@@ -22,6 +22,20 @@ static Window* mWindow;
 
 int main(void)
 {
+#pragma region Console Input Setup
+
+    Vector3 userinput;
+
+    std::cout << "Velocity:" << std::endl;
+    std::cout << "X: ";
+    std::cin >> userinput.x;
+    std::cout << "Y: ";
+    std::cin >> userinput.y;
+    std::cout << "Z: ";
+    std::cin >> userinput.z;
+
+#pragma endregion
+
     auto mTime = new Time();
 
     /* Initialize GLFW*/
@@ -47,7 +61,7 @@ int main(void)
     glUseProgram(CamOrthoPPShader->shaderID);
     glUniform1f(glGetUniformLocation(CamOrthoPPShader->shaderID, "saturation"), 1.0f);
     glUniform4fv(glGetUniformLocation(CamOrthoPPShader->shaderID, "tint"), 1, glm::value_ptr(glm::vec4(1, 1, 1, 1)));
-    mCameraOrtho->orthoRange = 450;
+    mCameraOrtho->orthoRange = mWindow->win_x / 2;
     mCameraOrtho->farClip = 1000.0f;
     mCameraOrtho->cameraPos = glm::vec3(0, 0, -50);
     mCameraOrtho->CamF = glm::vec3(0, 0, 1);
@@ -68,9 +82,8 @@ int main(void)
     mRenderPipeline->RegisterDrawCall(sphere_drawcall);
 
     auto sphere_object = new Object();
-    sphere_object->scale = Vector3(1, 1, 1) * 20;
-    sphere_object->position.x = -400;
-    sphere_object->position.z = 600;
+    sphere_object->scale = Vector3(1, 1, 1) * 5;
+    sphere_object->position.y = -mWindow->win_y / 2;
     sphere_object->acceleration.y = -50;
     sphere_object->velocity.x = 50;
     sphere_object->velocity.y = 50;
@@ -83,6 +96,9 @@ int main(void)
     /// <summary>
     /// MAIN GAME LOOP
     /// </summary>
+
+    sphere_object->velocity = userinput;
+    double time_objectFlying = 0;
 
     while (!glfwWindowShouldClose(mWindow->window))
     {
@@ -100,7 +116,12 @@ int main(void)
             mPhysicsPipeline->Update(fixedTickDur);
         }
 
-        std::cout << "Tick Dur : " << fixedTickDur << std::endl;
+        time_objectFlying += fixedTickDur;
+        if (sphere_object->position.y < -mWindow->win_y / 2)
+        {
+            std::cout << "It took " << time_objectFlying << "seconds for it to land." << std::endl;
+            break;
+        }
     }
     
     mRenderPipeline->CleanUp();
