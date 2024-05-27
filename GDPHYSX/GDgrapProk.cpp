@@ -119,7 +119,7 @@ int main(void)
         time_objectFlying += fixedTickDur;
         if (sphere_object->position.y < -mWindow->win_y / 2)
         {
-            std::cout << "It took " << time_objectFlying << "seconds for it to land." << std::endl;
+            std::cout << "It took " << time_objectFlying << " seconds for it to land." << std::endl;
             break;
         }
     }
