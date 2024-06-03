@@ -1,0 +1,73 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(517,5): warning MSB8028: The intermediate directory (x64\Release\) contains files shared from another project (GDgrapProk.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  Object.cpp
+  PhysicsPipeline.cpp
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\PhysicsPipeline.cpp(16,46): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\PhysicsPipeline.cpp(17,61): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\PhysicsPipeline.cpp(17,108): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  Time.cpp
+  Vector.cpp
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\Vector.cpp(31,24): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\Vector.cpp(34,10): warning C4244: 'return': conversion from 'int' to 'float', possible loss of data
+  Material.cpp
+  Mesh.cpp
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\Mesh.cpp(66,55): warning C4267: 'argument': conversion from 'size_t' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=int
+          ]
+  RenderPipeline.cpp
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\Framebuffer.h(42,80): warning C4244: 'argument': conversion from 'T' to 'GLsizei', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\Framebuffer.h(42,66): warning C4244: 'argument': conversion from 'T' to 'GLsizei', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\Framebuffer.h(49,97): warning C4244: 'argument': conversion from 'T' to 'GLsizei', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\Framebuffer.h(49,83): warning C4244: 'argument': conversion from 'T' to 'GLsizei', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\RenderPipeline.cpp(138,5): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+  GDgrapProk.cpp
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\Framebuffer.h(42,80): warning C4244: 'argument': conversion from 'T' to 'GLsizei', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\Framebuffer.h(42,66): warning C4244: 'argument': conversion from 'T' to 'GLsizei', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\Framebuffer.h(49,97): warning C4244: 'argument': conversion from 'T' to 'GLsizei', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\Framebuffer.h(49,83): warning C4244: 'argument': conversion from 'T' to 'GLsizei', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\GDgrapProk.cpp(123,23): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+  Camera.cpp
+  Shader.cpp
+  Skybox.cpp
+  Texture.cpp
+  Window.cpp
+  DrawCall.cpp
+  glad.c
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 2447 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  GDgrapProk.vcxproj -> C:\Users\gabri\OneDrive\Documents\UP_docs\School\CPP projects school\GDGRAP\GDPHYSX\x64\Release\GDPHYSX.exe
