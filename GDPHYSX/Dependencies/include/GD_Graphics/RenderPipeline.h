@@ -10,18 +10,20 @@
 #include "Light.h"
 #include "Framebuffer.h"
 
+#include <atomic>
+#include <future>
+
 namespace gde {
 	using namespace rendering;
 
 	class RenderPipeline {
 	private:
-		Shader* depthShader;
-		Framebuffer* mFrameBuffer;
-		Framebuffer* mDepthFrameBuffer;
+		std::atomic_bool is_running_concurrently = false;
+		std::future<void> current_task;
 
-		double lastFrameT = 0.0f;
-		double currentFrameT = 0.0f;
-		double deltaTime = 0.0f;
+		Shader* depthShader;
+		Framebuffer mFrameBuffer;
+		Framebuffer mDepthFrameBuffer;
 
 		glm::vec3 from;
 		glm::mat4 viewMat;

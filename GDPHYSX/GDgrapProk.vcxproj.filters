@@ -51,7 +51,7 @@
     <ClCompile Include="Dependencies\include\GD_Engine\Datatypes\Vector3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Dependencies\include\GD_Engine\Time.cpp">
+    <ClCompile Include="Dependencies\include\GD_Engine\Global\Time.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Dependencies\include\GD_Engine\ObjectHandlers\PhysicsHandler.cpp">
@@ -197,7 +197,7 @@
     <ClInclude Include="Dependencies\include\GD_Engine\Datatypes\Vector3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Dependencies\include\GD_Engine\Time.h">
+    <ClInclude Include="Dependencies\include\GD_Engine\Global\Time.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\include\GD_Engine\ObjectHandlers\PhysicsHandler.h">

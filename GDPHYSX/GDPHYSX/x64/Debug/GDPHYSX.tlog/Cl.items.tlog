@@ -28,7 +28,7 @@ D:\Documents\GitHub\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\Objects\Render
 D:\Documents\GitHub\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\Objects\Rendering\RenderObject.cpp;D:\Documents\GitHub\GDGRAP\GDPHYSX\GDPHYSX\x64\Debug\RenderObject.obj
 D:\Documents\GitHub\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\Objects\Physics\RigidObject.cpp;D:\Documents\GitHub\GDGRAP\GDPHYSX\GDPHYSX\x64\Debug\RigidObject.obj
 D:\Documents\GitHub\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\Objects\Root.cpp;D:\Documents\GitHub\GDGRAP\GDPHYSX\GDPHYSX\x64\Debug\Root.obj
-D:\Documents\GitHub\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\Time.cpp;D:\Documents\GitHub\GDGRAP\GDPHYSX\GDPHYSX\x64\Debug\Time.obj
+D:\Documents\GitHub\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\Global\Time.cpp;D:\Documents\GitHub\GDGRAP\GDPHYSX\GDPHYSX\x64\Debug\Time.obj
 D:\Documents\GitHub\GDGRAP\GDPHYSX\Dependencies\include\GD_Engine\Datatypes\Vector3.cpp;D:\Documents\GitHub\GDGRAP\GDPHYSX\GDPHYSX\x64\Debug\Vector3.obj
 D:\Documents\GitHub\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\DrawCall.cpp;D:\Documents\GitHub\GDGRAP\GDPHYSX\GDPHYSX\x64\Debug\DrawCall.obj
 D:\Documents\GitHub\GDGRAP\GDPHYSX\Dependencies\include\GD_Graphics\Light.cpp;D:\Documents\GitHub\GDGRAP\GDPHYSX\GDPHYSX\x64\Debug\Light.obj

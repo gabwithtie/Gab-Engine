@@ -4,7 +4,7 @@
 
 using namespace gde;
 
-gde::RenderPipeline::RenderPipeline(glm::vec2 dimensions)
+gde::RenderPipeline::RenderPipeline(glm::vec2 dimensions) : mFrameBuffer(dimensions), mDepthFrameBuffer(dimensions)
 {
     this->from = glm::vec3(1.0f);
     this->projMat = glm::mat4(1.0f);
@@ -16,8 +16,6 @@ gde::RenderPipeline::RenderPipeline(glm::vec2 dimensions)
 
     //Framebuffers setup
     depthShader = new Shader("Shaders/object.vert", "Shaders/depth.frag");
-    mFrameBuffer = new Framebuffer(dimensions);
-    mDepthFrameBuffer = new Framebuffer(dimensions);
 }
 
 void RenderPipeline::SetMaximumLights(int maxlights) {
@@ -33,6 +31,9 @@ void RenderPipeline::SetPostProcessing(Shader* postprocess) {
     this->postprocess = postprocess;
 }
 bool RenderPipeline::TryPushLight(rendering::Light* data, bool priority) {
+
+    if (this->is_running_concurrently)
+        return false;
 
     if (this->lights_this_frame.size() == this->maxlights)
         return false;
@@ -52,166 +53,186 @@ glm::mat4 gde::RenderPipeline::GetProjMat() {
 
 void gde::RenderPipeline::RenderFrame()
 {
-    //Update delta time
-    currentFrameT = glfwGetTime();
-    deltaTime = currentFrameT - lastFrameT;
-    lastFrameT = currentFrameT;
+    using namespace std::chrono_literals;
 
-#pragma region Rendering
-    auto& lights_mframe = this->lights_this_frame;
-    /* =============== Render here =============== */
-    //Function to draw all objects to a specified buffer
-    auto DrawToBuffer = [=, &lights_mframe](Framebuffer* buffer, bool depthWritersOnly = false, Shader* overrideShader = NULL) {
-        //Initialize the buffer
-        glBindFramebuffer(GL_FRAMEBUFFER, buffer->framebuffer);
-        glEnable(GL_DEPTH_TEST); //Enable depthtest again
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (this->is_running_concurrently == true) {
+        auto status = this->current_task.wait_for(0ms);
 
-        //Render the skybox if specified
-        if (!depthWritersOnly && mSkybox != NULL) {
-            mSkybox->Render(viewMat, projMat);
+        if (status == std::future_status::ready) {
+            this->is_running_concurrently = false;
+            this->lights_this_frame.clear();
         }
+        else
+            return;
+    }
 
-        //Loop through all objects
-        for (auto& obj : drawcalls)
-        {
-            //Enable chosen shader program
-            if (overrideShader == NULL)
-                glUseProgram(obj->m_material->m_shader->shaderID);
-            else
-                glUseProgram(overrideShader->shaderID);
+    this->is_running_concurrently = true;
+
+    auto fbuffer = this->mFrameBuffer;
+    auto dbuffer = this->mDepthFrameBuffer;
+    auto dShader = this->depthShader;
+    auto pProcess = this->postprocess;
+    auto mSkybox = this->mSkybox;
+    auto viewMat = this->viewMat;
+    auto projMat = this->viewMat;
+    auto drawcalls = this->drawcalls;
+    auto from = this->from;
+    auto& lights_mframe = this->lights_this_frame;
+
+    this->current_task = std::async(std::launch::async, [&dbuffer, &fbuffer, mSkybox, viewMat, projMat, drawcalls, from, dShader, pProcess, lights_mframe]() {
+        /* =============== Render here =============== */
+        //Function to draw all objects to a specified buffer
+        auto DrawToBuffer = [=, &lights_mframe](Framebuffer &buffer, bool depthWritersOnly = false, Shader* overrideShader = NULL) {
+            //Initialize the buffer
+            glBindFramebuffer(GL_FRAMEBUFFER, buffer.framebuffer);
+            glEnable(GL_DEPTH_TEST); //Enable depthtest again
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            //Render the skybox if specified
+            if (!depthWritersOnly && mSkybox != NULL) {
+                mSkybox->Render(viewMat, projMat);
+            }
+
+            //Loop through all objects
+            for (auto& obj : drawcalls)
+            {
+                //Enable chosen shader program
+                if (overrideShader == NULL)
+                    glUseProgram(obj->m_material->m_shader->shaderID);
+                else
+                    glUseProgram(overrideShader->shaderID);
 
 #pragma region Shader Set Functions
-            //Helper shader set functions
-            auto setBool = [obj](const char* id, bool value) {
-                unsigned int xLoc = glGetUniformLocation(obj->m_material->m_shader->shaderID, id);
-                glUniform1i(xLoc, value);
-            };
-            auto setFloat = [obj](const char* id, float value) {
-                unsigned int xLoc = glGetUniformLocation(obj->m_material->m_shader->shaderID, id);
-                glUniform1f(xLoc, value);
-            };
-            auto setVec2 = [obj](const char* id, glm::vec2 value) {
-                unsigned int xLoc = glGetUniformLocation(obj->m_material->m_shader->shaderID, id);
-                glUniform2fv(xLoc, 1, glm::value_ptr(value));
-            };
-            auto setVec3 = [obj](const char* id, glm::vec3 value) {
-                unsigned int xLoc = glGetUniformLocation(obj->m_material->m_shader->shaderID, id);
-                glUniform3fv(xLoc, 1, glm::value_ptr(value));
-            };
-            auto setMat4 = [obj](const char* id, glm::mat4 value) {
-                unsigned int xLoc = glGetUniformLocation(obj->m_material->m_shader->shaderID, id);
-                glUniformMatrix4fv(xLoc, 1, GL_FALSE, glm::value_ptr(value));
-            };
+                //Helper shader set functions
+                auto setBool = [obj](const char* id, bool value) {
+                    unsigned int xLoc = glGetUniformLocation(obj->m_material->m_shader->shaderID, id);
+                    glUniform1i(xLoc, value);
+                    };
+                auto setFloat = [obj](const char* id, float value) {
+                    unsigned int xLoc = glGetUniformLocation(obj->m_material->m_shader->shaderID, id);
+                    glUniform1f(xLoc, value);
+                    };
+                auto setVec2 = [obj](const char* id, glm::vec2 value) {
+                    unsigned int xLoc = glGetUniformLocation(obj->m_material->m_shader->shaderID, id);
+                    glUniform2fv(xLoc, 1, glm::value_ptr(value));
+                    };
+                auto setVec3 = [obj](const char* id, glm::vec3 value) {
+                    unsigned int xLoc = glGetUniformLocation(obj->m_material->m_shader->shaderID, id);
+                    glUniform3fv(xLoc, 1, glm::value_ptr(value));
+                    };
+                auto setMat4 = [obj](const char* id, glm::mat4 value) {
+                    unsigned int xLoc = glGetUniformLocation(obj->m_material->m_shader->shaderID, id);
+                    glUniformMatrix4fv(xLoc, 1, GL_FALSE, glm::value_ptr(value));
+                    };
 #pragma endregion
-            for (int i = 0; i < obj->m_material->textureOverrides.size(); i++)
-            {
-                auto& textureOverride = obj->m_material->textureOverrides[i];
-
-                glActiveTexture(GL_TEXTURE0 + i);
-                GLuint texAddress = glGetUniformLocation(obj->m_material->m_shader->shaderID, textureOverride.parameterName);
-
-                glBindTexture(GL_TEXTURE_2D, textureOverride.texture->texID);
-                glUniform1i(texAddress, i);
-            }
-
-            //Attach skybox texture for ambient lighting
-            if (mSkybox != NULL) {
-                glActiveTexture(GL_TEXTURE0);
-                GLuint skyboxAddress = glGetUniformLocation(obj->m_material->m_shader->shaderID, "skybox");
-                glBindTexture(GL_TEXTURE_2D, mSkybox->textureCubeMap->texID);
-                glUniform1i(skyboxAddress, 0);
-            }
-
-            //Pass the necessary CPU-computed data to the object shader
-            
-            for (auto& call : obj->calls) {
-
-                size_t index = 0;
-                for (auto lightdata : lights_mframe)
+                for (int i = 0; i < obj->m_material->textureOverrides.size(); i++)
                 {
-                    if (lightdata->changed == false && lightdata->previous_render_index == index)
-                        continue;
+                    auto& textureOverride = obj->m_material->textureOverrides[i];
 
-                    if (lightdata->GetType() == Light::DIRECTION) {
-                        auto dirlight = (DirLight*)lightdata;
-                        setVec3("dirlight.color", dirlight->color * dirlight->intensity);
-                        setVec3("dirlight.dir", dirlight->dir);
-                    }
+                    glActiveTexture(GL_TEXTURE0 + i);
+                    GLuint texAddress = glGetUniformLocation(obj->m_material->m_shader->shaderID, textureOverride.parameterName);
 
-                    index++;
+                    glBindTexture(GL_TEXTURE_2D, textureOverride.texture->texID);
+                    glUniform1i(texAddress, i);
                 }
-                //Transform data
-                glm::mat4 tmat = call.second;
-                glm::mat4 tmat_VM = tmat;
-                glm::mat4 tmat_PVM = projMat * viewMat * tmat;
-                setMat4("transform_model", tmat);
-                setMat4("transform_projection", tmat_PVM);
-                setVec3("cameraPos", from);
 
-                for (auto& iterator : obj->m_material->overrides) {
-                    switch (iterator.second.type)
+                //Attach skybox texture for ambient lighting
+                if (mSkybox != NULL) {
+                    glActiveTexture(GL_TEXTURE0);
+                    GLuint skyboxAddress = glGetUniformLocation(obj->m_material->m_shader->shaderID, "skybox");
+                    glBindTexture(GL_TEXTURE_2D, mSkybox->textureCubeMap->texID);
+                    glUniform1i(skyboxAddress, 0);
+                }
+
+                //Pass the necessary CPU-computed data to the object shader
+
+                for (auto& call : obj->calls) {
+
+                    size_t index = 0;
+                    for (auto lightdata : lights_mframe)
                     {
-                    case BOOL:
-                        setBool(iterator.first, iterator.second.value_bool);
-                        break;
-                    case FLOAT:
-                        setFloat(iterator.first, iterator.second.value_float);
-                        break;
-                    case VEC2:
-                        setVec2(iterator.first, iterator.second.value_vec2);
-                        break;
-                    case VEC3:
-                        setVec3(iterator.first, iterator.second.value_vec3);
-                        break;
-                    case MAT4:
-                        setMat4(iterator.first, iterator.second.value_mat4);
-                        break;
-                    default:
-                        break;
+                        if (lightdata->changed == false && lightdata->previous_render_index == index)
+                            continue;
+
+                        if (lightdata->GetType() == Light::DIRECTION) {
+                            auto dirlight = (DirLight*)lightdata;
+                            setVec3("dirlight.color", dirlight->color * dirlight->intensity);
+                            setVec3("dirlight.dir", dirlight->dir);
+                        }
+
+                        index++;
                     }
+                    //Transform data
+                    glm::mat4 tmat = call.second;
+                    glm::mat4 tmat_VM = tmat;
+                    glm::mat4 tmat_PVM = projMat * viewMat * tmat;
+                    setMat4("transform_model", tmat);
+                    setMat4("transform_projection", tmat_PVM);
+                    setVec3("cameraPos", from);
+
+                    for (auto& iterator : obj->m_material->overrides) {
+                        switch (iterator.second.type)
+                        {
+                        case BOOL:
+                            setBool(iterator.first, iterator.second.value_bool);
+                            break;
+                        case FLOAT:
+                            setFloat(iterator.first, iterator.second.value_float);
+                            break;
+                        case VEC2:
+                            setVec2(iterator.first, iterator.second.value_vec2);
+                            break;
+                        case VEC3:
+                            setVec3(iterator.first, iterator.second.value_vec3);
+                            break;
+                        case MAT4:
+                            setMat4(iterator.first, iterator.second.value_mat4);
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+
+                    //Draw the current object
+                    glBindVertexArray(obj->m_mesh->VAO);
+                    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)obj->m_mesh->fullVertexData.size() / 8);
                 }
-
-                //Draw the current object
-                glBindVertexArray(obj->m_mesh->VAO);
-                glDrawArrays(GL_TRIANGLES, 0, (GLsizei)obj->m_mesh->fullVertexData.size() / 8);
             }
-        }
 
-        //De-initialize the current frame buffer
-        glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default render target
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-    };
+            //De-initialize the current frame buffer
+            glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default render target
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            };
 
-    //Draw to the main display buffer
-    DrawToBuffer(mFrameBuffer);
-    //Draw to the depth buffer using a depth shader
-    DrawToBuffer(mDepthFrameBuffer, true, depthShader);
+        //Draw to the main display buffer
+        DrawToBuffer(fbuffer);
+        //Draw to the depth buffer using a depth shader
+        DrawToBuffer(dbuffer, true, dShader);
 
-    //Assign camera shader as post-processing
-    auto camShaderId = postprocess->shaderID;
-    glUseProgram(camShaderId);
-    glBindVertexArray(mFrameBuffer->quadVAO);
-    glDisable(GL_DEPTH_TEST); //Temporarily disable depth test
+        //Assign camera shader as post-processing
+        auto camShaderId = pProcess->shaderID;
+        glUseProgram(camShaderId);
+        glBindVertexArray(fbuffer.quadVAO);
+        glDisable(GL_DEPTH_TEST); //Temporarily disable depth test
 
-    //Attach the color texture to the post-process shader
-    glActiveTexture(GL_TEXTURE0);
-    GLuint colorBufferTextureSampler = glGetUniformLocation(camShaderId, "colorBufferTexture");
-    glBindTexture(GL_TEXTURE_2D, mFrameBuffer->textureColorbuffer);
-    glUniform1i(colorBufferTextureSampler, 0);
-    //Attach the depth texture to the post-process shader
-    glActiveTexture(GL_TEXTURE1);
-    GLuint depthBufferTextureSampler = glGetUniformLocation(camShaderId, "depthBufferTexture");
-    glBindTexture(GL_TEXTURE_2D, mDepthFrameBuffer->textureColorbuffer);
-    glUniform1i(depthBufferTextureSampler, 1);
+        //Attach the color texture to the post-process shader
+        glActiveTexture(GL_TEXTURE0);
+        GLuint colorBufferTextureSampler = glGetUniformLocation(camShaderId, "colorBufferTexture");
+        glBindTexture(GL_TEXTURE_2D, fbuffer.textureColorbuffer);
+        glUniform1i(colorBufferTextureSampler, 0);
+        //Attach the depth texture to the post-process shader
+        glActiveTexture(GL_TEXTURE1);
+        GLuint depthBufferTextureSampler = glGetUniformLocation(camShaderId, "depthBufferTexture");
+        glBindTexture(GL_TEXTURE_2D, dbuffer.textureColorbuffer);
+        glUniform1i(depthBufferTextureSampler, 1);
 
-    //Output the buffer
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+        //Output the buffer
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    this->lights_this_frame.clear();
-#pragma endregion
+        std::cout << "Rendered  Fram \n";
+    });
 }
 
 void gde::RenderPipeline::RegisterDrawCall(DrawCall* drawcall)

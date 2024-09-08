@@ -164,7 +164,7 @@
     <ClCompile Include="Dependencies\include\GD_Engine\Objects\Rendering\RenderObject.cpp" />
     <ClCompile Include="Dependencies\include\GD_Engine\Objects\Physics\RigidObject.cpp" />
     <ClCompile Include="Dependencies\include\GD_Engine\Objects\Root.cpp" />
-    <ClCompile Include="Dependencies\include\GD_Engine\Time.cpp" />
+    <ClCompile Include="Dependencies\include\GD_Engine\Global\Time.cpp" />
     <ClCompile Include="Dependencies\include\GD_Engine\Datatypes\Vector3.cpp" />
     <ClCompile Include="Dependencies\include\GD_Graphics\DrawCall.cpp" />
     <ClCompile Include="Dependencies\include\GD_Graphics\Light.cpp" />
@@ -231,7 +231,7 @@
     <ClInclude Include="Dependencies\include\GD_Engine\ObjectHandlers\PhysicsHandler.h" />
     <ClInclude Include="Dependencies\include\GD_Engine\Objects\Rendering\RenderObject.h" />
     <ClInclude Include="Dependencies\include\GD_Engine\Objects\Physics\RigidObject.h" />
-    <ClInclude Include="Dependencies\include\GD_Engine\Time.h" />
+    <ClInclude Include="Dependencies\include\GD_Engine\Global\Time.h" />
     <ClInclude Include="Dependencies\include\GD_Engine\ObjectFunctions\EarlyUpdate.h" />
     <ClInclude Include="Dependencies\include\GD_Engine\ObjectFunctions\LateUpdate.h" />
     <ClInclude Include="Dependencies\include\GD_Engine\ObjectFunctions\Update.h" />

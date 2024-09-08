@@ -17,7 +17,7 @@
 #include <GD_Engine/Objects/Objects.h>
 #include <GD_Engine/ObjectFunctions/ObjectFunctions.h>
 #include <GD_Engine/Datatypes/Vectors.h>
-#include <GD_Engine/Time.h>
+#include <GD_Engine/Global/Time.h>
 
 #include <GD_Engine/Objects/Physics/Joints/Spinner.h>
 

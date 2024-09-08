@@ -2,51 +2,76 @@
 
 #include <glm/gtx/quaternion.hpp>
 
-#include <iostream>
 
 gde::PhysicsHandler::PhysicsHandler()
 {
 	this->subhandlers.push_back(&this->forcevolume_handler);
 }
 
+void gde::PhysicsHandler::AddWorkFunction(RigidObject* ro)
+{
+	std::unique_lock<std::mutex> lock(mtx); // Lock the mutex
+	cond_var.wait(lock, [this] { return this->buffer.size() < 10; }); // Wait until there's space in buffer
+	buffer.push(ro); // Add value to the buffer
+	lock.unlock(); // Unlock the mutex
+	cond_var.notify_one(); // Notify one waiting thread
+}
+
+void gde::PhysicsHandler::WorkerFunction()
+{
+	std::unique_lock<std::mutex> lock(mtx); // Lock the mutex
+	cond_var.wait(lock, [this] { return this->buffer.size() > 0; }); // Wait until there's something in the buffer
+	auto ro = this->buffer.front(); // Get the front value from buffer
+	buffer.pop(); // Remove the value from buffer
+	lock.unlock(); // Unlock the mutex
+
+	auto& volumes = this->forcevolume_handler.object_list;
+
+	//Translational
+	for (auto volume : volumes) {
+		volume->TryApply(ro);
+	}
+
+	auto total_force = ro->frame_force;
+
+	ro->acceleration = Vector3::zero;
+	ro->acceleration += total_force * (1 / ro->mass);
+
+	float dur_f = (float)this->local_duration;
+
+	ro->TranslateWorld((ro->velocity * dur_f) + ((ro->acceleration * (dur_f * dur_f)) * (1.0f / 2.0f)));
+
+	ro->velocity += ro->acceleration * dur_f;
+	ro->velocity *= powf(ro->damping, dur_f);
+
+	ro->frame_force = Vector3::zero;
+
+	//Angular
+	float mI = ro->MomentOfInertia();
+	ro->angularVelocity += ro->accumulatedTorque * this->local_duration * ((float)1 / mI);
+	ro->angularVelocity *= powf(ro->amgularDamp, this->local_duration);
+
+	auto aV = ro->angularVelocity * this->local_duration;
+	float aVmag = aV.Magnitude();
+	Vector3 aVdir = aV * (1.0f / aVmag);
+
+	if (aVmag > 0.0001f) {
+		ro->Rotate(aVdir, aVmag);
+	}
+
+	ro->accumulatedTorque = Vector3::zero;
+
+	cond_var.notify_one(); // Notify one waiting thread
+}
+
 void gde::PhysicsHandler::Update(double duration)
 {
-	for (auto ro : this->object_list) {
+	this->local_duration = duration;
 
-		//Translational
-		for (auto volume : this->forcevolume_handler.object_list) {
-			volume->TryApply(ro);
-		}
-
-		auto total_force = ro->frame_force;
-
-		ro->acceleration = Vector3::zero;
-		ro->acceleration += total_force * (1 / ro->mass);
-
-		float dur_f = (float)duration;
-
-		ro->TranslateWorld((ro->velocity * dur_f) + ((ro->acceleration * (dur_f * dur_f)) * (1.0f / 2.0f)));
-
-		ro->velocity += ro->acceleration * dur_f;
-		ro->velocity *= powf(ro->damping, dur_f);
-
-		ro->frame_force = Vector3::zero;
-
-		//Angular
-		float mI = ro->MomentOfInertia();
-		ro->angularVelocity += ro->accumulatedTorque * duration * ((float)1 / mI);
-		ro->angularVelocity *= powf(ro->amgularDamp, duration);
-
-		auto aV = ro->angularVelocity * duration;
-		float aVmag = aV.Magnitude();
-		Vector3 aVdir = aV * (1.0f / aVmag);
-
-		if (aVmag > 0.0001f) {
-			ro->Rotate(aVdir, aVmag);
-		}
-
-		ro->accumulatedTorque = Vector3::zero;
-	}
+	for (auto ro : this->object_list)
+		this->AddWorkFunction(ro);
+	for (size_t i = 0; i < this->object_list.size(); i++)
+		this->WorkerFunction();
 
 	this->GenerateContacts();
 
