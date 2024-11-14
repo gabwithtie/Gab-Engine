@@ -1,7 +1,3 @@
-GDgrapProk/.vs/
 *.ipch
-*.zip
-/GDgrapProk/.vs
-/GDPHYSX/.vs
-/GDPHYSX/x64
+/out
 /.vs
