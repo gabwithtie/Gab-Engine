@@ -171,7 +171,7 @@ namespace gbe {
         }
 
         for (size_t f_i = 0; f_i < MAX_FRAMES_IN_FLIGHT; f_i++) {
-			std::vector<VkDescriptorBufferInfo> bufferInfos;
+            std::vector<VkWriteDescriptorSet> descriptorWrites{};
 
             for (const auto& uniformblock : newinst.uniformBuffers)
             {
@@ -186,11 +186,18 @@ namespace gbe {
                 bufferInfo.offset = 0;
                 bufferInfo.range = blockinfo.block_size;
 
-                bufferInfos.push_back(bufferInfo);
+                VkWriteDescriptorSet descriptorWrite{};
+
+                descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrite.dstSet = newinst.descriptorSets[f_i];
+                descriptorWrite.dstBinding = 0;
+                descriptorWrite.dstArrayElement = 0;
+                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                descriptorWrite.descriptorCount = 1;
+                descriptorWrite.pBufferInfo = &bufferInfo;
+
+                descriptorWrites.push_back(descriptorWrite);
             }
-
-
-            std::vector<VkDescriptorImageInfo> imageInfos;
 
             for (const auto& uniformtex : newinst.uniformTextures)
             {
@@ -200,28 +207,6 @@ namespace gbe {
                 imageInfo.imageView = uniformtex.imageView;
                 imageInfo.sampler = uniformtex.sampler;
 
-				imageInfos.push_back(imageInfo);
-            }
-
-            std::vector<VkWriteDescriptorSet> descriptorWrites{};
-
-            for (const auto& bufferinfo : bufferInfos)
-            {
-				VkWriteDescriptorSet descriptorWrite{};
-
-                descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                descriptorWrite.dstSet = newinst.descriptorSets[f_i];
-                descriptorWrite.dstBinding = 0;
-                descriptorWrite.dstArrayElement = 0;
-                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                descriptorWrite.descriptorCount = 1;
-                descriptorWrite.pBufferInfo = &bufferinfo;
-
-				descriptorWrites.push_back(descriptorWrite);
-            }
-
-            for (const auto& imageinfo : imageInfos)
-            {
                 VkWriteDescriptorSet descriptorWrite{};
 
                 descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -230,7 +215,7 @@ namespace gbe {
                 descriptorWrite.dstArrayElement = 0;
                 descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                 descriptorWrite.descriptorCount = 1;
-                descriptorWrite.pImageInfo = &imageinfo;
+                descriptorWrite.pImageInfo = &imageInfo;
 
                 descriptorWrites.push_back(descriptorWrite);
             }
