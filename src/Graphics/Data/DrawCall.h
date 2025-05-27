@@ -86,6 +86,7 @@ namespace gbe {
             }
 
             VkDescriptorSet* get_descriptorset(unsigned int frame, unsigned int objindex);
+            CallInstance& get_callinst(unsigned int objindex);
             
             Matrix4* RegisterCall(void* instance_id, Matrix4 matrix);
             void UnRegisterCall(void* instance_id);

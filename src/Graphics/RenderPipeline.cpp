@@ -855,7 +855,7 @@ void gbe::RenderPipeline::RenderFrame(Matrix4& viewmat, Matrix4& projmat, float&
                 VkDeviceSize offsets[] = { 0 };
                 vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
 
-                auto dset = drawcall->get_descriptorset(currentFrame, dc_i);
+                auto dset = &drawcall->get_callinst(dc_i).descriptorSets[currentFrame];
                 vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipelineLayout, 0, 1, dset, 0, nullptr);
                 
                 vkCmdBindIndexBuffer(currentCommandBuffer, curmesh.indexBuffer, 0, VK_INDEX_TYPE_UINT16);

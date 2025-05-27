@@ -68,6 +68,18 @@ namespace gbe {
         return &it_call->second.descriptorSets[frame];
     }
 
+    gfx::DrawCall::CallInstance& gfx::DrawCall::get_callinst(unsigned int objindex)
+    {
+        auto it_call = this->calls.begin();
+
+        for (int iters = 0; iters < objindex; iters++)
+        {
+            it_call++;
+        }
+
+        return it_call->second;
+    }
+
     gbe::Matrix4* gfx::DrawCall::RegisterCall(void* instance_id, Matrix4 matrix)
     {
         bool exists = this->calls.find(instance_id) != this->calls.end();
