@@ -186,11 +186,12 @@ namespace gbe {
                 bufferInfo.offset = 0;
                 bufferInfo.range = blockinfo.block_size;
 
+
                 VkWriteDescriptorSet descriptorWrite{};
 
                 descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 descriptorWrite.dstSet = newinst.descriptorSets[f_i];
-                descriptorWrite.dstBinding = 0;
+                descriptorWrite.dstBinding = blockinfo.binding;
                 descriptorWrite.dstArrayElement = 0;
                 descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 descriptorWrite.descriptorCount = 1;
@@ -207,11 +208,16 @@ namespace gbe {
                 imageInfo.imageView = uniformtex.imageView;
                 imageInfo.sampler = uniformtex.sampler;
 
+                //FIND BINDING
+				ShaderData::ShaderField fieldinfo{};
+				ShaderData::ShaderBlock blockinfo{};
+				bool found_field = shaderdata->FindUniformField(uniformtex.texture_name, fieldinfo, blockinfo);
+
                 VkWriteDescriptorSet descriptorWrite{};
 
                 descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 descriptorWrite.dstSet = newinst.descriptorSets[f_i];
-                descriptorWrite.dstBinding = 1;
+                descriptorWrite.dstBinding = fieldinfo.binding;
                 descriptorWrite.dstArrayElement = 0;
                 descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                 descriptorWrite.descriptorCount = 1;
@@ -244,9 +250,7 @@ namespace gbe {
         {
             auto& callinstance = pair.second;
 
-            ApplyOverride<Matrix4>(callinstance.model, "model", frameindex, callinstance);
-            ApplyOverride<Matrix4>(ubo.view, "view", frameindex, callinstance);
-            ApplyOverride<Matrix4>(ubo.proj, "proj", frameindex, callinstance);
+            
         }
     }
 }

@@ -767,7 +767,7 @@ bool RenderPipeline::TryPushLight(gfx::Light* data, bool priority) {
     return true;
 }
 
-void gbe::RenderPipeline::RenderFrame(Matrix4& viewmat, Matrix4& projmat, float& nearclip, float& farclip)
+void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& nearclip, float& farclip)
 {
 	//Syncronization
     vkWaitForFences(this->vkdevice, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
@@ -847,7 +847,7 @@ void gbe::RenderPipeline::RenderFrame(Matrix4& viewmat, Matrix4& projmat, float&
             DrawCall::GlobalUniforms ubo{};
             ubo.proj = projmat;
             ubo.view = viewmat;
-            ubo.proj[1][1] *= -1;
+            projmat[1][1] *= -1;
             drawcall->UpdateUniforms(ubo, currentFrame);
 
             for (int dc_i = 0; dc_i < drawcall->get_call_count(); dc_i++) {
@@ -855,7 +855,13 @@ void gbe::RenderPipeline::RenderFrame(Matrix4& viewmat, Matrix4& projmat, float&
                 VkDeviceSize offsets[] = { 0 };
                 vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
 
-                auto dset = &drawcall->get_callinst(dc_i).descriptorSets[currentFrame];
+                auto& callinst = drawcall->get_callinst(dc_i);
+
+                drawcall->ApplyOverride<Matrix4>(callinst.model, "model", currentFrame, callinst);
+                drawcall->ApplyOverride<Matrix4>(viewmat, "view", currentFrame, callinst);
+                drawcall->ApplyOverride<Matrix4>(projmat, "proj", currentFrame, callinst);
+
+                auto dset = &callinst.descriptorSets[currentFrame];
                 vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipelineLayout, 0, 1, dset, 0, nullptr);
                 
                 vkCmdBindIndexBuffer(currentCommandBuffer, curmesh.indexBuffer, 0, VK_INDEX_TYPE_UINT16);

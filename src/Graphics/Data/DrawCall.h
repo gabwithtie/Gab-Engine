@@ -62,7 +62,7 @@ namespace gbe {
             void BindForRender(VkCommandBuffer curcmdbuffer, unsigned int frame, unsigned int objindex, TransformUBO ubo);
             
             template<typename T>
-            bool ApplyOverride(const T& valueref, std::string target, unsigned int frameindex, CallInstance& callinst) {
+            bool ApplyOverride(const T valueref, std::string target, unsigned int frameindex, CallInstance& callinst) {
                 ShaderData::ShaderBlock blockinfo;
                 ShaderData::ShaderField fieldinfo;
 
