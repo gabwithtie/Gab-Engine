@@ -256,6 +256,7 @@ namespace gbe {
 
 			auto newball = create_sphere(Vector3(0, 0, 0), Vector3(1, 1, 1));
 			newball->GetRigidbody()->Set_velocity(final_vel);
+			newball->GetRigidbody()
 
 #pragma endregion
 			return game_root;
