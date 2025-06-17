@@ -84,6 +84,7 @@ namespace gbe {
 		auto test_mesh = new asset::Mesh("DefaultAssets/3D/test.obj.gbe");
 		auto cube_mesh = new asset::Mesh("DefaultAssets/3D/cube.obj.gbe");
 		auto plane_mesh = new asset::Mesh("DefaultAssets/3D/plane.obj.gbe");
+		auto sphere_mesh = new asset::Mesh("DefaultAssets/3D/sphere.obj.gbe");
 		
 		//SHADER CACHING
 		auto unlitShader = new asset::Shader("DefaultAssets/Shaders/unlit.shader.gbe");
@@ -104,6 +105,7 @@ namespace gbe {
 		auto test_drawcall = mRenderPipeline->RegisterDrawCall(test_mesh, test_mat);
 		auto cube_drawcall = mRenderPipeline->RegisterDrawCall(cube_mesh, cube_mat);
 		auto plane_drawcall = mRenderPipeline->RegisterDrawCall(plane_mesh, cube_mat);
+		auto sphere_drawcall = mRenderPipeline->RegisterDrawCall(sphere_mesh, cube_mat);
 
 #pragma endregion
 #pragma region Input
@@ -130,23 +132,7 @@ namespace gbe {
 			auto player = new RigidObject();
 
 			//Spawn funcs
-
-			auto create_test = [&](Vector3 pos, Vector3 scale, Vector3 renderscale) {
-				RigidObject* test = new RigidObject();
-				test->SetParent(game_root);
-				test->Local().position.Set(pos);
-				test->Local().rotation.Set(Quaternion::Euler(Vector3(0, 0, 0)));
-				test->Local().scale.Set(scale);
-				BoxCollider* platform_collider = new BoxCollider();
-				platform_collider->SetParent(test);
-				platform_collider->Local().position.Set(Vector3(0, 0, 0));
-				RenderObject* platform_renderer = new RenderObject(test_drawcall);
-				platform_renderer->SetParent(platform_collider);
-				platform_renderer->Local().scale.Set(renderscale);
-
-				return test;
-				};
-
+			
 			auto create_box = [&](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0,0,0))) {
 				RigidObject* test = new RigidObject(true);
 				test->SetParent(game_root);
@@ -177,12 +163,27 @@ namespace gbe {
 				return test;
 				};
 
+			auto create_sphere = [&](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
+				RigidObject* test = new RigidObject();
+				test->SetParent(game_root);
+				test->Local().position.Set(pos);
+				test->Local().rotation.Set(rotation);
+				test->Local().scale.Set(scale);
+				SphereCollider* platform_collider = new SphereCollider();
+				platform_collider->SetParent(test);
+				platform_collider->Local().position.Set(Vector3(0, 0, 0));
+				RenderObject* platform_renderer = new RenderObject(sphere_drawcall);
+				platform_renderer->SetParent(test);
+
+				return test;
+				};
+
 			//Global objects
 			//physics force setup
 			auto gravity_volume = new ForceVolume();
 			gravity_volume->shape = ForceVolume::GLOBAL;
 			gravity_volume->mode = ForceVolume::DIRECTIONAL;
-			gravity_volume->vector = Vector3(0.f, -12, 0.f);
+			gravity_volume->vector = Vector3(0.f, 0.0f, 0.f);
 			gravity_volume->forceMode = ForceVolume::VELOCITY;
 			gravity_volume->SetParent(game_root);
 
@@ -234,20 +235,27 @@ namespace gbe {
 
 #pragma region scene objects
 			
-			//CALL THE BUILDER
-			ext::AnimoBuilder::GenerationParams params{};
-			auto builder_result = ext::AnimoBuilder::AnimoBuilder::Generate(params);
 
-			//SPAWN THE RESULT
-			for (auto& objdata : builder_result.meshes)
-			{
-				create_box(objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0)));
-			}
+			//CREATE CAGE
+			Vector2 cagesize(10, 10);
+			Vector2 halfsize = cagesize * 0.5f;
 
-			//CINEMACHINE
-			auto cinematic_system_holder = create_box(Vector3(0, 0, -10), Vector3(3, 3, 3));
-			auto cinematic_system = new CinematicSystem();
-			cinematic_system->SetParent(cinematic_system_holder);
+			create_box(Vector3(halfsize.x + 1, 0, 0), Vector3(1, halfsize.y, 1));
+			create_box(Vector3(-(halfsize.x + 1), 0, 0), Vector3(1, halfsize.y, 1));
+			create_box(Vector3(0, halfsize.y + 1, 0), Vector3(halfsize.x, 1, 1));
+			create_box(Vector3(0, -(halfsize.y + 1), 0), Vector3(halfsize.x, 1, 1));
+
+			Vector2Int max_vel(1, 1);
+			Vector2Int max_vel_double = max_vel_double * 2;
+
+			Vector3 final_vel = Vector3(0, 0, 0);
+			//final_vel.x = rand() % max_vel_double.x;
+			//final_vel.y = rand() % max_vel_double.y;
+			final_vel.x = 0.5f;
+			final_vel.y = 0.5f;
+
+			auto newball = create_sphere(Vector3(0, 0, 0), Vector3(1, 1, 1));
+			newball->GetRigidbody()->Set_velocity(final_vel);
 
 #pragma endregion
 			return game_root;
