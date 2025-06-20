@@ -26,13 +26,20 @@ namespace gbe{
 		const float* Get_Ptr();
 
 		static const Vector3 zero;
-		inline static Vector3 Lerp(Vector3& a, Vector3& b, float t) {
+		inline static Vector3 Lerp(Vector3 a, Vector3 b, float t) {
 			auto d = b - a;
 			d *= t;
 			auto tv = a + d;
 			return tv;
 		}
-		static const Vector3 RandomWithin(Vector3& a, Vector3& b);
+		inline static Vector3 RandomWithin(Vector3 a, Vector3 b) {
+			gbe::Vector3 d = b - a;
+			auto rand_01 = []() {
+				return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+				};
+
+			return a + gbe::Vector3(d.x * rand_01(), d.y * rand_01(), d.z * rand_01());
+		}
 		static Vector3 GetClosestPointOnLineGivenLine(const Vector3& a, const Vector3& adir, const Vector3& b, const Vector3& bdir);
 	};
 }

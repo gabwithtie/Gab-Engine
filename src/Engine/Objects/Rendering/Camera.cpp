@@ -1,5 +1,4 @@
 #include "Camera.h"
-#include "Camera.h"
 
 namespace gbe {
     using namespace gfx;
@@ -53,6 +52,12 @@ namespace gbe {
 
     OrthographicCamera::OrthographicCamera(Window* mWindow) : Camera(mWindow)
     {
+        auto dims = mWindow->Get_dimentions();
+	
+        if(dims.x > dims.y)
+            this->orthoRange = dims.x; // Default orthographic range
+        else
+            this->orthoRange = dims.y; // Default orthographic range
     }
 
     Matrix4 OrthographicCamera::getproj()

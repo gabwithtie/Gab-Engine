@@ -77,25 +77,23 @@ namespace gbe {
                 if(sdlevent.wheel.y < 0)
                     this->keystates[gbe::Keys::MOUSE_SCROLL_DOWN] = true;
             }
-            if (sdlevent.type == SDL_KEYDOWN) {
-                auto symcode = sdlevent.key.keysym.sym;
-                if (symcode == 'w') this->keystates[gbe::Keys::W] = true;
-                if (symcode == 'a') this->keystates[gbe::Keys::A] = true;
-                if (symcode == 's') this->keystates[gbe::Keys::S] = true;
-                if (symcode == 'd') this->keystates[gbe::Keys::D] = true;
 
-                if (symcode == SDLK_SPACE) this->keystates[gbe::Keys::SPACE] = true;
-                if (symcode == SDLK_ESCAPE) this->keystates[gbe::Keys::ESCAPE] = true;
-            }
-            if (sdlevent.type == SDL_KEYUP) {
-                auto symcode = sdlevent.key.keysym.sym;
-                if (symcode == 'w') this->keystates[gbe::Keys::W] = false;
-                if (symcode == 'a') this->keystates[gbe::Keys::A] = false;
-                if (symcode == 's') this->keystates[gbe::Keys::S] = false;
-                if (symcode == 'd') this->keystates[gbe::Keys::D] = false;
+            if (sdlevent.type == SDL_KEYDOWN || sdlevent.type == SDL_KEYUP) {
+                bool keytoggle = true;
 
-                if (symcode == SDLK_SPACE) this->keystates[gbe::Keys::SPACE] = false;
-                if (symcode == SDLK_ESCAPE) this->keystates[gbe::Keys::ESCAPE] = false;
+                if (sdlevent.type == SDL_KEYUP)
+                    keytoggle = false;
+
+                auto symcode = sdlevent.key.keysym.sym;
+                if (symcode == 'w') this->keystates[gbe::Keys::W] = keytoggle;
+                if (symcode == 'a') this->keystates[gbe::Keys::A] = keytoggle;
+                if (symcode == 's') this->keystates[gbe::Keys::S] = keytoggle;
+                if (symcode == 'd') this->keystates[gbe::Keys::D] = keytoggle;
+
+                if (symcode == SDLK_SPACE) this->keystates[gbe::Keys::SPACE] = keytoggle;
+                if (symcode == SDLK_ESCAPE) this->keystates[gbe::Keys::ESCAPE] = keytoggle;
+                if (symcode == SDLK_BACKSPACE) this->keystates[gbe::Keys::BACKPSPACE] = keytoggle;
+                if (symcode == SDLK_DELETE) this->keystates[gbe::Keys::DELETE] = keytoggle;
             }
 
             for (auto& eventprocessor : this->additionalEventProcessors)
@@ -114,7 +112,7 @@ namespace gbe {
     }
     void Window::Terminate()
     {
-        SDL_Quit();
+        this->shouldclose = true;
     }
     bool Window::ShouldClose()
     {

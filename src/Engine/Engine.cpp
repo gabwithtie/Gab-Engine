@@ -11,8 +11,12 @@
 #include "Asset/gbe_asset.h"
 
 namespace gbe {
+	Engine* Engine::Instance;
+
 	Engine::Engine()
 	{
+		Instance = this;
+
 		this->current_root = nullptr;
 		this->queued_rootchange = nullptr;
 	}
@@ -40,13 +44,13 @@ namespace gbe {
 
 	Root* Engine::GetCurrentRoot()
 	{
-		return this->current_root;
+		return Engine::Instance->current_root;
 	}
 
 	void Engine::Run()
 	{
 		//WINDOW
-		Window* mWindow = new Window(Vector2Int(1280, 720));
+		Window* mWindow = new Window(Vector2Int(1024, 768));
 
 #pragma region Rendering Pipeline Setup
 		//RenderPipeline setup
@@ -95,11 +99,11 @@ namespace gbe {
 		auto test_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/test.img.gbe");
 		
 		//MATERIAL CACHING
+		auto cube_mat = new asset::Material("DefaultAssets/Materials/grid.mat.gbe");
 		auto id_mat = new asset::Material("DefaultAssets/Materials/id.mat.gbe");
 		auto test_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-		test_mat->setOverride("color", Vector4(0.3, 1, 0.3, 1.0f));
+		test_mat->setOverride("color", Vector4(1, 1, 1, 1.0f));
 		test_mat->setOverride("colortex", test_tex);
-		auto cube_mat = new asset::Material("DefaultAssets/Materials/grid.mat.gbe");
 
 		//DRAW CALL CACHING
 		auto test_drawcall = mRenderPipeline->RegisterDrawCall(test_mesh, test_mat);
@@ -117,6 +121,8 @@ namespace gbe {
 		mInputSystem->RegisterActionListener(player_name, new MouseDeltaImplementation());
 		mInputSystem->RegisterActionListener(player_name, new KeyPressImplementation<Keys::SPACE>());
 		mInputSystem->RegisterActionListener(player_name, new KeyPressImplementation<Keys::ESCAPE>());
+		mInputSystem->RegisterActionListener(player_name, new KeyPressImplementation<Keys::DELETE>());
+		mInputSystem->RegisterActionListener(player_name, new KeyPressImplementation<Keys::BACKPSPACE>());
 		mInputSystem->RegisterActionListener(player_name, new MouseDragImplementation<Keys::MOUSE_RIGHT>());
 		mInputSystem->RegisterActionListener(player_name, new MouseDragImplementation<Keys::MOUSE_MIDDLE>());
 #pragma endregion
@@ -133,7 +139,7 @@ namespace gbe {
 
 			//Spawn funcs
 			
-			auto create_box = [&](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0,0,0))) {
+			auto create_box = [game_root, cube_drawcall](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0,0,0)), bool has_renderer = true) {
 				RigidObject* test = new RigidObject(true);
 				test->SetParent(game_root);
 				test->Local().position.Set(pos);
@@ -142,13 +148,16 @@ namespace gbe {
 				BoxCollider* platform_collider = new BoxCollider();
 				platform_collider->SetParent(test);
 				platform_collider->Local().position.Set(Vector3(0, 0, 0));
-				RenderObject* platform_renderer = new RenderObject(cube_drawcall);
-				platform_renderer->SetParent(test);
+
+				if (has_renderer) {
+					RenderObject* platform_renderer = new RenderObject(cube_drawcall);
+					platform_renderer->SetParent(test);
+				}
 
 				return test;
 			};
 
-			auto create_plane = [&](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
+			auto create_plane = [game_root, plane_drawcall](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
 				RigidObject* test = new RigidObject(true);
 				test->SetParent(game_root);
 				test->Local().position.Set(pos);
@@ -163,9 +172,9 @@ namespace gbe {
 				return test;
 				};
 
-			auto create_sphere = [&](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
+			auto create_sphere = [game_root, sphere_drawcall](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
 				RigidObject* test = new RigidObject();
-				test->SetParent(game_root);
+				test->SetParent(Engine::GetCurrentRoot());
 				test->Local().position.Set(pos);
 				test->Local().rotation.Set(rotation);
 				test->Local().scale.Set(scale);
@@ -203,8 +212,14 @@ namespace gbe {
 			player_input->SetParent(game_root);
 			auto camera_controller = new FlyingCameraControl();
 			camera_controller->SetParent(player_input);
-
+			
+			//OrthographicCamera* player_cam = new OrthographicCamera(mWindow);
+			//player_cam->orthoRange = 10;
 			PerspectiveCamera* player_cam = new PerspectiveCamera(mWindow);
+			player_cam->nearClip = 0.01f;
+			player_cam->farClip = 100.0f;
+			player_cam->angles = 70;
+			player_cam->SetWorldPosition(Vector3(0, 0, -5));
 			player_cam->SetParent(camera_controller);
 
 			//================INPUT HANDLING================//
@@ -226,37 +241,50 @@ namespace gbe {
 					return;
 				}));
 			//ESCAPE Customer
-			input_communicator->AddCustomer(new InputCustomer<KeyPress<Keys::ESCAPE>>([=](KeyPress<Keys::ESCAPE>* value, bool changed) {
+			input_communicator->AddCustomer(new InputCustomer<KeyPress<Keys::ESCAPE>>([&](KeyPress<Keys::ESCAPE>* value, bool changed) {
 				if (value->state != KeyPress<Keys::ESCAPE>::START)
 					return;
 
+				mWindow->Terminate();
 				}));
 #pragma endregion
 
 #pragma region scene objects
-			
+			//Logical stack
+			float slanted_width = cosf(70 * (M_PI / 180.0f)) * 2; // Calculate width based on angle
+			float slanted_height = sinf(70 * (M_PI / 180.0f)) * 2; // Calculate width based on angle
+			auto const card_scale = Vector3(1, 0.0f, 0.7f);
 
-			//CREATE CAGE
-			Vector2 cagesize(10, 10);
-			Vector2 halfsize = cagesize * 0.5f;
+			const auto create_slanted_card = [&](Vector3 pos, bool right = true) {
+				create_box(pos, card_scale, Quaternion::Euler(Vector3(0, 0, right ? 70 : -70)));
+				};
 
-			create_box(Vector3(halfsize.x + 1, 0, 0), Vector3(1, halfsize.y, 1));
-			create_box(Vector3(-(halfsize.x + 1), 0, 0), Vector3(1, halfsize.y, 1));
-			create_box(Vector3(0, halfsize.y + 1, 0), Vector3(halfsize.x, 1, 1));
-			create_box(Vector3(0, -(halfsize.y + 1), 0), Vector3(halfsize.x, 1, 1));
+			const auto create_alternating_row = [&](size_t row, size_t count) {
+				float height = (row * slanted_height) + (slanted_height * 0.5f);
 
-			Vector2Int max_vel(1, 1);
-			Vector2Int max_vel_double = max_vel_double * 2;
+				for (size_t i = 0; i < count; i++)
+				{
+					size_t actual_i = i + row;
 
-			Vector3 final_vel = Vector3(0, 0, 0);
-			//final_vel.x = rand() % max_vel_double.x;
-			//final_vel.y = rand() % max_vel_double.y;
-			final_vel.x = 0.5f;
-			final_vel.y = 0.5f;
+					if (i % 2 == 0) {
+						create_slanted_card(Vector3(actual_i* slanted_width, height, 0), true);
+					}
+					else {
+						create_slanted_card(Vector3(actual_i* slanted_width, height, 0), false);
+					}
+				}
+				};
 
-			auto newball = create_sphere(Vector3(0, 0, 0), Vector3(1, 1, 1));
-			newball->GetRigidbody()->Set_velocity(final_vel);
-			newball->GetRigidbody()
+			create_alternating_row(0, 6);
+
+			create_box(Vector3(slanted_width, slanted_height, 0), card_scale);
+			create_box(Vector3(slanted_width * 4, slanted_height, 0), card_scale);
+
+			create_alternating_row(1, 4);
+
+			create_box(Vector3(slanted_width * 2.5f, slanted_height * 2, 0), card_scale);
+
+			create_alternating_row(2, 2);
 
 #pragma endregion
 			return game_root;

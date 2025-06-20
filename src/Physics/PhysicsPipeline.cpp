@@ -27,6 +27,7 @@ bool gbe::physics::PhysicsPipeline::Init()
 	
 	btContactSolverInfo& info = this->dynamicsWorld->getSolverInfo();
 	info.m_solverMode |= SOLVER_INTERLEAVE_CONTACT_AND_FRICTION_CONSTRAINTS;
+	info.m_damping = 0.0f;
 	
 	auto callback = [](btDynamicsWorld* world, btScalar timeStep) {
 		physics::PhysicsPipeline::Get_Instance()->OnFixedUpdate_callback(timeStep);

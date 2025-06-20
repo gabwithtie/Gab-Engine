@@ -9,10 +9,14 @@ gbe::physics::Rigidbody::Rigidbody(PhysicsObject* object, bool is_static) : Phys
 	btVector3 localInertia = (PhysicsVector3)Vector3(1.0f);
 
 	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, this->motionstate, this->mMainShape, localInertia);
+	rbInfo.m_friction = 0.5f;
+	rbInfo.m_rollingFriction = 0.1f;
+	rbInfo.m_spinningFriction = 0.1f;
+	rbInfo.m_linearDamping = 0.0f;
+	rbInfo.m_angularDamping = 0.0f;
+	rbInfo.m_restitution = 1.0f;
+
 	auto newdata = new btRigidBody(rbInfo);
-	newdata->setFriction(0.5f);
-	newdata->setRollingFriction(.1);
-	newdata->setSpinningFriction(0.1);
 
 	this->base_data = newdata;
 }

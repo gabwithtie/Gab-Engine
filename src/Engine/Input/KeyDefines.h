@@ -68,7 +68,9 @@ namespace gbe {
 			PERIOD,
 			MINUS,
 			EQUALS,
+			BACKPSPACE,
 			ESCAPE,
+			DELETE,
 
 			_TOTALKEYS
 		};
