@@ -14,6 +14,9 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
 
 	stbi_set_flip_vertically_on_load(true);
 	pixels = stbi_load(pathstr.c_str(), &tex_width, &tex_height, &colorchannels, 4);
+
+	//GET PIXEL COLORS HERE
+
 	loaddata->colorchannels = colorchannels;
 	loaddata->dimensions = Vector2Int(tex_width, tex_height);
 

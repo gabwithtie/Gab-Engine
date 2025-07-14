@@ -164,18 +164,18 @@ namespace gbe {
 			};
 
 		auto create_mesh = [&](gfx::DrawCall* drawcall, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
-			RigidObject* test = new RigidObject(true);
-			test->SetParent(game_root);
-			test->Local().position.Set(pos);
-			test->Local().rotation.Set(rotation);
-			test->Local().scale.Set(scale);
-			BoxCollider* platform_collider = new BoxCollider();
-			platform_collider->SetParent(test);
-			platform_collider->Local().position.Set(Vector3(0, 0, 0));
+			RigidObject* parent = new RigidObject(true);
+			parent->SetParent(game_root);
+			parent->Local().position.Set(pos);
+			parent->Local().rotation.Set(rotation);
+			parent->Local().scale.Set(scale);
+			MeshCollider* meshcollider = new MeshCollider(drawcall->get_mesh());
+			meshcollider->SetParent(parent);
+			meshcollider->Local().position.Set(Vector3(0, 0, 0));
 			RenderObject* platform_renderer = new RenderObject(drawcall);
-			platform_renderer->SetParent(test);
+			platform_renderer->SetParent(parent);
 
-			return test;
+			return parent;
 			};
 
 		auto create_box = [&](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
@@ -245,6 +245,21 @@ namespace gbe {
 			if (value->state != KeyPress<Keys::MOUSE_LEFT>::START)
 				return;
 
+			//RAYCAST MECHANICS
+			auto current_camera = this->GetCurrentRoot()->GetHandler<Camera>()->object_list.front();
+			Vector3 camera_pos = current_camera->World().position.Get();
+			auto mousedir = current_camera->ScreenToRay(mWindow->GetMouseDecimalPos());
+
+			//OBJECT SELECTION
+			Vector3 ray_dir = mousedir * 10000.0f;
+			auto result = physics::Raycast(camera_pos, ray_dir);
+
+			if (result.result) {
+				Vector3 finalpos = result.intersection;
+				finalpos -= mousedir.Normalize() * 1.0f;
+
+				//create_box(finalpos, Vector3(1, 1, 1));
+			}
 			}));
 		//WASD customer
 		input_communicator->AddCustomer(new InputCustomer<WasdDelta>([=](WasdDelta* value, bool changed) {
@@ -293,6 +308,11 @@ namespace gbe {
 		RenderObject* platform_renderer = new RenderObject(gizmo_3d_icon_plane_drawcall);
 		platform_renderer->SetParent(gizmo_3dicon);
 		
+		//test_tex->Get_load_data().pixels;
+
+		//DO LOOP HERE READING EACH PIXEL IN THE HEIGHTMAP AND PLACING THE APPROPRIATE COLLIDER HEIGHT
+
+
 
 		//CALL THE BUILDER
 		ext::AnimoBuilder::GenerationParams params{};

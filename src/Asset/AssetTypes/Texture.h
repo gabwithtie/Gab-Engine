@@ -13,6 +13,8 @@ namespace gbe {
 				std::string type;
 			};
 			struct TextureLoadData {
+				//TODO: ADD a 2D array std::vector<std::vector<Vector3>> pixels
+
 				Vector2Int dimensions;
 				int colorchannels;
 			};

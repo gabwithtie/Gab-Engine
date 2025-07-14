@@ -176,70 +176,83 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 			Vector3 ray_dir = mousedir * 10000.0f;
 			auto result = physics::Raycast(camera_pos, ray_dir);
 			if (result.result) {
-				//CHECK IF OTHER IS A GIZMO
-				for (auto& gizmoptr : gizmo_arrows)
-				{
-					if (result.other == (*gizmoptr)) {
-						held_gizmo = *gizmoptr;
+				//CHECK IF OTHER HAS A RENDERER, IF NONE, DONT CLICK
+				bool has_renderer = false;
+
+				result.other->CallRecursively([&](Object* child) {
+					RenderObject* renderer = dynamic_cast<RenderObject*>(child);
+
+					if (renderer != nullptr) {
+						has_renderer = true;
 					}
-				}
+					});
 
-				if (held_gizmo != nullptr) {
-					this->original_selected_position = selected[0]->World().position.Get();
-					std::cout << "Holding Gizmo" << std::endl;
-				}
-				else {
-					bool deselection = false;
-
-					if (this->keyboard_shifting) {
-						auto it = std::find(this->selected.begin(), this->selected.end(), result.other);
-
-						// DESELECT IF FOUND
-						if (it != this->selected.end()) {
-							this->selected.erase(it);
-
-							this->gizmo_boxes[result.other]->Destroy();
-							this->gizmo_boxes.erase(result.other);
-
-							deselection = true;
+				if (has_renderer) {
+					//CHECK IF OTHER IS A GIZMO
+					for (auto& gizmoptr : gizmo_arrows)
+					{
+						if (result.other == (*gizmoptr)) {
+							held_gizmo = *gizmoptr;
 						}
 					}
-					else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
-						this->selected.clear();
 
-						//CLEAR BOXES
-						for (auto& gizmoptr : this->gizmo_boxes)
-						{
-							gizmoptr.second->Destroy();
-						}
-						this->gizmo_boxes.clear();
-					}
-
-					if (!deselection) {
-						//SELECT AND BOX
-						this->selected.push_back(result.other);
-						CreateGizmoBox(result.collider, result.other);
-					}
-
-					if (this->selected.size() == 1) {
-						this->selected_f = this->selected[0]->World().GetForward();
-						this->selected_r = this->selected[0]->World().GetRight();
-						this->selected_u = this->selected[0]->World().GetUp();
-
-						//SPAWN GIZMO
-						this->CreateGizmoArrow(this->f_gizmo, this->gizmo_arrow_drawcall_b, Vector3(0, 180, 0), this->selected_f);
-						this->CreateGizmoArrow(this->r_gizmo, this->gizmo_arrow_drawcall_r, Vector3(0, -90, 0), this->selected_r);
-						this->CreateGizmoArrow(this->u_gizmo, this->gizmo_arrow_drawcall_g, Vector3(90, 0, 0), this->selected_u);
-
-						this->current_selected_position = this->selected[0]->World().position.Get();
+					if (held_gizmo != nullptr) {
+						this->original_selected_position = selected[0]->World().position.Get();
+						std::cout << "Holding Gizmo" << std::endl;
 					}
 					else {
-						//DELETE GIZMO
-						for (auto& gizmoptr : this->gizmo_arrows)
-						{
-							if (*gizmoptr != nullptr) {
-								(*gizmoptr)->Destroy();
-								(*gizmoptr) = nullptr;
+						bool deselection = false;
+
+						if (this->keyboard_shifting) {
+							auto it = std::find(this->selected.begin(), this->selected.end(), result.other);
+
+							// DESELECT IF FOUND
+							if (it != this->selected.end()) {
+								this->selected.erase(it);
+
+								this->gizmo_boxes[result.other]->Destroy();
+								this->gizmo_boxes.erase(result.other);
+
+								deselection = true;
+							}
+						}
+						else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
+							this->selected.clear();
+
+							//CLEAR BOXES
+							for (auto& gizmoptr : this->gizmo_boxes)
+							{
+								gizmoptr.second->Destroy();
+							}
+							this->gizmo_boxes.clear();
+						}
+
+						if (!deselection) {
+							//SELECT AND BOX
+							this->selected.push_back(result.other);
+							CreateGizmoBox(result.collider, result.other);
+						}
+
+						if (this->selected.size() == 1) {
+							this->selected_f = this->selected[0]->World().GetForward();
+							this->selected_r = this->selected[0]->World().GetRight();
+							this->selected_u = this->selected[0]->World().GetUp();
+
+							//SPAWN GIZMO
+							this->CreateGizmoArrow(this->f_gizmo, this->gizmo_arrow_drawcall_b, Vector3(0, 180, 0), this->selected_f);
+							this->CreateGizmoArrow(this->r_gizmo, this->gizmo_arrow_drawcall_r, Vector3(0, -90, 0), this->selected_r);
+							this->CreateGizmoArrow(this->u_gizmo, this->gizmo_arrow_drawcall_g, Vector3(90, 0, 0), this->selected_u);
+
+							this->current_selected_position = this->selected[0]->World().position.Get();
+						}
+						else {
+							//DELETE GIZMO
+							for (auto& gizmoptr : this->gizmo_arrows)
+							{
+								if (*gizmoptr != nullptr) {
+									(*gizmoptr)->Destroy();
+									(*gizmoptr) = nullptr;
+								}
 							}
 						}
 					}
