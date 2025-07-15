@@ -16,9 +16,9 @@ namespace gbe {
 				float base_height = 12;
 				float base_width = 6;
 				float height = 20;
-				float pillarInterval = 16;
+				float pillarInterval = 6;
 				float pillarThickness = 2.5f;
-				float wallThickness = 0.5f;
+				float wallThickness = 3.0f;
 				float beamInterval = 9;
 				float beamThickness = 1.8f;
 				float windowHeight = 3;

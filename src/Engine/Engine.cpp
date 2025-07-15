@@ -113,16 +113,29 @@ namespace gbe {
 		auto gizmo_3d_icon_plane_drawcall = mRenderPipeline->RegisterDrawCall(plane_mesh, icon_mat);
 
 		//MESH AND DRAWCALLS FOR ANIMOBUILDER
-		auto beam_m = new asset::Mesh("DefaultAssets/3D/beam.obj.gbe");
-		auto beam_dc = mRenderPipeline->RegisterDrawCall(beam_m, cube_mat);
+		auto roof_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
+		auto roof_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/roof.img.gbe");
+		roof_mat->setOverride("colortex", roof_tex);
 		auto roof_m = new asset::Mesh("DefaultAssets/3D/roof.obj.gbe");
-		auto roof_dc = mRenderPipeline->RegisterDrawCall(roof_m, cube_mat);
+		auto roof_dc = mRenderPipeline->RegisterDrawCall(roof_m, roof_mat);
+
+		auto window_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
+		//auto window_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/window.img.gbe");
+		//window_mat->setOverride("colortex", roof_tex);
 		auto window_m = new asset::Mesh("DefaultAssets/3D/window.obj.gbe");
-		auto window_dc = mRenderPipeline->RegisterDrawCall(window_m, cube_mat);
+		auto window_dc = mRenderPipeline->RegisterDrawCall(window_m, window_mat);
+
+		auto pillar_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
+		auto pillar_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/pillar.img.gbe");
+		pillar_mat->setOverride("colortex", pillar_tex);
 		auto pillar_m = new asset::Mesh("DefaultAssets/3D/pillar.obj.gbe");
-		auto pillar_dc = mRenderPipeline->RegisterDrawCall(pillar_m, cube_mat);
+		auto pillar_dc = mRenderPipeline->RegisterDrawCall(pillar_m, pillar_mat);
+
+		auto wall_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
+		auto wall_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/wall.img.gbe");
+		wall_mat->setOverride("colortex", wall_tex);
 		auto wall_m = new asset::Mesh("DefaultAssets/3D/wall.obj.gbe");
-		auto wall_dc = mRenderPipeline->RegisterDrawCall(wall_m, cube_mat);
+		auto wall_dc = mRenderPipeline->RegisterDrawCall(wall_m, wall_mat);
 
 #pragma endregion
 #pragma region Input
@@ -312,8 +325,6 @@ namespace gbe {
 
 		//DO LOOP HERE READING EACH PIXEL IN THE HEIGHTMAP AND PLACING THE APPROPRIATE COLLIDER HEIGHT
 
-
-
 		//CALL THE BUILDER
 		ext::AnimoBuilder::GenerationParams params{};
 		auto builder_result = ext::AnimoBuilder::AnimoBuilder::Generate(params);
@@ -321,12 +332,8 @@ namespace gbe {
 		//READ THE XML RESULT AND USE EXTERNALLY-LOADED MESHES
 		for (auto& objdata : builder_result.meshes)
 		{
-			if (objdata.type == "base")
+			if (objdata.type == "wall")
 				create_mesh(wall_dc, objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0)));
-			else if (objdata.type == "wall")
-				create_mesh(wall_dc, objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0)));
-			else if (objdata.type == "beam")
-				create_mesh(beam_dc, objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0)));
 			else if (objdata.type == "roof")
 				create_mesh(roof_dc, objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0)));
 			else if (objdata.type == "window")
@@ -334,15 +341,6 @@ namespace gbe {
 			else if (objdata.type == "pillar")
 				create_mesh(pillar_dc, objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0)));
 		}
-
-		//const auto frame_data = RenderPipeline::Get_Instance()->ScreenShot(true);
-
-		/*
-		//CINEMACHINE
-			auto cinematic_system_holder = create_box(Vector3(0, 0, -10), Vector3(3, 3, 3));
-			auto cinematic_system = new CinematicSystem();
-			cinematic_system->SetParent(cinematic_system_holder);
-		*/
 
 #pragma endregion
 
