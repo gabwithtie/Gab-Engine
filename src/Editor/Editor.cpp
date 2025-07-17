@@ -89,7 +89,7 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	this->inspectorwindow = new gbe::editor::InspectorWindow();
 
 	//CREATE THE GIZMO ARROW ASSETS
-	this->gizmo_arrow_mesh = new asset::Mesh("DefaultAssets/3D/arrow.obj.gbe");
+	this->gizmo_arrow_mesh = new asset::Mesh("DefaultAssets/3D/editor/arrow.obj.gbe");
 	
 	auto gizmoshader = new asset::Shader("DefaultAssets/Shaders/gizmo.shader.gbe");
 
@@ -104,7 +104,7 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	this->gizmo_arrow_drawcall_b = this->mrenderpipeline->RegisterDrawCall(this->gizmo_arrow_mesh, mat_b);
 
 	//CREATE GIZMO BOX ASSETS
-	this->gizmo_box_mesh = new asset::Mesh("DefaultAssets/3D/cube.obj.gbe");
+	this->gizmo_box_mesh = new asset::Mesh("DefaultAssets/3D/default/cube.obj.gbe");
 
 	auto wireshader = new asset::Shader("DefaultAssets/Shaders/wireframe.shader.gbe");
 

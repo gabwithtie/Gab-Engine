@@ -82,9 +82,8 @@ namespace gbe {
 		//AUDIO CACHING
 
 		//MESH CACHING
-		auto test_mesh = new asset::Mesh("DefaultAssets/3D/test.obj.gbe");
-		auto cube_mesh = new asset::Mesh("DefaultAssets/3D/cube.obj.gbe");
-		auto plane_mesh = new asset::Mesh("DefaultAssets/3D/plane.obj.gbe");
+		auto cube_mesh = new asset::Mesh("DefaultAssets/3D/default/cube.obj.gbe");
+		auto plane_mesh = new asset::Mesh("DefaultAssets/3D/default/plane.obj.gbe");
 
 		//SHADER CACHING
 		auto unlitShader = new asset::Shader("DefaultAssets/Shaders/unlit.shader.gbe");
@@ -108,7 +107,6 @@ namespace gbe {
 		cube_mat->setOverride("colortex", test_tex);
 
 		//DRAW CALL CACHING
-		auto test_drawcall = mRenderPipeline->RegisterDrawCall(test_mesh, grid_mat);
 		auto cube_drawcall = mRenderPipeline->RegisterDrawCall(cube_mesh, grid_mat);
 		auto gizmo_3d_icon_plane_drawcall = mRenderPipeline->RegisterDrawCall(plane_mesh, icon_mat);
 
@@ -116,25 +114,25 @@ namespace gbe {
 		auto roof_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
 		auto roof_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/roof.img.gbe");
 		roof_mat->setOverride("colortex", roof_tex);
-		auto roof_m = new asset::Mesh("DefaultAssets/3D/roof.obj.gbe");
+		auto roof_m = new asset::Mesh("DefaultAssets/3D/builder/roof.obj.gbe");
 		auto roof_dc = mRenderPipeline->RegisterDrawCall(roof_m, roof_mat);
 
 		auto window_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
 		//auto window_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/window.img.gbe");
 		//window_mat->setOverride("colortex", roof_tex);
-		auto window_m = new asset::Mesh("DefaultAssets/3D/window.obj.gbe");
+		auto window_m = new asset::Mesh("DefaultAssets/3D/builder/window.obj.gbe");
 		auto window_dc = mRenderPipeline->RegisterDrawCall(window_m, window_mat);
 
 		auto pillar_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
 		auto pillar_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/pillar.img.gbe");
 		pillar_mat->setOverride("colortex", pillar_tex);
-		auto pillar_m = new asset::Mesh("DefaultAssets/3D/pillar.obj.gbe");
+		auto pillar_m = new asset::Mesh("DefaultAssets/3D/builder/pillar.obj.gbe");
 		auto pillar_dc = mRenderPipeline->RegisterDrawCall(pillar_m, pillar_mat);
 
 		auto wall_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
 		auto wall_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/wall.img.gbe");
 		wall_mat->setOverride("colortex", wall_tex);
-		auto wall_m = new asset::Mesh("DefaultAssets/3D/wall.obj.gbe");
+		auto wall_m = new asset::Mesh("DefaultAssets/3D/builder/wall.obj.gbe");
 		auto wall_dc = mRenderPipeline->RegisterDrawCall(wall_m, wall_mat);
 
 #pragma endregion
@@ -159,23 +157,6 @@ namespace gbe {
 		auto player = new RigidObject();
 
 		//Spawn funcs
-
-		auto create_test = [&](Vector3 pos, Vector3 scale, Vector3 renderscale) {
-			RigidObject* test = new RigidObject();
-			test->SetParent(game_root);
-			test->Local().position.Set(pos);
-			test->Local().rotation.Set(Quaternion::Euler(Vector3(0, 0, 0)));
-			test->Local().scale.Set(scale);
-			BoxCollider* platform_collider = new BoxCollider();
-			platform_collider->SetParent(test);
-			platform_collider->Local().position.Set(Vector3(0, 0, 0));
-			RenderObject* platform_renderer = new RenderObject(test_drawcall);
-			platform_renderer->SetParent(platform_collider);
-			platform_renderer->Local().scale.Set(renderscale);
-
-			return test;
-			};
-
 		auto create_mesh = [&](gfx::DrawCall* drawcall, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
 			RigidObject* parent = new RigidObject(true);
 			parent->SetParent(game_root);
@@ -255,23 +236,40 @@ namespace gbe {
 		input_communicator->SetParent(player_input);
 		//Left click customer
 		input_communicator->AddCustomer(new InputCustomer<KeyPress<Keys::MOUSE_LEFT>>([&](KeyPress<Keys::MOUSE_LEFT>* value, bool changed) {
-			if (value->state != KeyPress<Keys::MOUSE_LEFT>::START)
-				return;
+			bool startend = value->state == KeyPress<Keys::MOUSE_LEFT>::START || value->state == KeyPress<Keys::MOUSE_LEFT>::END;
+			
+			if (startend && changed) {
 
-			//RAYCAST MECHANICS
-			auto current_camera = this->GetCurrentRoot()->GetHandler<Camera>()->object_list.front();
-			Vector3 camera_pos = current_camera->World().position.Get();
-			auto mousedir = current_camera->ScreenToRay(mWindow->GetMouseDecimalPos());
+				//RAYCAST MECHANICS
+				auto current_camera = this->GetCurrentRoot()->GetHandler<Camera>()->object_list.front();
+				Vector3 camera_pos = current_camera->World().position.Get();
+				auto mousedir = current_camera->ScreenToRay(mWindow->GetMouseDecimalPos());
 
-			//OBJECT SELECTION
-			Vector3 ray_dir = mousedir * 10000.0f;
-			auto result = physics::Raycast(camera_pos, ray_dir);
+				//OBJECT SELECTION
+				Vector3 ray_dir = mousedir * 10000.0f;
+				auto result = physics::Raycast(camera_pos, ray_dir);
 
-			if (result.result) {
-				Vector3 finalpos = result.intersection;
-				finalpos -= mousedir.Normalize() * 1.0f;
+				if (result.result) {
+					bool hasmeshcollider = false;
 
-				//create_box(finalpos, Vector3(1, 1, 1));
+					result.other->CallRecursively([&](Object* child) {
+						MeshCollider* meshcollider = dynamic_cast<MeshCollider*>(child);
+
+						if (meshcollider != nullptr) {
+							hasmeshcollider = true;
+						}
+						});
+
+					if (hasmeshcollider == false) {
+						result.other->Destroy();
+					}
+					else {
+						Vector3 finalpos = result.intersection;
+						finalpos += result.normal * 1.0f;
+
+						create_box(finalpos, Vector3(1, 1, 1));
+					}
+				}
 			}
 			}));
 		//WASD customer
