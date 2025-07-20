@@ -31,11 +31,19 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 
 		Vector3 position_gui_wrap = (*this->selected)[0]->Local().position.Get();
 
-		ImGui::InputFloat("X", &position_gui_wrap.x);
-		ImGui::InputFloat("Y", &position_gui_wrap.y);
-		ImGui::InputFloat("Z", &position_gui_wrap.z);
+		ImGui::InputFloat("pos.X", &position_gui_wrap.x);
+		ImGui::InputFloat("pos.Y", &position_gui_wrap.y);
+		ImGui::InputFloat("pos.Z", &position_gui_wrap.z);
 
 		(*this->selected)[0]->Local().position.Set(position_gui_wrap);
+
+		Vector3 scale_gui_wrap = (*this->selected)[0]->Local().scale.Get();
+
+		ImGui::InputFloat("scale.X", &scale_gui_wrap.x);
+		ImGui::InputFloat("scale.Y", &scale_gui_wrap.y);
+		ImGui::InputFloat("scale.Z", &scale_gui_wrap.z);
+
+		(*this->selected)[0]->Local().scale.Set(scale_gui_wrap);
 
 		//DRAW THE CUSTOM INSPECTORS
 		for (auto& field : inspectordata->fields)

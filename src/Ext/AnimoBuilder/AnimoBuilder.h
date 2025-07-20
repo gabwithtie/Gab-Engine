@@ -24,7 +24,7 @@ namespace gbe {
 				float windowHeight = 3;
 				Vector3 windowSize = Vector3(2.5, 4.5, 0.6f);
 				float roofHeight = 5.f;
-				float roofThickness = 3.0f;
+				float roofThickness = 5.0f;
 			};
 			//OUTPUT MESH
 			struct SubMesh {

@@ -36,6 +36,7 @@ gbe::ext::AnimoBuilder::GenerationResult gbe::ext::AnimoBuilder::AnimoBuilder::G
 		//STEP 2.1: PILLAR PLACEMENT
 		Vector3 pillarpos = stepdir * x;
 		pillarpos += params.up * halfheight;
+		pillarpos += forward * (params.wallThickness * 0.5f);
 		Vector3 pillarscale = Vector3(0.5f) * params.pillarThickness;
 		pillarscale.y = halfheight;
 
@@ -70,7 +71,7 @@ gbe::ext::AnimoBuilder::GenerationResult gbe::ext::AnimoBuilder::AnimoBuilder::G
 		{
 			Vector3 windowpos = stepdir * (x + (params.pillarInterval * 0.5f));
 			windowpos += params.up * (y + params.windowHeight + (params.windowSize.y * 0.5f));
-			windowpos += -forward * ((params.wallThickness * 0.5f) + (params.windowSize.z * 0.5f));
+			windowpos += forward * ((params.wallThickness * 0.5f) + (params.windowSize.z * 0.5f));
 			Vector3 windowscale = params.windowSize * 0.5f;
 
 			add("window", params.from + windowpos, windowscale);

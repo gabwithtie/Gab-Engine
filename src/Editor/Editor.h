@@ -35,8 +35,7 @@ namespace gbe {
 
 
 		//GIZMO BOX CACHE
-		asset::Mesh* gizmo_box_mesh;
-		DrawCall* gizmo_box_drawcall;
+		asset::Material* gizmo_box_mat;
 		//GIZMO ARROW CACHE
 		asset::Mesh* gizmo_arrow_mesh;
 		DrawCall* gizmo_arrow_drawcall_r;
@@ -77,6 +76,6 @@ namespace gbe {
 		void PresentFrame();
 		void RenderPass(VkCommandBuffer cmd);
 		void CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcall, Vector3 rotation, Vector3 direction);
-		void CreateGizmoBox(gbe::Collider* boxed, gbe::Object* rootboxed);
+		void CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed);
 	};
 }

@@ -104,13 +104,10 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	this->gizmo_arrow_drawcall_b = this->mrenderpipeline->RegisterDrawCall(this->gizmo_arrow_mesh, mat_b);
 
 	//CREATE GIZMO BOX ASSETS
-	this->gizmo_box_mesh = new asset::Mesh("DefaultAssets/3D/default/cube.obj.gbe");
-
 	auto wireshader = new asset::Shader("DefaultAssets/Shaders/wireframe.shader.gbe");
 
-	auto mat_wire = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
-	mat_wire->setOverride("color", Vector4(1, 1, 0, 1.0f));
-	this->gizmo_box_drawcall = this->mrenderpipeline->RegisterDrawCall(this->gizmo_box_mesh, mat_wire);
+	this->gizmo_box_mat = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
+	this->gizmo_box_mat->setOverride("color", Vector4(1, 1, 0, 1.0f));
 }
 
 void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcall, Vector3 rotation, Vector3 direction) {
@@ -133,9 +130,10 @@ void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcal
 	out_g->TranslateWorld(direction * gizmo_offset_distance);
 }
 
-void gbe::Editor::CreateGizmoBox(gbe::Collider* boxed, gbe::Object* rootboxed)
+void gbe::Editor::CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed)
 {
-	RenderObject* box_renderer = new RenderObject(this->gizmo_box_drawcall, true);
+	auto newDrawcall = this->mrenderpipeline->RegisterDrawCall(boxed->Get_DrawCall()->get_mesh(), this->gizmo_box_mat);
+	RenderObject* box_renderer = new RenderObject(newDrawcall, true);
 	box_renderer->SetParent(boxed);
 
 	gizmo_boxes.insert_or_assign(rootboxed, box_renderer);
@@ -178,12 +176,14 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 			if (result.result) {
 				//CHECK IF OTHER HAS A RENDERER, IF NONE, DONT CLICK
 				bool has_renderer = false;
+				RenderObject* renderer_has = nullptr;
 
 				result.other->CallRecursively([&](Object* child) {
-					RenderObject* renderer = dynamic_cast<RenderObject*>(child);
+					auto renderer_check = dynamic_cast<RenderObject*>(child);
 
-					if (renderer != nullptr) {
+					if (renderer_check != nullptr) {
 						has_renderer = true;
+						renderer_has = renderer_check;
 					}
 					});
 
@@ -230,7 +230,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 						if (!deselection) {
 							//SELECT AND BOX
 							this->selected.push_back(result.other);
-							CreateGizmoBox(result.collider, result.other);
+							CreateGizmoBox(renderer_has, result.other);
 						}
 
 						if (this->selected.size() == 1) {

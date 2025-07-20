@@ -18,6 +18,7 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
 
     std::vector<asset::data::Vertex> vertices = {};
     std::vector<uint16_t> indices = {};
+    std::unordered_map<std::string, uint32_t> uniqueVertices;
     std::vector<std::vector<uint16_t>> faces = {};
 
     // Loop over shapes
@@ -38,10 +39,13 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
                 tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
                 tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
 
+                Vector3 pos = { vx, vy, vz };
+                std::string key = pos.ToString();
+
                 // Check if `normal_index` is zero or positive. negative = no normal data
-                tinyobj::real_t nx;
-                tinyobj::real_t ny;
-                tinyobj::real_t nz;
+                tinyobj::real_t nx = 0;
+                tinyobj::real_t ny = 0;
+                tinyobj::real_t nz = 0;
                 if (idx.normal_index >= 0) {
                     nx = attrib.normals[3 * size_t(idx.normal_index) + 0];
                     ny = attrib.normals[3 * size_t(idx.normal_index) + 1];
@@ -49,8 +53,8 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
                 }
 
                 // Check if `texcoord_index` is zero or positive. negative = no texcoord data
-                tinyobj::real_t tx;
-                tinyobj::real_t ty;
+                tinyobj::real_t tx = 0;
+                tinyobj::real_t ty = 0;
                 if (idx.texcoord_index >= 0) {
                     tx = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
                     ty = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
@@ -61,14 +65,19 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
                 // tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
 
                 asset::data::Vertex vertex{
-                .pos = {vx, vy, vz},
+                .pos = pos,
                 .normal = {nx, ny, nz},
                 .color = {1, 1, 1},
                 .texCoord = {tx, ty},
                 };
+
+                if (uniqueVertices.count(key) == 0)
+                {
+                    uniqueVertices[key] = static_cast<uint32_t>(vertices.size());
+                }
+                cur_face.push_back(vertices.size());
+                indices.push_back(vertices.size());
                 vertices.push_back(vertex);
-                cur_face.push_back(indices.size());
-                indices.push_back(indices.size());
             }
             index_offset += fv;
 
