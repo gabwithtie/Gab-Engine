@@ -259,44 +259,11 @@ namespace gbe {
 		const auto test_scene = false;
 
 		if (enable_builder) {
-			//MESH AND DRAWCALLS FOR ANIMOBUILDER
-			auto roof_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-			auto roof_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/roof.img.gbe");
-			roof_mat->setOverride("colortex", roof_tex);
-			auto roof_m = new asset::Mesh("DefaultAssets/3D/builder/roof.obj.gbe");
-			auto roof_dc = mRenderPipeline->RegisterDrawCall(roof_m, roof_mat);
+			auto newbuilder = new ext::AnimoBuilder::AnimoBuilderObject();
+			newbuilder->SetParent(game_root);
 
-			auto window_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-			//auto window_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/window.img.gbe");
-			//window_mat->setOverride("colortex", roof_tex);
-			auto window_m = new asset::Mesh("DefaultAssets/3D/builder/window.obj.gbe");
-			auto window_dc = mRenderPipeline->RegisterDrawCall(window_m, window_mat);
-
-			auto pillar_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-			auto pillar_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/pillar.img.gbe");
-			pillar_mat->setOverride("colortex", pillar_tex);
-			auto pillar_m = new asset::Mesh("DefaultAssets/3D/builder/pillar.obj.gbe");
-			auto pillar_dc = mRenderPipeline->RegisterDrawCall(pillar_m, pillar_mat);
-
-			auto wall_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-			auto wall_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/wall.img.gbe");
-			wall_mat->setOverride("colortex", wall_tex);
-			auto wall_m = new asset::Mesh("DefaultAssets/3D/builder/wall.obj.gbe");
-			auto wall_dc = mRenderPipeline->RegisterDrawCall(wall_m, wall_mat);
-
-			ext::AnimoBuilder::GenerationParams params{};
-			auto builder_result = ext::AnimoBuilder::AnimoBuilder::Generate(params);
-
-			//READ THE XML RESULT AND USE EXTERNALLY-LOADED MESHES
-			for (auto& objdata : builder_result.meshes)
-			{
-				if (objdata.type == "wall")
-					create_mesh(wall_dc, objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0)));
-				else if (objdata.type == "roof")
-					create_mesh(roof_dc, objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0)));
-				else if (objdata.type == "pillar")
-					create_mesh(pillar_dc, objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0)));
-			}
+			newbuilder->AddPillar(Vector3(-2, 0, 0));
+			newbuilder->AddPillar(Vector3(2, 0, 0));
 		}
 
 		if (box_scene) {

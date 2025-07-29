@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Math/gbe_math.h"
+#include "Ext/AnimoBuilder/AnimoBuilder.h"
 
 #include <string>
 #include <vector>

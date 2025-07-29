@@ -1,7 +1,7 @@
 set(LIB_NAME "gbe_ext_animobuilder")
 
 
-add_library(${LIB_NAME} "AnimoBuilder.cpp")
+add_library(${LIB_NAME} "AnimoBuilder.cpp" )
 
 message("[GBE EXTERNAL] Including directory: "${GABENGINE_INCLUDE_DIRECTORY})
 

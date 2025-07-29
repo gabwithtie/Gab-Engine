@@ -4,7 +4,7 @@
 #include "Objects/Root.h"
 
 //EXTERNALS
-#include "Ext/AnimoBuilder/AnimoBuilder.h"
+#include "Ext/AnimoBuilderWrapper/AnimoBuilderWrapper.h"
 
 namespace gbe {
 	class Engine {

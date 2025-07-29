@@ -17,6 +17,7 @@ add_subdirectory(Network)
 
 #EXTERNAL LIBRARIES
 add_subdirectory("Ext/AnimoBuilder")
+add_subdirectory("Ext/AnimoBuilderWrapper")
 
 add_library(${CURRENT_CMAKE_LIB} INTERFACE)
 
@@ -33,6 +34,7 @@ target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_network)
 
 #EXTERNAL LIBARIES
 target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_animobuilder)
+target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_animobuilderwrapper)
 
 
 get_target_property(LINKED_LIBS ${CURRENT_CMAKE_LIB} INTERFACE_LINK_LIBRARIES)
