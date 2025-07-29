@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/gbe_engine.h"
+#include "Asset/gbe_asset.h"
 #include <string>
 
 namespace gbe {
