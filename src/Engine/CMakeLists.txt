@@ -45,6 +45,9 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Objects/Systems/ParticleSystem.cpp"
 	"Objects/Systems/Cinematics/CinematicSystem.cpp"
 	"ObjectHandlers/ColliderHandler.cpp"
+
+	"Serialization/HierarchySerializer.cpp"
+	"Serialization/TypeSerializer.cpp"
 )
 
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_graphics)

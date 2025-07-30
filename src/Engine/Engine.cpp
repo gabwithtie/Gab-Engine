@@ -87,7 +87,6 @@ namespace gbe {
 
 		//SHADER CACHING
 		auto unlitShader = new asset::Shader("DefaultAssets/Shaders/unlit.shader.gbe");
-		auto idShader = new asset::Shader("DefaultAssets/Shaders/id.shader.gbe");
 		auto gridShader = new asset::Shader("DefaultAssets/Shaders/grid.shader.gbe");
 		auto wireShader = new asset::Shader("DefaultAssets/Shaders/wireframe.shader.gbe");
 
@@ -104,7 +103,7 @@ namespace gbe {
 		auto wire_mat = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
 
 		//DRAW CALL CACHING
-		auto cube_drawcall = mRenderPipeline->RegisterDrawCall(cube_mesh, grid_mat);
+		auto cube_drawcall = mRenderPipeline->RegisterDrawCall(cube_mesh, cube_mat);
 
 #pragma endregion
 #pragma region Input
@@ -144,33 +143,7 @@ namespace gbe {
 			};
 
 		auto create_box = [&](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
-			RigidObject* test = new RigidObject();
-			test->SetParent(game_root);
-			test->Local().position.Set(pos);
-			test->Local().rotation.Set(rotation);
-			test->Local().scale.Set(scale);
-			BoxCollider* platform_collider = new BoxCollider();
-			platform_collider->SetParent(test);
-			platform_collider->Local().position.Set(Vector3(0, 0, 0));
-			RenderObject* platform_renderer = new RenderObject(cube_drawcall);
-			platform_renderer->SetParent(test);
-
-			return test;
-			};
-
-		auto create_plane = [&](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
-			RigidObject* test = new RigidObject(true);
-			test->SetParent(game_root);
-			test->Local().position.Set(pos);
-			test->Local().rotation.Set(rotation);
-			test->Local().scale.Set(scale);
-			BoxCollider* platform_collider = new BoxCollider();
-			platform_collider->SetParent(test);
-			platform_collider->Local().position.Set(Vector3(0, 0, 0));
-			RenderObject* platform_renderer = new RenderObject(cube_drawcall);
-			platform_renderer->SetParent(test);
-
-			return test;
+			return create_mesh(cube_drawcall, pos, scale, rotation);
 			};
 
 		//Global objects
@@ -254,20 +227,31 @@ namespace gbe {
 #pragma region scene objects
 
 		//CALL THE BUILDER
-		const auto enable_builder = true;
-		const auto box_scene = false;
+		const auto enable_builder = false;
+		const auto box_scene = true;
 		const auto test_scene = false;
 
 		if (enable_builder) {
+			//create_mesh(cube_drawcall, Vector3(0), Vector3(1), Quaternion::Euler(Vector3(0, 0, 0)));
+
+			//NEW BUILDER
 			auto newbuilder = new ext::AnimoBuilder::AnimoBuilderObject();
 			newbuilder->SetParent(game_root);
 
-			newbuilder->AddPillar(Vector3(-2, 0, 0));
-			newbuilder->AddPillar(Vector3(2, 0, 0));
+			newbuilder->AddPillar(Vector3(30, 0, 2));
+			newbuilder->AddPillar(Vector3(30, 0, -8));
+			newbuilder->AddPillar(Vector3(24, 0, -8));
+			newbuilder->AddPillar(Vector3(24, 0, -2));
+			newbuilder->AddPillar(Vector3(-24, 0, -2));
+			newbuilder->AddPillar(Vector3(-24, 0, -8));
+			newbuilder->AddPillar(Vector3(-30, 0, -8));
+			newbuilder->AddPillar(Vector3(-30, 0, 2));
+			newbuilder->AddPillar(Vector3(30, 0, 2)); //loop back
 		}
 
 		if (box_scene) {
-			create_plane(Vector3(0, -5, 0), Vector3(20, 20, 1), Quaternion::Euler(Vector3(90, 0 , 0)));
+			create_box(Vector3(0, -5, 0), Vector3(2), Quaternion::Euler(Vector3(0)));
+			create_box(Vector3(0, -5, 5), Vector3(2), Quaternion::Euler(Vector3(0)));
 		}
 
 		if (test_scene) {

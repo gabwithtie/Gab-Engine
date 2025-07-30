@@ -66,5 +66,8 @@ namespace gbe {
 		}
 
 		void CallRecursively(std::function<void(Object*)> action);
+
+		//SERIALIZATION
+
 	};
 }

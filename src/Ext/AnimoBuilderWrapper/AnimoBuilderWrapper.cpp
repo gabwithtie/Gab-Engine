@@ -6,32 +6,45 @@
 void gbe::ext::AnimoBuilder::AnimoBuilderObject::Regenerate()
 {
 	if (this->generation_root != nullptr) {
+		this->generation_root->SetParent(this->parent);
 		this->generation_root->Destroy();
 		this->generation_root = nullptr;
 	}
 
 	this->generation_root = new GenericObject([](GenericObject* self, float dt) {});
 
-	ext::AnimoBuilder::GenerationParams params{};
-	auto builder_result = ext::AnimoBuilder::AnimoBuilder::Generate(params);
-
-	//READ THE XML RESULT AND USE EXTERNALLY-LOADED MESHES
-	for (auto& objdata : builder_result.meshes)
+	for (size_t i = 0; i < this->GetChildCount() - 1; i++)
 	{
-		this->CreateMesh(this->drawcall_dictionary[objdata.type], objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0)));
+		auto start = this->GetChildAt(i);
+		auto end = this->GetChildAt(i + 1);
+
+		ext::AnimoBuilder::GenerationParams params{};
+		params.from = start->World().position.Get();
+		params.to = end->World().position.Get();
+
+		auto builder_result = ext::AnimoBuilder::AnimoBuilder::Generate(params);
+
+		//READ THE XML RESULT AND USE EXTERNALLY-LOADED MESHES
+		for (auto& objdata : builder_result.meshes)
+		{
+			auto it = this->drawcall_dictionary.find(objdata.type);
+
+			if (it != this->drawcall_dictionary.end()) {
+				this->CreateMesh(this->drawcall_dictionary[objdata.type], objdata.position, objdata.scale, objdata.rotation);
+			}
+		}
 	}
+
+	this->generation_root->SetParent(this);
 }
 
 void gbe::ext::AnimoBuilder::AnimoBuilderObject::CreateMesh(gfx::DrawCall* drawcall, Vector3 pos, Vector3 scale, Quaternion rotation)
 {
 	RigidObject* parent = new RigidObject(true);
 	parent->SetParent(this->generation_root);
-	parent->Local().position.Set(pos);
+	parent->SetWorldPosition(pos);
 	parent->Local().rotation.Set(rotation);
 	parent->Local().scale.Set(scale);
-	MeshCollider* meshcollider = new MeshCollider(drawcall->get_mesh());
-	meshcollider->SetParent(parent);
-	meshcollider->Local().position.Set(Vector3(0, 0, 0));
 	RenderObject* platform_renderer = new RenderObject(drawcall);
 	platform_renderer->SetParent(parent);
 }
@@ -57,7 +70,7 @@ gbe::ext::AnimoBuilder::AnimoBuilderObject::AnimoBuilderObject()
 	//window_mat->setOverride("colortex", roof_tex);
 	auto window_m = new asset::Mesh("DefaultAssets/3D/builder/window.obj.gbe");
 	auto window_dc = RenderPipeline::Get_Instance()->RegisterDrawCall(window_m, window_mat);
-	drawcall_dictionary.insert_or_assign("window", window_dc);
+	//drawcall_dictionary.insert_or_assign("window", window_dc);
 
 	auto pillar_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
 	auto pillar_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/pillar.img.gbe");
@@ -75,7 +88,7 @@ gbe::ext::AnimoBuilder::AnimoBuilderObject::AnimoBuilderObject()
 
 	//INSPECTOR BUTTON
 	auto spawn_button = new editor::InspectorButton();
-	spawn_button->name = "Spawn Node";
+	spawn_button->name = "Regenerate";
 	spawn_button->onpress = [this]() {
 		this->Regenerate();
 		};
@@ -85,14 +98,14 @@ gbe::ext::AnimoBuilder::AnimoBuilderObject::AnimoBuilderObject()
 
 void gbe::ext::AnimoBuilder::AnimoBuilderObject::AddPillar(Vector3 position)
 {
-	RigidObject* test = new RigidObject();
+	RigidObject* test = new RigidObject(true);
 	test->SetParent(this);
 	test->Local().position.Set(position);
 	test->Local().rotation.Set(Quaternion::Euler(Vector3(0)));
-	test->Local().scale.Set(Vector3(1));
+	test->Local().scale.Set(Vector3(0.5f, 2, 0.5f));
 	BoxCollider* platform_collider = new BoxCollider();
 	platform_collider->SetParent(test);
 	platform_collider->Local().position.Set(Vector3(0, 0, 0));
-	RenderObject* platform_renderer = new RenderObject(cube_drawcall);
+	RenderObject* platform_renderer = new RenderObject(this->cube_drawcall);
 	platform_renderer->SetParent(test);
 }

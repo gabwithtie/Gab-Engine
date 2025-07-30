@@ -5,6 +5,7 @@
 
 //EXTERNALS
 #include "Ext/AnimoBuilderWrapper/AnimoBuilderWrapper.h"
+#include "Ext/AnimoBuilder/AnimoBuilder.h"
 
 namespace gbe {
 	class Engine {
