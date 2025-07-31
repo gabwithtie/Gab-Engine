@@ -227,8 +227,8 @@ namespace gbe {
 #pragma region scene objects
 
 		//CALL THE BUILDER
-		const auto enable_builder = false;
-		const auto box_scene = true;
+		const auto enable_builder = true;
+		const auto box_scene = false;
 		const auto test_scene = false;
 
 		if (enable_builder) {
@@ -236,6 +236,10 @@ namespace gbe {
 
 			//NEW BUILDER
 			auto newbuilder = new ext::AnimoBuilder::AnimoBuilderObject();
+			newbuilder->SetBaseParams({
+				.pillarInterval = 6,
+				.beamInterval = 3
+				});
 			newbuilder->SetParent(game_root);
 
 			newbuilder->AddPillar(Vector3(30, 0, 2));

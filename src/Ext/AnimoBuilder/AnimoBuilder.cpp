@@ -35,10 +35,10 @@ gbe::ext::AnimoBuilder::GenerationResult gbe::ext::AnimoBuilder::AnimoBuilder::G
 	{
 		float final_width = params.pillarInterval;
 
-		if (x > abdistance) {
-			final_width = abdistance - (x - params.pillarInterval);
-			x = abdistance;
+		if (x + (params.pillarInterval * 2.0f) > abdistance) {
+			final_width = abdistance - x;
 		}
+
 		//STEP 2.1: PILLAR PLACEMENT
 		Vector3 pillarpos = stepdir * x;
 		pillarpos += params.up * halfheight;
@@ -90,6 +90,15 @@ gbe::ext::AnimoBuilder::GenerationResult gbe::ext::AnimoBuilder::AnimoBuilder::G
 
 		add("roof", params.from + roofpos, roofscale);
 	}
+
+	//STEP 3 END PILLAR PLACEMENT
+	Vector3 pillarpos = stepdir * abdistance;
+	pillarpos += params.up * halfheight;
+	pillarpos += forward * (params.wallThickness * 0.5f);
+	Vector3 pillarscale = Vector3(0.5f) * params.pillarThickness;
+	pillarscale.y = halfheight;
+
+	add("pillar", params.from + pillarpos, pillarscale);
 
 	return res;
 }

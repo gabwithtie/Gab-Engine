@@ -18,11 +18,10 @@ void gbe::ext::AnimoBuilder::AnimoBuilderObject::Regenerate()
 		auto start = this->GetChildAt(i);
 		auto end = this->GetChildAt(i + 1);
 
-		ext::AnimoBuilder::GenerationParams params{};
-		params.from = start->World().position.Get();
-		params.to = end->World().position.Get();
+		this->parentparams.from = start->World().position.Get();
+		this->parentparams.to = end->World().position.Get();
 
-		auto builder_result = ext::AnimoBuilder::AnimoBuilder::Generate(params);
+		auto builder_result = ext::AnimoBuilder::AnimoBuilder::Generate(this->parentparams);
 
 		//READ THE XML RESULT AND USE EXTERNALLY-LOADED MESHES
 		for (auto& objdata : builder_result.meshes)

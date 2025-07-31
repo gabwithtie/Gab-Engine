@@ -1,13 +1,13 @@
 #include "TypeSerializer.h"
 
-namespace gbe::editor::TypeSerializer {
-	std::unordered_map<std::string, std::function<Object*>> instantiation_dictionary;
+namespace gbe::editor {
+	std::unordered_map<std::string, std::function<Object*()>> instantiation_dictionary;
 	
-	void InitializeTypeDictionary()
+	void TypeSerializer::InitializeTypeDictionary()
 	{
 	}
 
-	Object* Instantiate(std::string type_id)
+	Object* TypeSerializer::Instantiate(std::string type_id)
 	{
 		return nullptr;
 	}
