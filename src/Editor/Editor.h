@@ -10,6 +10,7 @@
 #include "Gui/CreditsWindow.h"
 #include "Gui/ColorpickerWindow.h"
 #include "Gui/InspectorWindow.h"
+#include "Gui/MenuBar.h"
 
 namespace gbe {
 	class RenderPipeline;
@@ -68,6 +69,7 @@ namespace gbe {
 
 		//WINDOWS
 		editor::InspectorWindow* inspectorwindow;
+		editor::MenuBar* menubar	;
 	public:
 		Editor(RenderPipeline* renderpipeline, Window* window, Engine* engine, Time* _mtime);
 		void PrepareFrame();

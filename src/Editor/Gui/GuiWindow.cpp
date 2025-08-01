@@ -1,16 +1,5 @@
 #include "GuiWindow.h"
 
-void gbe::editor::GuiWindow::Draw() {
-	if (!this->ext_Begin()) {
-		this->ext_End();
-		return;
-	}
-
-	this->DrawSelf();
-
-	this->ext_End();
-}
-
 bool gbe::editor::GuiWindow::ext_Begin() {
 
 	bool began = ImGui::Begin(this->GetWindowId().c_str());

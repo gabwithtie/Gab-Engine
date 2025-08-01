@@ -84,9 +84,9 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 		});
 		*/
 
-	//UI SCREENS
-
+	//============================UI SCREENS============================//
 	this->inspectorwindow = new gbe::editor::InspectorWindow();
+	this->menubar = new gbe::editor::MenuBar();
 
 	//CREATE THE GIZMO ARROW ASSETS
 	this->gizmo_arrow_mesh = new asset::Mesh("DefaultAssets/3D/editor/arrow.obj.gbe");
@@ -343,6 +343,8 @@ void gbe::Editor::DrawFrame()
 	this->inspectorwindow->mtime = this->mtime;
 	this->inspectorwindow->selected = &this->selected;
 	this->inspectorwindow->Draw();
+
+	this->menubar->Draw();
 }
 
 void gbe::Editor::PresentFrame()

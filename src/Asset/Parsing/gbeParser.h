@@ -19,6 +19,14 @@ namespace gbe {
 					target = datareceiver;
 					std::cout << ec << std::endl;
 				}
+
+				template<class TExportData>
+				static void ExportClass(TExportData& target, std::string asset_path) {
+					std::ofstream file(asset_path);
+					auto ec = glz::write_json(target);
+					file << ec;
+					file.close();
+				}
 			};
 		}
 	}

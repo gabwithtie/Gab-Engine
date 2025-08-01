@@ -10,6 +10,7 @@ namespace gbe {
 	class RenderObject : public Object, public EarlyUpdate {
 	public:
 		enum PrimitiveType {
+			NONE = 0,
 			cube,
 			sphere,
 			capsule,
@@ -23,10 +24,14 @@ namespace gbe {
 		gfx::DrawCall* mDrawCall;
 		Matrix4* to_update;
 		const bool editor = false;
+		PrimitiveType ptype = PrimitiveType::NONE;
 	public:
-		static void RegisterPrimitiveDrawcall(PrimitiveType, gfx::DrawCall*);
+		static inline void RegisterPrimitiveDrawcall(PrimitiveType ptype, gfx::DrawCall* drawtype) {
+			primitive_drawcalls.insert_or_assign(ptype, drawtype);
+		}
 
 		RenderObject(gfx::DrawCall* mDrawCall, bool editor = false);
+		RenderObject(PrimitiveType ptype, bool editor = false);
 		virtual ~RenderObject();
 
 		// Inherited via EarlyUpdate

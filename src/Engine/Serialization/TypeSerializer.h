@@ -8,12 +8,13 @@
 
 #include <typeinfo>
 
-namespace gbe::editor {
+namespace gbe {
 	class TypeSerializer {
 	private:
-		static const std::unordered_map<std::string, std::function<Object*()>> instantiation_dictionary;
+		static std::unordered_map<std::string, std::function<Object*()>> instantiation_dictionary;
 	public:
 		static void InitializeTypeDictionary();
-		Object* Instantiate(std::string type_id);
+		static void RegisterTypeCreator(std::string type_id, std::function<Object* ()> instantiation_function);
+		static Object* Instantiate(std::string type_id);
 	};
 }

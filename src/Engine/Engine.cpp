@@ -11,15 +11,18 @@
 #include "Asset/gbe_asset.h"
 
 namespace gbe {
+	Engine* Engine::instance;
+
 	Engine::Engine()
 	{
+		instance = this;
 		this->current_root = nullptr;
 		this->queued_rootchange = nullptr;
 	}
 
 	bool Engine::ChangeRoot(Root* newroot)
 	{
-		this->queued_rootchange = newroot;
+		instance->queued_rootchange = newroot;
 		return true;
 	}
 
@@ -41,7 +44,7 @@ namespace gbe {
 
 	Root* Engine::GetCurrentRoot()
 	{
-		return this->current_root;
+		return instance->current_root;
 	}
 
 	void Engine::Run()
@@ -104,7 +107,6 @@ namespace gbe {
 
 		//DRAW CALL CACHING
 		auto cube_drawcall = mRenderPipeline->RegisterDrawCall(cube_mesh, cube_mat);
-
 #pragma endregion
 #pragma region Input
 		auto mInputSystem = new InputSystem();
@@ -227,8 +229,8 @@ namespace gbe {
 #pragma region scene objects
 
 		//CALL THE BUILDER
-		const auto enable_builder = true;
-		const auto box_scene = false;
+		const auto enable_builder = false;
+		const auto box_scene = true;
 		const auto test_scene = false;
 
 		if (enable_builder) {

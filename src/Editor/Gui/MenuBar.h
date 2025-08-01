@@ -2,7 +2,6 @@
 
 #include "GuiElement.h"
 
-#include <typeinfo>
 #include <string>
 
 #include <imgui.h>
@@ -11,9 +10,9 @@
 
 namespace gbe {
 	namespace editor {
-		class GuiWindow : public GuiElement{
-		protected:
-			virtual std::string GetWindowId() = 0;
+		class MenuBar : public GuiElement{
+		public:
+			void DrawSelf() override;
 		private:
 			bool ext_Begin() override;
 			void ext_End() override;

@@ -3,8 +3,6 @@
 #include "../Utility/ModelExport.h"
 
 void gbe::editor::InspectorWindow::DrawSelf() {
-	ImGui::InputDouble("GAME TIME SCALE: ", &mtime->scale);
-
 	//OBJECT INSPECTOR
 	if ((*this->selected).size() == 0) {
 		ImGui::Text("Nothing Selected.");
@@ -85,7 +83,11 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 	}
 	else {
 		ImGui::Text("Multi-inspect not supported yet.");
+	}
 
+	//EXPORTING
+	if ((*this->selected).size() > 0) {
+		ImGui::SeparatorText("Exporting");
 		if (ImGui::Button("Merge and export selected.")) {
 			ModelExport modelexporter(*selected);
 

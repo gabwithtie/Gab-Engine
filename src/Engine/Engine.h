@@ -10,14 +10,16 @@
 namespace gbe {
 	class Engine {
 	private:
+		static Engine* instance;
+
 		//Current Root and its handlers
 		Root* current_root;
 		Root* queued_rootchange;
 	public:
 		Engine();
-		bool ChangeRoot(Root* newroot);
+		static bool ChangeRoot(Root* newroot);
 		Root* CreateBlankRoot();
-		Root* GetCurrentRoot();
+		static Root* GetCurrentRoot();
 		void Run();
 	};
 }

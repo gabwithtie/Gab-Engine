@@ -1,5 +1,6 @@
 #include "Object.h"
 #include "Root.h"
+#include "Engine/Serialization/TypeSerializer.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -233,4 +234,34 @@ void gbe::Object::CallRecursively(std::function<void(Object*)> action)
 	}
 
 	action(this);
+}
+
+gbe::SerializedObject gbe::Object::Serialize() {
+	std::vector<SerializedObject> serialized_children;
+	for (const auto child : this->children)
+	{
+		serialized_children.push_back(child->Serialize());
+	}
+
+	auto euler_rot = this->local.rotation.Get().ToEuler();
+
+	return {
+		.type = typeid(*this).name(),
+		.local_position = { this->local.position.Get().x, this->local.position.Get().y, this->local.position.Get().z },
+		.local_scale = { this->local.scale.Get().x, this->local.scale.Get().y, this->local.scale.Get().z },
+		.local_euler_rotation = { euler_rot.x, euler_rot.y, euler_rot.z },
+		.children = serialized_children
+	};
+}
+
+void gbe::Object::Deserialize(gbe::SerializedObject data) {
+	this->local.position.Set(Vector3(data.local_position[0], data.local_position[1], data.local_position[2]));
+	this->local.scale.Set(Vector3(data.local_scale[0], data.local_scale[1], data.local_scale[2]));
+	this->local.rotation.Set(Quaternion::Euler(Vector3(data.local_euler_rotation[0], data.local_euler_rotation[1], data.local_euler_rotation[2])));
+	for (const auto& child : data.children)
+	{
+		auto new_child = gbe::TypeSerializer::Instantiate(child.type);
+		new_child->Deserialize(child);
+		new_child->SetParent(this);
+	}
 }

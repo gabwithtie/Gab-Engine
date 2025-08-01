@@ -2,6 +2,7 @@
 
 #include "Engine/Component/Transform.h"
 #include "Engine/Component/TransformChangeType.h"
+#include "Engine/Serialization/SerializedObject.h"
 
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -68,6 +69,7 @@ namespace gbe {
 		void CallRecursively(std::function<void(Object*)> action);
 
 		//SERIALIZATION
-
+		virtual SerializedObject Serialize();
+		virtual void Deserialize(SerializedObject data);
 	};
 }
