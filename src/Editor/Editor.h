@@ -72,6 +72,8 @@ namespace gbe {
 		editor::MenuBar* menubar	;
 	public:
 		Editor(RenderPipeline* renderpipeline, Window* window, Engine* engine, Time* _mtime);
+		void DeselectAll();
+		void PrepareSceneChange();
 		void PrepareFrame();
 		void DrawFrame();
 		void ProcessRawWindowEvent(void* rawwindowevent);

@@ -261,7 +261,10 @@ void gbe::Object::Deserialize(gbe::SerializedObject data) {
 	for (const auto& child : data.children)
 	{
 		auto new_child = gbe::TypeSerializer::Instantiate(child.type);
-		new_child->Deserialize(child);
-		new_child->SetParent(this);
+
+		if (new_child != nullptr) {
+			new_child->Deserialize(child);
+			new_child->SetParent(this);
+		}
 	}
 }

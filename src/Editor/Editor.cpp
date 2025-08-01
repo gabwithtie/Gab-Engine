@@ -110,6 +110,17 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	this->gizmo_box_mat->setOverride("color", Vector4(1, 1, 0, 1.0f));
 }
 
+void gbe::Editor::DeselectAll() {
+	this->selected.clear();
+
+	//CLEAR BOXES
+	for (auto& gizmoptr : this->gizmo_boxes)
+	{
+		gizmoptr.second->Destroy();
+	}
+	this->gizmo_boxes.clear();
+}
+
 void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcall, Vector3 rotation, Vector3 direction) {
 	if (out_g == nullptr) {
 		auto newGizmo = new RigidObject(true);
@@ -217,14 +228,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 							}
 						}
 						else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
-							this->selected.clear();
-
-							//CLEAR BOXES
-							for (auto& gizmoptr : this->gizmo_boxes)
-							{
-								gizmoptr.second->Destroy();
-							}
-							this->gizmo_boxes.clear();
+							this->DeselectAll();
 						}
 
 						if (!deselection) {
@@ -287,6 +291,10 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 			this->held_gizmo = nullptr;
 		}
 	}
+}
+
+void gbe::Editor::PrepareSceneChange() {
+	this->DeselectAll();
 }
 
 void gbe::Editor::PrepareFrame()

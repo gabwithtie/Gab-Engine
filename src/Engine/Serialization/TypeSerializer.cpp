@@ -17,6 +17,9 @@ namespace gbe {
 
 	Object* TypeSerializer::Instantiate(std::string type_id)
 	{
+		if (instantiation_dictionary.find(type_id) == instantiation_dictionary.end())
+			return nullptr;
+
 		return instantiation_dictionary[type_id]();
 	}
 }

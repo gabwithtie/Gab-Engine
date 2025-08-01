@@ -404,6 +404,8 @@ namespace gbe {
 
 			//Queued root change
 			if (this->queued_rootchange != nullptr) {
+				mEditor->PrepareSceneChange();
+
 				if (this->current_root != nullptr)
 				{
 					this->current_root->Destroy();

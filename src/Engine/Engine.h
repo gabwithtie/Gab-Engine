@@ -18,7 +18,7 @@ namespace gbe {
 	public:
 		Engine();
 		static bool ChangeRoot(Root* newroot);
-		Root* CreateBlankRoot();
+		static Root* CreateBlankRoot();
 		static Root* GetCurrentRoot();
 		void Run();
 	};
