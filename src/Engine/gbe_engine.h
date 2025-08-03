@@ -25,3 +25,6 @@
 #include "ObjectHandlers/PhysicsHandler.h"
 #include "ObjectHandlers/ColliderHandler.h"
 #include "Objects/Objects.h"
+#include "Serialization/HierarchySerializer.h"
+#include "Serialization/SerializedObject.h"
+#include "Serialization/TypeSerializer.h"

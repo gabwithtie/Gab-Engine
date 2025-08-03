@@ -33,7 +33,3 @@ void gbe::Root::OnExitHierarchy(Object* newChild)
 		handler->Remove(newChild);
 	}
 }
-
-gbe::Object* Create(gbe::SerializedObject data) {
-	return nullptr;
-}

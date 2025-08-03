@@ -7,7 +7,7 @@ namespace gbe {
 
 	class Collider : public Object {
 	private:
-		PhysicsObject* holder;
+		PhysicsObject* holder = nullptr;
 	public:
 		virtual physics::ColliderData* GetColliderData() = 0;
 

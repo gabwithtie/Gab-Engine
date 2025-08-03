@@ -20,6 +20,8 @@ namespace gbe {
 
 	class Editor {
 	private:
+		static Editor* instance;
+
 		Window* mwindow;
 		Engine* mengine;
 		RenderPipeline* mrenderpipeline;
@@ -72,8 +74,10 @@ namespace gbe {
 		editor::MenuBar* menubar	;
 	public:
 		Editor(RenderPipeline* renderpipeline, Window* window, Engine* engine, Time* _mtime);
+		static void SelectSingle(Object* other);
 		void DeselectAll();
 		void PrepareSceneChange();
+		void UpdateSelectionGui(Object* newlyclicked);
 		void PrepareFrame();
 		void DrawFrame();
 		void ProcessRawWindowEvent(void* rawwindowevent);

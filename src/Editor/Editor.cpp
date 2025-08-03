@@ -5,9 +5,12 @@
 #include "Graphics/gbe_graphics.h"
 #include "Engine/gbe_engine.h"
 
+gbe::Editor* gbe::Editor::instance = nullptr;
 
 gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engine, Time* _mtime)
 {
+	instance = this;
+
 	this->mengine = engine;
 	this->mwindow = window;
 	this->mrenderpipeline = renderpipeline;
@@ -110,6 +113,83 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	this->gizmo_box_mat->setOverride("color", Vector4(1, 1, 0, 1.0f));
 }
 
+void gbe::Editor::SelectSingle(Object* other) {
+	auto newlyclicked = other;
+	RenderObject* renderer_has = nullptr;
+
+	newlyclicked->CallRecursively([&](Object* child) {
+		auto renderer_check = dynamic_cast<RenderObject*>(child);
+
+		if (renderer_check != nullptr) {
+			renderer_has = renderer_check;
+		}
+		});
+
+	//CHECK IF OTHER IS A GIZMO
+	for (auto& gizmoptr : instance->gizmo_arrows)
+	{
+		if (newlyclicked == (*gizmoptr)) {
+			instance->held_gizmo = *gizmoptr;
+		}
+	}
+
+	if (instance->held_gizmo != nullptr) {
+		instance->original_selected_position = instance->selected[0]->World().position.Get();
+		std::cout << "Holding Gizmo" << std::endl;
+	}
+	else {
+		bool deselection = false;
+
+		if (instance->keyboard_shifting) {
+			auto it = std::find(instance->selected.begin(), instance->selected.end(), newlyclicked);
+
+			// DESELECT IF FOUND
+			if (it != instance->selected.end()) {
+				instance->selected.erase(it);
+
+				instance->gizmo_boxes[newlyclicked]->Destroy();
+				instance->gizmo_boxes.erase(newlyclicked);
+
+				deselection = true;
+			}
+		}
+		else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
+			instance->DeselectAll();
+		}
+
+		if (!deselection) {
+			//SELECT AND BOX
+			instance->selected.push_back(newlyclicked);
+
+			if (renderer_has != nullptr)
+				instance->CreateGizmoBox(renderer_has, newlyclicked);
+		}
+
+		if (instance->selected.size() == 1) {
+			instance->selected_f = instance->selected[0]->World().GetForward();
+			instance->selected_r = instance->selected[0]->World().GetRight();
+			instance->selected_u = instance->selected[0]->World().GetUp();
+
+			//SPAWN GIZMO
+			instance->CreateGizmoArrow(instance->f_gizmo, instance->gizmo_arrow_drawcall_b, Vector3(0, 180, 0), instance->selected_f);
+			instance->CreateGizmoArrow(instance->r_gizmo, instance->gizmo_arrow_drawcall_r, Vector3(0, -90, 0), instance->selected_r);
+			instance->CreateGizmoArrow(instance->u_gizmo, instance->gizmo_arrow_drawcall_g, Vector3(90, 0, 0), instance->selected_u);
+
+			instance->current_selected_position = instance->selected[0]->World().position.Get();
+		}
+		else {
+			//DELETE GIZMO
+			for (auto& gizmoptr : instance->gizmo_arrows)
+			{
+				if (*gizmoptr != nullptr) {
+					(*gizmoptr)->Destroy();
+					(*gizmoptr) = nullptr;
+				}
+			}
+		}
+	}
+}
+
 void gbe::Editor::DeselectAll() {
 	this->selected.clear();
 
@@ -185,11 +265,13 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 			Vector3 ray_dir = mousedir * 10000.0f;
 			auto result = physics::Raycast(camera_pos, ray_dir);
 			if (result.result) {
+				auto newlyclicked = result.other;
+
 				//CHECK IF OTHER HAS A RENDERER, IF NONE, DONT CLICK
 				bool has_renderer = false;
 				RenderObject* renderer_has = nullptr;
 
-				result.other->CallRecursively([&](Object* child) {
+				newlyclicked->CallRecursively([&](Object* child) {
 					auto renderer_check = dynamic_cast<RenderObject*>(child);
 
 					if (renderer_check != nullptr) {
@@ -199,67 +281,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 					});
 
 				if (has_renderer) {
-					//CHECK IF OTHER IS A GIZMO
-					for (auto& gizmoptr : gizmo_arrows)
-					{
-						if (result.other == (*gizmoptr)) {
-							held_gizmo = *gizmoptr;
-						}
-					}
-
-					if (held_gizmo != nullptr) {
-						this->original_selected_position = selected[0]->World().position.Get();
-						std::cout << "Holding Gizmo" << std::endl;
-					}
-					else {
-						bool deselection = false;
-
-						if (this->keyboard_shifting) {
-							auto it = std::find(this->selected.begin(), this->selected.end(), result.other);
-
-							// DESELECT IF FOUND
-							if (it != this->selected.end()) {
-								this->selected.erase(it);
-
-								this->gizmo_boxes[result.other]->Destroy();
-								this->gizmo_boxes.erase(result.other);
-
-								deselection = true;
-							}
-						}
-						else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
-							this->DeselectAll();
-						}
-
-						if (!deselection) {
-							//SELECT AND BOX
-							this->selected.push_back(result.other);
-							CreateGizmoBox(renderer_has, result.other);
-						}
-
-						if (this->selected.size() == 1) {
-							this->selected_f = this->selected[0]->World().GetForward();
-							this->selected_r = this->selected[0]->World().GetRight();
-							this->selected_u = this->selected[0]->World().GetUp();
-
-							//SPAWN GIZMO
-							this->CreateGizmoArrow(this->f_gizmo, this->gizmo_arrow_drawcall_b, Vector3(0, 180, 0), this->selected_f);
-							this->CreateGizmoArrow(this->r_gizmo, this->gizmo_arrow_drawcall_r, Vector3(0, -90, 0), this->selected_r);
-							this->CreateGizmoArrow(this->u_gizmo, this->gizmo_arrow_drawcall_g, Vector3(90, 0, 0), this->selected_u);
-
-							this->current_selected_position = this->selected[0]->World().position.Get();
-						}
-						else {
-							//DELETE GIZMO
-							for (auto& gizmoptr : this->gizmo_arrows)
-							{
-								if (*gizmoptr != nullptr) {
-									(*gizmoptr)->Destroy();
-									(*gizmoptr) = nullptr;
-								}
-							}
-						}
-					}
+					SelectSingle(newlyclicked);
 				}
 			}
 			else { //NOTHING WAS CLICKED
@@ -295,6 +317,10 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 
 void gbe::Editor::PrepareSceneChange() {
 	this->DeselectAll();
+}
+
+void gbe::Editor::UpdateSelectionGui(Object* newlyclicked) {
+	
 }
 
 void gbe::Editor::PrepareFrame()

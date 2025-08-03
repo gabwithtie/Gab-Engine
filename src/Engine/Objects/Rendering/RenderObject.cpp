@@ -41,6 +41,8 @@ gbe::SerializedObject gbe::RenderObject::Serialize() {
 	auto data = gbe::Object::Serialize();
 
 	data.serialized_variables.insert_or_assign("primitive", PrimitiveTypeStr(this->ptype));
+
+	return data;
 }
 
 gbe::Object* gbe::RenderObject::Create(gbe::SerializedObject data) {
@@ -57,6 +59,6 @@ gbe::Object* gbe::RenderObject::Create(gbe::SerializedObject data) {
 				break;
 			}
 		}
-		return new RenderObject(curptype, this->editor);
+		return new RenderObject(curptype);
 	}
 }

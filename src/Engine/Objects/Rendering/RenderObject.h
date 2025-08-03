@@ -39,7 +39,7 @@ namespace gbe {
 		virtual ~RenderObject();
 
 		SerializedObject Serialize() override;
-		Object* Create(SerializedObject data) override;
+		static Object* Create(SerializedObject data);
 
 		// Inherited via EarlyUpdate
 		virtual void InvokeEarlyUpdate() override;

@@ -41,7 +41,6 @@ namespace gbe {
 	public:
 		Object();
 		virtual ~Object();
-		virtual Object* Create(SerializedObject data) = 0;
 
 		Transform& World();
 		Transform& Local();

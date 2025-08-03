@@ -18,3 +18,7 @@ gbe::physics::Rigidbody* gbe::RigidObject::GetRigidbody()
 
 	return static_cast<physics::Rigidbody*>(this->body);
 }
+
+gbe::Object* gbe::RigidObject::Create(gbe::SerializedObject data) {
+	return new RigidObject(true);
+}

@@ -1,6 +1,7 @@
 #include "InspectorWindow.h"
 
 #include "../Utility/ModelExport.h"
+#include "../Editor.h"
 
 void gbe::editor::InspectorWindow::DrawSelf() {
 	//OBJECT INSPECTOR
@@ -21,7 +22,7 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 			button_label += "]";
 
 			if (ImGui::Button(button_label.c_str())) {
-				(*this->selected)[0] = sel_parent;
+				gbe::Editor::SelectSingle(sel_parent);
 			}
 		}
 
@@ -77,7 +78,7 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 			button_label += typeid(*child).name();
 
 			if (ImGui::Button(button_label.c_str())) {
-				(*this->selected)[0] = child;
+				gbe::Editor::SelectSingle(child);
 			}
 		}
 	}

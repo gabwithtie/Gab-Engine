@@ -12,5 +12,7 @@ namespace gbe {
 		~RigidObject();
 
 		physics::Rigidbody* GetRigidbody();
+
+		static Object* Create(SerializedObject data);
 	};
 }

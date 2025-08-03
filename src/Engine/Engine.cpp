@@ -86,6 +86,7 @@ namespace gbe {
 
 		//MESH CACHING
 		auto cube_mesh = new asset::Mesh("DefaultAssets/3D/default/cube.obj.gbe");
+		auto sphere_mesh = new asset::Mesh("DefaultAssets/3D/default/sphere.obj.gbe");
 		auto plane_mesh = new asset::Mesh("DefaultAssets/3D/default/plane.obj.gbe");
 
 		//SHADER CACHING
@@ -105,8 +106,15 @@ namespace gbe {
 		cube_mat->setOverride("colortex", test_tex);
 		auto wire_mat = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
 
-		//DRAW CALL CACHING
-		auto cube_drawcall = mRenderPipeline->RegisterDrawCall(cube_mesh, cube_mat);
+		//DRAW CALL CACHING X PRIMITIVES CACHING
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, mRenderPipeline->RegisterDrawCall(cube_mesh, cube_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, mRenderPipeline->RegisterDrawCall(sphere_mesh, cube_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, mRenderPipeline->RegisterDrawCall(plane_mesh, cube_mat));
+
+		//TYPE SERIALIZER REGISTERING
+		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), RenderObject::Create);
+		gbe::TypeSerializer::RegisterTypeCreator(typeid(RigidObject).name(), RigidObject::Create);
+		gbe::TypeSerializer::RegisterTypeCreator(typeid(BoxCollider).name(), BoxCollider::Create);
 #pragma endregion
 #pragma region Input
 		auto mInputSystem = new InputSystem();
@@ -144,8 +152,19 @@ namespace gbe {
 			return parent;
 			};
 
-		auto create_box = [&](Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
-			return create_mesh(cube_drawcall, pos, scale, rotation);
+		auto create_primitive = [&](RenderObject::PrimitiveType ptype, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
+			RigidObject* parent = new RigidObject(true);
+			parent->SetParent(game_root);
+			parent->Local().position.Set(pos);
+			parent->Local().rotation.Set(rotation);
+			parent->Local().scale.Set(scale);
+			BoxCollider* meshcollider = new BoxCollider();
+			meshcollider->SetParent(parent);
+			meshcollider->Local().position.Set(Vector3(0, 0, 0));
+			RenderObject* platform_renderer = new RenderObject(ptype);
+			platform_renderer->SetParent(parent);
+
+			return parent;
 			};
 
 		//Global objects
@@ -213,7 +232,7 @@ namespace gbe {
 					Vector3 from = Vector3(2, 30, 2);
 					Vector3 to = -from;
 					to.y = from.y;
-					create_box(Vector3::RandomWithin(from, to), Vector3(1.0f));
+					create_primitive(RenderObject::PrimitiveType::cube, Vector3::RandomWithin(from, to), Vector3(1.0f));
 				}
 			}
 
@@ -234,8 +253,6 @@ namespace gbe {
 		const auto test_scene = false;
 
 		if (enable_builder) {
-			//create_mesh(cube_drawcall, Vector3(0), Vector3(1), Quaternion::Euler(Vector3(0, 0, 0)));
-
 			//NEW BUILDER
 			auto newbuilder = new ext::AnimoBuilder::AnimoBuilderObject();
 			newbuilder->SetBaseParams({
@@ -256,8 +273,8 @@ namespace gbe {
 		}
 
 		if (box_scene) {
-			create_box(Vector3(0, -5, 0), Vector3(2), Quaternion::Euler(Vector3(0)));
-			create_box(Vector3(0, -5, 5), Vector3(2), Quaternion::Euler(Vector3(0)));
+			create_primitive(RenderObject::PrimitiveType::cube, Vector3(0, -5, 0), Vector3(2), Quaternion::Euler(Vector3(0)));
+			create_primitive(RenderObject::PrimitiveType::cube, Vector3(0, -5, 5), Vector3(2), Quaternion::Euler(Vector3(0)));
 		}
 
 		if (test_scene) {

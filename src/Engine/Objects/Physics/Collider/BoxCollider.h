@@ -14,6 +14,6 @@ namespace gbe {
 		// Inherited via Collider
 		physics::ColliderData* GetColliderData() override;
 
-		
+		static Object* Create(SerializedObject data);
 	};
 }
