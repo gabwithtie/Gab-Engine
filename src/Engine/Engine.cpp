@@ -42,11 +42,6 @@ namespace gbe {
 		return root_object;
 	}
 
-	Root* Engine::GetCurrentRoot()
-	{
-		return instance->current_root;
-	}
-
 	void Engine::Run()
 	{
 		//WINDOW
@@ -129,8 +124,7 @@ namespace gbe {
 		mInputSystem->RegisterActionListener(player_name, new MouseDragImplementation<Keys::MOUSE_MIDDLE>());
 #pragma endregion
 #pragma region Root Loaders
-
-		auto game_root = this->CreateBlankRoot();
+		this->current_root = this->CreateBlankRoot();
 
 #pragma region scene singletons
 		//forward declaration
@@ -139,7 +133,7 @@ namespace gbe {
 		//Spawn funcs
 		auto create_mesh = [&](gfx::DrawCall* drawcall, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
 			RigidObject* parent = new RigidObject(true);
-			parent->SetParent(game_root);
+			parent->SetParent(this->current_root);
 			parent->Local().position.Set(pos);
 			parent->Local().rotation.Set(rotation);
 			parent->Local().scale.Set(scale);
@@ -154,7 +148,7 @@ namespace gbe {
 
 		auto create_primitive = [&](RenderObject::PrimitiveType ptype, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
 			RigidObject* parent = new RigidObject(true);
-			parent->SetParent(game_root);
+			parent->SetParent(this->current_root);
 			parent->Local().position.Set(pos);
 			parent->Local().rotation.Set(rotation);
 			parent->Local().scale.Set(scale);
@@ -168,33 +162,15 @@ namespace gbe {
 			};
 
 		//Global objects
-		//physics force setup
-		auto gravity_volume = new ForceVolume();
-		gravity_volume->shape = ForceVolume::GLOBAL;
-		gravity_volume->mode = ForceVolume::DIRECTIONAL;
-		gravity_volume->vector = Vector3(0.f, -12, 0.f);
-		gravity_volume->forceMode = ForceVolume::VELOCITY;
-		gravity_volume->SetParent(game_root);
-
-		//light
-		auto directional_light = new DirectionalLight();
-		directional_light->Set_Color(Vector3(1, 1, 1));
-		directional_light->Set_Intensity(1);
-		directional_light->Local().rotation.Set(Quaternion::Euler(Vector3(80, 90, 0)));
-		directional_light->SetParent(game_root);
-		directional_light->Set_ShadowmapResolutions(2160);
-
-		//Player and Camera setup
-		auto f_speed = 100.0f;
-		auto f_jump = 180.0f;
-
 		auto player_input = new InputPlayer(player_name);
-		player_input->SetParent(game_root);
+		player_input->SetParent(this->current_root);
 		auto camera_controller = new FlyingCameraControl();
 		camera_controller->SetParent(player_input);
 
 		PerspectiveCamera* player_cam = new PerspectiveCamera(mWindow);
 		player_cam->SetParent(camera_controller);
+
+		Engine::MakePersistent(player_input);
 
 		//================INPUT HANDLING================//
 		auto input_communicator = new GenericController();
@@ -259,7 +235,7 @@ namespace gbe {
 				.pillarInterval = 6,
 				.beamInterval = 3
 				});
-			newbuilder->SetParent(game_root);
+			newbuilder->SetParent(this->current_root);
 
 			newbuilder->AddPillar(Vector3(30, 0, 2));
 			newbuilder->AddPillar(Vector3(30, 0, -8));
@@ -311,7 +287,6 @@ namespace gbe {
 #pragma endregion
 
 #pragma endregion
-		this->current_root = game_root;
 #pragma region MAIN LOOP
 
 		/// MAIN GAME LOOP
@@ -354,7 +329,7 @@ namespace gbe {
 			//Update Render pipeline
 			//EDITOR UPDATE
 			mEditor->PrepareFrame();
-			mEditor->DrawFrame();
+			mEditor->Update();
 			//<----------MORE EDITOR FUNCTIONS GO HERE
 			mEditor->PresentFrame();
 			//ENGINE UPDATE
@@ -382,6 +357,9 @@ namespace gbe {
 				projm = current_camera->getproj();
 				nearclip = current_camera->nearClip;
 				farclip = current_camera->farClip;
+			}
+			else {
+				throw std::runtime_error("No cameras rendering scene.");
 			}
 			mRenderPipeline->RenderFrame(viewm, projm, nearclip, farclip);
 			//mGUIPipeline->DrawActiveCanvas();
@@ -423,6 +401,11 @@ namespace gbe {
 			if (this->queued_rootchange != nullptr) {
 				mEditor->PrepareSceneChange();
 
+				for (const auto persistent : this->persistents)
+				{
+					persistent->SetParent(nullptr);
+				}
+
 				if (this->current_root != nullptr)
 				{
 					this->current_root->Destroy();
@@ -452,6 +435,11 @@ namespace gbe {
 				//Object handlers setup
 				this->current_root = this->queued_rootchange;
 				this->queued_rootchange = nullptr;
+
+				for (const auto persistent : this->persistents)
+				{
+					persistent->SetParent(this->current_root);
+				}
 			}
 		}
 #pragma endregion

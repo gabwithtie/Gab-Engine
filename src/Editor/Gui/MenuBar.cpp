@@ -9,7 +9,10 @@ void gbe::editor::MenuBar::DrawSelf()
 		if (ImGui::MenuItem("Load Serialized File")) {
 			SerializedObject data;
 			gbe::asset::serialization::gbeParser::PopulateClass(data, "out/default.level");
-			gbe::Engine::GetCurrentRoot()->Deserialize(data);
+			auto newroot = gbe::Engine::CreateBlankRoot();
+			newroot->Deserialize(data);
+
+			gbe::Engine::ChangeRoot(newroot);
 		}
 		if (ImGui::MenuItem("Write Serialized File")) {
 			auto data = gbe::Engine::GetCurrentRoot()->Serialize();

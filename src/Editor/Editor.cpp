@@ -87,11 +87,7 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 		});
 		*/
 
-	//============================UI SCREENS============================//
-	this->inspectorwindow = new gbe::editor::InspectorWindow();
-	this->menubar = new gbe::editor::MenuBar();
-
-	//CREATE THE GIZMO ARROW ASSETS
+	//============================GIZMOS============================//
 	this->gizmo_arrow_mesh = new asset::Mesh("DefaultAssets/3D/editor/arrow.obj.gbe");
 	
 	auto gizmoshader = new asset::Shader("DefaultAssets/Shaders/gizmo.shader.gbe");
@@ -111,6 +107,12 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 
 	this->gizmo_box_mat = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
 	this->gizmo_box_mat->setOverride("color", Vector4(1, 1, 0, 1.0f));
+
+	//============================UI SCREENS============================//
+	this->hierarchyWindow = new gbe::editor::HierarchyWindow();
+	this->inspectorwindow = new gbe::editor::InspectorWindow();
+	this->inspectorwindow->selected = &this->selected;
+	this->menubar = new gbe::editor::MenuBar();
 }
 
 void gbe::Editor::SelectSingle(Object* other) {
@@ -206,11 +208,16 @@ void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcal
 		auto newGizmo = new RigidObject(true);
 		newGizmo->SetParent(mengine->GetCurrentRoot());
 		newGizmo->Local().scale.Set(Vector3(0.1f, 0.1f, (gizmo_offset_distance * 2.0f)));
+		newGizmo->Set_is_editor();
+		
 		BoxCollider* FGizmo_collider = new BoxCollider();
 		FGizmo_collider->SetParent(newGizmo);
 		FGizmo_collider->Local().position.Set(Vector3(0, 0, 0));
-		RenderObject* platform_renderer = new RenderObject(drawcall, true);
+		FGizmo_collider->Set_is_editor();
+		RenderObject* platform_renderer = new RenderObject(drawcall);
 		platform_renderer->SetParent(newGizmo);
+		platform_renderer->Set_is_editor();
+
 
 		out_g = newGizmo;
 	}
@@ -224,8 +231,9 @@ void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcal
 void gbe::Editor::CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed)
 {
 	auto newDrawcall = this->mrenderpipeline->RegisterDrawCall(boxed->Get_DrawCall()->get_mesh(), this->gizmo_box_mat);
-	RenderObject* box_renderer = new RenderObject(newDrawcall, true);
+	RenderObject* box_renderer = new RenderObject(newDrawcall);
 	box_renderer->SetParent(boxed);
+	box_renderer->Set_is_editor();
 
 	gizmo_boxes.insert_or_assign(rootboxed, box_renderer);
 }
@@ -317,6 +325,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 
 void gbe::Editor::PrepareSceneChange() {
 	this->DeselectAll();
+	this->hierarchyWindow->root = nullptr;
 }
 
 void gbe::Editor::UpdateSelectionGui(Object* newlyclicked) {
@@ -337,7 +346,7 @@ void gbe::Editor::PrepareFrame()
 	this->keyboard_inUi = ui_io.WantCaptureKeyboard;
 }
 
-void gbe::Editor::DrawFrame()
+void gbe::Editor::Update()
 {
 	//==============================EDITOR UPDATE==============================//
 	if (selected.size() == 1) {
@@ -374,10 +383,11 @@ void gbe::Editor::DrawFrame()
 	}
 
 	//==============================IMGUI==============================//
-	this->inspectorwindow->mtime = this->mtime;
-	this->inspectorwindow->selected = &this->selected;
+	if (this->hierarchyWindow->root == nullptr)
+		this->hierarchyWindow->root = mengine->GetCurrentRoot();
+	
 	this->inspectorwindow->Draw();
-
+	this->hierarchyWindow->Draw();
 	this->menubar->Draw();
 }
 

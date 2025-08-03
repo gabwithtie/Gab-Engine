@@ -117,19 +117,13 @@ void gbe::Object::TranslateWorld(Vector3 vector)
 
 void gbe::Object::OnEnterHierarchy(Object* newChild)
 {
-	auto propagate_upwards = [this](Object* object) {
-		Object* current = this->parent;
+	Object* current = this->parent;
 
-		while (current != nullptr)
-		{
-			current->OnEnterHierarchy(object);
-			current = current->parent;
-		}
-	};
-
-	newChild->CallRecursively([propagate_upwards](Object* child) {
-		propagate_upwards(child);
-	});
+	while (current != nullptr)
+	{
+		current->OnEnterHierarchy(newChild);
+		current = current->parent;
+	}
 }
 
 void gbe::Object::OnExitHierarchy(Object* newChild)
@@ -165,7 +159,9 @@ void gbe::Object::SetParent(Object* newParent)
 	}
 
 	if (newParent != nullptr) {
-		newParent->OnEnterHierarchy(this);
+		this->CallRecursively([newParent, this](Object* child) {
+			newParent->OnEnterHierarchy(child);
+			});
 		newParent->children.push_back(this);
 
 		this->parent_matrix = newParent->GetWorldMatrix();

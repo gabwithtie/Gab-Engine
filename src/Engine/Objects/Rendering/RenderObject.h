@@ -27,15 +27,14 @@ namespace gbe {
 		//Rendering stuff
 		gfx::DrawCall* mDrawCall;
 		Matrix4* to_update;
-		const bool editor = false;
 		PrimitiveType ptype = PrimitiveType::NONE;
 	public:
 		static inline void RegisterPrimitiveDrawcall(PrimitiveType ptype, gfx::DrawCall* drawtype) {
 			primitive_drawcalls.insert_or_assign(ptype, drawtype);
 		}
 
-		RenderObject(gfx::DrawCall* mDrawCall, bool editor = false);
-		RenderObject(PrimitiveType ptype, bool editor = false);
+		RenderObject(gfx::DrawCall* mDrawCall);
+		RenderObject(PrimitiveType ptype);
 		virtual ~RenderObject();
 
 		SerializedObject Serialize() override;
@@ -47,10 +46,5 @@ namespace gbe {
 		inline gfx::DrawCall* Get_DrawCall() {
 			return this->mDrawCall;
 		}
-
-		bool is_editor() {
-			return this->editor;
-		}
-
 	};
 }

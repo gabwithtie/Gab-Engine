@@ -1,5 +1,4 @@
 #pragma once
-
 #include "GuiWindow.h"
 #include "InspectorData.h"
 
@@ -10,12 +9,13 @@
 namespace gbe {
 	namespace editor {
 
-		class InspectorWindow : public GuiWindow {
+		class HierarchyWindow : public GuiWindow {
 			void DrawSelf() override;
 			std::string GetWindowId() override;
-			void DrawVector3Field(std::string label, Vector3* field);
+			void DrawChildList(Object* parent, std::string label, unsigned int id = 0);
 		public:
-			std::vector<gbe::Object*>* selected;
+			Time* mtime;
+			Root* root;
 		};
 	}
 }

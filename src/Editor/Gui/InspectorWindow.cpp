@@ -10,38 +10,24 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 	}
 	else if ((*this->selected).size() == 1)
 	{
+		std::string cur_label = "";
+		cur_label += typeid(*(*this->selected)[0]).name();
+
+		ImGui::Text(cur_label.c_str());
+
 		//FOR ONLY ONE
 		auto inspectordata = (*this->selected)[0]->GetInspectorData();
 
 		//DRAW THE BUILT IN INSPECTORS PER OBJECT
-		auto sel_parent = (*this->selected)[0]->GetParent();
-		if (sel_parent != nullptr) {
-			std::string button_label = "Select Parent ";
-			button_label += "[";
-			button_label += typeid(*sel_parent).name();
-			button_label += "]";
-
-			if (ImGui::Button(button_label.c_str())) {
-				gbe::Editor::SelectSingle(sel_parent);
-			}
-		}
 
 		ImGui::SeparatorText("Transform:");
 
 		Vector3 position_gui_wrap = (*this->selected)[0]->Local().position.Get();
-
-		ImGui::InputFloat("pos.X", &position_gui_wrap.x);
-		ImGui::InputFloat("pos.Y", &position_gui_wrap.y);
-		ImGui::InputFloat("pos.Z", &position_gui_wrap.z);
-
+		this->DrawVector3Field("Position:", & position_gui_wrap);
 		(*this->selected)[0]->Local().position.Set(position_gui_wrap);
 
 		Vector3 scale_gui_wrap = (*this->selected)[0]->Local().scale.Get();
-
-		ImGui::InputFloat("scale.X", &scale_gui_wrap.x);
-		ImGui::InputFloat("scale.Y", &scale_gui_wrap.y);
-		ImGui::InputFloat("scale.Z", &scale_gui_wrap.z);
-
+		this->DrawVector3Field("Scale:", &scale_gui_wrap);
 		(*this->selected)[0]->Local().scale.Set(scale_gui_wrap);
 
 		//DRAW THE CUSTOM INSPECTORS
@@ -49,12 +35,13 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 		{
 			if (field->fieldtype == editor::InspectorField::VECTOR3) {
 				auto vec3field = static_cast<editor::InspectorVec3*>(field);
+				Vector3 proxy_vec = {*vec3field->x, *vec3field->y, *vec3field->z};
 
-				ImGui::SeparatorText(vec3field->name.c_str());
+				this->DrawVector3Field(vec3field->name.c_str(), &proxy_vec);
 
-				ImGui::InputFloat("X", vec3field->x);
-				ImGui::InputFloat("Y", vec3field->y);
-				ImGui::InputFloat("Z", vec3field->z);
+				*vec3field->x = proxy_vec.x;
+				*vec3field->y = proxy_vec.y;
+				*vec3field->z = proxy_vec.z;
 			}
 
 			if (field->fieldtype == editor::InspectorField::FUNCTION) {
@@ -62,23 +49,6 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 				if (ImGui::Button(buttonfield->name.c_str())) {
 					buttonfield->onpress();
 				}
-			}
-		}
-
-		//DRAW THE CHILDREN SELECTOR
-		ImGui::SeparatorText("CHILDREN");
-		for (size_t i = 0; i < (*this->selected)[0]->GetChildCount(); i++)
-		{
-			auto child = (*this->selected)[0]->GetChildAt(i);
-
-			std::string button_label = "";
-			button_label += "[";
-			button_label += std::to_string(i);
-			button_label += "] : ";
-			button_label += typeid(*child).name();
-
-			if (ImGui::Button(button_label.c_str())) {
-				gbe::Editor::SelectSingle(child);
 			}
 		}
 	}
@@ -97,6 +67,34 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 			std::cout << "Wrote merged mesh file.";
 		}
 	}
+}
+
+void gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* field)
+{
+
+	ImGui::Text(label.c_str()); // Optional: Display a label for the entire vector field
+	ImGui::SameLine();
+
+	auto remaining_width = ImGui::GetContentRegionAvail().x;
+	auto per_width = remaining_width * (1.0f / 3.0f);
+
+	ImGui::PushID(label.c_str());
+
+	// Input for X component
+	ImGui::SetNextItemWidth(per_width); // Adjust width as needed
+	ImGui::InputFloat("##X", &field->x, 0.0f, 0.0f, "%.3f");
+	ImGui::SameLine();
+
+	// Input for Y component
+	ImGui::SetNextItemWidth(per_width);
+	ImGui::InputFloat("##Y", &field->y, 0.0f, 0.0f, "%.3f");
+	ImGui::SameLine();
+
+	// Input for Z component
+	ImGui::SetNextItemWidth(per_width);
+	ImGui::InputFloat("##Z", &field->z, 0.0f, 0.0f, "%.3f");
+	
+	ImGui::PopID();
 }
 
 std::string gbe::editor::InspectorWindow::GetWindowId()

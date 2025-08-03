@@ -10,6 +10,7 @@
 #include "Gui/CreditsWindow.h"
 #include "Gui/ColorpickerWindow.h"
 #include "Gui/InspectorWindow.h"
+#include "Gui/HierarchyWindow.h"
 #include "Gui/MenuBar.h"
 
 namespace gbe {
@@ -70,8 +71,9 @@ namespace gbe {
 		};
 
 		//WINDOWS
+		editor::HierarchyWindow* hierarchyWindow;
 		editor::InspectorWindow* inspectorwindow;
-		editor::MenuBar* menubar	;
+		editor::MenuBar* menubar;
 	public:
 		Editor(RenderPipeline* renderpipeline, Window* window, Engine* engine, Time* _mtime);
 		static void SelectSingle(Object* other);
@@ -79,7 +81,7 @@ namespace gbe {
 		void PrepareSceneChange();
 		void UpdateSelectionGui(Object* newlyclicked);
 		void PrepareFrame();
-		void DrawFrame();
+		void Update();
 		void ProcessRawWindowEvent(void* rawwindowevent);
 		void PresentFrame();
 		void RenderPass(VkCommandBuffer cmd);

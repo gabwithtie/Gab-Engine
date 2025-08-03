@@ -22,6 +22,7 @@ namespace gbe {
 	class Object {
 	private:
 		bool isDestroyQueued = false;
+		bool is_editor = false;
 
 		std::list<Object*> children;
 
@@ -41,6 +42,12 @@ namespace gbe {
 	public:
 		Object();
 		virtual ~Object();
+		inline void Set_is_editor() {
+			this->is_editor = true;
+		}
+		inline bool Get_is_editor() {
+			return this->is_editor;
+		}
 
 		Transform& World();
 		Transform& Local();
