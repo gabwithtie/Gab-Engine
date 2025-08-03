@@ -245,8 +245,8 @@ void gbe::Object::Deserialize(gbe::SerializedObject data) {
 		auto new_child = gbe::TypeSerializer::Instantiate(child.type, child);
 
 		if (new_child != nullptr) {
-			new_child->Deserialize(child);
 			new_child->SetParent(this);
+			new_child->Deserialize(child);
 		}
 	}
 }
