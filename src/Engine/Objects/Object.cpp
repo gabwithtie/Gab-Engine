@@ -7,6 +7,8 @@
 
 #include "Editor/gbe_editor.h"
 
+unsigned int gbe::Object::next_avail_id = 0;
+
 void gbe::Object::MatToTrans(Transform* target, Matrix4 mat)
 {
 	glm::vec3 scale;
@@ -61,6 +63,9 @@ gbe::Object::Object()
 
 	//INSPECTOR DATA
 	inspectorData = new editor::InspectorData();
+
+	this->id = next_avail_id;
+	next_avail_id++;
 }
 
 gbe::Object::~Object(){
@@ -218,7 +223,8 @@ gbe::SerializedObject gbe::Object::Serialize() {
 	std::vector<SerializedObject> serialized_children;
 	for (const auto child : this->children)
 	{
-		serialized_children.push_back(child->Serialize());
+		if (!child->Get_is_editor())
+			serialized_children.push_back(child->Serialize());
 	}
 
 	auto euler_rot = this->local.rotation.Get().ToEuler();

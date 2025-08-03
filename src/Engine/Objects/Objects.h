@@ -18,6 +18,7 @@
 #include "Physics/Collider/BoxCollider.h"
 #include "Physics/Collider/SphereCollider.h"
 #include "Physics/Collider/MeshCollider.h"
+#include "Physics/Collider/CapsuleCollider.h"
 
 #include "Input/InputCustomer.h"
 #include "Input/InputPlayer.h"

@@ -21,6 +21,9 @@ namespace gbe {
 
 	class Object {
 	private:
+		static unsigned int next_avail_id;
+		unsigned int id = 0;
+
 		bool isDestroyQueued = false;
 		bool is_editor = false;
 
@@ -48,6 +51,12 @@ namespace gbe {
 		inline bool Get_is_editor() {
 			return this->is_editor;
 		}
+		inline void Set_id(unsigned int _id) {
+			this->id = _id;
+		}
+		inline unsigned int Get_id() {
+			return this->id;
+		}
 
 		Transform& World();
 		Transform& Local();
@@ -61,6 +70,19 @@ namespace gbe {
 		Object* GetParent();
 		virtual void SetParent(Object* newParent);
 		Object* GetChildAt(size_t i);
+		inline size_t GetIndexOfChild(Object* _child) {
+			size_t index = 0;
+
+			for (const auto child : this->children)
+			{
+				if (_child == child)
+					return index;
+
+				index++;
+			}
+
+			return -1;
+		}
 		size_t GetChildCount();
 
 		editor::InspectorData* GetInspectorData();

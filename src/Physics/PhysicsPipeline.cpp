@@ -1,5 +1,8 @@
 #include "PhysicsPipeline.h"
+
 #include <bullet/BulletCollision/CollisionDispatch/btGhostObject.h>
+
+#include "PhysicsBody.h"
 
 gbe::physics::PhysicsPipeline* gbe::physics::PhysicsPipeline::Instance;
 
@@ -13,6 +16,8 @@ gbe::physics::PhysicsPipeline* gbe::physics::PhysicsPipeline::Get_Instance() {
 
 bool gbe::physics::PhysicsPipeline::Init()
 {
+	this->Instance = this;
+
 	this->collisionConfiguration = new btDefaultCollisionConfiguration();
 	///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
 	this->dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -21,19 +26,7 @@ bool gbe::physics::PhysicsPipeline::Init()
 	///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
 	this->solver = new btSequentialImpulseConstraintSolver;
 
-	this->dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
-	this->dynamicsWorld->setGravity(btVector3(0, 0, 0));
-	this->dynamicsWorld->getBroadphase()->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
-	
-	btContactSolverInfo& info = this->dynamicsWorld->getSolverInfo();
-	info.m_solverMode |= SOLVER_INTERLEAVE_CONTACT_AND_FRICTION_CONSTRAINTS;
-	
-	auto callback = [](btDynamicsWorld* world, btScalar timeStep) {
-		physics::PhysicsPipeline::Get_Instance()->OnFixedUpdate_callback(timeStep);
-	};
-	this->dynamicsWorld->setInternalTickCallback(callback, this, false);
-
-	this->Instance = this;
+	this->Reset();
 
 	return true;
 }
@@ -48,31 +41,18 @@ void gbe::physics::PhysicsPipeline::Tick(double delta)
 	dynamicsWorld->stepSimulation(delta, 30);
 }
 
-void gbe::physics::PhysicsPipeline::RegisterBody(gbe::physics::PhysicsBody* body)
-{
-	body_wrapper_dictionary.insert_or_assign(body->Get_wrapped_data(), body);
-	body->Register(this->dynamicsWorld);
-}
+void gbe::physics::PhysicsPipeline::Reset() {
+	this->dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+	this->dynamicsWorld->setGravity(btVector3(0, 0, 0));
+	this->dynamicsWorld->getBroadphase()->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
 
-void gbe::physics::PhysicsPipeline::UnRegisterBody(PhysicsBody* body)
-{
-	body_wrapper_dictionary.erase(body->Get_wrapped_data());
-	body->UnRegister();
-}
+	btContactSolverInfo& info = this->dynamicsWorld->getSolverInfo();
+	info.m_solverMode |= SOLVER_INTERLEAVE_CONTACT_AND_FRICTION_CONSTRAINTS;
 
-void gbe::physics::PhysicsPipeline::RegisterCollider(gbe::physics::ColliderData* col)
-{
-	collider_wrapper_dictionary.insert_or_assign(col->GetShape(), col);
-}
-
-void gbe::physics::PhysicsPipeline::UnRegisterCollider(gbe::physics::ColliderData* col)
-{
-	collider_wrapper_dictionary.erase(col->GetShape());
-}
-
-void gbe::physics::PhysicsPipeline::Set_OnFixedUpdate_callback(std::function<void(float physicsdeltatime)> newfunc)
-{
-	this->OnFixedUpdate_callback = newfunc;
+	auto callback = [](btDynamicsWorld* world, btScalar timeStep) {
+		physics::PhysicsPipeline::Get_Instance()->OnFixedUpdate_callback(timeStep);
+		};
+	this->dynamicsWorld->setInternalTickCallback(callback, this, false);
 }
 
 btDiscreteDynamicsWorld* gbe::physics::PhysicsPipeline::Get_world()

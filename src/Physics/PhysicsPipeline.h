@@ -1,9 +1,12 @@
 #pragma once
 
 #include <bullet/btBulletDynamicsCommon.h>
-#include "Rigidbody.h"
+
 #include <unordered_map>
 #include <functional>
+
+#include "PhysicsBody.h"
+#include "ColliderData/ColliderData.h"
 
 namespace gbe {
 	namespace physics {
@@ -26,14 +29,30 @@ namespace gbe {
 			static PhysicsPipeline* Get_Instance();
 			
 			bool Init();
+			void Reset();
 			void Tick(double delta);
-			void RegisterBody(PhysicsBody* body);
-			void UnRegisterBody(PhysicsBody* body);
-			void RegisterCollider(ColliderData* body);
-			void UnRegisterCollider(ColliderData* body);
-			void Set_OnFixedUpdate_callback(std::function<void(float physicsdeltatime)>);
+			inline void RegisterBody(PhysicsBody* body) {
+				body_wrapper_dictionary.insert_or_assign(body->Get_wrapped_data(), body);
+				body->Register(this->dynamicsWorld);
+			}
+			inline void UnRegisterBody(PhysicsBody* body) {
+				body_wrapper_dictionary.erase(body->Get_wrapped_data());
+				body->UnRegister();
+			}
+			inline void RegisterCollider(ColliderData* body) {
+				collider_wrapper_dictionary.insert_or_assign(body->GetShape(), body);
+			}
+			inline void UnRegisterCollider(ColliderData* body) {
+				collider_wrapper_dictionary.erase(body->GetShape());
+			}
+			inline void Set_OnFixedUpdate_callback(std::function<void(float physicsdeltatime)> newfunc) {
+				this->OnFixedUpdate_callback = newfunc;
+			}
 
 			btDiscreteDynamicsWorld* Get_world();
+			inline btCollisionDispatcher* Get_dispatcher() {
+				return this->dispatcher;
+			}
 
 			static PhysicsBody* GetRelatedBody(const btCollisionObject*);
 			static ColliderData* GetRelatedCollider(const btCollisionShape*);

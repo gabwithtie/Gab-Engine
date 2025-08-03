@@ -38,6 +38,7 @@ namespace gbe {
 			void UpdateColliderTransform(ColliderData*);
 			void RemoveCollider(ColliderData*);
 
+			void ForceWake();
 			void UpdateAABB();
 			virtual void ForceUpdateTransform() = 0;
 			virtual void Pre_Tick_function(float deltatime) = 0;

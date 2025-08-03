@@ -4,11 +4,11 @@
 
 #include <bullet/btBulletDynamicsCommon.h>
 
-#include "PhysicsDatatypes.h"
 #include <list>
-#include "ColliderData/ColliderData.h"
 
 #include "PhysicsBody.h"
+#include "PhysicsDatatypes.h"
+#include "ColliderData/ColliderData.h"
 
 namespace gbe {
 	class PhysicsObject;

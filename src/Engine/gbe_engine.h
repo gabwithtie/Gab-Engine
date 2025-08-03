@@ -4,6 +4,7 @@
 #include "Component/Transform.h"
 #include "Component/TransformChangeType.h"
 #include "Global/Time.h"
+#include "Global/Console.h"
 #include "Input/ActionImplementation.h"
 #include "Input/InputAction.h"
 #include "Input/InputSystem.h"

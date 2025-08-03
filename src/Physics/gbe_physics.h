@@ -8,3 +8,4 @@
 #include "ColliderData/ColliderData.h"
 #include "ColliderData/BoxColliderData.h"
 #include "ColliderData/SphereColliderData.h"
+#include "ColliderData/CapsuleColliderData.h"

@@ -11,6 +11,17 @@ namespace gbe{
 		~Root();
 		void RegisterHandler(Handler* handler);
 
+		inline Object* GetObjectWithId(unsigned int _id) {
+			Object* chosen = nullptr;
+
+			this->CallRecursively([&](Object* child) {
+				if (child->Get_id() == _id)
+					chosen = child;
+				});
+
+			return chosen;
+		}
+
 		virtual void OnEnterHierarchy(Object* newChild);
 		virtual void OnExitHierarchy(Object* newChild);
 

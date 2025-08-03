@@ -111,6 +111,10 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	//============================UI SCREENS============================//
 	this->hierarchyWindow = new gbe::editor::HierarchyWindow();
 	this->inspectorwindow = new gbe::editor::InspectorWindow();
+	this->consoleWindow = new gbe::editor::ConsoleWindow();
+	this->spawnWindow = new gbe::editor::SpawnWindow();
+	this->spawnWindow->selected = &this->selected;
+	this->stateWindow = new gbe::editor::StateWindow();
 	this->inspectorwindow->selected = &this->selected;
 	this->menubar = new gbe::editor::MenuBar();
 }
@@ -193,14 +197,48 @@ void gbe::Editor::SelectSingle(Object* other) {
 }
 
 void gbe::Editor::DeselectAll() {
-	this->selected.clear();
+	instance->selected.clear();
 
 	//CLEAR BOXES
-	for (auto& gizmoptr : this->gizmo_boxes)
+	for (auto& gizmoptr : instance->gizmo_boxes)
 	{
 		gizmoptr.second->Destroy();
 	}
-	this->gizmo_boxes.clear();
+	instance->gizmo_boxes.clear();
+}
+
+void gbe::Editor::RegisterAction(std::function<void()> action_done, std::function<void()> undo)
+{
+	EditorAction newaction = {
+		.action_done = action_done,
+		.undo = undo
+	};
+
+	for (size_t i = instance->action_stack.size() - instance->cur_action_index; i > 0; i--)
+	{
+		instance->action_stack.pop_back();
+	}
+
+	instance->action_stack.push_back(newaction);
+	instance->cur_action_index = instance->action_stack.size();
+}
+
+void gbe::Editor::Undo()
+{
+	if (instance->cur_action_index == 0)
+		return;
+
+	instance->cur_action_index--;
+	instance->action_stack[instance->cur_action_index].undo();
+}
+
+void gbe::Editor::Redo()
+{
+	if (instance->cur_action_index == instance->action_stack.size())
+		return;
+
+	instance->action_stack[instance->cur_action_index].action_done();
+	instance->cur_action_index++;
 }
 
 void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcall, Vector3 rotation, Vector3 direction) {
@@ -217,7 +255,6 @@ void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcal
 		RenderObject* platform_renderer = new RenderObject(drawcall);
 		platform_renderer->SetParent(newGizmo);
 		platform_renderer->Set_is_editor();
-
 
 		out_g = newGizmo;
 	}
@@ -272,7 +309,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 			//OBJECT SELECTION
 			Vector3 ray_dir = mousedir * 10000.0f;
 			auto result = physics::Raycast(camera_pos, ray_dir);
-			if (result.result) {
+			if (result.result && !result.other->get_isDestroyed()) {
 				auto newlyclicked = result.other;
 
 				//CHECK IF OTHER HAS A RENDERER, IF NONE, DONT CLICK
@@ -318,7 +355,22 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 	}
 	if (sdlevent->type == SDL_MOUSEBUTTONUP) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT) {
-			this->held_gizmo = nullptr;
+			//COMMIT HELD GIZMO ACTION
+			if (this->held_gizmo != nullptr) {
+				auto newpos = instance->selected[0]->World().position.Get();
+				auto oldpos = instance->original_selected_position;
+				auto what_was_edited = Editor::instance->selected[0];
+
+				Editor::RegisterAction(
+					[=]() {
+						what_was_edited->SetWorldPosition(newpos);
+					},
+					[=]() {
+						what_was_edited->SetWorldPosition(oldpos);
+					});
+
+				this->held_gizmo = nullptr;
+			}
 		}
 	}
 }
@@ -387,6 +439,9 @@ void gbe::Editor::Update()
 		this->hierarchyWindow->root = mengine->GetCurrentRoot();
 	
 	this->inspectorwindow->Draw();
+	this->spawnWindow->Draw();
+	this->stateWindow->Draw();
+	this->consoleWindow->Draw();
 	this->hierarchyWindow->Draw();
 	this->menubar->Draw();
 }

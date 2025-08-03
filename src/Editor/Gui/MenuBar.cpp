@@ -3,8 +3,19 @@
 #include "Engine/gbe_engine.h"
 #include "Asset/Parsing/gbeParser.h"
 
+#include "../Editor.h"
+
 void gbe::editor::MenuBar::DrawSelf()
 {
+	if (ImGui::BeginMenu("Edit")) {
+		if (ImGui::MenuItem("Undo")) {
+			Editor::Undo();
+		}
+		if (ImGui::MenuItem("Redo")) {
+			Editor::Redo();
+		}
+		ImGui::EndMenu();
+	}
 	if (ImGui::BeginMenu("Serialization")) {
 		if (ImGui::MenuItem("Load Serialized File")) {
 			SerializedObject data;

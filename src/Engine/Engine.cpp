@@ -42,6 +42,37 @@ namespace gbe {
 		return root_object;
 	}
 
+	void Engine::Set_state(Engine::EngineState _state) {
+		if (_state == EngineState::Edit) {
+			if (instance->pre_play_scenedata != nullptr)
+			{
+				auto newroot = gbe::Engine::CreateBlankRoot();
+				newroot->Deserialize(*instance->pre_play_scenedata);
+
+				gbe::Engine::ChangeRoot(newroot);
+			}
+
+			instance->_time.scale = 0;
+			Console::Log("Entering Edit Mode...");
+		}
+		if (_state == EngineState::Play) {
+			instance->pre_play_scenedata = new SerializedObject(instance->current_root->Serialize());
+
+			instance->_time.scale = 1;
+
+			auto objlist = instance->current_root->GetHandler<PhysicsObject>()->object_list;
+			for (const auto physicsobject : objlist) {
+				physicsobject->ForceWake();
+			}
+
+			Console::Log("Entering Play Mode...");
+		}
+		if (_state == EngineState::Paused) {
+			instance->_time.scale = 0;
+			Console::Log("Pausing...");
+		}
+	}
+
 	void Engine::Run()
 	{
 		//WINDOW
@@ -52,7 +83,7 @@ namespace gbe {
 		auto mRenderPipeline = new RenderPipeline(mWindow, mWindow->Get_dimentions());
 #pragma endregion
 		//GLOBAL RUNTIME COMPONENTS
-		auto mTime = new Time();
+		this->_time = Time();
 #pragma region Physics Pipeline Setup
 		auto mPhysicsPipeline = new physics::PhysicsPipeline();
 		mPhysicsPipeline->Init();
@@ -71,7 +102,7 @@ namespace gbe {
 		//mAudioPipeline->Init();
 #pragma endregion
 #pragma region Editor Setup
-		auto mEditor = new gbe::Editor(mRenderPipeline, mWindow, this, mTime);
+		auto mEditor = new gbe::Editor(mRenderPipeline, mWindow, this, &this->_time);
 		mWindow->AddAdditionalEventProcessor([mEditor](void* newevent) {
 			mEditor->ProcessRawWindowEvent(newevent);
 			});
@@ -82,6 +113,7 @@ namespace gbe {
 		//MESH CACHING
 		auto cube_mesh = new asset::Mesh("DefaultAssets/3D/default/cube.obj.gbe");
 		auto sphere_mesh = new asset::Mesh("DefaultAssets/3D/default/sphere.obj.gbe");
+		auto capsule_mesh = new asset::Mesh("DefaultAssets/3D/default/capsule.obj.gbe");
 		auto plane_mesh = new asset::Mesh("DefaultAssets/3D/default/plane.obj.gbe");
 
 		//SHADER CACHING
@@ -105,11 +137,16 @@ namespace gbe {
 		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, mRenderPipeline->RegisterDrawCall(cube_mesh, cube_mat));
 		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, mRenderPipeline->RegisterDrawCall(sphere_mesh, cube_mat));
 		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, mRenderPipeline->RegisterDrawCall(plane_mesh, cube_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, mRenderPipeline->RegisterDrawCall(capsule_mesh, cube_mat));
 
 		//TYPE SERIALIZER REGISTERING
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), RenderObject::Create);
+		
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RigidObject).name(), RigidObject::Create);
+
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(BoxCollider).name(), BoxCollider::Create);
+		gbe::TypeSerializer::RegisterTypeCreator(typeid(SphereCollider).name(), SphereCollider::Create);
+		gbe::TypeSerializer::RegisterTypeCreator(typeid(CapsuleCollider).name(), CapsuleCollider::Create);
 #pragma endregion
 #pragma region Input
 		auto mInputSystem = new InputSystem();
@@ -127,9 +164,6 @@ namespace gbe {
 		this->current_root = this->CreateBlankRoot();
 
 #pragma region scene singletons
-		//forward declaration
-		auto player = new RigidObject();
-
 		//Spawn funcs
 		auto create_mesh = [&](gfx::DrawCall* drawcall, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
 			RigidObject* parent = new RigidObject(true);
@@ -162,6 +196,12 @@ namespace gbe {
 			};
 
 		//Global objects
+		//physics force setup
+		auto gravity_volume = new ForceVolume();
+		gravity_volume->SetParent(this->current_root);
+		
+		Engine::MakePersistent(gravity_volume);
+
 		auto player_input = new InputPlayer(player_name);
 		player_input->SetParent(this->current_root);
 		auto camera_controller = new FlyingCameraControl();
@@ -171,6 +211,7 @@ namespace gbe {
 		player_cam->SetParent(camera_controller);
 
 		Engine::MakePersistent(player_input);
+		player_input->Set_is_editor();
 
 		//================INPUT HANDLING================//
 		auto input_communicator = new GenericController();
@@ -284,6 +325,7 @@ namespace gbe {
 			}
 		}
 
+		this->Set_state(EngineState::Edit);
 #pragma endregion
 
 #pragma endregion
@@ -393,7 +435,7 @@ namespace gbe {
 				//GUI
 				//mGUIPipeline->Update(deltatime);
 				};
-			mTime->TickFixed(onTick);
+			this->_time.TickFixed(onTick);
 
 			mInputSystem->ResetStates(mWindow);
 
@@ -431,8 +473,8 @@ namespace gbe {
 				delete rootdeletee;
 			}
 
+			//COMMIT ROOT CHANGE
 			if (this->queued_rootchange != nullptr) {
-				//Object handlers setup
 				this->current_root = this->queued_rootchange;
 				this->queued_rootchange = nullptr;
 

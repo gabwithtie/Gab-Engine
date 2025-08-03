@@ -14,7 +14,6 @@ namespace gbe {
 			std::string GetWindowId() override;
 			void DrawChildList(Object* parent, std::string label, unsigned int id = 0);
 		public:
-			Time* mtime;
 			Root* root;
 		};
 	}

@@ -1,6 +1,7 @@
 #include "PhysicsBody.h"
 
 #include "Engine/Objects/Physics/PhysicsObject.h"
+#include "PhysicsPipeline.h"
 
 gbe::physics::PhysicsBody::PhysicsBody(PhysicsObject* _related_engine_wrapper)
 {
@@ -54,6 +55,11 @@ void gbe::physics::PhysicsBody::Register(btDynamicsWorld* register_to)
 void gbe::physics::PhysicsBody::UnRegister()
 {
 	this->world = nullptr;
+}
+
+void gbe::physics::PhysicsBody::ForceWake() {
+	world->getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(base_data->getBroadphaseHandle(), PhysicsPipeline::Get_Instance()->Get_dispatcher());
+	base_data->activate(true);
 }
 
 void gbe::physics::PhysicsBody::AddCollider(ColliderData* col)
