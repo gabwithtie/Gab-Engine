@@ -28,5 +28,7 @@ namespace gbe{
 
 			return toreturn;
 		}
+
+		Object* Create(SerializedObject data) override;
 	};
 }
