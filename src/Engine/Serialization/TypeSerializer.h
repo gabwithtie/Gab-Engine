@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SerializedObject.h"
+
 #include "Engine/gbe_engine.h"
 #include "Asset/gbe_asset.h"
 #include <string>
@@ -11,10 +13,10 @@
 namespace gbe {
 	class TypeSerializer {
 	private:
-		static std::unordered_map<std::string, std::function<Object*()>> instantiation_dictionary;
+		static std::unordered_map<std::string, std::function<Object*(SerializedObject)>> instantiation_dictionary;
 	public:
 		static void InitializeTypeDictionary();
 		static void RegisterTypeCreator(std::string type_id, std::function<Object* ()> instantiation_function);
-		static Object* Instantiate(std::string type_id);
+		static Object* Instantiate(std::string type_id, SerializedObject data);
 	};
 }

@@ -16,6 +16,10 @@ namespace gbe {
 			capsule,
 			plane
 		};
+		const static std::unordered_map<PrimitiveType, std::string> PrimitiveTypeStrs;
+		inline static std::string PrimitiveTypeStr(PrimitiveType _ptype) {
+			return PrimitiveTypeStrs.at(_ptype);
+		}
 	private:
 		//PRIMITIVES CACHE
 		static std::unordered_map<PrimitiveType, gfx::DrawCall*> primitive_drawcalls;
@@ -34,6 +38,9 @@ namespace gbe {
 		RenderObject(PrimitiveType ptype, bool editor = false);
 		virtual ~RenderObject();
 
+		SerializedObject Serialize() override;
+		Object* Create(SerializedObject data) override;
+
 		// Inherited via EarlyUpdate
 		virtual void InvokeEarlyUpdate() override;
 
@@ -44,5 +51,6 @@ namespace gbe {
 		bool is_editor() {
 			return this->editor;
 		}
+
 	};
 }

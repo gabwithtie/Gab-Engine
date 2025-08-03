@@ -21,11 +21,6 @@ void gbe::Object::MatToTrans(Transform* target, Matrix4 mat)
 	target->scale.Set(scale);
 }
 
-gbe::Object* gbe::Object::Copy_self()
-{
-	return new Object(*this);
-}
-
 void gbe::Object::OnLocalTransformationChange(TransformChangeType changetype)
 {
 	auto worldmat = this->parent_matrix * this->local.GetMatrix();
@@ -73,19 +68,6 @@ gbe::Object::~Object(){
 	{
 		delete child;
 	}
-}
-
-gbe::Object* gbe::Object::Copy()
-{
-	auto copy = this->Copy_self();
-	copy->children.clear();
-
-	for (auto child : this->children)
-	{
-		copy->children.push_back(child->Copy());
-	}
-
-	return copy;
 }
 
 gbe::Transform& gbe::Object::World()
@@ -260,7 +242,7 @@ void gbe::Object::Deserialize(gbe::SerializedObject data) {
 	this->local.rotation.Set(Quaternion::Euler(Vector3(data.local_euler_rotation[0], data.local_euler_rotation[1], data.local_euler_rotation[2])));
 	for (const auto& child : data.children)
 	{
-		auto new_child = gbe::TypeSerializer::Instantiate(child.type);
+		auto new_child = gbe::TypeSerializer::Instantiate(child.type, child);
 
 		if (new_child != nullptr) {
 			new_child->Deserialize(child);

@@ -34,7 +34,6 @@ namespace gbe {
 	protected:
 		Root* root;
 		Object* parent;
-		virtual Object* Copy_self();
 		virtual void OnLocalTransformationChange(TransformChangeType changetype);
 		virtual void OnExternalTransformationChange(TransformChangeType changetype, Matrix4 newparentmatrix);
 
@@ -42,7 +41,7 @@ namespace gbe {
 	public:
 		Object();
 		virtual ~Object();
-		virtual Object* Copy();
+		virtual Object* Create(SerializedObject data) = 0;
 
 		Transform& World();
 		Transform& Local();
