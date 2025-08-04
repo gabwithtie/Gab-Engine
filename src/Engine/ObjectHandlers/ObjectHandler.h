@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <vector>
 #include <functional>
 #include "Engine/Objects/Object.h"
 
@@ -16,7 +17,8 @@ namespace gbe {
 	protected:
 		std::list<Handler*> subhandlers;
 	public:
-		std::list<TValue*> object_list;
+		std::list<TValue*> t_object_list;
+		std::list<Object*> object_list;
 
 		virtual void OnAdd(TValue*) {}
 		virtual void OnRemove(TValue*) {}
@@ -25,15 +27,18 @@ namespace gbe {
 			for (auto subhandler : this->subhandlers)
 				subhandler->Remove(object);
 
-			this->object_list.remove_if([this, object](TValue* tocheck) {
-				Object* base_object = dynamic_cast<Object*>(tocheck);
-				if (base_object == object) {
-					OnRemove(tocheck);
-					return true;
+			auto it = object_list.begin();
+			auto it_t = t_object_list.begin();
+			while (it != object_list.end()) {
+				if (*it == object) {
+					it = object_list.erase(it);
+					it_t = t_object_list.erase(it_t);
+					break;
 				}
 
-				return false;
-			});
+				++it;
+				++it_t;
+			}
 		}
 
 		virtual bool TryAdd(Object* object) {
@@ -45,14 +50,27 @@ namespace gbe {
 			if (typed_object == nullptr)
 				return false;
 
-			for (auto existing : this->object_list)
+			for (auto existing : this->t_object_list)
 				if (existing == typed_object)
 					return false;
 
-			object_list.push_back(typed_object);
+			t_object_list.push_back(typed_object);
+			object_list.push_back(object);
 			OnAdd(typed_object);
 
 			return true;
+		}
+
+		void DoOnEnabled(std::function<void(TValue*)> action) {
+			auto _it = object_list.begin();
+			auto _it_t = t_object_list.begin();
+			while (_it != object_list.end()) {
+				if ((*_it)->Get_enabled()) {
+					action(*_it_t);
+				}
+				++_it;
+				++_it_t;
+			}
 		}
 	};
 }

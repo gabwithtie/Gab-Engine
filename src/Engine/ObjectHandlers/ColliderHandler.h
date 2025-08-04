@@ -14,10 +14,9 @@
 namespace gbe {
 	class ColliderHandler : public ObjectHandler<Collider> {
 	private:
-		physics::PhysicsPipeline* mPipeline;
+		physics::PhysicsWorld* mPipeline;
 	public:
-
-		ColliderHandler(physics::PhysicsPipeline*);
+		ColliderHandler(physics::PhysicsWorld*);
 
 		virtual void OnAdd(Collider*) override;
 		virtual void OnRemove(Collider*) override;

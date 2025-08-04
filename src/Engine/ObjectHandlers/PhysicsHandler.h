@@ -17,12 +17,16 @@ namespace gbe {
 		std::function<PhysicsObject* (physics::PhysicsBody*)> lookup_func;
 		std::unordered_map<physics::PhysicsBody*, PhysicsObject*> map;
 		ObjectHandler<ForceVolume> forcevolume_handler;
-		physics::PhysicsPipeline* mPipeline;
+
+		physics::PhysicsWorld* localpipeline;
 	public:
+		PhysicsHandler();
 
-		PhysicsHandler(physics::PhysicsPipeline*);
+		inline physics::PhysicsWorld* GetLocalPipeline() {
+			return this->localpipeline;
+		}
 
-		void Update();
+		void Update(double dt);
 
 		virtual void OnAdd(PhysicsObject*) override;
 		virtual void OnRemove(PhysicsObject*) override;

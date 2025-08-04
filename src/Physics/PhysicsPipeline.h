@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <functional>
 
-#include "PhysicsBody.h"
+#include "PhysicsWorld.h"
 #include "ColliderData/ColliderData.h"
 
 namespace gbe {
@@ -13,49 +13,15 @@ namespace gbe {
 		class PhysicsPipeline
 		{
 		private:
-			static PhysicsPipeline* Instance;
-			std::unordered_map<const btCollisionObject*, PhysicsBody*> body_wrapper_dictionary;
-			std::unordered_map<const btCollisionShape*, ColliderData*> collider_wrapper_dictionary;
-			std::function<void(float physicsdeltatime)> OnFixedUpdate_callback;
-
-			btDefaultCollisionConfiguration* collisionConfiguration;
-			btCollisionDispatcher* dispatcher;
-			btBroadphaseInterface* overlappingPairCache;
-			btSequentialImpulseConstraintSolver* solver;
-			btDiscreteDynamicsWorld* dynamicsWorld;
-
-			void internal_physics_callback(btDynamicsWorld* world, btScalar timeStep);
+			static PhysicsWorld* current_world;
 		public:
-			static PhysicsPipeline* Get_Instance();
-			
-			bool Init();
-			void Reset();
-			void Tick(double delta);
-			inline void RegisterBody(PhysicsBody* body) {
-				body_wrapper_dictionary.insert_or_assign(body->Get_wrapped_data(), body);
-				body->Register(this->dynamicsWorld);
-			}
-			inline void UnRegisterBody(PhysicsBody* body) {
-				body_wrapper_dictionary.erase(body->Get_wrapped_data());
-				body->UnRegister();
-			}
-			inline void RegisterCollider(ColliderData* body) {
-				collider_wrapper_dictionary.insert_or_assign(body->GetShape(), body);
-			}
-			inline void UnRegisterCollider(ColliderData* body) {
-				collider_wrapper_dictionary.erase(body->GetShape());
-			}
-			inline void Set_OnFixedUpdate_callback(std::function<void(float physicsdeltatime)> newfunc) {
-				this->OnFixedUpdate_callback = newfunc;
+			static inline void PushContext(PhysicsWorld* _world) {
+				current_world = _world;
 			}
 
-			btDiscreteDynamicsWorld* Get_world();
-			inline btCollisionDispatcher* Get_dispatcher() {
-				return this->dispatcher;
+			static PhysicsWorld* GetContext() {
+				return current_world;
 			}
-
-			static PhysicsBody* GetRelatedBody(const btCollisionObject*);
-			static ColliderData* GetRelatedCollider(const btCollisionShape*);
 		};
 	}
 }

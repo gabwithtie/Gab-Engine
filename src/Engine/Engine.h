@@ -1,14 +1,15 @@
 #pragma once
 
-
-#include "Objects/Root.h"
 #include "Global/Time.h"
+#include "Objects/Root.h"
 
 //EXTERNALS
 #include "Ext/AnimoBuilderWrapper/AnimoBuilderWrapper.h"
 #include "Ext/AnimoBuilder/AnimoBuilder.h"
 
 namespace gbe {
+	class Camera;
+
 	class Engine {
 	public:
 		enum EngineState {
@@ -19,17 +20,15 @@ namespace gbe {
 	private:
 		static Engine* instance;
 
-		//Current Root and its handlers
-		Root* current_root;
-		Root* queued_rootchange;
-
-		std::vector<Object*> persistents;
-
-		EngineState state;
+		Time _time;
+		double timeleft_stepping = 0;
+		EngineState state = EngineState::Edit;
 
 		SerializedObject* pre_play_scenedata = nullptr;
-
-		Time _time;
+		Root* current_root;
+		Root* queued_rootchange;
+		std::vector<Object*> persistents;
+		void InitializeRoot();
 	public:
 		Engine();
 
@@ -37,9 +36,10 @@ namespace gbe {
 			return this->state;
 		}
 		static void Set_state(EngineState _state);
-
+		static void Step(double dur);
 		static bool ChangeRoot(Root* newroot);
 		static Root* CreateBlankRoot();
+		static Camera* GetActiveCamera();
 		inline static Root* GetCurrentRoot() {
 			return instance->current_root;
 		}

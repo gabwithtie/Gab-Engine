@@ -29,8 +29,7 @@ namespace gbe {
 	Root* Engine::CreateBlankRoot()
 	{
 		auto root_object = new Root();
-		root_object->RegisterHandler(new PhysicsHandler(physics::PhysicsPipeline::Get_Instance()));
-		root_object->RegisterHandler(new ColliderHandler(physics::PhysicsPipeline::Get_Instance()));
+		root_object->RegisterHandler(new PhysicsHandler());
 		root_object->RegisterHandler(new ObjectHandler<gbe::LightObject>());
 		root_object->RegisterHandler(new ObjectHandler<gbe::Camera>());
 		root_object->RegisterHandler(new ObjectHandler<PhysicsUpdate>());
@@ -42,35 +41,78 @@ namespace gbe {
 		return root_object;
 	}
 
+	Camera* Engine::GetActiveCamera() {
+		Camera* current_camera = nullptr;
+		auto camera_handler = instance->current_root->GetHandler<Camera>();
+
+		for (const auto cam : camera_handler->t_object_list)
+		{
+			if (!cam->Get_enabled())
+				continue;
+			if (instance->Get_state() == EngineState::Edit && !cam->Get_is_editor())
+				continue;
+			if (instance->Get_state() != EngineState::Edit && cam->Get_is_editor())
+				continue;
+
+			current_camera = cam;
+			break;
+		}
+
+		return current_camera;
+	}
+
+	void Engine::InitializeRoot() {
+		for (const auto persistent : this->persistents)
+		{
+			persistent->SetParent(this->current_root);
+		}
+
+		//Push new context for physics singletons
+		auto physicshandler_generic = this->current_root->GetHandler<PhysicsObject>();
+		auto physicshandler = static_cast<PhysicsHandler*>(physicshandler_generic);
+		physics::PhysicsPipeline::PushContext(physicshandler->GetLocalPipeline());
+	}
+
 	void Engine::Set_state(Engine::EngineState _state) {
 		if (_state == EngineState::Edit) {
-			if (instance->pre_play_scenedata != nullptr)
-			{
-				auto newroot = gbe::Engine::CreateBlankRoot();
-				newroot->Deserialize(*instance->pre_play_scenedata);
+			if (instance->pre_play_scenedata == nullptr)
+				instance->pre_play_scenedata = new SerializedObject(instance->current_root->Serialize());
 
-				gbe::Engine::ChangeRoot(newroot);
-			}
+			auto newroot = gbe::Engine::CreateBlankRoot();
+			newroot->Deserialize(*instance->pre_play_scenedata);
+
+			gbe::Engine::ChangeRoot(newroot);
 
 			instance->_time.scale = 0;
 			Console::Log("Entering Edit Mode...");
 		}
 		if (_state == EngineState::Play) {
-			instance->pre_play_scenedata = new SerializedObject(instance->current_root->Serialize());
+			if(instance->state == EngineState::Edit)
+				instance->pre_play_scenedata = new SerializedObject(instance->current_root->Serialize());
 
 			instance->_time.scale = 1;
 
-			auto objlist = instance->current_root->GetHandler<PhysicsObject>()->object_list;
+			auto objlist = instance->current_root->GetHandler<PhysicsObject>()->t_object_list;
 			for (const auto physicsobject : objlist) {
+				if (!physicsobject->Get_enabled())
+					continue;
+				
 				physicsobject->ForceWake();
 			}
 
-			Console::Log("Entering Play Mode...");
+			if (instance->state == EngineState::Edit)
+				Console::Log("Entering Play Mode...");
+
 		}
 		if (_state == EngineState::Paused) {
 			instance->_time.scale = 0;
-			Console::Log("Pausing...");
 		}
+
+		instance->state = _state;
+	}
+
+	void Engine::Step(double dur) {
+		instance->timeleft_stepping = dur;
 	}
 
 	void Engine::Run()
@@ -84,19 +126,6 @@ namespace gbe {
 #pragma endregion
 		//GLOBAL RUNTIME COMPONENTS
 		this->_time = Time();
-#pragma region Physics Pipeline Setup
-		auto mPhysicsPipeline = new physics::PhysicsPipeline();
-		mPhysicsPipeline->Init();
-		mPhysicsPipeline->Set_OnFixedUpdate_callback(
-			[=](float physicsdeltatime) {
-				auto phandler = this->current_root->GetHandler<PhysicsUpdate>();
-				for (auto updatable : phandler->object_list)
-				{
-					updatable->InvokePhysicsUpdate(physicsdeltatime);
-				}
-			}
-		);
-#pragma endregion
 #pragma region Audio Pipeline Setup
 		auto mAudioPipeline = new audio::AudioPipeline();
 		//mAudioPipeline->Init();
@@ -141,7 +170,7 @@ namespace gbe {
 
 		//TYPE SERIALIZER REGISTERING
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), RenderObject::Create);
-		
+
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RigidObject).name(), RigidObject::Create);
 
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(BoxCollider).name(), BoxCollider::Create);
@@ -162,6 +191,7 @@ namespace gbe {
 #pragma endregion
 #pragma region Root Loaders
 		this->current_root = this->CreateBlankRoot();
+		this->InitializeRoot();
 
 #pragma region scene singletons
 		//Spawn funcs
@@ -195,71 +225,30 @@ namespace gbe {
 			return parent;
 			};
 
-		//Global objects
-		//physics force setup
+		//PERSISTENT OBJECTS
+		//GRAVITY
 		auto gravity_volume = new ForceVolume();
 		gravity_volume->SetParent(this->current_root);
-		
 		Engine::MakePersistent(gravity_volume);
 
+		//EDITOR CAMERA
+		auto editor_input = new InputPlayer(player_name);
+		editor_input->SetParent(this->current_root);
+		auto editor_camera_controller = new FlyingCameraControl();
+		editor_camera_controller->SetParent(editor_input);
+		PerspectiveCamera* editor_cam = new PerspectiveCamera(mWindow);
+		editor_cam->SetParent(editor_camera_controller);
+		Engine::MakePersistent(editor_input);
+		editor_input->Set_is_editor();
+
+		//PLAYER CAMERA
 		auto player_input = new InputPlayer(player_name);
 		player_input->SetParent(this->current_root);
 		auto camera_controller = new FlyingCameraControl();
 		camera_controller->SetParent(player_input);
-
 		PerspectiveCamera* player_cam = new PerspectiveCamera(mWindow);
 		player_cam->SetParent(camera_controller);
-
 		Engine::MakePersistent(player_input);
-		player_input->Set_is_editor();
-
-		//================INPUT HANDLING================//
-		auto input_communicator = new GenericController();
-		input_communicator->SetParent(player_input);
-		//Left click customer
-		input_communicator->AddCustomer(new InputCustomer<KeyPress<Keys::MOUSE_LEFT>>([&](KeyPress<Keys::MOUSE_LEFT>* value, bool changed) {
-			}));
-		//WASD customer
-		input_communicator->AddCustomer(new InputCustomer<WasdDelta>([=](WasdDelta* value, bool changed) {
-
-			}));
-		//Spacebar customer
-		input_communicator->AddCustomer(new InputCustomer<KeyPress<Keys::SPACE>>([=](KeyPress<Keys::SPACE>* value, bool changed) {
-			if (value->state != KeyPress<Keys::SPACE>::START)
-				return;
-
-			const bool spawn_merged = false;
-
-			if (spawn_merged) {
-				auto merged_mesh = new asset::Mesh("out/merged.obj.gbe");
-				auto merged_dc = mRenderPipeline->RegisterDrawCall(merged_mesh, cube_mat);
-
-				auto current_camera = this->GetCurrentRoot()->GetHandler<Camera>()->object_list.front();
-				Vector3 camera_pos = current_camera->World().position.Get();
-				auto mousedir = current_camera->ScreenToRay(Vector2(0, 0));
-
-				create_mesh(merged_dc, camera_pos + (mousedir * 20.0f), Vector3(1, 1, 1), Quaternion::Euler(Vector3::zero));
-			}
-
-			const bool spawn_boxes = true;
-
-			if (spawn_boxes) {
-				for (size_t i = 0; i < 15; i++)
-				{
-					Vector3 from = Vector3(2, 30, 2);
-					Vector3 to = -from;
-					to.y = from.y;
-					create_primitive(RenderObject::PrimitiveType::cube, Vector3::RandomWithin(from, to), Vector3(1.0f));
-				}
-			}
-
-			}));
-		//ESCAPE Customer
-		input_communicator->AddCustomer(new InputCustomer<KeyPress<Keys::ESCAPE>>([=](KeyPress<Keys::ESCAPE>* value, bool changed) {
-			if (value->state != KeyPress<Keys::ESCAPE>::START)
-				return;
-
-			}));
 #pragma endregion
 
 #pragma region scene objects
@@ -294,37 +283,6 @@ namespace gbe {
 			create_primitive(RenderObject::PrimitiveType::cube, Vector3(0, -5, 5), Vector3(2), Quaternion::Euler(Vector3(0)));
 		}
 
-		if (test_scene) {
-			//MESH AND DRAWCALLS FOR TEST
-			auto brick_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-			auto brick_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/brick.img.gbe");
-			brick_mat->setOverride("colortex", brick_tex);
-
-			auto teapot_m = new asset::Mesh("DefaultAssets/3D/test/teapot.obj.gbe");
-			auto teapot_dc = mRenderPipeline->RegisterDrawCall(teapot_m, brick_mat);
-
-			auto bunny_m = new asset::Mesh("DefaultAssets/3D/test/bunny.obj.gbe");
-			auto bunny_dc = mRenderPipeline->RegisterDrawCall(bunny_m, grid_mat);
-
-			auto armadillo_m = new asset::Mesh("DefaultAssets/3D/test/armadillo.obj.gbe");
-			auto armadillo_dc = mRenderPipeline->RegisterDrawCall(armadillo_m, grid_mat);
-
-			const int trial = 3;
-
-			if (trial == 0)
-				create_mesh(teapot_dc, Vector3(0, 0, 0), Vector3(4.0f));
-			if (trial == 1)
-				create_mesh(bunny_dc, Vector3(-0, 0, 0), Vector3(20.0f));
-			if (trial == 2)
-				create_mesh(armadillo_dc, Vector3(-0, 0, 0), Vector3(2.0f));
-
-			if (trial == 3) {
-				create_mesh(teapot_dc, Vector3(0, 0, 0), Vector3(4.0f));
-				create_mesh(bunny_dc, Vector3(-10, 0, 0), Vector3(20.0f));
-				create_mesh(armadillo_dc, Vector3(-20, 0, 0), Vector3(2.0f));
-			}
-		}
-
 		this->Set_state(EngineState::Edit);
 #pragma endregion
 
@@ -334,6 +292,13 @@ namespace gbe {
 		/// MAIN GAME LOOP
 		while (!mWindow->ShouldClose())
 		{
+			if (this->state == Engine::EngineState::Paused) {
+				if (this->timeleft_stepping > 0)
+					this->_time.scale = 1;
+				else
+					this->_time.scale = 0;
+			}
+
 			/* Poll for and process events */
 			mWindow->UpdateState();
 			gbe::window::WindowEventType windoweventtype;
@@ -349,11 +314,17 @@ namespace gbe {
 			auto inputhandler = this->current_root->GetHandler<InputPlayer>();
 
 			mInputSystem->UpdateStates([=](std::string name, gbe::input::InputAction* action, bool changed) {
-				for (auto input_player : inputhandler->object_list) {
+				for (auto input_player : inputhandler->t_object_list) {
+					if (!input_player->Get_enabled())
+						continue;
 					if (input_player->get_player_name() != name)
 						continue;
+					if (this->Get_state() == EngineState::Edit && !input_player->Get_is_editor())
+						continue;
+					if (this->Get_state() != EngineState::Edit && input_player->Get_is_editor())
+						continue;
 
-					for (auto controller : input_player->controllers.object_list)
+					for (auto controller : input_player->controllers.t_object_list)
 						controller->ForEach_inputreceivers([action, changed](InputCustomer_base* input_customer) {
 						input_customer->TryReceive(action, changed);
 							});
@@ -363,10 +334,9 @@ namespace gbe {
 			//Update GUI system
 
 			//Early update
-			for (auto updatable : this->current_root->GetHandler<EarlyUpdate>()->object_list)
-			{
+			this->current_root->GetHandler<EarlyUpdate>()->DoOnEnabled([](EarlyUpdate* updatable) {
 				updatable->InvokeEarlyUpdate();
-			}
+				});
 
 			//Update Render pipeline
 			//EDITOR UPDATE
@@ -375,12 +345,9 @@ namespace gbe {
 			//<----------MORE EDITOR FUNCTIONS GO HERE
 			mEditor->PresentFrame();
 			//ENGINE UPDATE
-			for (auto light : this->current_root->GetHandler<LightObject>()->object_list)
-			{
-				if (mRenderPipeline->TryPushLight(light->GetData(), false) == false) {
-					break;
-				}
-			}
+			this->current_root->GetHandler<LightObject>()->DoOnEnabled([](LightObject* light) {
+				RenderPipeline::Get_Instance()->TryPushLight(light->GetData(), false);
+				});
 
 			auto pos = Vector3::zero;
 			auto forward = Vector3::zero;
@@ -390,8 +357,8 @@ namespace gbe {
 			auto nearclip = 0.0f;
 			auto farclip = 0.0f;
 
-			if (this->current_root->GetHandler<Camera>()->object_list.size() > 0) {
-				auto current_camera = this->current_root->GetHandler<Camera>()->object_list.front();
+			Camera* current_camera = GetActiveCamera();
+			if (current_camera != nullptr) {
 				pos = current_camera->World().position.Get();
 				forward = current_camera->World().GetForward();
 				frustrum = current_camera->getproj() * current_camera->GetViewMat();
@@ -416,21 +383,18 @@ namespace gbe {
 			auto lateupdatehandler = this->current_root->GetHandler<LateUpdate>();
 
 			auto onTick = [=](double deltatime) {
-				physics::PhysicsPipeline::Get_Instance()->Tick(deltatime);
-				physicshandler->Update();
+				physicshandler->Update(deltatime);
 
 				float delta_f = (float)deltatime;
 
 				//Normal Update
-				for (auto updatable : updatehandler->object_list)
-				{
+				updatehandler->DoOnEnabled([delta_f](Update* updatable) {
 					updatable->InvokeUpdate(delta_f);
-				}
+					});
 				//Late Update
-				for (auto updatable : lateupdatehandler->object_list)
-				{
+				lateupdatehandler->DoOnEnabled([delta_f](LateUpdate* updatable) {
 					updatable->InvokeLateUpdate(delta_f);
-				}
+					});
 
 				//GUI
 				//mGUIPipeline->Update(deltatime);
@@ -473,15 +437,11 @@ namespace gbe {
 				delete rootdeletee;
 			}
 
-			//COMMIT ROOT CHANGE
 			if (this->queued_rootchange != nullptr) {
 				this->current_root = this->queued_rootchange;
 				this->queued_rootchange = nullptr;
 
-				for (const auto persistent : this->persistents)
-				{
-					persistent->SetParent(this->current_root);
-				}
+				this->InitializeRoot();
 			}
 		}
 #pragma endregion

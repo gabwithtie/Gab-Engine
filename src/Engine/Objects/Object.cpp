@@ -8,6 +8,7 @@
 #include "Editor/gbe_editor.h"
 
 unsigned int gbe::Object::next_avail_id = 0;
+std::unordered_map<unsigned int, gbe::Object*> gbe::Object::valid_objects;
 
 void gbe::Object::MatToTrans(Transform* target, Matrix4 mat)
 {
@@ -66,9 +67,12 @@ gbe::Object::Object()
 
 	this->id = next_avail_id;
 	next_avail_id++;
+	valid_objects.insert_or_assign(this->id, this);
 }
 
 gbe::Object::~Object(){
+	valid_objects.insert_or_assign(this->id, nullptr);
+
 	for (const auto& child : this->children)
 	{
 		delete child;
@@ -161,6 +165,9 @@ void gbe::Object::SetParent(Object* newParent)
 		parent->children.remove_if([this](Object* child) {return child == this; });
 
 		this->parent_matrix = Matrix4(1.0f);
+
+		if (parent->enabled_hierarchy != this->enabled_hierarchy && this->enabled_self)
+			this->On_Change_enabled(parent->enabled_hierarchy);
 	}
 
 	if (newParent != nullptr) {
@@ -208,15 +215,19 @@ bool gbe::Object::get_isDestroyed()
 	return this->isDestroyQueued;
 }
 
-void gbe::Object::CallRecursively(std::function<void(Object*)> action)
+void gbe::Object::CallRecursively(std::function<void(Object*)> action, bool bottom_up)
 {
+	if (!bottom_up)
+		action(this);
+
 	size_t childcount = GetChildCount();
 	for (size_t i = 0; i < childcount; i++)
 	{
 		this->GetChildAt(i)->CallRecursively(action);
 	}
 
-	action(this);
+	if(bottom_up)
+		action(this);
 }
 
 gbe::SerializedObject gbe::Object::Serialize() {
@@ -231,6 +242,7 @@ gbe::SerializedObject gbe::Object::Serialize() {
 
 	return {
 		.type = typeid(*this).name(),
+		.enabled = this->enabled_self,
 		.local_position = { this->local.position.Get().x, this->local.position.Get().y, this->local.position.Get().z },
 		.local_scale = { this->local.scale.Get().x, this->local.scale.Get().y, this->local.scale.Get().z },
 		.local_euler_rotation = { euler_rot.x, euler_rot.y, euler_rot.z },
@@ -238,17 +250,39 @@ gbe::SerializedObject gbe::Object::Serialize() {
 	};
 }
 
-void gbe::Object::Deserialize(gbe::SerializedObject data) {
+void gbe::Object::Deserialize(gbe::SerializedObject data, bool root) {
 	this->local.position.Set(Vector3(data.local_position[0], data.local_position[1], data.local_position[2]));
 	this->local.scale.Set(Vector3(data.local_scale[0], data.local_scale[1], data.local_scale[2]));
 	this->local.rotation.Set(Quaternion::Euler(Vector3(data.local_euler_rotation[0], data.local_euler_rotation[1], data.local_euler_rotation[2])));
-	for (const auto& child : data.children)
+	
+	for (size_t i= 0; i < data.children.size(); i++)
 	{
+		const auto& child = data.children[i];
 		auto new_child = gbe::TypeSerializer::Instantiate(child.type, child);
 
 		if (new_child != nullptr) {
 			new_child->SetParent(this);
-			new_child->Deserialize(child);
+			new_child->Deserialize(child, false);
 		}
+		else {
+			data.children.erase(data.children.begin() + i);
+			i--;
+		}
+	}
+
+	if (root) {
+		std::function<void(gbe::SerializedObject data, Object* obj)>* _commit_enabled;
+		std::function<void(gbe::SerializedObject data, Object* obj)> commit_enabled = [&](gbe::SerializedObject data, Object* obj) {
+			for (size_t i = 0; i < data.children.size(); i++)
+			{
+				(*_commit_enabled)(data.children[i], obj->GetChildAt(i));
+			}
+			
+			obj->Set_enabled(data.enabled);
+			};
+
+		_commit_enabled = &commit_enabled;
+
+		(*_commit_enabled)(data, this);
 	}
 }

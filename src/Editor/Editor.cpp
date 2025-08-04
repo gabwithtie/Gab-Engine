@@ -140,6 +140,9 @@ void gbe::Editor::SelectSingle(Object* other) {
 	}
 
 	if (instance->held_gizmo != nullptr) {
+		if (instance->selected.size() == 0)
+			return;
+
 		instance->original_selected_position = instance->selected[0]->World().position.Get();
 		std::cout << "Holding Gizmo" << std::endl;
 	}
@@ -242,7 +245,7 @@ void gbe::Editor::Redo()
 }
 
 void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcall, Vector3 rotation, Vector3 direction) {
-	if (out_g == nullptr) {
+	if (out_g == nullptr || !Object::ValidateObject(out_g)) {
 		auto newGizmo = new RigidObject(true);
 		newGizmo->SetParent(mengine->GetCurrentRoot());
 		newGizmo->Local().scale.Set(Vector3(0.1f, 0.1f, (gizmo_offset_distance * 2.0f)));
@@ -302,14 +305,14 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT && !this->pointer_inUi) {
 
 			//RAYCAST MECHANICS
-			auto current_camera = this->mengine->GetCurrentRoot()->GetHandler<Camera>()->object_list.front();
+			auto current_camera = this->mengine->GetActiveCamera();
 			Vector3 camera_pos = current_camera->World().position.Get();
 			auto mousedir = current_camera->ScreenToRay(mwindow->GetMouseDecimalPos());
 
 			//OBJECT SELECTION
 			Vector3 ray_dir = mousedir * 10000.0f;
 			auto result = physics::Raycast(camera_pos, ray_dir);
-			if (result.result && !result.other->get_isDestroyed()) {
+			if (result.result && Object::ValidateObject(result.other)) {
 				auto newlyclicked = result.other;
 
 				//CHECK IF OTHER HAS A RENDERER, IF NONE, DONT CLICK
@@ -402,7 +405,7 @@ void gbe::Editor::Update()
 {
 	//==============================EDITOR UPDATE==============================//
 	if (selected.size() == 1) {
-		auto current_camera = this->mengine->GetCurrentRoot()->GetHandler<Camera>()->object_list.front();
+		auto current_camera = this->mengine->GetActiveCamera();
 		Vector3 camera_pos = current_camera->World().position.Get();
 		auto mousedir = current_camera->ScreenToRay(mwindow->GetMouseDecimalPos());
 

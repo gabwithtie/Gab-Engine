@@ -34,7 +34,22 @@ gbe::RenderObject::~RenderObject()
 
 void gbe::RenderObject::InvokeEarlyUpdate()
 {
+	if (to_update == nullptr)
+		return;
+
 	*to_update = this->GetWorldMatrix();
+}
+
+void gbe::RenderObject::On_Change_enabled(bool _to) {
+	Object::On_Change_enabled(_to);
+
+	if (_to) {
+		to_update = this->mDrawCall->RegisterCall(this, this->GetWorldMatrix());
+	}
+	else {
+		this->mDrawCall->UnRegisterCall(this);
+		to_update = nullptr;
+	}
 }
 
 gbe::SerializedObject gbe::RenderObject::Serialize() {

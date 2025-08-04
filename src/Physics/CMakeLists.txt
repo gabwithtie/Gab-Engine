@@ -2,7 +2,7 @@ set(CURRENT_CMAKE_LIB gbe_physics)
 
 #SUBDIRECTORY LOADING
 add_library(${CURRENT_CMAKE_LIB} STATIC
-	"PhysicsPipeline.cpp"
+	"PhysicsWorld.cpp"
 	"PhysicsDatatypes.cpp" 
 	"PhysicsBody.cpp"
 	"Rigidbody.cpp"
@@ -10,7 +10,11 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"ColliderData/SphereColliderData.cpp"
 	"ColliderData/ColliderData.cpp" 
 	"ColliderData/BoxColliderData.cpp"
- "Raycast.cpp" "ColliderData/MeshColliderData.cpp" "RaycastAll.cpp" "ColliderData/CapsuleColliderData.h" "ColliderData/CapsuleColliderData.cpp")
+ "Raycast.cpp"
+ "ColliderData/MeshColliderData.cpp"
+ "RaycastAll.cpp"
+ "ColliderData/CapsuleColliderData.cpp"
+ "PhysicsPipeline.cpp")
 
 find_package(Bullet CONFIG REQUIRED)
 target_link_libraries(${CURRENT_CMAKE_LIB} PUBLIC ${BULLET_LIBRARIES})

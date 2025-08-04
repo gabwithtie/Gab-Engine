@@ -10,6 +10,9 @@ namespace gbe {
 		std::function<PhysicsObject* (physics::PhysicsBody*)>* lookup_func;
 		std::list<Collider*> colliders;
 		physics::PhysicsBody* body;
+		physics::PhysicsWorld* world;
+
+		void On_Change_enabled(bool _to) override;
 	public:
 		virtual ~PhysicsObject();
 

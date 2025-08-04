@@ -18,8 +18,8 @@ namespace gbe {
 		public:
 			TriggerRigidBody(PhysicsObject* object);
 
-			void Register(btDynamicsWorld* register_to) override;
-			void UnRegister() override;
+			void Activate() override;
+			void Deactivate() override;
 
 			int Get_numInside();
 			PhysicsBody* Get_inside(int index);

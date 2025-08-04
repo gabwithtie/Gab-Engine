@@ -11,18 +11,22 @@ namespace gbe {
 	class PhysicsObject;
 
 	namespace physics {
+		class PhysicsWorld;
+
 		class PhysicsBody {
 		protected:
-			btDynamicsWorld* world;
+			PhysicsWorld* world = nullptr;
 
 			btTransform transform;
-			btCollisionObject* base_data;
-			btDefaultMotionState* motionstate;
+			btCollisionObject* base_data = nullptr;
+			btDefaultMotionState* motionstate = nullptr;
 
-			PhysicsObject* related_engine_wrapper;
+			PhysicsObject* related_engine_wrapper = nullptr;
 
-			btCompoundShape* mMainShape;
+			btCompoundShape* mMainShape = nullptr;
 			PhysicsBody(PhysicsObject* _related_engine_wrapper);
+
+			bool active = true;
 		public:
 			void InjectCurrentTransformMatrix(Matrix4);
 			void PassTransformationData(Vector3&, Quaternion&);
@@ -31,8 +35,20 @@ namespace gbe {
 			btCollisionObject* Get_wrapped_data();
 			PhysicsObject* Get_wrapper();
 
-			virtual void Register(btDynamicsWorld* register_to);
-			virtual void UnRegister();
+			inline PhysicsWorld* Get_world() {
+				return this->world;
+			}
+
+			inline void Register(PhysicsWorld* register_to) {
+				this->world = register_to;
+			}
+
+			inline virtual void Activate() {
+				active = true;
+			}
+			inline virtual void Deactivate() {
+				active = false;
+			}
 
 			void AddCollider(ColliderData*);
 			void UpdateColliderTransform(ColliderData*);

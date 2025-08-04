@@ -55,16 +55,17 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 		//DRAW THE BUILT IN INSPECTORS PER OBJECT
 
 		ImGui::SeparatorText("Quick Actions:");
+		bool _enabled = (*this->selected)[0]->Get_enabled_self();
+		if (ImGui::Checkbox("Enabled", &_enabled)) {
+			(*this->selected)[0]->Set_enabled(_enabled);
+		}
+		ImGui::SameLine();
 		if (ImGui::Button("Re-Parent")) {
 			this->reparentee = (*this->selected)[0];
 			this->is_reparenting = true;
 			Editor::DeselectAll();
 
 			return;
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Enable")) {
-
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Destroy")) {

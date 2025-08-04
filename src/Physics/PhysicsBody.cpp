@@ -1,11 +1,10 @@
 #include "PhysicsBody.h"
 
 #include "Engine/Objects/Physics/PhysicsObject.h"
-#include "PhysicsPipeline.h"
+#include "PhysicsWorld.h"
 
 gbe::physics::PhysicsBody::PhysicsBody(PhysicsObject* _related_engine_wrapper)
 {
-
 	this->related_engine_wrapper = _related_engine_wrapper;
 	this->base_data = nullptr;
 	this->world = nullptr;
@@ -19,14 +18,19 @@ gbe::physics::PhysicsBody::PhysicsBody(PhysicsObject* _related_engine_wrapper)
 
 void gbe::physics::PhysicsBody::InjectCurrentTransformMatrix(Matrix4 pos)
 {
+	if (!active)
+		return;
+
 	this->transform.setFromOpenGLMatrix(pos.Get_Ptr());
 	this->base_data->setWorldTransform(this->transform);
 	this->motionstate->setWorldTransform(this->transform);
-
 }
 
 void gbe::physics::PhysicsBody::PassTransformationData(Vector3& pos, Quaternion& rot)
 {
+	if (!active)
+		return;
+
 	this->ForceUpdateTransform();
 	pos = (PhysicsVector3)this->transform.getOrigin();
 	rot = (PhysicsQuaternion)this->transform.getRotation();
@@ -34,6 +38,9 @@ void gbe::physics::PhysicsBody::PassTransformationData(Vector3& pos, Quaternion&
 
 void gbe::physics::PhysicsBody::PassTransformationMatrix(Matrix4& mat)
 {
+	if (!active)
+		return;
+
 	this->ForceUpdateTransform();
 	this->transform.getOpenGLMatrix((float*)mat.Get_Ptr());
 }
@@ -47,18 +54,8 @@ gbe::PhysicsObject* gbe::physics::PhysicsBody::Get_wrapper()
 	return this->related_engine_wrapper;
 }
 
-void gbe::physics::PhysicsBody::Register(btDynamicsWorld* register_to)
-{
-	this->world = register_to;
-}
-
-void gbe::physics::PhysicsBody::UnRegister()
-{
-	this->world = nullptr;
-}
-
 void gbe::physics::PhysicsBody::ForceWake() {
-	world->getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(base_data->getBroadphaseHandle(), PhysicsPipeline::Get_Instance()->Get_dispatcher());
+	world->Get_world()->getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(base_data->getBroadphaseHandle(), world->Get_dispatcher());
 	base_data->activate(true);
 }
 
@@ -69,6 +66,8 @@ void gbe::physics::PhysicsBody::AddCollider(ColliderData* col)
 
 void gbe::physics::PhysicsBody::UpdateColliderTransform(ColliderData* col)
 {
+	if (!active)
+		return;
 
 	int index = 0;
 	for (size_t i = 0; i < this->mMainShape->getNumChildShapes(); i++)
@@ -89,10 +88,12 @@ void gbe::physics::PhysicsBody::RemoveCollider(ColliderData* col)
 
 void gbe::physics::PhysicsBody::UpdateAABB()
 {
+	if (!active)
+		return;
 	if (this->world == nullptr)
 		return;
 
-	this->world->updateSingleAabb(this->base_data);
+	this->world->Get_world()->updateSingleAabb(this->base_data);
 }
 
 

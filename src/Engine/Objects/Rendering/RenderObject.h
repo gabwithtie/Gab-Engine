@@ -26,8 +26,10 @@ namespace gbe {
 
 		//Rendering stuff
 		gfx::DrawCall* mDrawCall;
-		Matrix4* to_update;
+		Matrix4* to_update = nullptr;
 		PrimitiveType ptype = PrimitiveType::NONE;
+	protected:
+		void On_Change_enabled(bool _to) override;
 	public:
 		static inline void RegisterPrimitiveDrawcall(PrimitiveType ptype, gfx::DrawCall* drawtype) {
 			primitive_drawcalls.insert_or_assign(ptype, drawtype);

@@ -1,6 +1,6 @@
 #include "TriggerRigidBody.h"
 #include <bullet/BulletCollision/CollisionDispatch/btGhostObject.h>
-#include "PhysicsPipeline.h"
+#include "PhysicsWorld.h"
 
 gbe::physics::TriggerRigidBody::TriggerRigidBody(PhysicsObject* object) : PhysicsBody(object) {
 	auto newdata = new btGhostObject();
@@ -17,16 +17,16 @@ void gbe::physics::TriggerRigidBody::Pre_Tick_function(float deltatime)
 {
 }
 
-void gbe::physics::TriggerRigidBody::Register(btDynamicsWorld* register_to)
+void gbe::physics::TriggerRigidBody::Activate()
 {
-	register_to->addCollisionObject(this->base_data);
-	PhysicsBody::Register(register_to);
+	this->world->Get_world()->addCollisionObject(this->base_data);
+	PhysicsBody::Activate();
 }
 
-void gbe::physics::TriggerRigidBody::UnRegister()
+void gbe::physics::TriggerRigidBody::Deactivate()
 {
-	this->world->removeCollisionObject(this->base_data);
-	PhysicsBody::UnRegister();
+	this->world->Get_world()->removeCollisionObject(this->base_data);
+	PhysicsBody::Deactivate();
 }
 
 int gbe::physics::TriggerRigidBody::Get_numInside() {
@@ -35,7 +35,7 @@ int gbe::physics::TriggerRigidBody::Get_numInside() {
 
 gbe::physics::PhysicsBody* gbe::physics::TriggerRigidBody::Get_inside(int index) {
 	auto key = btGhostObject::upcast(this->base_data)->getOverlappingObject(index);
-	return physics::PhysicsPipeline::Get_Instance()->GetRelatedBody(key);
+	return this->world->GetRelatedBody(key);
 }
 
 void gbe::physics::TriggerRigidBody::ForceUpdateTransform()

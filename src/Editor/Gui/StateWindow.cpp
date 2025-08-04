@@ -15,7 +15,7 @@ void gbe::editor::StateWindow::DrawSelf()
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Step")) {
-
+		Engine::Step(0.05f);
 	}
 }
 

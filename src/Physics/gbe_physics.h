@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PhysicsDatatypes.h"
+#include "PhysicsWorld.h"
 #include "PhysicsPipeline.h"
 #include "Rigidbody.h"
 #include "Raycast.h"
