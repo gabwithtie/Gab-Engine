@@ -21,17 +21,17 @@ namespace gbe {
 			VELOCITY
 		};
 
-		Shape shape;
+		Shape shape = ForceVolume::GLOBAL;
 		Vector3 half_bounds;
 		float radius;
 		
-		Mode mode;
+		Mode mode = ForceVolume::DIRECTIONAL;
 		//for directional
-		Vector3 vector;
+		Vector3 vector = Vector3(0.f, -12, 0.f);
 		//for radial and orbital
 		float scalar;
 
-		ForceMode forceMode;
+		ForceMode forceMode = ForceVolume::VELOCITY;
 
 		void TryApply(RigidObject* object);
 	};

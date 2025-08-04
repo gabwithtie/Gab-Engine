@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GuiElement.h"
+
 #include <typeinfo>
 #include <string>
 
@@ -9,15 +11,12 @@
 
 namespace gbe {
 	namespace editor {
-		class GuiWindow {
-		public:
-			void Draw();
+		class GuiWindow : public GuiElement{
 		protected:
-			virtual void DrawSelf() = 0;
 			virtual std::string GetWindowId() = 0;
 		private:
-			bool ext_Begin();
-			void ext_End();
+			bool ext_Begin() override;
+			void ext_End() override;
 		};
 	}
 }

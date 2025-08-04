@@ -7,23 +7,31 @@
 
 namespace gbe {
 	namespace asset {
+		struct BaseImportData {
+			std::string asset_type;
+			std::string asset_id;
+		};
+
 		namespace internal {
 			class BaseAsset_base {
-
+			protected:
+				std::string asset_directory;
+				std::string asset_filepath;
+				bool destroy_queued;
+				BaseImportData base_import_data;
+			public:
+				inline std::string Get_asset_directory() {
+					return asset_directory;
+				}
+				inline std::string Get_asset_filepath() {
+					return asset_filepath;
+				}
 			};
 		}
 
 		template<class TFinal, class TImportData, class TLoadData>
-		class BaseAsset : internal::BaseAsset_base {
-		private:
-			std::string asset_directory;
-			bool destroy_queued;
+		class BaseAsset : public internal::BaseAsset_base {
 		protected:
-			struct BaseImportData {
-				std::string asset_type;
-				std::string asset_id;
-			}base_import_data;
-
 			TImportData import_data;
 
 			TLoadData load_data;
@@ -32,6 +40,7 @@ namespace gbe {
 				gbe::asset::serialization::gbeParser::PopulateClass(this->base_import_data, asset_path);
 				gbe::asset::serialization::gbeParser::PopulateClass(this->import_data, asset_path);
 				
+				this->asset_filepath = asset_path;
 				this->asset_directory = asset_path;
 
 				while (this->asset_directory.back() != '/')

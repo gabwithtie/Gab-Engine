@@ -13,7 +13,7 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
  "Parsing/gbeParser.h" "AssetLoading/AssetDeserializer.cpp"  
  "AssetTypes/Audio.cpp"
  "AssetTypes/Material.cpp"
-)
+ )
 
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)
 

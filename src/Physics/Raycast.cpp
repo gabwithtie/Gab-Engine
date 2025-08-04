@@ -1,5 +1,6 @@
 #include "Raycast.h"
 
+#include "PhysicsWorld.h"
 #include "PhysicsPipeline.h"
 #include "BulletCollision/NarrowPhaseCollision/btRaycastCallback.h"
 #include "BulletCollision/Gimpact/btGImpactShape.h"
@@ -36,17 +37,18 @@ gbe::physics::Raycast::Raycast(PhysicsVector3 from, PhysicsVector3 dir)
 	RaycastCallback closestResults(from, to);
 	closestResults.m_flags |= btTriangleRaycastCallback::kF_FilterBackfaces;
 
-	physics::PhysicsPipeline::Get_Instance()->Get_world()->rayTest(from, to, closestResults);
-
+	auto cur_context = physics::PhysicsPipeline::GetContext();
+	cur_context->Get_world()->rayTest(from, to, closestResults);
 	this->result = closestResults.hasHit();
 	
 	if (this->result) {
-		auto relatedbody = PhysicsPipeline::GetRelatedBody(closestResults.m_collisionObject);
-		auto relatedcollider = PhysicsPipeline::GetRelatedCollider(closestResults.hitShape);
+		auto relatedbody = cur_context->GetRelatedBody(closestResults.m_collisionObject);
+		auto relatedcollider = cur_context->GetRelatedCollider(closestResults.hitShape);
 		this->other = relatedbody->Get_wrapper();
 		this->collider = relatedcollider->Get_wrapper();
 		this->intersection = closestResults.m_hitPointWorld;
 		Vector3 delta = from - this->intersection;
+		this->normal = closestResults.m_hitNormalWorld;
 		this->distance = delta.Magnitude();
 	}
 }

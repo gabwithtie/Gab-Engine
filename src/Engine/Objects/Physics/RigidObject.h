@@ -7,10 +7,15 @@
 
 namespace gbe {
 	class RigidObject : public PhysicsObject {
+		bool is_static = false;
 	public:
 		RigidObject(bool is_static = false);
 		~RigidObject();
 
 		physics::Rigidbody* GetRigidbody();
+
+		static Object* Create(SerializedObject data);
+
+		SerializedObject Serialize() override;
 	};
 }

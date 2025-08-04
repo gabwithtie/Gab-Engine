@@ -36,6 +36,17 @@ const std::list<gbe::Collider*> gbe::PhysicsObject::Get_colliders() {
 	return this->colliders;
 }
 
+void gbe::PhysicsObject::On_Change_enabled(bool _to) {
+	Object::On_Change_enabled(_to);
+
+	if (_to) {
+		this->body->Activate();
+	}
+	else {
+		this->body->Deactivate();
+	}
+}
+
 void gbe::PhysicsObject::OnEnterHierarchy(Object* newChild)
 {
 	Object::OnEnterHierarchy(newChild);

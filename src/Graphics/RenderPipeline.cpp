@@ -10,7 +10,7 @@
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
-const bool enableValidationLayers = true;
+const bool enableValidationLayers = false;
 #endif
 
 using namespace gbe;
@@ -917,7 +917,8 @@ void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& n
     renderPassBeginInfo.renderArea.extent = this->swapchainExtent;
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = { {0.5f, 0.5f, 0.5f, 1.0f} };
+    float clear_brightness = 0.3f;
+    clearValues[0].color = { {clear_brightness, clear_brightness, clear_brightness, 1.0f} };
     clearValues[1].depthStencil = { 1.0f, 0 };
 
     renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());

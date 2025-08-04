@@ -16,7 +16,7 @@ namespace gbe {
 			Vector3 position;
 			Quaternion rotation;
 			float duration; // Duration in seconds for this node
-		};;
+		};
 
 		bool is_playing = false;
 

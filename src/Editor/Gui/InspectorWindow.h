@@ -13,8 +13,11 @@ namespace gbe {
 		class InspectorWindow : public GuiWindow {
 			void DrawSelf() override;
 			std::string GetWindowId() override;
+			bool DrawVector3Field(std::string label, Vector3* field);
+
+			bool is_reparenting = false;
+			gbe::Object* reparentee;
 		public:
-			Time* mtime;
 			std::vector<gbe::Object*>* selected;
 		};
 	}

@@ -24,11 +24,12 @@ namespace gbe {
 			};
 		
 		public:
-			bool result;
-			PhysicsObject* other;
-			Collider* collider;
+			bool result = false;
+			PhysicsObject* other = nullptr;
+			Collider* collider = nullptr;
 			PhysicsVector3 intersection;
-			float distance;
+			PhysicsVector3 normal;
+			float distance = 0;
 
 			Raycast(PhysicsVector3 from, PhysicsVector3 dir);
 			

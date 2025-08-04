@@ -1,6 +1,6 @@
 #include "ColliderHandler.h"
 
-gbe::ColliderHandler::ColliderHandler(physics::PhysicsPipeline* pipeline)
+gbe::ColliderHandler::ColliderHandler(physics::PhysicsWorld* pipeline)
 {
 	this->mPipeline = pipeline;
 }

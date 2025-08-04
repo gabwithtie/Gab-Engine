@@ -18,7 +18,7 @@ namespace gbe {
 			btTransform transform;
 
 		protected:
-			Collider* related_engine_wrapper;
+			Collider* related_engine_wrapper = nullptr;
 		public:
 			ColliderData(Collider* related_engine_wrapper);
 

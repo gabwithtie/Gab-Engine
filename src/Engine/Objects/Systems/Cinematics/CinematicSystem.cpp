@@ -32,7 +32,7 @@ gbe::CinematicSystem::CinematicSystem()
 
 void gbe::CinematicSystem::StartCameraMovement()
 {
-	this->cur_cam = this->root->GetHandler<Camera>()->object_list.front();
+	this->cur_cam = this->root->GetHandler<Camera>()->t_object_list.front();
 
 	this->is_playing = true;
 	this->sequence_t = 0;
@@ -40,7 +40,7 @@ void gbe::CinematicSystem::StartCameraMovement()
 
 void gbe::CinematicSystem::SpawnNode()
 {
-	auto current_camera = this->root->GetHandler<Camera>()->object_list.front();
+	auto current_camera = this->root->GetHandler<Camera>()->t_object_list.front();
 	
 	//NEW OBJECT
 	auto newGizmo = new RenderObject(this->node_dracall);

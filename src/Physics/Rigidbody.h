@@ -4,16 +4,18 @@
 
 #include <bullet/btBulletDynamicsCommon.h>
 
-#include "PhysicsDatatypes.h"
 #include <list>
-#include "ColliderData/ColliderData.h"
 
 #include "PhysicsBody.h"
+#include "PhysicsDatatypes.h"
+#include "ColliderData/ColliderData.h"
 
 namespace gbe {
 	class PhysicsObject;
 
 	namespace physics {
+		class PhysicsWorld;
+
 		class Rigidbody : public PhysicsBody{
 		private:
 			PhysicsVector3 continouus_forces_this_frame;
@@ -21,8 +23,8 @@ namespace gbe {
 		public:
 			Rigidbody(PhysicsObject* object, bool is_static = false);
 
-			void Register(btDynamicsWorld* register_to) override;
-			void UnRegister() override;
+			void Activate() override;
+			void Deactivate() override;
 
 			void SetStatic(bool);
 			void AddForce(PhysicsVector3 force);

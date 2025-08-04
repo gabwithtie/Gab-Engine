@@ -10,6 +10,9 @@ namespace gbe {
 		std::function<PhysicsObject* (physics::PhysicsBody*)>* lookup_func;
 		std::list<Collider*> colliders;
 		physics::PhysicsBody* body;
+		physics::PhysicsWorld* world;
+
+		void On_Change_enabled(bool _to) override;
 	public:
 		virtual ~PhysicsObject();
 
@@ -20,6 +23,9 @@ namespace gbe {
 		void OnExternalTransformationChange(TransformChangeType, Matrix4 parentmat) override;
 
 		void UpdateCollider(Collider* what);
+		inline void ForceWake() {
+			body->ForceWake();
+		}
 
 		void Set_lookup_func(std::function<PhysicsObject* (physics::PhysicsBody*)>*);
 		physics::PhysicsBody* Get_data();

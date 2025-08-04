@@ -1,4 +1,5 @@
 #include "Rigidbody.h"
+#include "PhysicsWorld.h"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -17,16 +18,16 @@ gbe::physics::Rigidbody::Rigidbody(PhysicsObject* object, bool is_static) : Phys
 	this->base_data = newdata;
 }
 
-void gbe::physics::Rigidbody::Register(btDynamicsWorld* register_to)
+void gbe::physics::Rigidbody::Activate()
 {
-	register_to->addRigidBody(btRigidBody::upcast(this->base_data));
-	PhysicsBody::Register(register_to);
+	this->world->Get_world()->addRigidBody(btRigidBody::upcast(this->base_data));
+	PhysicsBody::Activate();
 }
 
-void gbe::physics::Rigidbody::UnRegister()
+void gbe::physics::Rigidbody::Deactivate()
 {
-	this->world->removeRigidBody(btRigidBody::upcast(this->base_data));
-	PhysicsBody::UnRegister();
+	this->world->Get_world()->removeRigidBody(btRigidBody::upcast(this->base_data));
+	PhysicsBody::Deactivate();
 }
 
 void gbe::physics::Rigidbody::ForceUpdateTransform() {
