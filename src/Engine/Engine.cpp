@@ -155,18 +155,15 @@ namespace gbe {
 		auto logo_tex = new asset::Texture("DefaultAssets/Tex/UI/logo.img.gbe");
 
 		//MATERIAL CACHING
+		auto unlit_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
 		auto grid_mat = new asset::Material("DefaultAssets/Materials/grid.mat.gbe");
-		grid_mat->setOverride("color", Vector4(0.3, 1, 0.3, 1.0f));
-		grid_mat->setOverride("colortex", test_tex);
-		auto cube_mat = new asset::Material("DefaultAssets/Materials/grid.mat.gbe");
-		cube_mat->setOverride("colortex", test_tex);
 		auto wire_mat = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
 
 		//DRAW CALL CACHING X PRIMITIVES CACHING
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, mRenderPipeline->RegisterDrawCall(cube_mesh, cube_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, mRenderPipeline->RegisterDrawCall(sphere_mesh, cube_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, mRenderPipeline->RegisterDrawCall(plane_mesh, cube_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, mRenderPipeline->RegisterDrawCall(capsule_mesh, cube_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, mRenderPipeline->RegisterDrawCall(cube_mesh, grid_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, mRenderPipeline->RegisterDrawCall(sphere_mesh, grid_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, mRenderPipeline->RegisterDrawCall(plane_mesh, grid_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, mRenderPipeline->RegisterDrawCall(capsule_mesh, grid_mat));
 
 		//TYPE SERIALIZER REGISTERING
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), RenderObject::Create);

@@ -3,6 +3,8 @@
 #include "../Utility/ModelExport.h"
 #include "../Editor.h"
 
+#include "Asset/gbe_asset.h"
+
 void gbe::editor::InspectorWindow::DrawSelf() {
 	//OBJECT INSPECTOR
 	if ((*this->selected).size() == 0) {
@@ -173,9 +175,29 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 				}
 
 				if (field->fieldtype == editor::InspectorField::ASSET) {
-					auto buttonfield = static_cast<editor::InspectorAsset*>(field);
-					if (ImGui::Button(buttonfield->name.c_str())) {
-						buttonfield->onpress();
+					auto assetfield = static_cast<editor::InspectorAsset_base*>(field);
+					auto assetlist = assetfield->GetChoices();
+
+					if (ImGui::BeginCombo(assetfield->name.c_str(), assetfield->choice_label.c_str()))
+					{
+						for (size_t n = 0; n < assetlist.size(); n++)
+						{
+							auto cur = assetlist[n]->Get_asset_filepath();
+
+							const bool is_selected = (cur == assetfield->choice_label.c_str());
+							if (ImGui::Selectable(cur.c_str(), is_selected))
+							{
+								*assetfield->choice = assetlist[n];
+								assetfield->choice_label = cur;
+							}
+
+							// Set the initial focus when opening the combo (scrolling to the item if needed)
+							if (is_selected)
+							{
+								ImGui::SetItemDefaultFocus();
+							}
+						}
+						ImGui::EndCombo();
 					}
 				}
 			}

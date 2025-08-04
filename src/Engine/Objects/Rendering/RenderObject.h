@@ -25,12 +25,12 @@ namespace gbe {
 		static std::unordered_map<PrimitiveType, gfx::DrawCall*> primitive_drawcalls;
 
 		//CONSTRUCTION INFO
-		asset::Mesh* _mesh;
-		asset::Texture* _tex;
-		asset::Material* _mat;
+		asset::Mesh* _mesh = nullptr;
+		asset::Texture* _tex = nullptr;
+		asset::Material* _mat = nullptr;
 
 		//RENDERING CACHE
-		gfx::DrawCall* mDrawCall;
+		gfx::DrawCall* mDrawCall = nullptr;
 		Matrix4* to_update = nullptr;
 		PrimitiveType ptype = PrimitiveType::NONE;
 	protected:

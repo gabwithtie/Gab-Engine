@@ -3,6 +3,7 @@
 
 #include "Editor/gbe_editor.h"
 #include "Graphics/RenderPipeline.h"
+#include "Asset/gbe_asset.h"
 
 using namespace gbe::gfx;
 
@@ -19,26 +20,29 @@ const std::unordered_map<gbe::RenderObject::PrimitiveType, std::string> gbe::Ren
 
 gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 {
-	this->mDrawCall = mDrawCall;
-	to_update = this->mDrawCall->RegisterCall(this, this->GetWorldMatrix());
+	if (mDrawCall != nullptr) {
+		this->mDrawCall = mDrawCall;
+		to_update = this->mDrawCall->RegisterCall(this, this->GetWorldMatrix());
+	}
 
 	auto texture_field = new gbe::editor::InspectorAsset<TextureLoader, asset::Texture>();
 	texture_field->name = "Texture";
-	texture_field->choice = &this->_tex;
+	texture_field->choice = (asset::internal::BaseAsset_base**)&this->_tex;
 
 	auto mesh_field = new gbe::editor::InspectorAsset<MeshLoader, asset::Mesh>();
 	mesh_field->name = "Mesh";
-	mesh_field->choice = &this->_mesh;
+	mesh_field->choice = (asset::internal::BaseAsset_base**)&this->_mesh;
 
 	auto mat_field = new gbe::editor::InspectorAsset<MaterialLoader, asset::Material>();
 	mat_field->name = "Material";
-	mat_field->choice = &this->_mat;
+	mat_field->choice = (asset::internal::BaseAsset_base**)&this->_mat;
 
 	auto refresh_field = new gbe::editor::InspectorButton();
 	refresh_field->name = "Refresh Drawcall";
 	refresh_field->onpress = [this]() {
 		auto old_drawcall = this->mDrawCall;
-		old_drawcall->UnRegisterCall(this);
+		if(old_drawcall != nullptr)
+			old_drawcall->UnRegisterCall(this);
 
 		this->_mat->setOverride("colortex", this->_tex);
 
@@ -48,6 +52,7 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 
 	this->inspectorData->fields.push_back(texture_field);
 	this->inspectorData->fields.push_back(mesh_field);
+	this->inspectorData->fields.push_back(mat_field);
 	this->inspectorData->fields.push_back(refresh_field);
 }
 
@@ -88,6 +93,27 @@ gbe::SerializedObject gbe::RenderObject::Serialize() {
 
 	data.serialized_variables.insert_or_assign("primitive", PrimitiveTypeStr(this->ptype));
 
+	std::string mesh_str;
+	if (this->_mesh != nullptr)
+		mesh_str = this->_mesh->Get_asset_filepath();
+	else
+		mesh_str = "";
+	data.serialized_variables.insert_or_assign("mesh", mesh_str);
+
+	std::string tex_str;
+	if (this->_tex != nullptr)
+		tex_str = this->_tex->Get_asset_filepath();
+	else
+		tex_str = "";
+	data.serialized_variables.insert_or_assign("tex", tex_str);
+
+	std::string mat_str;
+	if (this->_tex != nullptr)
+		mat_str = this->_mat->Get_asset_filepath();
+	else
+		mat_str = "";
+	data.serialized_variables.insert_or_assign("mat", mat_str);
+
 	return data;
 }
 
@@ -95,7 +121,18 @@ gbe::Object* gbe::RenderObject::Create(gbe::SerializedObject data) {
 	auto _ptype = data.serialized_variables["primitive"];
 
 	if (_ptype == PrimitiveTypeStr(PrimitiveType::NONE)) {
-		return nullptr;
+		auto newobj = new RenderObject(nullptr);
+
+		newobj->_mesh = MeshLoader::GetAssetByPath(data.serialized_variables["mesh"]);
+		newobj->_mat = MaterialLoader::GetAssetByPath(data.serialized_variables["mat"]);
+		newobj->_tex = TextureLoader::GetAssetByPath(data.serialized_variables["tex"]);
+
+		newobj->_mat->setOverride("colortex", newobj->_tex);
+
+		newobj->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(newobj->_mesh, newobj->_mat);
+		newobj->to_update = newobj->mDrawCall->RegisterCall(newobj, newobj->GetWorldMatrix());
+
+		return newobj;
 	}
 	else {
 		auto curptype = PrimitiveType::NONE;

@@ -80,6 +80,15 @@ namespace gbe {
 				throw std::exception("Asset not found");
 			}
 
+			static TAsset* GetAssetByPath(std::string asset_path) {
+				for (const auto& pair : active_instance->loaded_assets) {
+					if (pair.first->Get_asset_filepath() == asset_path) {
+						return pair.first;
+					}
+				}
+				throw std::exception("Asset not found");
+			}
+
 			static std::vector<internal::BaseAsset_base*> GetAssetList() {
 				std::vector<internal::BaseAsset_base*> list;
 
@@ -87,6 +96,8 @@ namespace gbe {
 				{
 					list.push_back(pair.first);
 				}
+
+				return list;
 			}
 		};
 

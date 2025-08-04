@@ -26,10 +26,12 @@ namespace gbe {
 		};
 
 		struct InspectorAsset_base : public InspectorField {
-			std::function<std::vector<gbe::asset::internal::BaseAsset_base*>()> getter;
+			std::function<std::vector<gbe::asset::internal::BaseAsset_base*>()> _getter;
+			gbe::asset::internal::BaseAsset_base** choice;
+			std::string choice_label = "NULL";
 
 			std::vector<gbe::asset::internal::BaseAsset_base*> GetChoices() {
-				return getter();
+				return _getter();
 			}
 
 			InspectorAsset_base() {
@@ -42,7 +44,9 @@ namespace gbe {
 			TAssetLoader* loader;
 
 			InspectorAsset() {
-
+				this->_getter = [this]() {
+					return this->loader->GetAssetList();
+					};
 			}
 		};
 

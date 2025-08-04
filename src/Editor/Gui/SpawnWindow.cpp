@@ -13,7 +13,7 @@ void gbe::editor::SpawnWindow::DrawSelf()
 
 	Object* newobj = nullptr;
 
-	ImGui::SeparatorText("RigidObject Root");
+	ImGui::SeparatorText("RigidObject Types");
 
 	if (ImGui::Button("Dynamic RigidObject")) {
 		newobj = new RigidObject(false);
@@ -23,7 +23,7 @@ void gbe::editor::SpawnWindow::DrawSelf()
 		newobj = new RigidObject(true);
 	}
 
-	ImGui::SeparatorText("Collider");
+	ImGui::SeparatorText("Colliders");
 
 	if (ImGui::Button("Cube")) {
 		newobj = new BoxCollider();
@@ -37,7 +37,7 @@ void gbe::editor::SpawnWindow::DrawSelf()
 		newobj = new CapsuleCollider();
 	}
 
-	ImGui::PushID("renderer_buttons");
+	ImGui::PushID("Renderers");
 	
 	ImGui::SeparatorText("Renderer");
 
@@ -55,6 +55,10 @@ void gbe::editor::SpawnWindow::DrawSelf()
 	ImGui::SameLine();
 	if (ImGui::Button("Capsule")) {
 		newobj = new RenderObject(RenderObject::capsule);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Generic")) {
+		newobj = new RenderObject(nullptr);
 	}
 	ImGui::PopID();
 

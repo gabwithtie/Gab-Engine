@@ -270,6 +270,9 @@ void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcal
 
 void gbe::Editor::CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed)
 {
+	if (boxed->Get_DrawCall() == nullptr)
+		return;
+
 	auto newDrawcall = this->mrenderpipeline->RegisterDrawCall(boxed->Get_DrawCall()->get_mesh(), this->gizmo_box_mat);
 	RenderObject* box_renderer = new RenderObject(newDrawcall);
 	box_renderer->SetParent(boxed);
