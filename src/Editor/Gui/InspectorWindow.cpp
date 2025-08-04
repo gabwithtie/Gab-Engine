@@ -171,6 +171,13 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 						buttonfield->onpress();
 					}
 				}
+
+				if (field->fieldtype == editor::InspectorField::ASSET) {
+					auto buttonfield = static_cast<editor::InspectorAsset*>(field);
+					if (ImGui::Button(buttonfield->name.c_str())) {
+						buttonfield->onpress();
+					}
+				}
 			}
 		}
 	}

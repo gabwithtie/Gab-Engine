@@ -7,23 +7,23 @@
 
 namespace gbe {
 	namespace asset {
+		struct BaseImportData {
+			std::string asset_type;
+			std::string asset_id;
+		}
+
 		namespace internal {
 			class BaseAsset_base {
-
+			protected:
+				std::string asset_directory;
+				bool destroy_queued;
+				BaseImportData base_import_data;
 			};
 		}
 
 		template<class TFinal, class TImportData, class TLoadData>
-		class BaseAsset : internal::BaseAsset_base {
-		private:
-			std::string asset_directory;
-			bool destroy_queued;
+		class BaseAsset : public internal::BaseAsset_base {
 		protected:
-			struct BaseImportData {
-				std::string asset_type;
-				std::string asset_id;
-			}base_import_data;
-
 			TImportData import_data;
 
 			TLoadData load_data;

@@ -5,6 +5,9 @@
 
 namespace gbe {
 	namespace asset {
+		namespace internal {
+			class BaseAsset_base;
+		}
 
 		template<class TAsset, class TAssetImportData, class TAssetLoadData>
 		class AssetLoader_base {
@@ -75,6 +78,15 @@ namespace gbe {
 					}
 				}
 				throw std::exception("Asset not found");
+			}
+
+			static std::vector<internal::BaseAsset_base*> GetAssetList() {
+				std::vector<internal::BaseAsset_base*> list;
+
+				for (const auto& pair : active_instance->loaded_assets)
+				{
+					list.push_back(pair.first);
+				}
 			}
 		};
 

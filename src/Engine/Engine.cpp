@@ -396,8 +396,7 @@ namespace gbe {
 					updatable->InvokeLateUpdate(delta_f);
 					});
 
-				//GUI
-				//mGUIPipeline->Update(deltatime);
+				instance->timeleft_stepping -= deltatime;
 				};
 			this->_time.TickFixed(onTick);
 
