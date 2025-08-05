@@ -144,6 +144,12 @@ namespace gbe {
 		auto sphere_mesh = new asset::Mesh("DefaultAssets/3D/default/sphere.obj.gbe");
 		auto capsule_mesh = new asset::Mesh("DefaultAssets/3D/default/capsule.obj.gbe");
 		auto plane_mesh = new asset::Mesh("DefaultAssets/3D/default/plane.obj.gbe");
+		//MESH CACHING
+		auto lucy_mesh = new asset::Mesh("DefaultAssets/3D/test/lucy.obj.gbe");
+		auto armadillo_mesh = new asset::Mesh("DefaultAssets/3D/test/armadillo.obj.gbe");
+		auto bunny_mesh = new asset::Mesh("DefaultAssets/3D/test/bunny.obj.gbe");
+		auto pot_mesh = new asset::Mesh("DefaultAssets/3D/test/teapot.obj.gbe");
+
 
 		//SHADER CACHING
 		auto unlitShader = new asset::Shader("DefaultAssets/Shaders/unlit.shader.gbe");
@@ -156,6 +162,7 @@ namespace gbe {
 
 		//MATERIAL CACHING
 		auto unlit_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
+		unlit_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
 		auto grid_mat = new asset::Material("DefaultAssets/Materials/grid.mat.gbe");
 		auto wire_mat = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
 
@@ -207,8 +214,8 @@ namespace gbe {
 			return parent;
 			};
 
-		auto create_primitive = [&](RenderObject::PrimitiveType ptype, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
-			RigidObject* parent = new RigidObject(true);
+		auto create_primitive = [&](RenderObject::PrimitiveType ptype, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0)), bool _static = true) {
+			RigidObject* parent = new RigidObject(_static);
 			parent->SetParent(this->current_root);
 			parent->Local().position.Set(pos);
 			parent->Local().rotation.Set(rotation);
@@ -276,8 +283,15 @@ namespace gbe {
 		}
 
 		if (box_scene) {
-			create_primitive(RenderObject::PrimitiveType::cube, Vector3(0, -5, 0), Vector3(2), Quaternion::Euler(Vector3(0)));
-			create_primitive(RenderObject::PrimitiveType::cube, Vector3(0, -5, 5), Vector3(2), Quaternion::Euler(Vector3(0)));
+			for (size_t x = 0; x < 10; x++)
+			{
+				for (size_t z = 0; z < 10; z++)
+				{
+					create_primitive(RenderObject::PrimitiveType::cube, Vector3(x, 5, z), Vector3(0.6f), Quaternion::Euler(Vector3(0)), false);
+				}
+			}
+
+			create_primitive(RenderObject::PrimitiveType::cube, Vector3(0, -3, 0), Vector3(20, 1, 20), Quaternion::Euler(Vector3(0)));
 		}
 
 		this->Set_state(EngineState::Edit);
