@@ -259,7 +259,7 @@ namespace gbe {
 
 		//CALL THE BUILDER
 		const auto enable_builder = false;
-		const auto box_scene = true;
+		const auto box_scene = false;
 		const auto test_scene = false;
 
 		if (enable_builder) {

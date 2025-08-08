@@ -234,7 +234,7 @@ gbe::SerializedObject gbe::Object::Serialize() {
 	std::vector<SerializedObject> serialized_children;
 	for (const auto child : this->children)
 	{
-		if (!child->Get_is_editor())
+		if (!child->Get_is_editor() && TypeSerializer::isTypeRegistered(typeid(*child).name()))
 			serialized_children.push_back(child->Serialize());
 	}
 

@@ -16,6 +16,12 @@ namespace gbe {
 		static std::unordered_map<std::string, std::function<Object*(SerializedObject)>> instantiation_dictionary;
 	public:
 		static void RegisterTypeCreator(std::string type_id, std::function<Object* (gbe::SerializedObject)> instantiation_function);
+		inline static bool isTypeRegistered(std::string type_id) {
+			if (instantiation_dictionary.find(type_id) == instantiation_dictionary.end())
+				return false;
+
+			return true;
+		}
 		static Object* Instantiate(std::string type_id, SerializedObject data);
 	};
 }
