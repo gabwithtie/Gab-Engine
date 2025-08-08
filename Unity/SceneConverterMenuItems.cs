@@ -6,7 +6,6 @@ public static class SceneConverterMenuItems
 {
     private const string ConverterAssetPath = "Assets/SceneConverterData.asset";
 
-    // Method to get or create the SceneConverter ScriptableObject
     private static SceneConverter GetOrCreateConverter()
     {
         SceneConverter converter = AssetDatabase.LoadAssetAtPath<SceneConverter>(ConverterAssetPath);

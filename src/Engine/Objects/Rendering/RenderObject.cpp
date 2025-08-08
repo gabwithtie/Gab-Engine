@@ -5,6 +5,10 @@
 #include "Graphics/RenderPipeline.h"
 #include "Asset/gbe_asset.h"
 
+#include <algorithm>
+#include <cctype>
+#include <string>
+
 using namespace gbe::gfx;
 
 std::unordered_map<gbe::RenderObject::PrimitiveType, gbe::gfx::DrawCall*> gbe::RenderObject::primitive_drawcalls;
@@ -137,7 +141,11 @@ gbe::Object* gbe::RenderObject::Create(gbe::SerializedObject data) {
 	else {
 		auto curptype = PrimitiveType::NONE;
 		for (const auto& pair : PrimitiveTypeStrs) {
-			if (pair.second == _ptype) {
+			std::string primitivetypestr = pair.second;
+			std::transform(primitivetypestr.begin(), primitivetypestr.end(), primitivetypestr.begin(),
+				[](unsigned char c) { return std::tolower(c); });
+
+			if (_ptype.contains(primitivetypestr)) {
 				curptype = pair.first;
 				break;
 			}

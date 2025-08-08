@@ -4,17 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 
-// ScriptableObject for holding the serialization logic and data.
 public class SceneConverter : ScriptableObject
 {
-    // A public array of GameObjects to be used as prefabs for RenderObjects.
-    // Assign these in the Unity Inspector.
     public GameObject[] renderObjectPrefabs;
 
-    // Public field to specify a custom file extension.
     public string fileExtension = "json";
 
-    // Data structures for serialization
     [System.Serializable]
     public class SceneNodeData
     {
@@ -43,10 +38,6 @@ public class SceneConverter : ScriptableObject
         public List<SceneNodeData> children;
     }
 
-    /// <summary>
-    /// Loads a scene from a JSON file and spawns the GameObjects.
-    /// </summary>
-    /// <param name="filePath">The full path to the JSON file to load.</param>
     public void LoadSceneFromJson(string filePath)
     {
         if (!File.Exists(filePath))
@@ -87,10 +78,9 @@ public class SceneConverter : ScriptableObject
 
         go.transform.localPosition = node.GetPosition();
 
-        // Conditionally double the scale for meshes and colliders
         if (node.type == "class gbe::RenderObject" ||
-            node.type == "class gbe::BoxCollider" ||
-            node.type == "class gbe::SphereCollider")
+    node.type == "class gbe::BoxCollider" ||
+    node.type == "class gbe::SphereCollider")
         {
             go.transform.localScale = node.GetScale() * 2;
         }
@@ -135,7 +125,6 @@ public class SceneConverter : ScriptableObject
     {
         if (variables != null && variables.TryGetValue("primitive", out string primitiveName) && renderObjectPrefabs != null)
         {
-            // Find the prefab with a matching name, ignoring case
             GameObject prefab = System.Array.Find(renderObjectPrefabs, p => string.Equals(p.name, primitiveName, System.StringComparison.OrdinalIgnoreCase));
 
             if (prefab != null)
@@ -157,9 +146,7 @@ public class SceneConverter : ScriptableObject
                     go.AddComponent<MeshRenderer>().sharedMaterial = prefabMeshRenderer.sharedMaterial;
                 }
 
-                DestroyImmediate(instantiatedPrefab); // Use DestroyImmediate for edit mode
-
-                // Set the game object's name to match the prefab name
+                DestroyImmediate(instantiatedPrefab);
                 go.name = primitiveName;
             }
             else
@@ -175,7 +162,6 @@ public class SceneConverter : ScriptableObject
 
     private void AddRigidObject(GameObject go, Dictionary<string, string> variables)
     {
-        // Rigidbodies are not typically added in Edit Mode, but we will add the component for completeness
         Rigidbody rb = go.AddComponent<Rigidbody>();
         if (variables != null && variables.TryGetValue("static", out string isStaticString))
         {
@@ -183,9 +169,6 @@ public class SceneConverter : ScriptableObject
         }
     }
 
-    /// <summary>
-    /// Saves the entire active scene to a JSON file.
-    /// </summary>
     public void SaveFullSceneToJson(string filePath)
     {
         RootNodeData rootNode = new RootNodeData
@@ -223,10 +206,9 @@ public class SceneConverter : ScriptableObject
             children = new List<SceneNodeData>()
         };
 
-        // Conditionally halve the scale for meshes and colliders
         if (go.GetComponent<MeshFilter>() != null ||
-            go.GetComponent<BoxCollider>() != null ||
-            go.GetComponent<SphereCollider>() != null)
+    go.GetComponent<BoxCollider>() != null ||
+    go.GetComponent<SphereCollider>() != null)
         {
             node.local_scale = new float[] { go.transform.localScale.x / 2, go.transform.localScale.y / 2, go.transform.localScale.z / 2 };
         }
@@ -235,7 +217,6 @@ public class SceneConverter : ScriptableObject
             node.local_scale = new float[] { go.transform.localScale.x, go.transform.localScale.y, go.transform.localScale.z };
         }
 
-        // Check for specific components and populate variables accordingly
         if (go.GetComponent<Rigidbody>() != null)
         {
             node.type = "class gbe::RigidObject";
@@ -258,6 +239,11 @@ public class SceneConverter : ScriptableObject
         else if (go.GetComponent<SphereCollider>() != null)
         {
             node.type = "class gbe::SphereCollider";
+            node.serialized_variables.Add("radius", go.GetComponent<SphereCollider>().radius.ToString());
+        }
+        else if (go.GetComponent<CapsuleCollider>() != null)
+        {
+            node.type = "class gbe::CapsuleCollider";
             node.serialized_variables.Add("radius", go.GetComponent<SphereCollider>().radius.ToString());
         }
 
