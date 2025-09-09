@@ -3,7 +3,6 @@
 #include "Asset/gbe_asset.h"
 #include "Math/gbe_math.h"
 
-#include <vulkan/vulkan.h>
 #include "TextureLoader.h"
 
 #include <optional>

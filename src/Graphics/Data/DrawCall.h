@@ -1,6 +1,5 @@
 #pragma once
 #include "Asset/gbe_asset.h"
-#include <vulkan/vulkan.h>
 #include "../AssetLoaders/ShaderLoader.h"
 #include "../AssetLoaders/MeshLoader.h"
 

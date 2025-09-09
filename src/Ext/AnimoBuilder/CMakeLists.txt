@@ -1,4 +1,5 @@
 set(LIB_NAME "gbe_ext_animobuilder")
+message("[GBE EXTERNAL] Building Library "${LIB_NAME})
 
 
 add_library(${LIB_NAME} "AnimoBuilder.cpp" )

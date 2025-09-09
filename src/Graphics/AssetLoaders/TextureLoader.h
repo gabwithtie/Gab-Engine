@@ -1,8 +1,7 @@
 #pragma once
-
+#include "Ext/GabVulkan/Objects.h"
 #include "Asset/gbe_asset.h"
 #include "Math/gbe_math.h"
-#include <vulkan/vulkan.h>
 #include <stb_image.h>
 #include <functional>
 #include <unordered_map>
@@ -11,8 +10,8 @@
 namespace gbe {
 	namespace gfx {
 		struct TextureData {
-			VkImageView textureImageView;
-			VkImage textureImage;
+			vulkan::ImageView textureImageView;
+			vulkan::Image textureImage;
 
 			VkDeviceMemory textureImageMemory;
 			VkSampler textureSampler;
