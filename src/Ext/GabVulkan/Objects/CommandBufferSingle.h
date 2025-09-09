@@ -6,20 +6,24 @@
 
 namespace gbe::vulkan {
     class CommandBufferSingle : public VulkanObject<VkCommandBuffer> {
+        VkCommandPool commandPool;
 
     public:
         inline void RegisterDependencies() override {
 
         }
 
-        inline void Begin() {
+        inline void Begin(CommandPool* pool = nullptr) {
             VkCommandBufferAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandPool = CommandPool::Active()->data;
+            if (pool == nullptr)
+                allocInfo.commandPool = CommandPool::GetActive()->GetData();
+            else
+                allocInfo.commandPool = pool->GetData();
             allocInfo.commandBufferCount = 1;
 
-            vkAllocateCommandBuffers(VirtualDevice::Active()->data, &allocInfo, &(this->data));
+            vkAllocateCommandBuffers(VirtualDevice::GetActive()->GetData(), &allocInfo, &(this->data));
 
             VkCommandBufferBeginInfo beginInfo{};
             beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -34,12 +38,13 @@ namespace gbe::vulkan {
             VkSubmitInfo submitInfo{};
             submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
             submitInfo.commandBufferCount = 1;
-            submitInfo.pCommandBuffers = &commandBuffer;
+            submitInfo.pCommandBuffers = &this->data;
 
-            vkQueueSubmit(Instance->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-            vkQueueWaitIdle(Instance->graphicsQueue);
+            vkQueueSubmit(VirtualDevice::GetActive()->Get_graphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+            vkQueueWaitIdle(VirtualDevice::GetActive()->Get_graphicsQueue());
 
-            vkFreeCommandBuffers(Instance->vkdevice, Instance->commandPool, 1, &commandBuffer);
+            vkFreeCommandBuffers(VirtualDevice::GetActive()->GetData(), this->commandPool, 1, &this->data);
+            initialized = true;
         }
     };
 }

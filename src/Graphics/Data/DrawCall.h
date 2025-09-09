@@ -3,6 +3,8 @@
 #include "../AssetLoaders/ShaderLoader.h"
 #include "../AssetLoaders/MeshLoader.h"
 
+#include "Ext/GabVulkan/Objects.h"
+
 namespace gbe {
     namespace gfx {
         class DrawCall {
@@ -12,20 +14,19 @@ namespace gbe {
                 struct UniformBlockBuffer {
                     std::string block_name;
 
-                    std::vector<VkBuffer> uboPerFrame;
-                    std::vector<VkDeviceMemory> uboMemoryPerFrame;
+                    std::vector<vulkan::Buffer> uboPerFrame;
                     std::vector<void*> uboMappedPerFrame;
                 };
 
                 struct UniformTexture {
 					std::string texture_name;
-					VkImageView imageView;
-					VkSampler sampler;
+					vulkan::ImageView imageView;
+					vulkan::Sampler sampler;
                 };
 
 				std::vector<UniformBlockBuffer> uniformBuffers;
 				std::vector<UniformTexture> uniformTextures;
-                VkDescriptorPool descriptorPool;
+                vulkan::DescriptorPool descriptorPool;
                 std::vector<std::vector<VkDescriptorSet>> allocdescriptorSets;
 
                 bool GetBlock(std::string name, gbe::gfx::DrawCall::CallInstance::UniformBlockBuffer& out_block);
@@ -72,7 +73,7 @@ namespace gbe {
                 if(callinst.GetBlock(blockinfo.name, blockbuffer) == false)
 					return false;
 
-                const auto& blockaddr = reinterpret_cast<char*>(blockbuffer.uboMappedPerFrame[frameindex]);
+                const auto& blockaddr = reinterpret_cast<char*>(blockbuffer.uboPerFrame[frameindex].GetMemory());
                 const auto& finaladdr = blockaddr + fieldinfo.offset;
 
                 if (sizeof(valueref) != fieldinfo.size)

@@ -21,23 +21,6 @@ gbe::RenderPipeline* gbe::RenderPipeline::Get_Instance() {
 	return gbe::RenderPipeline::Instance;
 }
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void* pUserData) {
-
-    if (messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-        std::cerr << "validation ERROR: " << pCallbackData->pMessage << std::endl;
-		throw std::runtime_error("Vulkan validation layer error encountered: " + std::string(pCallbackData->pMessage));
-    }
-    else {
-        std::cerr << "validation log: " << pCallbackData->pMessage << std::endl;
-    }
-
-    return VK_FALSE;
-}
-
 gbe::RenderPipeline::RenderPipeline(gbe::Window* window, Vector2Int dimensions)
 {
     if(this->Instance != nullptr)
@@ -62,17 +45,7 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window* window, Vector2Int dimensions)
         allextensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
-    //APP INFO
-    VkApplicationInfo appInfo{};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Hello Triangle";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "No Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_0;
-    
     bool validationlayerssupported = true;
-
     const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
     };
@@ -101,54 +74,10 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window* window, Vector2Int dimensions)
     }
     
 	//INSTANCE INFO
-    VkInstanceCreateInfo instInfo{};
-    instInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instInfo.pApplicationInfo = &appInfo;
-    instInfo.pNext = nullptr;
-    instInfo.flags = 0;
-    instInfo.ppEnabledLayerNames = nullptr;
-    instInfo.enabledExtensionCount = static_cast<uint32_t>(allextensions.size());;
-    instInfo.ppEnabledExtensionNames = allextensions.data();
-
-    //DEBUG
-    VkDebugUtilsMessengerCreateInfoEXT debug_messenger_create_info{};
-    if (enableValidationLayers) {
-        instInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-        instInfo.ppEnabledLayerNames = validationLayers.data();
-
-        debug_messenger_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        debug_messenger_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        debug_messenger_create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        debug_messenger_create_info.pfnUserCallback = debugCallback;
-        debug_messenger_create_info.pUserData = nullptr; // Optional
-
-        instInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debug_messenger_create_info;
-    }
-    else {
-        instInfo.enabledLayerCount = 0;
-
-		instInfo.pNext = nullptr;
-    }
-    
-    //INSTANCE
-    auto instresult = vkCreateInstance(&instInfo, nullptr, &vkInst);
-    if (instresult != VK_SUCCESS) {
-        throw std::runtime_error("failed to create instance!");
-    }
+    this->vkInst = vulkan::Instance(resolution.x, resolution.y, allextensions, enableValidationLayers, validationLayers);
 
     //SDL SURFACE
-    SDL_Vulkan_CreateSurface(implemented_window, vkInst, &vksurface);
-
-    //DEBUG
-    if (enableValidationLayers) {
-        auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vkInst, "vkCreateDebugUtilsMessengerEXT");
-        if (func != nullptr) {
-            func(vkInst, &debug_messenger_create_info, nullptr, &this->debugMessenger);
-        }
-        else {
-            throw std::runtime_error("failed to set up debug messenger!");
-        }
-    }
+    SDL_Vulkan_CreateSurface(implemented_window, vkInst.GetData(), &vkInst.vksurface);
 
     vkInst.Init();
 
@@ -206,6 +135,9 @@ bool RenderPipeline::TryPushLight(gfx::Light* data, bool priority) {
 
 void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& nearclip, float& farclip)
 {
+    if (window->isMinimized())
+        return;
+
 	//Syncronization
     vkWaitForFences(this->vkdevice, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 

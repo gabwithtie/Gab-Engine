@@ -2,17 +2,67 @@
 
 #include "../VulkanObject.h"
 
+#include "CommandBufferSingle.h"
+#include "Buffer.h"
+
 namespace gbe::vulkan {
 	class Image : public VulkanObject<VkImage> {
     private:
         VkDeviceMemory imageMemory;
-    
-    public:
+        VkFormat format;
+        VkImageTiling tiling;
+        VkImageLayout layout;
+        uint32_t width;
+        uint32_t height;
+
+	public:
+		inline VkDeviceMemory Get_imageMemory() {
+			return imageMemory;
+		}
+		inline VkFormat Get_format() {
+			return format;
+		}
+		inline VkImageTiling Get_tiling() {
+			return tiling;
+		}
+		inline VkImageLayout Get_layout() {
+			return layout;
+		}
+		inline uint32_t Get_width() {
+			return width;
+		}
+		inline uint32_t Get_height() {
+			return height;
+		}
+
 		inline void RegisterDependencies() override {
 
 		}
-		inline static Image Create(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties)
+        inline ~Image() {
+            if (!initialized)
+                return;
+
+            vkDestroyImage(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
+            vkFreeMemory(VirtualDevice::GetActive()->GetData(), imageMemory, nullptr);
+        }
+
+        inline Image() {
+
+        }
+
+        inline Image(const VkImage& createdimage)
         {
+            this->data = createdimage;
+            initialized = true;
+        }
+        inline Image(uint32_t _width, uint32_t _height, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties)
+        {
+            width = _width;
+            height = _height;
+            format = _format;
+            tiling = _tiling;
+            layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
             VkImageCreateInfo imageInfo{};
             imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
             imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -28,39 +78,37 @@ namespace gbe::vulkan {
             imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
             imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-            if (vkCreateImage(Instance->vkdevice, &imageInfo, nullptr, &image) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create image!");
-            }
+            CheckSuccess(vkCreateImage(VirtualDevice::GetActive()->GetData(), &imageInfo, nullptr, &this->data));
 
             VkMemoryRequirements memRequirements;
-            vkGetImageMemoryRequirements(Instance->vkdevice, image, &memRequirements);
+            vkGetImageMemoryRequirements(VirtualDevice::GetActive()->GetData(), this->data, &memRequirements);
 
             VkMemoryAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
             allocInfo.allocationSize = memRequirements.size;
-            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+            allocInfo.memoryTypeIndex = PhysicalDevice::GetActive()->FindMemoryType(memRequirements.memoryTypeBits, properties);
 
-            if (vkAllocateMemory(Instance->vkdevice, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+            if (vkAllocateMemory(VirtualDevice::GetActive()->GetData(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
                 throw std::runtime_error("failed to allocate image memory!");
             }
 
-            vkBindImageMemory(Instance->vkdevice, image, imageMemory, 0);
+            CheckSuccess(vkBindImageMemory(VirtualDevice::GetActive()->GetData(), this->data, imageMemory, 0));
+            initialized = true;
         }
 
-        inline void transitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+        inline void transitionImageLayout(VkImageLayout newLayout)
         {
-            VkCommandBuffer commandBuffer;
-            beginSingleTimeCommands(commandBuffer);
+            CommandBufferSingle commandBuffer;
+            commandBuffer.Begin();
 
             VkImageMemoryBarrier barrier{};
             barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            barrier.oldLayout = oldLayout;
             barrier.newLayout = newLayout;
 
             barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
             barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
-            barrier.image = image;
+            barrier.image = this->data;
             barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             barrier.subresourceRange.baseMipLevel = 0;
             barrier.subresourceRange.levelCount = 1;
@@ -81,35 +129,35 @@ namespace gbe::vulkan {
                 barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             }
 
-            if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+            if (layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
                 barrier.srcAccessMask = 0;
                 barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
                 sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             }
-            else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+            else if (layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
                 barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
                 barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
                 sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                 destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
             }
-            else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+            else if (layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
                 barrier.srcAccessMask = 0;
                 barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
                 sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
             }
-            else if (oldLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+            else if (layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
                 barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
                 barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
                 sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
                 destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             }
-            else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+            else if (layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
                 barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
                 barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
@@ -121,7 +169,7 @@ namespace gbe::vulkan {
             }
 
             vkCmdPipelineBarrier(
-                commandBuffer,
+                commandBuffer.GetData(),
                 sourceStage, destinationStage,
                 0,
                 0, nullptr,
@@ -129,15 +177,15 @@ namespace gbe::vulkan {
                 1, &barrier
             );
 
+            commandBuffer.End();
 
-
-            endSingleTimeCommands(commandBuffer);
+            layout = newLayout;
         }
 
-        void gbe::RenderPipeline::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+        inline static void copyBufferToImage(Buffer& buffer, Image& image)
         {
-            VkCommandBuffer commandBuffer;
-            beginSingleTimeCommands(commandBuffer);
+            CommandBufferSingle commandBuffer;
+            commandBuffer.Begin();
 
             VkBufferImageCopy region{};
             region.bufferOffset = 0;
@@ -151,27 +199,27 @@ namespace gbe::vulkan {
 
             region.imageOffset = { 0, 0, 0 };
             region.imageExtent = {
-                width,
-                height,
+                image.width,
+                image.height,
                 1
             };
 
             vkCmdCopyBufferToImage(
-                commandBuffer,
-                buffer,
-                image,
+                commandBuffer.GetData(),
+                buffer.GetData(),
+                image.GetData(),
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 1,
                 &region
             );
 
-            endSingleTimeCommands(commandBuffer);
+            commandBuffer.End();
         }
 
-        void gbe::RenderPipeline::copyImageToBuffer(VkImage image, VkFormat imageformat, VkImageLayout imagelayout, VkBuffer buffer, uint32_t width, uint32_t height)
+        inline static void copyImageToBuffer(Image image, Buffer buffer)
         {
-            VkCommandBuffer commandBuffer;
-            beginSingleTimeCommands(commandBuffer);
+            CommandBufferSingle commandBuffer;
+            commandBuffer.Begin();
 
             VkBufferImageCopy region{};
             region.bufferOffset = 0;
@@ -185,25 +233,24 @@ namespace gbe::vulkan {
 
             region.imageOffset = { 0, 0, 0 };
             region.imageExtent = {
-                width,
-                height,
+                image.width,
+                image.height,
                 1
             };
 
-            transitionImageLayout(image, imageformat, imagelayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+            image.transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
             vkCmdCopyImageToBuffer(
-                commandBuffer,
-                image,
+                commandBuffer.GetData(),
+                image.GetData(),
                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                buffer,
+                buffer.GetData(),
                 1,
                 &region
             );
 
-            //transitionImageLayout(image, imageformat, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imagelayout);
-
-            endSingleTimeCommands(commandBuffer);
+            
+            commandBuffer.End();
         }
-	}
-};
+    };
+}

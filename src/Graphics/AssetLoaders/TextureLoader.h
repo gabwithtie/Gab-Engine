@@ -8,13 +8,11 @@
 #include <stack>
 
 namespace gbe {
-	namespace gfx {
+	namespace gfx {		
 		struct TextureData {
 			vulkan::ImageView textureImageView;
 			vulkan::Image textureImage;
-
-			VkDeviceMemory textureImageMemory;
-			VkSampler textureSampler;
+			vulkan::Sampler textureSampler;
 
 			VkDescriptorSet DS;
 
@@ -28,13 +26,13 @@ namespace gbe {
 			VkPhysicalDevice* vkphysicaldevice;
 			TextureData defaultImage;
 
-			static std::function<VkDescriptorSet(VkSampler, VkImageView)> Ui_Callback;
+			static std::function<VkDescriptorSet(gbe::vulkan::Sampler, gbe::vulkan::ImageView)> Ui_Callback;
 		protected:
 			TextureData LoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) override;
 			void UnLoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) override;
 		public:
 			static TextureData& GetDefaultImage();
-			const static void Set_Ui_Callback(std::function<VkDescriptorSet(VkSampler, VkImageView)> func);
+			const static void Set_Ui_Callback(std::function<VkDescriptorSet(gbe::vulkan::Sampler, gbe::vulkan::ImageView)> func);
 			void PassDependencies(VkDevice* vkdevice, VkPhysicalDevice* vkphysicaldevice);
 		};
 	}

@@ -16,20 +16,6 @@ namespace gbe {
     }
     gfx::DrawCall::~DrawCall()
     {
-        for (const auto& pair : this->calls)
-        {
-			const auto& callinst = pair.second;
-
-            vkDestroyDescriptorPool(*this->vkdevice, callinst.descriptorPool, nullptr);
-            
-            for (const auto& block : callinst.uniformBuffers)
-            {
-                for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                    vkDestroyBuffer(*this->vkdevice, block.uboPerFrame[i], nullptr);
-                    vkFreeMemory(*this->vkdevice, block.uboMemoryPerFrame[i], nullptr);
-                }
-            }
-        }
     }
 
     asset::Mesh* gfx::DrawCall::get_mesh()
@@ -91,8 +77,8 @@ namespace gbe {
                 VkDescriptorImageInfo imageInfo{};
 
                 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageInfo.imageView = findtexturedata.textureImageView;
-                imageInfo.sampler = findtexturedata.textureSampler;
+                imageInfo.imageView = findtexturedata.textureImageView.GetData();
+                imageInfo.sampler = findtexturedata.textureSampler.GetData();
 
                 //CREATE THE WRITE DATA FOR EACH INSTANCE
 				for (const auto& callinstpair : this->calls)
@@ -156,13 +142,12 @@ namespace gbe {
             VkDeviceSize bufferSize = block.block_size;
 
             newblockbuffer.uboPerFrame.resize(MAX_FRAMES_IN_FLIGHT);
-            newblockbuffer.uboMemoryPerFrame.resize(MAX_FRAMES_IN_FLIGHT);
             newblockbuffer.uboMappedPerFrame.resize(MAX_FRAMES_IN_FLIGHT);
 
             for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                RenderPipeline::createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, newblockbuffer.uboPerFrame[i], newblockbuffer.uboMemoryPerFrame[i]);
+                newblockbuffer.uboPerFrame[i] = vulkan::Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-                vkMapMemory(*this->vkdevice, newblockbuffer.uboMemoryPerFrame[i], 0, bufferSize, 0, &newblockbuffer.uboMappedPerFrame[i]);
+                vulkan::VirtualDevice::GetActive()->MapMemory(newblockbuffer.uboPerFrame[i].GetMemory(), 0, bufferSize, 0, &newblockbuffer.uboMappedPerFrame[i]);
             }
 
 			newinst.uniformBuffers.push_back(newblockbuffer);
@@ -196,15 +181,7 @@ namespace gbe {
 			}
         }
 
-        VkDescriptorPoolCreateInfo poolInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-        poolInfo.pPoolSizes = poolSizes.data();
-        poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * shaderdata->descriptorSetLayouts.size());
-
-        if (vkCreateDescriptorPool(*this->vkdevice, &poolInfo, nullptr, &newinst.descriptorPool) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create descriptor pool!");
-        }
+        newinst.descriptorPool = vulkan::DescriptorPool(poolSizes, MAX_FRAMES_IN_FLIGHT * shaderdata->descriptorSetLayouts.size());
 
         //DESCRIPTOR SETS
         auto setcount = shaderdata->descriptorSetLayouts.size();
@@ -218,7 +195,7 @@ namespace gbe {
 
             VkDescriptorSetAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            allocInfo.descriptorPool = newinst.descriptorPool;
+            allocInfo.descriptorPool = newinst.descriptorPool.GetData();
             allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
             allocInfo.pSetLayouts = layoutsperframe.data();
 
@@ -240,7 +217,7 @@ namespace gbe {
 					throw std::runtime_error("Failed to find uniform block: " + uniformblock.block_name);
 
                 VkDescriptorBufferInfo bufferInfo{};
-                bufferInfo.buffer = uniformblock.uboPerFrame[f_i];
+                bufferInfo.buffer = uniformblock.uboPerFrame[f_i].GetData();
                 bufferInfo.offset = 0;
                 bufferInfo.range = blockinfo.block_size;
 
@@ -264,8 +241,8 @@ namespace gbe {
                 VkDescriptorImageInfo imageInfo{};
 
                 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageInfo.imageView = uniformtex.imageView;
-                imageInfo.sampler = uniformtex.sampler;
+                imageInfo.imageView = uniformtex.imageView.GetData();
+                imageInfo.sampler = uniformtex.sampler.GetData();
 
                 //FIND THE BINDING INDEX
                 ShaderData::ShaderField fieldinfo;

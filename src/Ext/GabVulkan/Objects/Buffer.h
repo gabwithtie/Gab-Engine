@@ -1,45 +1,54 @@
 #pragma once
 
 #include "../VulkanObject.h"
-#include "CommandBuffer.h"
+#include "CommandBufferSingle.h"
 
 namespace gbe::vulkan {
-	class Buffer : public VulkanObject<VkBuffer> {
-	private:
-		VkDeviceMemory bufferMemory;
-	public:
-		VkDeviceMemory GetMemory() {
-			return bufferMemory;
-		}
+    class Buffer : public VulkanObject<VkBuffer> {
+    private:
+        VkDeviceMemory bufferMemory;
+    public:
+        VkDeviceMemory GetMemory() {
+            return bufferMemory;
+        }
 
-		inline void RegisterDependencies() override {
+        inline ~Buffer() {
+            if (!initialized)
+                return;
 
-		}
+            vkDestroyBuffer(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
+            vkFreeMemory(VirtualDevice::GetActive()->GetData(), bufferMemory, nullptr);
+        }
 
-		inline static Buffer Create(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
+        inline void RegisterDependencies() override {
+
+        }
+
+        inline Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
             VkBufferCreateInfo bufferInfo{};
             bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
             bufferInfo.size = size;
             bufferInfo.usage = usage;
             bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-            CheckSuccess(vkCreateBuffer(Instance->vkdevice, &bufferInfo, nullptr, &buffer));
+            CheckSuccess(vkCreateBuffer(VirtualDevice::GetActive()->GetData(), &bufferInfo, nullptr, &this->data));
 
             VkMemoryRequirements memRequirements;
-            vkGetBufferMemoryRequirements(Instance->vkdevice, buffer, &memRequirements);
+            vkGetBufferMemoryRequirements(VirtualDevice::GetActive()->GetData(), this->data, &memRequirements);
 
             VkMemoryAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
             allocInfo.allocationSize = memRequirements.size;
-            allocInfo.memoryTypeIndex = Instance->findMemoryType(memRequirements.memoryTypeBits, properties);
+            allocInfo.memoryTypeIndex = PhysicalDevice::GetActive()->FindMemoryType(memRequirements.memoryTypeBits, properties);
 
-            CheckSuccess(vkAllocateMemory(Instance->vkdevice, &allocInfo, nullptr, &bufferMemory));
-            vkBindBufferMemory(Instance->vkdevice, buffer, bufferMemory, 0);
-		}
+            CheckSuccess(vkAllocateMemory(VirtualDevice::GetActive()->GetData(), &allocInfo, nullptr, &bufferMemory));
+            vkBindBufferMemory(VirtualDevice::GetActive()->GetData(), this->data, bufferMemory, 0);
+            initialized = true;
+        }
 
-        inline static void CopyBuffer(Buffer src, Buffer dst) {
-			CommandBufferSingle cmd;
-			cmd.Begin();
+        inline static void CopyBuffer(Buffer& src, Buffer& dst, VkDeviceSize size) {
+            CommandBufferSingle cmd;
+            cmd.Begin();
 
             VkBufferCopy copyRegion{};
             copyRegion.srcOffset = 0; // Optional
@@ -47,7 +56,7 @@ namespace gbe::vulkan {
             copyRegion.size = size;
             vkCmdCopyBuffer(cmd.GetData(), src.GetData(), dst.GetData(), 1, &copyRegion);
 
-			cmd.End();
+            cmd.End();
         }
-	}
-};
+    };
+}

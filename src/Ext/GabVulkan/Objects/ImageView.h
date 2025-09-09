@@ -1,6 +1,9 @@
 #pragma once
 
 #include "../VulkanObject.h"
+#include "VirtualDevice.h"
+
+#include "Image.h"
 
 namespace gbe::vulkan {
 	class ImageView : public VulkanObject<VkImageView> {
@@ -10,22 +13,32 @@ namespace gbe::vulkan {
 
 		}
 
-        void gbe::RenderPipeline::createImageView(VkImageView& imageview, VkImage image, VkFormat format, VkImageAspectFlags aspectflags)
+        inline ~ImageView() {
+            if (!initialized)
+                return;
+
+            vkDestroyImageView(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
+        }
+
+        inline ImageView() {
+
+        }
+
+        inline ImageView(Image& image, VkImageAspectFlags aspectflags)
         {
             VkImageViewCreateInfo viewInfo{};
             viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            viewInfo.image = image;
+            viewInfo.image = image.GetData();
             viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            viewInfo.format = format;
+            viewInfo.format = image.Get_format();
             viewInfo.subresourceRange.aspectMask = aspectflags;
             viewInfo.subresourceRange.baseMipLevel = 0;
             viewInfo.subresourceRange.levelCount = 1;
             viewInfo.subresourceRange.baseArrayLayer = 0;
             viewInfo.subresourceRange.layerCount = 1;
 
-            if (vkCreateImageView(Instance->vkdevice, &viewInfo, nullptr, &imageview) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create texture image view!");
-            }
+            CheckSuccess(vkCreateImageView(VirtualDevice::GetActive()->GetData(), &viewInfo, nullptr, &this->data));
+            initialized = true;
         }
 	};
 }

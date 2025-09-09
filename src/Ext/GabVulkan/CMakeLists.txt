@@ -1,7 +1,7 @@
 set(LIB_NAME "gbe_ext_gabvulkan")
 message("[GBE EXTERNAL] Building Library "${LIB_NAME})
 
-add_library(${LIB_NAME} "GabVulkan.cpp" "Objects.h"  "Objects/VirtualDevice.h" "Objects/PhysicalDevice.cpp" "Objects/CommandPool.h")
+add_library(${LIB_NAME} "GabVulkan.cpp" "VulkanObjectSingleton.h" "Objects/Sampler.h" "Objects/DescriptorPool.h")
 
 find_package(Vulkan REQUIRED)
 if (Vulkan_FOUND)

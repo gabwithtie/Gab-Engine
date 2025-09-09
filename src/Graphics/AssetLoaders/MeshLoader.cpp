@@ -1,6 +1,7 @@
 #include "MeshLoader.h"
 
 #include "../RenderPipeline.h"
+#include "Ext/GabVulkan/Objects.h"
 
 gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const asset::data::MeshImportData & importdata, asset::data::MeshLoadData * loaddata)
 {
@@ -90,48 +91,30 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
     }
 
     //VULKAN MESH SETUP vvvvvvvvvvv
-
-    //VERTEX BUFFER
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-
     VkDeviceSize vbufferSize = sizeof(vertices[0]) * vertices.size();
 
-    VkBuffer vstagingBuffer;
-    VkDeviceMemory vstagingBufferMemory;
-    RenderPipeline::createBuffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vstagingBuffer, vstagingBufferMemory);
+    vulkan::Buffer stagingBuffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     void* vdata;
-    vkMapMemory(*this->vkdevice, vstagingBufferMemory, 0, vbufferSize, 0, &vdata);
+    vulkan::VirtualDevice::GetActive()->MapMemory(stagingBuffer.GetMemory(), 0, vbufferSize, 0, &vdata);
     memcpy(vdata, vertices.data(), (size_t)vbufferSize);
-    vkUnmapMemory(*this->vkdevice, vstagingBufferMemory);
+    vulkan::VirtualDevice::GetActive()->UnMapMemory(stagingBuffer.GetMemory());
 
-    RenderPipeline::createBuffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
-    RenderPipeline::copyBuffer(vstagingBuffer, vertexBuffer, vbufferSize);
-
-    vkDestroyBuffer(*this->vkdevice, vstagingBuffer, nullptr);
-    vkFreeMemory(*this->vkdevice, vstagingBufferMemory, nullptr);
+    vulkan::Buffer vertexBuffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    vulkan::Buffer::CopyBuffer(stagingBuffer, vertexBuffer, vbufferSize);
 
     //INDEX BUFFER
-    VkBuffer indexBuffer;
-    VkDeviceMemory indexBufferMemory;
-
     VkDeviceSize ibufferSize = sizeof(indices[0]) * indices.size();
 
-    VkBuffer istagingBuffer;
-    VkDeviceMemory istagingBufferMemory;
-    RenderPipeline::createBuffer(ibufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, istagingBuffer, istagingBufferMemory);
+    vulkan::Buffer istagingBuffer(ibufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     void* idata;
-    vkMapMemory(*this->vkdevice, istagingBufferMemory, 0, ibufferSize, 0, &idata);
+    vulkan::VirtualDevice::GetActive()->MapMemory(istagingBuffer.GetMemory(), 0, ibufferSize, 0, &idata);
     memcpy(idata, indices.data(), (size_t)ibufferSize);
-    vkUnmapMemory(*this->vkdevice, istagingBufferMemory);
+    vulkan::VirtualDevice::GetActive()->UnMapMemory(istagingBuffer.GetMemory());
 
-    RenderPipeline::createBuffer(ibufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
-    RenderPipeline::copyBuffer(istagingBuffer, indexBuffer, ibufferSize);
-
-    vkDestroyBuffer(*this->vkdevice, istagingBuffer, nullptr);
-    vkFreeMemory(*this->vkdevice, istagingBufferMemory, nullptr);
+    vulkan::Buffer indexBuffer(ibufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    vulkan::Buffer::CopyBuffer(istagingBuffer, indexBuffer, ibufferSize);
 
     //UNIFORM BUFFER
     std::vector<VkBuffer> uniformBuffers;
@@ -146,24 +129,11 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
     return MeshData{
         loaddata,
         vertexBuffer,
-        vertexBufferMemory,
-        indexBuffer,
-        indexBufferMemory
+        indexBuffer
         };
 }
 
 void gbe::gfx::MeshLoader::UnLoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* data)
 {
     const auto& meshdata = this->GetAssetData(asset);
-
-    vkDestroyBuffer((*this->vkdevice), meshdata.vertexBuffer, nullptr);
-	vkFreeMemory((*this->vkdevice), meshdata.vertexBufferMemory, nullptr);
-    vkDestroyBuffer((*this->vkdevice), meshdata.indexBuffer, nullptr);
-    vkFreeMemory((*this->vkdevice), meshdata.indexBufferMemory, nullptr);
-}
-
-void gbe::gfx::MeshLoader::PassDependencies(VkDevice* vkdevice, VkPhysicalDevice* vkphysicaldevice)
-{
-	this->vkdevice = vkdevice;
-    this->vkphysicaldevice = vkphysicaldevice;
 }

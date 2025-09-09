@@ -8,6 +8,8 @@
 #include <optional>
 #include <tuple>
 
+#include "Ext/GabVulkan/Objects.h"
+
 namespace gbe {
 	namespace gfx {
 		struct TransformUBO {
@@ -19,21 +21,14 @@ namespace gbe {
 		struct MeshData {
 			asset::data::MeshLoadData* loaddata;
 
-			VkBuffer vertexBuffer;
-			VkDeviceMemory vertexBufferMemory;
-			VkBuffer indexBuffer;
-			VkDeviceMemory indexBufferMemory;
+			vulkan::Buffer vertexBuffer;
+			vulkan::Buffer indexBuffer;
 		};
 
 		class MeshLoader : public asset::AssetLoader<asset::Mesh, asset::data::MeshImportData, asset::data::MeshLoadData, MeshData> {
-		private:
-			VkDevice* vkdevice;
-			VkPhysicalDevice* vkphysicaldevice;
 		protected:
 			MeshData LoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* data) override;
 			void UnLoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* data) override;
-		public:
-			void PassDependencies(VkDevice* vkdevice, VkPhysicalDevice* vkphysicaldevice);
 		};
 	}
 }

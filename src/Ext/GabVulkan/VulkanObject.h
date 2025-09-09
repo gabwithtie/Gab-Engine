@@ -15,6 +15,7 @@ namespace gbe::vulkan {
 	private:
 		std::vector<VulkanObject_base*> dependents;
 		std::vector<VulkanObject_base*> dependencies;
+
 	protected:
 		T data;
 		inline void CheckSuccess(VkResult result) {
@@ -22,8 +23,9 @@ namespace gbe::vulkan {
 				throw std::runtime_error("Vulkan call failed with error code: " + result);
 			}
 		}
+		bool initialized = false;
 	public:
-		inline virtual T GetData() {
+		inline virtual T GetData() const {
 			return data;
 		};
 		inline virtual void RegisterDependencies() = 0;
