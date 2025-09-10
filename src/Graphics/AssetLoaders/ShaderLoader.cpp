@@ -409,12 +409,6 @@ void gbe::gfx::ShaderLoader::UnLoadAsset_(asset::Shader* asset, const asset::dat
 	vkDestroyPipeline((*this->vkdevice), shaderdata.pipeline, nullptr);
 }
 
-void gbe::gfx::ShaderLoader::PassDependencies(VkDevice* vkdevice, VkExtent2D* vkextent, VkRenderPass* vkrenderpass) {
-	this->vkdevice = vkdevice;
-	this->vkextent = vkextent;
-	this->vkrenderpass = vkrenderpass;
-}
-
 VkShaderModule gbe::gfx::ShaderLoader::TryCompileShader(const std::vector<char>& code) {
 	VkShaderModuleCreateInfo shaderModuleInfo{};
 	shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

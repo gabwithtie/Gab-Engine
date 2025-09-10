@@ -83,25 +83,9 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window* window, Vector2Int dimensions)
 
 	//Asset Loaders
     this->shaderloader.AssignSelfAsLoader();
-    this->shaderloader.PassDependencies(&this->vkdevice, &this->swapchainExtent, &this->renderPass);
-	
     this->meshloader.AssignSelfAsLoader();
-	this->meshloader.PassDependencies(&this->vkdevice, &this->vkphysicalDevice);
-	
     this->materialloader.AssignSelfAsLoader();
-    this->materialloader.PassDependencies(&this->shaderloader);
-
     this->textureloader.AssignSelfAsLoader();
-    this->textureloader.PassDependencies(&this->vkdevice, &this->vkphysicalDevice);
-
-    //Assigning pipeline specific variables
-    this->PipelineVariables.insert_or_assign("VkInstance", &vkInst);
-    this->PipelineVariables.insert_or_assign("VkSurfaceKHR", &vksurface);
-    this->PipelineVariables.insert_or_assign("VkDevice", &vkdevice);
-    this->PipelineVariables.insert_or_assign("VkPhysicalDevice", &vkphysicalDevice);
-    this->PipelineVariables.insert_or_assign("VkRenderPass", &renderPass);
-    this->PipelineVariables.insert_or_assign("VkQueue_graphics", &graphicsQueue);
-    this->PipelineVariables.insert_or_assign("VkQueue_present", &presentQueue);
 }
 
 void gbe::RenderPipeline::AssignEditor(Editor* _editor)
@@ -138,7 +122,7 @@ void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& n
     if (window->isMinimized())
         return;
 
-	//Syncronization
+    //==============SYNCING================
     vkWaitForFences(this->vkdevice, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
@@ -157,7 +141,7 @@ void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& n
 	auto currentCommandBuffer = commandBuffers[currentFrame];
     vkResetCommandBuffer(currentCommandBuffer, 0);
 
-#pragma region command buffer recording
+    //==============COMMAND BUFFER START================
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0; // Optional
@@ -167,7 +151,7 @@ void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& n
         throw std::runtime_error("failed to begin recording command buffer!");
     }
 
-    //Start render pass
+    //==============RENDER PASS START================
     VkRenderPassBeginInfo renderPassBeginInfo{};
     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassBeginInfo.renderPass = renderPass;

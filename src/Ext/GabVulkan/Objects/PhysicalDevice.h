@@ -44,6 +44,10 @@ namespace gbe::vulkan {
 
 		}
 
+		inline PhysicalDevice() {
+
+		}
+
 		inline PhysicalDevice(VkPhysicalDevice vkphysicaldevice) {
 			this->data = vkphysicaldevice;
 

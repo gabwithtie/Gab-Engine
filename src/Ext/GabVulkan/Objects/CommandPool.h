@@ -13,6 +13,12 @@ namespace gbe::vulkan {
 		}
 
 		inline CommandPool() {
+			if (PhysicalDevice::GetActive() == nullptr)
+				return;
+
+			if (VirtualDevice::GetActive() == nullptr)
+				return;
+
 			VkCommandPoolCreateInfo poolInfo{};
 			poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 			poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;

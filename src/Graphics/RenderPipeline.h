@@ -55,9 +55,6 @@ namespace gbe {
 		TextureLoader textureloader;
 		MaterialLoader materialloader;
 
-		//--------PIPELINE SPECIFIC VARIABLES--------//
-		std::unordered_map<std::string, void*> PipelineVariables;
-
 		Window* window;
 		Editor* editor;
 

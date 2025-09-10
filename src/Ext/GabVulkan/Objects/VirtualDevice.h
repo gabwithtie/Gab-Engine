@@ -23,6 +23,10 @@ namespace gbe::vulkan {
 
         }
 
+        inline VirtualDevice() {
+
+        }
+
         inline VirtualDevice(PhysicalDevice* from, const std::vector<const char*> deviceExtensionNames) {
 
             float queuePriority = 1.0f;
