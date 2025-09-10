@@ -6,6 +6,8 @@
 
 #include "Engine/gbe_engine.h"
 
+#include "Ext/GabVulkan/Objects.h"
+
 #include "Gui/InspectorData.h"
 #include "Gui/CreditsWindow.h"
 #include "Gui/InspectorWindow.h"
@@ -97,7 +99,7 @@ namespace gbe {
 		void Update();
 		void ProcessRawWindowEvent(void* rawwindowevent);
 		void PresentFrame();
-		void RenderPass(VkCommandBuffer cmd);
+		void RenderPass(vulkan::CommandBuffer* cmd);
 		void CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcall, Vector3 rotation, Vector3 direction);
 		void CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed);
 	};

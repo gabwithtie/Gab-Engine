@@ -10,24 +10,24 @@ namespace gbe::vulkan {
 
 	};
 
-	template<typename T>
+	template<typename Vk, class Derived>
 	class VulkanObject : VulkanObject_base {
-	private:
-		std::vector<VulkanObject_base*> dependents;
-		std::vector<VulkanObject_base*> dependencies;
-
 	protected:
-		T data;
+		Vk data;
 		inline void CheckSuccess(VkResult result) {
 			if (result != VK_SUCCESS) {
 				throw std::runtime_error("Vulkan call failed with error code: " + result);
 			}
 		}
-		bool initialized = false;
+
 	public:
-		inline virtual T GetData() const {
+		inline Vk GetData() const {
 			return data;
 		};
+		inline Vk* GetDataPtr() {
+			return &data;
+		}
+
 		inline virtual void RegisterDependencies() = 0;
 	};
 }

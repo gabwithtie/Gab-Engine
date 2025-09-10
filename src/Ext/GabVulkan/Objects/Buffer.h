@@ -4,20 +4,19 @@
 #include "CommandBufferSingle.h"
 
 namespace gbe::vulkan {
-    class Buffer : public VulkanObject<VkBuffer> {
+    class Buffer : public VulkanObject<VkBuffer, Buffer> {
     private:
         VkDeviceMemory bufferMemory;
+    protected:
     public:
-        VkDeviceMemory GetMemory() {
-            return bufferMemory;
-        }
 
-        inline ~Buffer() {
-            if (!initialized)
-                return;
-
+        inline ~Buffer(){
             vkDestroyBuffer(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
             vkFreeMemory(VirtualDevice::GetActive()->GetData(), bufferMemory, nullptr);
+        }
+
+        VkDeviceMemory GetMemory() {
+            return bufferMemory;
         }
 
         inline void RegisterDependencies() override {
@@ -43,10 +42,9 @@ namespace gbe::vulkan {
 
             CheckSuccess(vkAllocateMemory(VirtualDevice::GetActive()->GetData(), &allocInfo, nullptr, &bufferMemory));
             vkBindBufferMemory(VirtualDevice::GetActive()->GetData(), this->data, bufferMemory, 0);
-            initialized = true;
         }
 
-        inline static void CopyBuffer(Buffer& src, Buffer& dst, VkDeviceSize size) {
+        inline static void CopyBuffer(Buffer* src, Buffer* dst, VkDeviceSize size) {
             CommandBufferSingle cmd;
             cmd.Begin();
 
@@ -54,7 +52,7 @@ namespace gbe::vulkan {
             copyRegion.srcOffset = 0; // Optional
             copyRegion.dstOffset = 0; // Optional
             copyRegion.size = size;
-            vkCmdCopyBuffer(cmd.GetData(), src.GetData(), dst.GetData(), 1, &copyRegion);
+            vkCmdCopyBuffer(cmd.GetData(), src->GetData(), dst->GetData(), 1, &copyRegion);
 
             cmd.End();
         }

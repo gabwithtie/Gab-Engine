@@ -2,10 +2,12 @@
 
 #include <vulkan/vulkan.h>
 
+#include "../Objects/Image.h"
+
 namespace gbe::vulkan {
 	class MemoryBarrier {
 	public:
-		static void Insert(VkCommandBuffer cmdbuffer, VkImage image, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldImageLayout, VkImageLayout newImageLayout, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkImageSubresourceRange subresourceRange)
+		static void Insert(VkCommandBuffer cmdbuffer, Image* image, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout newImageLayout, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkImageSubresourceRange subresourceRange)
         {
             VkImageMemoryBarrier imageMemoryBarrier{};
             imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -15,9 +17,9 @@ namespace gbe::vulkan {
 
             imageMemoryBarrier.srcAccessMask = srcAccessMask;
             imageMemoryBarrier.dstAccessMask = dstAccessMask;
-            imageMemoryBarrier.oldLayout = oldImageLayout;
+            imageMemoryBarrier.oldLayout = image->Get_layout();
             imageMemoryBarrier.newLayout = newImageLayout;
-            imageMemoryBarrier.image = image;
+            imageMemoryBarrier.image = image->GetData();
             imageMemoryBarrier.subresourceRange = subresourceRange;
 
             vkCmdPipelineBarrier(

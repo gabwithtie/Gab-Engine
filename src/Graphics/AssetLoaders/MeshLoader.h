@@ -21,8 +21,8 @@ namespace gbe {
 		struct MeshData {
 			asset::data::MeshLoadData* loaddata;
 
-			vulkan::Buffer vertexBuffer;
-			vulkan::Buffer indexBuffer;
+			vulkan::Buffer* vertexBuffer;
+			vulkan::Buffer* indexBuffer;
 		};
 
 		class MeshLoader : public asset::AssetLoader<asset::Mesh, asset::data::MeshImportData, asset::data::MeshLoadData, MeshData> {

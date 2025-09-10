@@ -14,19 +14,19 @@ namespace gbe {
                 struct UniformBlockBuffer {
                     std::string block_name;
 
-                    std::vector<vulkan::Buffer> uboPerFrame;
+                    std::vector<vulkan::Buffer*> uboPerFrame;
                     std::vector<void*> uboMappedPerFrame;
                 };
 
                 struct UniformTexture {
 					std::string texture_name;
-					vulkan::ImageView imageView;
-					vulkan::Sampler sampler;
+					vulkan::ImageView* imageView;
+					vulkan::Sampler* sampler;
                 };
 
 				std::vector<UniformBlockBuffer> uniformBuffers;
 				std::vector<UniformTexture> uniformTextures;
-                vulkan::DescriptorPool descriptorPool;
+                vulkan::DescriptorPool* descriptorPool;
                 std::vector<std::vector<VkDescriptorSet>> allocdescriptorSets;
 
                 bool GetBlock(std::string name, gbe::gfx::DrawCall::CallInstance::UniformBlockBuffer& out_block);
@@ -43,12 +43,11 @@ namespace gbe {
             asset::Material* m_material;
 
             //VULKAN
-			VkDevice* vkdevice;
 			ShaderData* shaderdata;
             unsigned int MAX_FRAMES_IN_FLIGHT = 2;
         public:
 
-            DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* shaderdata, unsigned int MAX_FRAMES_IN_FLIGHT, VkDevice* vkdevice, int order);
+            DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* shaderdata, unsigned int MAX_FRAMES_IN_FLIGHT, int order);
             ~DrawCall();
 
             asset::Mesh* get_mesh();
@@ -73,7 +72,7 @@ namespace gbe {
                 if(callinst.GetBlock(blockinfo.name, blockbuffer) == false)
 					return false;
 
-                const auto& blockaddr = reinterpret_cast<char*>(blockbuffer.uboPerFrame[frameindex].GetMemory());
+                const auto& blockaddr = reinterpret_cast<char*>(blockbuffer.uboPerFrame[frameindex]->GetMemory());
                 const auto& finaladdr = blockaddr + fieldinfo.offset;
 
                 if (sizeof(valueref) != fieldinfo.size)

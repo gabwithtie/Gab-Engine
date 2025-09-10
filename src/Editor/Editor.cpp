@@ -5,6 +5,8 @@
 #include "Graphics/gbe_graphics.h"
 #include "Engine/gbe_engine.h"
 
+#include "Ext/GabVulkan/Objects.h"
+
 gbe::Editor* gbe::Editor::instance = nullptr;
 
 gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engine, Time* _mtime)
@@ -15,14 +17,6 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	this->mwindow = window;
 	this->mrenderpipeline = renderpipeline;
 	this->mtime = _mtime;
-
-	//GET ALL REQUIRED VARIABLES FROM RENDERPIPELINE
-	auto vkInst = static_cast<VkInstance*>(renderpipeline->GetPipelineVariable("VkInstance"));
-	auto vkdevice = static_cast<VkDevice*>(renderpipeline->GetPipelineVariable("VkDevice"));
-	auto vkphysicalDevice = static_cast<VkPhysicalDevice*>(renderpipeline->GetPipelineVariable("VkPhysicalDevice"));
-	auto renderPass = static_cast<VkRenderPass*>(renderpipeline->GetPipelineVariable("VkRenderPass"));
-	auto graphicsqueue = static_cast<VkQueue*>(renderpipeline->GetPipelineVariable("VkQueue_graphics"));
-
 
 	//1: create descriptor pool for IMGUI
 	// the size of the pool is very oversize, but it's copied from imgui demo itself.
@@ -49,12 +43,12 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	pool_info.pPoolSizes = pool_sizes;
 
 	VkDescriptorPool imguiPool;
-	if (vkCreateDescriptorPool(*vkdevice, &pool_info, nullptr, &imguiPool) != VK_SUCCESS) {
+	if (vkCreateDescriptorPool(vulkan::VirtualDevice::GetActive()->GetData(), &pool_info, nullptr, &imguiPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to init imgui");
 	}
 
-	TextureLoader::Set_Ui_Callback([](VkSampler sampler, VkImageView imgview) {
-		return ImGui_ImplVulkan_AddTexture(sampler, imgview, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	TextureLoader::Set_Ui_Callback([](vulkan::Sampler* sampler, vulkan::ImageView* imgview) {
+		return ImGui_ImplVulkan_AddTexture(sampler->GetData(), imgview->GetData(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 			});
 
 	// 2: initialize imgui library
@@ -67,15 +61,15 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 
 	//this initializes imgui for Vulkan
 	ImGui_ImplVulkan_InitInfo init_info = {};
-	init_info.Instance = *vkInst;
-	init_info.PhysicalDevice = *vkphysicalDevice;
-	init_info.Device = *vkdevice;
-	init_info.Queue = *graphicsqueue;
+	init_info.Instance = vulkan::Instance::GetActive()->GetData();
+	init_info.PhysicalDevice = vulkan::PhysicalDevice::GetActive()->GetData();
+	init_info.Device = vulkan::VirtualDevice::GetActive()->GetData();
+	init_info.Queue = vulkan::VirtualDevice::GetActive()->Get_graphicsQueue();
 	init_info.DescriptorPool = imguiPool;
 	init_info.MinImageCount = 3;
 	init_info.ImageCount = 3;
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-	init_info.RenderPass = *renderPass;
+	init_info.RenderPass = vulkan::RenderPass::GetActive()->GetData();
 
 	ImGui_ImplVulkan_Init(&init_info);
 
@@ -286,13 +280,6 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 
 	ImGui_ImplSDL2_ProcessEvent(sdlevent);
 
-	//CHECK SCREENSHOT BUTTON
-	if (sdlevent->type == SDL_KEYDOWN) {
-		if (sdlevent->key.keysym.sym == SDLK_p) {
-			this->mrenderpipeline->ToggleRecording();
-		}
-	}
-
 	//CHECK SHIFT CLICK
 	if (sdlevent->key.keysym.sym == SDLK_LSHIFT) {
 		if (sdlevent->type == SDL_KEYDOWN) {
@@ -461,7 +448,7 @@ void gbe::Editor::PresentFrame()
 	ImGui::Render();
 }
 
-void gbe::Editor::RenderPass(VkCommandBuffer cmd)
+void gbe::Editor::RenderPass(vulkan::CommandBuffer* cmd)
 {
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd->GetData());
 }

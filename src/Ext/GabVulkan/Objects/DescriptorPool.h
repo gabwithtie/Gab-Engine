@@ -4,14 +4,10 @@
 #include "../VulkanObjectSingleton.h"
 
 namespace gbe::vulkan {
-    class DescriptorPool : public VulkanObject<VkDescriptorPool> {
-
+    class DescriptorPool : public VulkanObject<VkDescriptorPool, DescriptorPool> {
+    protected:
     public:
         inline void RegisterDependencies() override {
-
-        }
-
-        inline DescriptorPool() {
 
         }
 

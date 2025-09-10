@@ -5,9 +5,8 @@
 namespace gbe {
     using namespace gfx;
 
-    DrawCall::DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* _shaderdata, unsigned int MAX_FRAMES_IN_FLIGHT, VkDevice* _vkdevice, int order)
+    DrawCall::DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* _shaderdata, unsigned int MAX_FRAMES_IN_FLIGHT, int order)
     {
-        this->vkdevice = _vkdevice;
         this->shaderdata = _shaderdata;
         this->order = order;
         this->m_mesh = mesh;
@@ -77,8 +76,8 @@ namespace gbe {
                 VkDescriptorImageInfo imageInfo{};
 
                 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageInfo.imageView = findtexturedata.textureImageView.GetData();
-                imageInfo.sampler = findtexturedata.textureSampler.GetData();
+                imageInfo.imageView = findtexturedata.textureImageView->GetData();
+                imageInfo.sampler = findtexturedata.textureSampler->GetData();
 
                 //CREATE THE WRITE DATA FOR EACH INSTANCE
 				for (const auto& callinstpair : this->calls)
@@ -95,7 +94,7 @@ namespace gbe {
                     descriptorWrite.descriptorCount = 1;
                     descriptorWrite.pImageInfo = &imageInfo;
 
-                    vkUpdateDescriptorSets(*this->vkdevice, static_cast<uint32_t>(1), &descriptorWrite, 0, nullptr);
+                    vkUpdateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), static_cast<uint32_t>(1), &descriptorWrite, 0, nullptr);
 				}   
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::VEC4) {
@@ -145,9 +144,10 @@ namespace gbe {
             newblockbuffer.uboMappedPerFrame.resize(MAX_FRAMES_IN_FLIGHT);
 
             for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                newblockbuffer.uboPerFrame[i] = vulkan::Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+                //MM_note: will be freed by unregister call instance.
+                newblockbuffer.uboPerFrame[i] = new vulkan::Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-                vulkan::VirtualDevice::GetActive()->MapMemory(newblockbuffer.uboPerFrame[i].GetMemory(), 0, bufferSize, 0, &newblockbuffer.uboMappedPerFrame[i]);
+                vulkan::VirtualDevice::GetActive()->MapMemory(newblockbuffer.uboPerFrame[i]->GetMemory(), 0, bufferSize, 0, &newblockbuffer.uboMappedPerFrame[i]);
             }
 
 			newinst.uniformBuffers.push_back(newblockbuffer);
@@ -181,7 +181,7 @@ namespace gbe {
 			}
         }
 
-        newinst.descriptorPool = vulkan::DescriptorPool(poolSizes, MAX_FRAMES_IN_FLIGHT * shaderdata->descriptorSetLayouts.size());
+        newinst.descriptorPool = new vulkan::DescriptorPool(poolSizes, MAX_FRAMES_IN_FLIGHT * shaderdata->descriptorSetLayouts.size());
 
         //DESCRIPTOR SETS
         auto setcount = shaderdata->descriptorSetLayouts.size();
@@ -195,12 +195,12 @@ namespace gbe {
 
             VkDescriptorSetAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            allocInfo.descriptorPool = newinst.descriptorPool.GetData();
+            allocInfo.descriptorPool = newinst.descriptorPool->GetData();
             allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
             allocInfo.pSetLayouts = layoutsperframe.data();
 
             newinst.allocdescriptorSets[set_i].resize(MAX_FRAMES_IN_FLIGHT);
-            if (vkAllocateDescriptorSets(*this->vkdevice, &allocInfo, newinst.allocdescriptorSets[set_i].data()) != VK_SUCCESS) {
+            if (vkAllocateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), &allocInfo, newinst.allocdescriptorSets[set_i].data()) != VK_SUCCESS) {
                 throw std::runtime_error("failed to allocate descriptor sets!");
             }
         }
@@ -217,7 +217,7 @@ namespace gbe {
 					throw std::runtime_error("Failed to find uniform block: " + uniformblock.block_name);
 
                 VkDescriptorBufferInfo bufferInfo{};
-                bufferInfo.buffer = uniformblock.uboPerFrame[f_i].GetData();
+                bufferInfo.buffer = uniformblock.uboPerFrame[f_i]->GetData();
                 bufferInfo.offset = 0;
                 bufferInfo.range = blockinfo.block_size;
 
@@ -241,8 +241,8 @@ namespace gbe {
                 VkDescriptorImageInfo imageInfo{};
 
                 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageInfo.imageView = uniformtex.imageView.GetData();
-                imageInfo.sampler = uniformtex.sampler.GetData();
+                imageInfo.imageView = uniformtex.imageView->GetData();
+                imageInfo.sampler = uniformtex.sampler->GetData();
 
                 //FIND THE BINDING INDEX
                 ShaderData::ShaderField fieldinfo;
@@ -262,7 +262,7 @@ namespace gbe {
                 descriptorWrites.push_back(descriptorWrite);
             }
 
-            vkUpdateDescriptorSets(*this->vkdevice, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+            vkUpdateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
         }
 
         //COMMITTING
@@ -273,9 +273,19 @@ namespace gbe {
 
     void gfx::DrawCall::UnRegisterCall(void* instance_id)
     {
-        bool exists = this->calls.find(instance_id) != this->calls.end();
+        auto it = this->calls.find(instance_id);
+        bool exists = it != this->calls.end();
         if (exists)
             callcount--;
+
+        for (size_t i = 0; i < it->second.uniformBuffers.size(); i++)
+        {
+            for (size_t j = 0; j < it->second.uniformBuffers[i].uboPerFrame.size(); j++)
+            {
+                vulkan::VirtualDevice::GetActive()->UnMapMemory(it->second.uniformBuffers[i].uboPerFrame[j]->GetMemory());
+                delete it->second.uniformBuffers[i].uboPerFrame[j];
+            }
+        }
 
         this->calls.erase(instance_id);
     }

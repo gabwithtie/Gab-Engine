@@ -3,7 +3,7 @@
 #include "../RenderPipeline.h"
 
 //Function is to be injected by the UI library in use
-std::function<VkDescriptorSet(gbe::vulkan::Sampler, gbe::vulkan::ImageView)> gbe::gfx::TextureLoader::Ui_Callback;
+gbe::gfx::GbeUiCallbackFunction gbe::gfx::TextureLoader::Ui_Callback;
 
 gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* loaddata) {
 	std::string pathstr = target->Get_asset_directory() + importdata.filename;
@@ -32,29 +32,28 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
 	vulkan::VirtualDevice::GetActive()->UnMapMemory(stagingBuffer.GetMemory());
 
 	stbi_image_free(pixels);
+	
+	//MM_note: will be freed by Unload asset function.
 
-	//IMAGE CREATION
-
-	vulkan::Image textureImage(tex_width, tex_height, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-	//CREATE IMAGE VIEW
-	vulkan::ImageView textureImageView(textureImage, VK_IMAGE_ASPECT_COLOR_BIT);
-
-	//SAMPLING
-	vulkan::Sampler textureSampler;
+	vulkan::Image* textureImage = new vulkan::Image(tex_width, tex_height, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	vulkan::ImageView* textureImageView = new vulkan::ImageView(textureImage, VK_IMAGE_ASPECT_COLOR_BIT);
+	vulkan::Sampler* textureSampler = new vulkan::Sampler();
 
 	//DO UI LOADING HERE
 	VkDescriptorSet tex_DS = nullptr;
 
-	if(importdata.type == "UI")
-		tex_DS = TextureLoader::Ui_Callback(textureSampler, textureImageView);
-
+	if (importdata.type == "UI") {
+		if (TextureLoader::Ui_Callback)
+			tex_DS = TextureLoader::Ui_Callback(textureSampler, textureImageView);
+		else {
+			std::cerr << "Texture loaded as a UI Texture but UI Texture Loader not initialized." << std::endl;
+		}
+	}
 
 	//Map memory
-	textureImage.transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	vulkan::Image::copyBufferToImage(stagingBuffer, textureImage);
-
-	textureImage.transitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	textureImage->transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	vulkan::Image::copyBufferToImage(&stagingBuffer, textureImage);
+	textureImage->transitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	return TextureData{
 		textureImageView,
@@ -64,7 +63,11 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
 	};
 }
 void gbe::gfx::TextureLoader::UnLoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) {
+	const auto& assetdata = GetAssetData(target);
 
+	delete assetdata.textureImage;
+	delete assetdata.textureImageView;
+	delete assetdata.textureSampler;
 }
 
 gbe::gfx::TextureData& gbe::gfx::TextureLoader::GetDefaultImage()
@@ -72,18 +75,10 @@ gbe::gfx::TextureData& gbe::gfx::TextureLoader::GetDefaultImage()
 	return static_cast<TextureLoader*>(active_instance)->defaultImage;
 }
 
-const void gbe::gfx::TextureLoader::Set_Ui_Callback(std::function<VkDescriptorSet(gbe::vulkan::Sampler, gbe::vulkan::ImageView)> func) {
-	gbe::gfx::TextureLoader::Ui_Callback = func;
-}
-
-void gbe::gfx::TextureLoader::PassDependencies(VkDevice* vkdevice, VkPhysicalDevice* vkphysicaldevice)
-{
-	this->vkdevice = vkdevice;
-	this->vkphysicaldevice = vkphysicaldevice;
+void gbe::gfx::TextureLoader::AssignSelfAsLoader() {
+	asset::AssetLoader<asset::Texture, asset::data::TextureImportData, asset::data::TextureLoadData, TextureData>::AssignSelfAsLoader();
 
 	//CREATING DEFAULT IMAGE
-	//IMAGE CREATION
-
 	int tex_width = 1;
 	int tex_height = 1;
 	int colorchannels = 3;
@@ -96,28 +91,27 @@ void gbe::gfx::TextureLoader::PassDependencies(VkDevice* vkdevice, VkPhysicalDev
 	vulkan::Buffer stagingBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	void* vkdata;
-	vkMapMemory(*this->vkdevice, stagingBuffer.GetMemory(), 0, imageSize, 0, &vkdata);
+	vulkan::VirtualDevice::GetActive()->MapMemory(stagingBuffer.GetMemory(), 0, imageSize, 0, &vkdata);
 	memcpy(vkdata, pixels, static_cast<size_t>(imageSize));
-	vkUnmapMemory(*this->vkdevice, stagingBuffer.GetMemory());
+	vulkan::VirtualDevice::GetActive()->UnMapMemory(stagingBuffer.GetMemory());
 
 	stbi_image_free(pixels);
 
-	vulkan::Image textureImage(tex_width, tex_height, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	vulkan::Image* textureImage = new vulkan::Image(tex_width, tex_height, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	vulkan::ImageView* textureImageView = new vulkan::ImageView(textureImage, VK_IMAGE_ASPECT_COLOR_BIT);
+	vulkan::Sampler* textureSampler = new vulkan::Sampler();
 
-	textureImage.transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	vulkan::Image::copyBufferToImage(stagingBuffer, textureImage);
-
-	textureImage.transitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-	//CREATE IMAGE VIEW
-	vulkan::ImageView textureImageView(textureImage, VK_IMAGE_ASPECT_COLOR_BIT);
-
-	//SAMPLING
-	vulkan::Sampler textureSampler;
+	textureImage->transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	vulkan::Image::copyBufferToImage(&stagingBuffer, textureImage);
+	textureImage->transitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	this->defaultImage = TextureData{
 		textureImageView,
 		textureImage,
 		textureSampler
 	};
+}
+
+const void gbe::gfx::TextureLoader::Set_Ui_Callback(GbeUiCallbackFunction func) {
+	gbe::gfx::TextureLoader::Ui_Callback = func;
 }

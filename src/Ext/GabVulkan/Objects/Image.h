@@ -6,7 +6,7 @@
 #include "Buffer.h"
 
 namespace gbe::vulkan {
-	class Image : public VulkanObject<VkImage> {
+	class Image : public VulkanObject<VkImage, Image> {
     private:
         VkDeviceMemory imageMemory;
         VkFormat format;
@@ -39,21 +39,13 @@ namespace gbe::vulkan {
 
 		}
         inline ~Image() {
-            if (!initialized)
-                return;
-
             vkDestroyImage(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
             vkFreeMemory(VirtualDevice::GetActive()->GetData(), imageMemory, nullptr);
-        }
-
-        inline Image() {
-
         }
 
         inline Image(const VkImage& createdimage)
         {
             this->data = createdimage;
-            initialized = true;
         }
         inline Image(uint32_t _width, uint32_t _height, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties)
         {
@@ -93,7 +85,6 @@ namespace gbe::vulkan {
             }
 
             CheckSuccess(vkBindImageMemory(VirtualDevice::GetActive()->GetData(), this->data, imageMemory, 0));
-            initialized = true;
         }
 
         inline void transitionImageLayout(VkImageLayout newLayout)
@@ -182,7 +173,7 @@ namespace gbe::vulkan {
             layout = newLayout;
         }
 
-        inline static void copyBufferToImage(Buffer& buffer, Image& image)
+        inline static void copyBufferToImage(Buffer* buffer, Image* image)
         {
             CommandBufferSingle commandBuffer;
             commandBuffer.Begin();
@@ -199,15 +190,15 @@ namespace gbe::vulkan {
 
             region.imageOffset = { 0, 0, 0 };
             region.imageExtent = {
-                image.width,
-                image.height,
+                image->width,
+                image->height,
                 1
             };
 
             vkCmdCopyBufferToImage(
                 commandBuffer.GetData(),
-                buffer.GetData(),
-                image.GetData(),
+                buffer->GetData(),
+                image->GetData(),
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 1,
                 &region
@@ -216,7 +207,7 @@ namespace gbe::vulkan {
             commandBuffer.End();
         }
 
-        inline static void copyImageToBuffer(Image image, Buffer buffer)
+        inline static void copyImageToBuffer(Image* image, Buffer* buffer)
         {
             CommandBufferSingle commandBuffer;
             commandBuffer.Begin();
@@ -233,18 +224,18 @@ namespace gbe::vulkan {
 
             region.imageOffset = { 0, 0, 0 };
             region.imageExtent = {
-                image.width,
-                image.height,
+                image->width,
+                image->height,
                 1
             };
 
-            image.transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+            image->transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
             vkCmdCopyImageToBuffer(
                 commandBuffer.GetData(),
-                image.GetData(),
+                image->GetData(),
                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                buffer.GetData(),
+                buffer->GetData(),
                 1,
                 &region
             );

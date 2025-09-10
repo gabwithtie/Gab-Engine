@@ -4,6 +4,7 @@
 #include "../VulkanObjectSingleton.h"
 
 #include "../Utility/DebugCallback.h"
+#include "../Utility/ValidationLayers.h"
 
 #include <algorithm>
 #include <array>
@@ -15,52 +16,63 @@
 #include "RenderPass.h"
 #include "PhysicalDevice.h"
 #include "VirtualDevice.h"
+#include "CommandBuffer.h"
+#include "Structures/FrameSyncronizationObject.h"
+
 
 namespace gbe::vulkan {
-    class Instance : public VulkanObject<VkInstance>, public VulkanObjectSingleton<Instance> {
+    class Instance : public VulkanObject<VkInstance, Instance>, public VulkanObjectSingleton<Instance> {
     
-    public:
         //INSTANCE INFO
-        VkSurfaceKHR vksurface = nullptr;
         VkDebugUtilsMessengerEXT debugMessenger = nullptr;
         bool enableValidationLayers = false;
 
-        //DEVICES
-        PhysicalDevice physicalDevice;
-        VirtualDevice virtualDevice;
-
-        //SWAPCHAINS
         unsigned int x;
         unsigned int y;
-        vulkan::SwapChain swapchain;
+        int MAX_FRAMES_IN_FLIGHT = 2;
 
-        //Renderpass
-        RenderPass renderPass;
-
-        //DEPTH PASS
-        Image depthImage;
-        ImageView depthImageView;
-
-        //COMMANDPOOL
-        CommandPool commandPool;
-        const int MAX_FRAMES_IN_FLIGHT = 2;
+        //STATES
         uint32_t currentFrame = 0;
-        std::vector<VkCommandBuffer> commandBuffers;
+        uint32_t currentSwapchainImage = 0;
+        
+        //==============DYNAMICALLY ALLOCATED============
+        Surface* surface;
+        PhysicalDevice* physicalDevice;
+        VirtualDevice* virtualDevice;
+        vulkan::SwapChain* swapchain; //remember that images are arbitrary
+        RenderPass* renderPass;
+        Image* depthImage;
+        ImageView* depthImageView;
+        CommandPool* commandPool;
+        std::vector<CommandBuffer*> commandBuffers; //buffers per frame
+        std::vector<FrameSyncronizationObject*> frameSynchronizationObjects; //sync objects per frame
 
-        //Synchronization
-        std::vector<VkSemaphore> imageAvailableSemaphores;
-        std::vector<VkSemaphore> renderFinishedSemaphores;
-        std::vector<VkFence> inFlightFences;
-
+    public:
         inline void RegisterDependencies() override {
 
         }
 
-        inline Instance() {
-
+        inline const uint32_t Get_maxFrames() const {
+            return MAX_FRAMES_IN_FLIGHT;
         }
 
-        inline Instance(unsigned int _x, unsigned int _y, std::vector<const char*>& allextensions, bool _enableValidationLayers, const std::vector<const char*>& validationLayers) {
+        inline CommandBuffer* GetCurrentCommandBuffer() {
+            return commandBuffers[currentFrame];
+        }
+
+        inline uint32_t GetCurrentFrameIndex() {
+            return currentFrame;
+        }
+
+        inline uint32_t GetCurrentSwapchainImage() {
+            return currentSwapchainImage;
+        }
+
+        inline Surface* GetSurface() {
+            return surface;
+        }
+
+        inline Instance(unsigned int _x, unsigned int _y, std::vector<const char*>& allextensions, bool _enableValidationLayers) {
             this->x = _x;
             this->y = _y;
             enableValidationLayers = _enableValidationLayers;
@@ -85,8 +97,8 @@ namespace gbe::vulkan {
             //DEBUG
             VkDebugUtilsMessengerCreateInfoEXT debug_messenger_create_info{};
             if (enableValidationLayers) {
-                instInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-                instInfo.ppEnabledLayerNames = validationLayers.data();
+                instInfo.enabledLayerCount = static_cast<uint32_t>(ValidationLayers::validationLayerNames.size());
+                instInfo.ppEnabledLayerNames = ValidationLayers::validationLayerNames.data();
 
                 debug_messenger_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
                 debug_messenger_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -98,9 +110,12 @@ namespace gbe::vulkan {
             }
             else {
                 instInfo.enabledLayerCount = 0;
-
                 instInfo.pNext = nullptr;
             }
+
+            //INSTANCE
+            CheckSuccess(vkCreateInstance(&instInfo, nullptr, &this->data));
+
             if (enableValidationLayers) {
                 auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(this->data, "vkCreateDebugUtilsMessengerEXT");
                 if (func != nullptr) {
@@ -110,13 +125,15 @@ namespace gbe::vulkan {
                     throw std::runtime_error("failed to set up debug messenger!");
                 }
             }
-
-            //INSTANCE
-            CheckSuccess(vkCreateInstance(&instInfo, nullptr, &this->data));
-            initialized = true;
         }
 
-        inline void Init(){
+        inline void Init(Surface* _surface) {
+            //===================SURFACE SET UP===================//
+            
+            surface = _surface;
+            Surface::SetActive(surface);
+            //reconstruct because surface is expected to be constructed using dereferencing.
+
             //===================DEVICE SET UP===================//
             const std::vector<const char*> deviceExtensionNames = {
                 VK_KHR_SWAPCHAIN_EXTENSION_NAME,
@@ -131,21 +148,24 @@ namespace gbe::vulkan {
             }
             std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
             vkEnumeratePhysicalDevices(this->data, &physicalDeviceCount, physicalDevices.data());
-            std::vector<PhysicalDevice> gbephysicalDevices;
+            std::vector<PhysicalDevice*> gbephysicalDevices;
             for (const auto pd : physicalDevices)
             {
-                gbephysicalDevices.push_back(PhysicalDevice(pd));
+                gbephysicalDevices.push_back(new PhysicalDevice(pd));
             }
 
             //TEST DEVICE SUITABLE
             std::set<std::string> requiredExtensions(deviceExtensionNames.begin(), deviceExtensionNames.end());
 
-            for (auto& vkpdevice : gbephysicalDevices) {
-                if (vkpdevice.IsCompatible(requiredExtensions) && vkpdevice.Get_Features().samplerAnisotropy) {
-                    physicalDevice = vkpdevice;
-                    PhysicalDevice::SetActive(&physicalDevice);
+            for (size_t i = 0; i < physicalDeviceCount; i++)
+            {
+                if (gbephysicalDevices[i]->IsCompatible(requiredExtensions) && gbephysicalDevices[i]->Get_Features().samplerAnisotropy) {
+                    physicalDevice = gbephysicalDevices[i];
+                    PhysicalDevice::SetActive(physicalDevice);
                     founddevice = true;
-                    break;
+                }
+                else {
+                    delete gbephysicalDevices[i];
                 }
             }
 
@@ -153,51 +173,32 @@ namespace gbe::vulkan {
                 throw std::runtime_error("failed to find a suitable GPU!");
             }
 
-            virtualDevice = VirtualDevice(PhysicalDevice::GetActive(), deviceExtensionNames);
-            VirtualDevice::SetActive(&virtualDevice);
+            virtualDevice = new VirtualDevice(PhysicalDevice::GetActive(), deviceExtensionNames);
+            VirtualDevice::SetActive(virtualDevice);
 
             //======================OBJECT SETUP========================
             this->InitializePipelineObjects();
 
             //======================CommandPool SETUP========================
-            commandPool = CommandPool();
-            CommandPool::SetActive(&commandPool);
+            commandPool = new CommandPool();
+            CommandPool::SetActive(commandPool);
 
             commandBuffers.resize(this->MAX_FRAMES_IN_FLIGHT);
 
-            VkCommandBufferAllocateInfo allocInfo{};
-            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            allocInfo.commandPool = commandPool.GetData();
-            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
-
-            if (vkAllocateCommandBuffers(VirtualDevice::GetActive()->GetData(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-                throw std::runtime_error("failed to allocate command buffers!");
+            for (size_t i = 0; i < this->MAX_FRAMES_IN_FLIGHT; i++)
+            {
+                commandBuffers[i] = new CommandBuffer(commandPool->GetData());
             }
 
             //======================DISPLAY SETUP========================
             this->CreateDepthResources();
-            this->swapchain.InitializeFramebuffers(depthImageView, renderPass);
+            this->swapchain->InitializeFramebuffers(depthImageView, renderPass);
 
             //======================SYNCHRONIZATION SETUP========================
-            this->imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-            this->renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-            this->inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-
-            VkSemaphoreCreateInfo semaphoreInfo{};
-            semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-            VkFenceCreateInfo fenceInfo{};
-            fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-            fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+            this->frameSynchronizationObjects.resize(MAX_FRAMES_IN_FLIGHT);
 
             for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                if (vkCreateSemaphore(VirtualDevice::GetActive()->GetData(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-                    vkCreateSemaphore(VirtualDevice::GetActive()->GetData(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-                    vkCreateFence(VirtualDevice::GetActive()->GetData(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
-
-                    throw std::runtime_error("failed to create synchronization objects for a frame!");
-                }
+                frameSynchronizationObjects[i] = new FrameSyncronizationObject();
             }
         }
 
@@ -245,25 +246,23 @@ namespace gbe::vulkan {
                 imageCount = PhysicalDevice::GetActive()->Get_capabilities().maxImageCount;
             }
 
-            swapchain = SwapChain(chosenFormat, chosenPresentMode, swapchainExtent, imageCount);
-            SwapChain::SetActive(&swapchain);
+            swapchain = new SwapChain(chosenFormat, chosenPresentMode, swapchainExtent, imageCount);
+            SwapChain::SetActive(swapchain);
 
             //==============RENDERPASS================
-            renderPass = RenderPass(chosenFormat.format);
-            RenderPass::SetActive(&renderPass);
+            renderPass = new RenderPass(chosenFormat.format);
+            RenderPass::SetActive(renderPass);
         }
 
         inline void RefreshPipelineObjects() {
             this->CleanPipelineObjects();
             this->InitializePipelineObjects();
             this->CreateDepthResources();
-            this->swapchain.InitializeFramebuffers(depthImageView, renderPass);
+            this->swapchain->InitializeFramebuffers(depthImageView, renderPass);
         }
 
         inline void CleanPipelineObjects() {
             vkDeviceWaitIdle(VirtualDevice::GetActive()->GetData());
-
-
         }
 
         inline void CreateDepthResources()
@@ -274,14 +273,16 @@ namespace gbe::vulkan {
                 VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
             );
 
-            depthImage = Image(this->x, this->y, depthformat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-            depthImageView = ImageView(depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
+            depthImage = new Image(this->x, this->y, depthformat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            depthImageView = new ImageView(depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-            depthImage.transitionImageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            depthImage->transitionImageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
         }
 
-        inline void CleanUp()
+        inline ~Instance()
         {
+            vkDeviceWaitIdle(VirtualDevice::GetActive()->GetData());
+
             if (enableValidationLayers) {
                 auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(this->data, "vkDestroyDebugUtilsMessengerEXT");
                 if (func != nullptr) {
@@ -289,21 +290,110 @@ namespace gbe::vulkan {
                 }
             }
 
-            vkDeviceWaitIdle(VirtualDevice::GetActive()->GetData());
-
-            this->CleanPipelineObjects();
-
-            //Insert Shader Program disposal here
-            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                vkDestroySemaphore(VirtualDevice::GetActive()->GetData(), renderFinishedSemaphores[i], nullptr);
-                vkDestroySemaphore(VirtualDevice::GetActive()->GetData(), imageAvailableSemaphores[i], nullptr);
-                vkDestroyFence(VirtualDevice::GetActive()->GetData(), inFlightFences[i], nullptr);
+            delete surface;
+            delete physicalDevice;
+            delete virtualDevice;
+            delete swapchain;
+            delete renderPass;
+            delete depthImage;
+            delete depthImageView;
+            delete commandPool;
+            for (size_t i = 0; i < commandBuffers.size(); i++)
+            {
+                delete commandBuffers[i];
             }
-            vkDestroyCommandPool(VirtualDevice::GetActive()->GetData(), CommandPool::GetActive()->GetData(), nullptr);
+            for (size_t i = 0; i < frameSynchronizationObjects.size(); i++)
+            {
+                delete frameSynchronizationObjects[i];
+            }
 
-            vkDestroySurfaceKHR(this->data, vksurface, nullptr);
-            vkDestroyDevice(VirtualDevice::GetActive()->GetData(), nullptr);
             vkDestroyInstance(this->data, nullptr);
+        }
+
+        inline void PrepareFrame() {
+            //==============SYNCING================
+            vkWaitForFences(VirtualDevice::GetActive()->GetData(), 1, frameSynchronizationObjects[currentFrame]->Get_inFlightFence_ptr(), VK_TRUE, UINT64_MAX);
+
+            VkResult aquireResult = vkAcquireNextImageKHR(VirtualDevice::GetActive()->GetData(), SwapChain::GetActive()->GetData(), UINT64_MAX, frameSynchronizationObjects[currentFrame]->Get_imageAvailableSemaphore(), VK_NULL_HANDLE, &currentSwapchainImage);
+
+            if (aquireResult == VK_ERROR_OUT_OF_DATE_KHR) {
+                this->RefreshPipelineObjects();
+                return;
+            }
+            else if (aquireResult != VK_SUCCESS && aquireResult != VK_SUBOPTIMAL_KHR) {
+                throw std::runtime_error("failed to acquire swap chain image!");
+            }
+
+            vkResetFences(VirtualDevice::GetActive()->GetData(), 1, frameSynchronizationObjects[currentFrame]->Get_inFlightFence_ptr());
+            
+            //==============COMMAND BUFFER START================
+            vkResetCommandBuffer(commandBuffers[currentFrame]->GetData(), 0);
+            commandBuffers[currentFrame]->Begin();
+
+            //==============RENDER PASS START================
+            VkRenderPassBeginInfo renderPassBeginInfo{};
+            renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            renderPassBeginInfo.renderPass = renderPass->GetData();
+            renderPassBeginInfo.framebuffer = swapchain->GetFramebuffer(currentSwapchainImage)->GetData();
+
+            renderPassBeginInfo.renderArea.offset = { 0, 0 };
+            renderPassBeginInfo.renderArea.extent = swapchain->GetExtent();
+
+            std::array<VkClearValue, 2> clearValues{};
+            float clear_brightness = 0.3f;
+            clearValues[0].color = { {clear_brightness, clear_brightness, clear_brightness, 1.0f} };
+            clearValues[1].depthStencil = { 1.0f, 0 };
+
+            renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+            renderPassBeginInfo.pClearValues = clearValues.data();
+
+            vkCmdBeginRenderPass(commandBuffers[currentFrame]->GetData(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        }
+
+        inline void PushFrame() {
+            vkCmdEndRenderPass(commandBuffers[currentFrame]->GetData());
+
+            VkSubmitInfo submitInfo{};
+            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+            VkSemaphore waitSemaphores[] = { frameSynchronizationObjects[currentFrame]->Get_imageAvailableSemaphore()};
+            VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+            submitInfo.waitSemaphoreCount = 1;
+            submitInfo.pWaitSemaphores = waitSemaphores;
+            submitInfo.pWaitDstStageMask = waitStages;
+
+            submitInfo.commandBufferCount = 1;
+            submitInfo.pCommandBuffers = commandBuffers[currentFrame]->GetDataPtr();
+
+            VkSemaphore signalSemaphores[] = { frameSynchronizationObjects[currentFrame]->Get_renderFinishedSemaphore()};
+            submitInfo.signalSemaphoreCount = 1;
+            submitInfo.pSignalSemaphores = signalSemaphores;
+
+            CheckSuccess(vkQueueSubmit(virtualDevice->Get_graphicsQueue(), 1, &submitInfo, frameSynchronizationObjects[currentFrame]->Get_inFlightFence()));
+
+            VkPresentInfoKHR presentInfo{};
+            presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+            presentInfo.waitSemaphoreCount = 1;
+            presentInfo.pWaitSemaphores = signalSemaphores;
+
+            VkSwapchainKHR swapChains[] = { swapchain->GetData()};
+            presentInfo.swapchainCount = 1;
+            presentInfo.pSwapchains = swapChains;
+            presentInfo.pImageIndices = &currentSwapchainImage;
+
+            presentInfo.pResults = nullptr; // Optional
+
+            VkResult presentResult = vkQueuePresentKHR(virtualDevice->Get_presentQueue(), &presentInfo);
+
+            if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR) {
+                this->RefreshPipelineObjects();
+            }
+            else if (presentResult != VK_SUCCESS) {
+                throw std::runtime_error("failed to present swap chain image!");
+            }
+
+            this->currentFrame = (this->currentFrame + 1) % this->MAX_FRAMES_IN_FLIGHT;
         }
 
     };

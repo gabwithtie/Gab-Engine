@@ -3,17 +3,14 @@
 #include "../VulkanObject.h"
 
 namespace gbe::vulkan {
-    class Sampler : public VulkanObject<VkSampler> {
+    class Sampler : public VulkanObject<VkSampler, Sampler> {
 
     public:
         inline void RegisterDependencies() override {
 
         }
 
-		inline ~Sampler() {
-			if (!initialized)
-				return;
-
+		inline ~Sampler(){
 			vkDestroySampler(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
 		}
 
@@ -40,6 +37,7 @@ namespace gbe::vulkan {
 			samplerInfo.maxLod = 0.0f;
 
 			CheckSuccess(vkCreateSampler(VirtualDevice::GetActive()->GetData(), &samplerInfo, nullptr, &this->data));
+
         }
     };
 }

@@ -8,19 +8,15 @@
 #include <array>
 
 namespace gbe::vulkan {
-    class RenderPass : public VulkanObject<VkRenderPass>, public VulkanObjectSingleton<RenderPass> {
+    class RenderPass : public VulkanObject<VkRenderPass, RenderPass>, public VulkanObjectSingleton<RenderPass> {
 
     public:
         inline void RegisterDependencies() override {
 
         }
 
-        inline ~RenderPass() {
+        inline ~RenderPass(){
             vkDestroyRenderPass(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
-        }
-
-        inline RenderPass() {
-
         }
 
         inline RenderPass(VkFormat chosenFormat) {
@@ -84,7 +80,6 @@ namespace gbe::vulkan {
 
             CheckSuccess(vkCreateRenderPass(VirtualDevice::GetActive()->GetData(), &renderPassInfo, nullptr, &this->data));
 
-            initialized = true;
         }
     };
 }

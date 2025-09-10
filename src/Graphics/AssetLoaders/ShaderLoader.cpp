@@ -172,7 +172,7 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 
 		VkDescriptorSetLayout newsetlayout;
 
-		if (vkCreateDescriptorSetLayout(*this->vkdevice, &layoutInfo, nullptr, &newsetlayout) != VK_SUCCESS) {
+		if (vkCreateDescriptorSetLayout(vulkan::VirtualDevice::GetActive()->GetData(), &layoutInfo, nullptr, &newsetlayout) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create descriptor set layout!");
 		}
 
@@ -262,14 +262,14 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)(*this->vkextent).width;
-	viewport.height = (float)(*this->vkextent).height;
+	viewport.width = (float)vulkan::SwapChain::GetActive()->GetExtent().width;
+	viewport.height = (float)vulkan::SwapChain::GetActive()->GetExtent().height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor{};
 	scissor.offset = { 0, 0 };
-	scissor.extent = (*this->vkextent);
+	scissor.extent = vulkan::SwapChain::GetActive()->GetExtent();
 
 	VkPipelineViewportStateCreateInfo viewportState{};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -351,7 +351,7 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-	if (vkCreatePipelineLayout((*this->vkdevice), &pipelineLayoutInfo, nullptr, &newpipelineLayout) != VK_SUCCESS) {
+	if (vkCreatePipelineLayout(vulkan::VirtualDevice::GetActive()->GetData(), &pipelineLayoutInfo, nullptr, &newpipelineLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 
@@ -372,21 +372,21 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 
 	pipelineInfo.layout = newpipelineLayout;
 
-	pipelineInfo.renderPass = (*this->vkrenderpass);
+	pipelineInfo.renderPass = vulkan::RenderPass::GetActive()->GetData();
 	pipelineInfo.subpass = 0;
 
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 	pipelineInfo.basePipelineIndex = -1; // Optional
 
 	VkPipeline newgraphicsPipeline;
-	VkResult newgraphicsPipeline_result = vkCreateGraphicsPipelines((*this->vkdevice), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newgraphicsPipeline);
+	VkResult newgraphicsPipeline_result = vkCreateGraphicsPipelines(vulkan::VirtualDevice::GetActive()->GetData(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newgraphicsPipeline);
 	if (newgraphicsPipeline_result != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 
 	//Cleanup
-	vkDestroyShaderModule((*this->vkdevice), vertShader, nullptr);
-	vkDestroyShaderModule((*this->vkdevice), fragShader, nullptr);
+	vkDestroyShaderModule(vulkan::VirtualDevice::GetActive()->GetData(), vertShader, nullptr);
+	vkDestroyShaderModule(vulkan::VirtualDevice::GetActive()->GetData(), fragShader, nullptr);
 
 	return ShaderData{
 		binding_sets,
@@ -403,10 +403,10 @@ void gbe::gfx::ShaderLoader::UnLoadAsset_(asset::Shader* asset, const asset::dat
 	auto shaderdata = this->GetAssetData(asset);
 	for (const auto& setlayout : shaderdata.descriptorSetLayouts)
 	{
-		vkDestroyDescriptorSetLayout(*this->vkdevice, setlayout, nullptr);
+		vkDestroyDescriptorSetLayout(vulkan::VirtualDevice::GetActive()->GetData(), setlayout, nullptr);
 	}
-	vkDestroyPipelineLayout((*this->vkdevice), shaderdata.pipelineLayout, nullptr);
-	vkDestroyPipeline((*this->vkdevice), shaderdata.pipeline, nullptr);
+	vkDestroyPipelineLayout(vulkan::VirtualDevice::GetActive()->GetData(), shaderdata.pipelineLayout, nullptr);
+	vkDestroyPipeline(vulkan::VirtualDevice::GetActive()->GetData(), shaderdata.pipeline, nullptr);
 }
 
 VkShaderModule gbe::gfx::ShaderLoader::TryCompileShader(const std::vector<char>& code) {
@@ -416,7 +416,7 @@ VkShaderModule gbe::gfx::ShaderLoader::TryCompileShader(const std::vector<char>&
 	shaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
 	VkShaderModule shaderModule;
-	if (vkCreateShaderModule((*this->vkdevice), &shaderModuleInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+	if (vkCreateShaderModule(vulkan::VirtualDevice::GetActive()->GetData(), &shaderModuleInfo, nullptr, &shaderModule) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create shader module!");
 	}
 

@@ -8,14 +8,15 @@
 #include "RenderPass.h"
 
 namespace gbe::vulkan {
-	class SwapChain : public VulkanObject<VkSwapchainKHR>, public VulkanObjectSingleton<SwapChain> {
+	class SwapChain : public VulkanObject<VkSwapchainKHR, SwapChain>, public VulkanObjectSingleton<SwapChain> {
 
-		std::vector<Image> swapChainImages;
 		VkSurfaceFormatKHR chosenFormat;
 		VkExtent2D swapchainExtent;
-		std::vector<ImageView> swapChainImageViews;
-		//SWAPCHAIN FRAMEBUFFERS
-		std::vector<Framebuffer> swapChainFramebuffers;
+
+        //================DYNAMICALLY ALLOCATED=====================// 
+		std::vector<Image*> swapChainImages;
+		std::vector<ImageView*> swapChainImageViews;
+		std::vector<Framebuffer*> swapChainFramebuffers;
 
 	public:
 
@@ -23,12 +24,34 @@ namespace gbe::vulkan {
 
 		}
 
-        inline ~SwapChain() {
-            vkDestroySwapchainKHR(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
+        inline VkSurfaceFormatKHR& GetFormat() {
+            return chosenFormat;
         }
 
-        inline SwapChain() {
+        inline Image* GetImage(int index) {
+            return swapChainImages[index];
+        }
 
+        inline Framebuffer* GetFramebuffer(int index) {
+            return swapChainFramebuffers[index];
+        }
+
+        inline VkExtent2D& GetExtent() {
+            return swapchainExtent;
+        }
+
+        inline ~SwapChain() {
+            for (size_t i = 0; i < swapChainImages.size(); i++) {
+                delete swapChainImages[i];
+            }
+            for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+                delete swapChainImageViews[i];
+            }
+            for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
+                delete swapChainFramebuffers[i];
+            }
+
+            vkDestroySwapchainKHR(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
         }
 
 		inline SwapChain(VkSurfaceFormatKHR _chosenFormat, VkPresentModeKHR chosenPresentMode, VkExtent2D _swapchainExtent, uint32_t imageCount) {
@@ -77,28 +100,26 @@ namespace gbe::vulkan {
 
             for (auto& vkimg : swapchain_vkimages)
             {
-                swapChainImages.push_back(Image(vkimg));
+                swapChainImages.push_back(new Image(vkimg));
             }
 
             //Image views
             swapChainImageViews.resize(swapChainImages.size());
 
             for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-                swapChainImageViews[i] = ImageView(swapChainImages[i], VK_IMAGE_ASPECT_COLOR_BIT);
+                swapChainImageViews[i] = new ImageView(swapChainImages[i], VK_IMAGE_ASPECT_COLOR_BIT);
             }
-
-            initialized = true;
 		}
 
-        inline void InitializeFramebuffers(ImageView depthImageView, RenderPass renderPass) {
+        inline void InitializeFramebuffers(ImageView* depthImageView, RenderPass* renderPass) {
             this->swapChainFramebuffers.resize(this->swapChainImageViews.size());
             for (size_t i = 0; i < swapChainImageViews.size(); i++) {
                 std::array<VkImageView, 2> attachments = {
-                    swapChainImageViews[i].GetData(),
-                    depthImageView.GetData()
+                    swapChainImageViews[i]->GetData(),
+                    depthImageView->GetData()
                 };
 
-                swapChainFramebuffers[i] = Framebuffer(swapchainExtent.width, swapchainExtent.height, renderPass, attachments);
+                swapChainFramebuffers[i] = new Framebuffer(swapchainExtent.width, swapchainExtent.height, renderPass, attachments);
             }
         }
 	};

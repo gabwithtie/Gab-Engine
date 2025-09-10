@@ -5,13 +5,14 @@
 #include "VirtualDevice.h"
 
 namespace gbe::vulkan {
-    class CommandBufferSingle : public VulkanObject<VkCommandBuffer> {
+    class CommandBufferSingle : public VulkanObject<VkCommandBuffer, CommandBufferSingle> {
         VkCommandPool commandPool;
-
+    protected:
     public:
         inline void RegisterDependencies() override {
 
         }
+
 
         inline void Begin(CommandPool* pool = nullptr) {
             VkCommandBufferAllocateInfo allocInfo{};
@@ -44,7 +45,6 @@ namespace gbe::vulkan {
             vkQueueWaitIdle(VirtualDevice::GetActive()->Get_graphicsQueue());
 
             vkFreeCommandBuffers(VirtualDevice::GetActive()->GetData(), this->commandPool, 1, &this->data);
-            initialized = true;
         }
     };
 }

@@ -15,6 +15,8 @@
 #include <functional>
 
 #include "Ext/GabVulkan/Objects.h"
+#include "Ext/GabVulkan/Utility/ValidationLayers.h"
+#include "Ext/GabVulkan/Utility/MemoryBarrier.h"
 
 #include "Math/gbe_math.h"
 #include "Asset/gbe_asset.h"
@@ -40,42 +42,36 @@ namespace gbe {
 	private:
 		static RenderPipeline* Instance;
 
+		Window& window;
+		Editor* editor;
 		Vector2Int resolution;
 
+		//Rendering
 		DrawCall* default_drawcall;
 		std::map<int, std::vector<DrawCall*>> drawcalls;
-
 		std::list<gfx::Light*> lights_this_frame;
 		const int maxlights = 10;
 
-		//--------CACHE--------//
 		//Loaders
 		ShaderLoader shaderloader;
 		MeshLoader meshloader;
 		TextureLoader textureloader;
 		MaterialLoader materialloader;
 
-		Window* window;
-		Editor* editor;
-
-		//VK Init
-		vulkan::Instance vkInst;
 
 		//CAPTURING
 		VkImage* mostrecent_screenshot = nullptr;
-		//RECORDING
-		bool recording = false;
-		std::vector<cv::Mat> video_frames;
-		
 
+		//============DYNAMICALLY ALLOCATED=======================//
+		vulkan::Instance* vulkanInstance;
+		
 	public:
 		static RenderPipeline* Get_Instance();
 		
-		RenderPipeline(gbe::Window*, Vector2Int);
+		RenderPipeline(gbe::Window&, Vector2Int);
 		DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material);
 		DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
 		DrawCall* GetDefaultDrawCall();
-		void* GetPipelineVariable(std::string id);
 
 		void AssignEditor(Editor* editor);
 		void SetCameraShader(asset::Shader* postprocess);
@@ -85,10 +81,5 @@ namespace gbe {
 		
 		void RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& nearclip, float& farclip);
 		std::vector<unsigned char> ScreenShot(bool write_file = false);
-		void StartRecording();
-		void StopRecording();
-		void ToggleRecording();
-
-		void CleanUp();
 	};
 }

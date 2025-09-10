@@ -10,9 +10,9 @@
 namespace gbe {
 	namespace gfx {		
 		struct TextureData {
-			vulkan::ImageView textureImageView;
-			vulkan::Image textureImage;
-			vulkan::Sampler textureSampler;
+			vulkan::ImageView* textureImageView;
+			vulkan::Image* textureImage;
+			vulkan::Sampler* textureSampler;
 
 			VkDescriptorSet DS;
 
@@ -20,20 +20,19 @@ namespace gbe {
 			unsigned int height;
 		};
 
+		typedef std::function<VkDescriptorSet(gbe::vulkan::Sampler*, gbe::vulkan::ImageView*)> GbeUiCallbackFunction;
+
 		class TextureLoader : public asset::AssetLoader<asset::Texture, asset::data::TextureImportData, asset::data::TextureLoadData, TextureData> {
 		private:
-			VkDevice* vkdevice;
-			VkPhysicalDevice* vkphysicaldevice;
 			TextureData defaultImage;
-
-			static std::function<VkDescriptorSet(gbe::vulkan::Sampler, gbe::vulkan::ImageView)> Ui_Callback;
+			static GbeUiCallbackFunction Ui_Callback;
 		protected:
 			TextureData LoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) override;
 			void UnLoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) override;
 		public:
+			void AssignSelfAsLoader() override;
 			static TextureData& GetDefaultImage();
-			const static void Set_Ui_Callback(std::function<VkDescriptorSet(gbe::vulkan::Sampler, gbe::vulkan::ImageView)> func);
-			void PassDependencies(VkDevice* vkdevice, VkPhysicalDevice* vkphysicaldevice);
+			const static void Set_Ui_Callback(GbeUiCallbackFunction func);
 		};
 	}
 }

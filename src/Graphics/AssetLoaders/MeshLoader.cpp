@@ -100,8 +100,10 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
     memcpy(vdata, vertices.data(), (size_t)vbufferSize);
     vulkan::VirtualDevice::GetActive()->UnMapMemory(stagingBuffer.GetMemory());
 
-    vulkan::Buffer vertexBuffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    vulkan::Buffer::CopyBuffer(stagingBuffer, vertexBuffer, vbufferSize);
+    //MM_note: Will be freed by unload asset.
+
+    vulkan::Buffer* vertexBuffer = new vulkan::Buffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    vulkan::Buffer::CopyBuffer(&stagingBuffer, vertexBuffer, vbufferSize);
 
     //INDEX BUFFER
     VkDeviceSize ibufferSize = sizeof(indices[0]) * indices.size();
@@ -113,8 +115,8 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
     memcpy(idata, indices.data(), (size_t)ibufferSize);
     vulkan::VirtualDevice::GetActive()->UnMapMemory(istagingBuffer.GetMemory());
 
-    vulkan::Buffer indexBuffer(ibufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    vulkan::Buffer::CopyBuffer(istagingBuffer, indexBuffer, ibufferSize);
+    vulkan::Buffer* indexBuffer = new vulkan::Buffer(ibufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    vulkan::Buffer::CopyBuffer(&istagingBuffer, indexBuffer, ibufferSize);
 
     //UNIFORM BUFFER
     std::vector<VkBuffer> uniformBuffers;
@@ -136,4 +138,7 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
 void gbe::gfx::MeshLoader::UnLoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* data)
 {
     const auto& meshdata = this->GetAssetData(asset);
+
+    delete meshdata.vertexBuffer;
+    delete meshdata.indexBuffer;
 }

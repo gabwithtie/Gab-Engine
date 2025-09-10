@@ -6,7 +6,7 @@
 #include "PhysicalDevice.h"
 
 namespace gbe::vulkan {
-    class VirtualDevice : public VulkanObject<VkDevice>, public VulkanObjectSingleton<VirtualDevice> {
+    class VirtualDevice : public VulkanObject<VkDevice, VirtualDevice>, public VulkanObjectSingleton<VirtualDevice> {
         VkQueue graphicsQueue;
         VkQueue presentQueue;
 
@@ -23,10 +23,9 @@ namespace gbe::vulkan {
 
         }
 
-        inline VirtualDevice() {
-
+        inline ~VirtualDevice(){
+            vkDestroyDevice(this->data, nullptr);
         }
-
         inline VirtualDevice(PhysicalDevice* from, const std::vector<const char*> deviceExtensionNames) {
 
             float queuePriority = 1.0f;
@@ -67,7 +66,6 @@ namespace gbe::vulkan {
             vkGetDeviceQueue(this->data, from->Get_graphicsQueueIndex(), 0, &graphicsQueue);
             vkGetDeviceQueue(this->data, from->Get_presentQueueIndex(), 0, &presentQueue);
 
-            initialized = true;
         }
 
         inline void MapMemory(VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void** ppData)

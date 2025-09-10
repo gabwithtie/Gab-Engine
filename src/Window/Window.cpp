@@ -6,6 +6,14 @@ namespace gbe {
         return this->implemented_window;
     }
 
+    Window::~Window() {
+        SDL_Quit();
+    }
+
+    Window::Window() {
+
+    }
+
     gbe::Window::Window(Vector2Int dimentions)
     {
         this->dimentions = dimentions; 
@@ -35,7 +43,6 @@ namespace gbe {
 
     void gbe::Window::UpdateState()
     {
-        
         //States to reset
         this->keystates[gbe::Keys::MOUSE_SCROLL_UP] = false;
         this->keystates[gbe::Keys::MOUSE_SCROLL_DOWN] = false;
@@ -112,10 +119,6 @@ namespace gbe {
     {
         //SDL_GL_SwapWindow(this->implemented_window);
     }
-    void Window::Terminate()
-    {
-        SDL_Quit();
-    }
     bool Window::ShouldClose()
     {
         return this->shouldclose;
@@ -163,10 +166,6 @@ namespace gbe {
         SDL_SetRelativeMouseMode(locked ? SDL_TRUE : SDL_FALSE);
         
         centered_cursor = locked;
-    }
-    void* (*Window::Get_procaddressfunc())(const char*)
-    {
-        return this->procaddressfunc;
     }
 
     void Window::AddAdditionalEventProcessor(std::function<void(void*)> processor) {

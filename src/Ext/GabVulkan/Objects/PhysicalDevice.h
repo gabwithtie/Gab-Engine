@@ -8,7 +8,7 @@
 #include "Surface.h"
 
 namespace gbe::vulkan {
-	class PhysicalDevice : public VulkanObject<VkPhysicalDevice>, public VulkanObjectSingleton<PhysicalDevice> {
+	class PhysicalDevice : public VulkanObject<VkPhysicalDevice, PhysicalDevice>, public VulkanObjectSingleton<PhysicalDevice> {
 		uint32_t graphicsQueueIndex = UINT32_MAX;
 		uint32_t presentQueueIndex = UINT32_MAX;
 		VkPhysicalDeviceFeatures supportedFeatures;
@@ -70,9 +70,9 @@ namespace gbe::vulkan {
 			}
 
 			uint32_t queueFamilyCount;
-			vkGetPhysicalDeviceQueueFamilyProperties(PhysicalDevice::GetActive()->GetData(), &queueFamilyCount, nullptr);
+			vkGetPhysicalDeviceQueueFamilyProperties(this->data, &queueFamilyCount, nullptr);
 			std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-			vkGetPhysicalDeviceQueueFamilyProperties(PhysicalDevice::GetActive()->GetData(), &queueFamilyCount, queueFamilies.data());
+			vkGetPhysicalDeviceQueueFamilyProperties(this->data, &queueFamilyCount, queueFamilies.data());
 
 			VkBool32 support;
 			uint32_t i = 0;
@@ -80,7 +80,7 @@ namespace gbe::vulkan {
 				if (graphicsQueueIndex == UINT32_MAX && queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 					graphicsQueueIndex = i;
 				if (presentQueueIndex == UINT32_MAX) {
-					vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice::GetActive()->GetData(), i, Surface::GetActive()->GetData(), &support);
+					vkGetPhysicalDeviceSurfaceSupportKHR(this->data, i, Surface::GetActive()->GetData(), &support);
 					if (support)
 						presentQueueIndex = i;
 				}
@@ -89,7 +89,6 @@ namespace gbe::vulkan {
 			if (graphicsQueueIndex == UINT32_MAX || presentQueueIndex == UINT32_MAX) {
 				throw std::runtime_error("failed to find a suitable queue family!");
 			}
-			initialized = true;
 		}
 
 		inline bool IsCompatible(std::set<std::string> requiredExtensions) const {
@@ -105,9 +104,6 @@ namespace gbe::vulkan {
 			bool extensionsSupported = requiredExtensions.empty();
 
 			if (extensionsSupported) {
-				VkSurfaceCapabilitiesKHR capabilities = {};
-				std::vector<VkSurfaceFormatKHR> formats;
-				std::vector<VkPresentModeKHR> presentModes;
 				return !formats.empty() && !presentModes.empty();
 			}
 
