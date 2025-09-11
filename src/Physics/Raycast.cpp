@@ -34,21 +34,21 @@ gbe::physics::Raycast::Raycast(PhysicsVector3 from, PhysicsVector3 dir)
 {
 	PhysicsVector3 to = (PhysicsVector3)(from + dir);
 
-	RaycastCallback closestResults(from, to);
-	closestResults.m_flags |= btTriangleRaycastCallback::kF_FilterBackfaces;
+	RaycastCallback results(from, to);
+	results.m_flags |= btTriangleRaycastCallback::kF_FilterBackfaces;
 
 	auto cur_context = physics::PhysicsPipeline::GetContext();
-	cur_context->Get_world()->rayTest(from, to, closestResults);
-	this->result = closestResults.hasHit();
+	cur_context->Get_world()->rayTest(from, to, results);
+	this->result = results.hasHit();
 	
 	if (this->result) {
-		auto relatedbody = cur_context->GetRelatedBody(closestResults.m_collisionObject);
-		auto relatedcollider = cur_context->GetRelatedCollider(closestResults.hitShape);
+		auto relatedbody = cur_context->GetRelatedBody(results.m_collisionObject);
+		auto relatedcollider = cur_context->GetRelatedCollider(results.hitShape);
 		this->other = relatedbody->Get_wrapper();
 		this->collider = relatedcollider->Get_wrapper();
-		this->intersection = closestResults.m_hitPointWorld;
+		this->intersection = results.m_hitPointWorld;
 		Vector3 delta = from - this->intersection;
-		this->normal = closestResults.m_hitNormalWorld;
+		this->normal = results.m_hitNormalWorld;
 		this->distance = delta.Magnitude();
 	}
 }
