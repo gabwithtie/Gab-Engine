@@ -5,6 +5,8 @@
 #include "Graphics/gbe_graphics.h"
 #include "Engine/gbe_engine.h"
 
+#include "Ext/GabVulkan/Objects.h"
+
 gbe::Editor* gbe::Editor::instance = nullptr;
 
 gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engine, Time* _mtime)
@@ -15,14 +17,6 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	this->mwindow = window;
 	this->mrenderpipeline = renderpipeline;
 	this->mtime = _mtime;
-
-	//GET ALL REQUIRED VARIABLES FROM RENDERPIPELINE
-	auto vkInst = static_cast<VkInstance*>(renderpipeline->GetPipelineVariable("VkInstance"));
-	auto vkdevice = static_cast<VkDevice*>(renderpipeline->GetPipelineVariable("VkDevice"));
-	auto vkphysicalDevice = static_cast<VkPhysicalDevice*>(renderpipeline->GetPipelineVariable("VkPhysicalDevice"));
-	auto renderPass = static_cast<VkRenderPass*>(renderpipeline->GetPipelineVariable("VkRenderPass"));
-	auto graphicsqueue = static_cast<VkQueue*>(renderpipeline->GetPipelineVariable("VkQueue_graphics"));
-
 
 	//1: create descriptor pool for IMGUI
 	// the size of the pool is very oversize, but it's copied from imgui demo itself.
@@ -49,12 +43,12 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	pool_info.pPoolSizes = pool_sizes;
 
 	VkDescriptorPool imguiPool;
-	if (vkCreateDescriptorPool(*vkdevice, &pool_info, nullptr, &imguiPool) != VK_SUCCESS) {
+	if (vkCreateDescriptorPool(vulkan::VirtualDevice::GetActive()->GetData(), &pool_info, nullptr, &imguiPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to init imgui");
 	}
 
-	TextureLoader::Set_Ui_Callback([](VkSampler sampler, VkImageView imgview) {
-		return ImGui_ImplVulkan_AddTexture(sampler, imgview, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	TextureLoader::Set_Ui_Callback([](vulkan::Sampler* sampler, vulkan::ImageView* imgview) {
+		return ImGui_ImplVulkan_AddTexture(sampler->GetData(), imgview->GetData(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 			});
 
 	// 2: initialize imgui library
@@ -67,15 +61,15 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 
 	//this initializes imgui for Vulkan
 	ImGui_ImplVulkan_InitInfo init_info = {};
-	init_info.Instance = *vkInst;
-	init_info.PhysicalDevice = *vkphysicalDevice;
-	init_info.Device = *vkdevice;
-	init_info.Queue = *graphicsqueue;
+	init_info.Instance = vulkan::Instance::GetActive()->GetData();
+	init_info.PhysicalDevice = vulkan::PhysicalDevice::GetActive()->GetData();
+	init_info.Device = vulkan::VirtualDevice::GetActive()->GetData();
+	init_info.Queue = vulkan::VirtualDevice::GetActive()->Get_graphicsQueue();
 	init_info.DescriptorPool = imguiPool;
 	init_info.MinImageCount = 3;
 	init_info.ImageCount = 3;
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-	init_info.RenderPass = *renderPass;
+	init_info.RenderPass = vulkan::RenderPass::GetActive()->GetData();
 
 	ImGui_ImplVulkan_Init(&init_info);
 
@@ -120,6 +114,9 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 }
 
 void gbe::Editor::SelectSingle(Object* other) {
+	if(other->Get_is_editor())
+		throw std::runtime_error("Cannot select editor object.");
+
 	auto newlyclicked = other;
 	RenderObject* renderer_has = nullptr;
 
@@ -131,69 +128,52 @@ void gbe::Editor::SelectSingle(Object* other) {
 		}
 		});
 
-	//CHECK IF OTHER IS A GIZMO
-	for (auto& gizmoptr : instance->gizmo_arrows)
-	{
-		if (newlyclicked == (*gizmoptr)) {
-			instance->held_gizmo = *gizmoptr;
+	bool deselection = false;
+
+	if (instance->keyboard_shifting) {
+		auto it = std::find(instance->selected.begin(), instance->selected.end(), newlyclicked);
+
+		// DESELECT IF FOUND
+		if (it != instance->selected.end()) {
+			instance->selected.erase(it);
+
+			instance->gizmo_boxes[newlyclicked]->Destroy();
+			instance->gizmo_boxes.erase(newlyclicked);
+
+			deselection = true;
 		}
 	}
+	else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
+		instance->DeselectAll();
+	}
 
-	if (instance->held_gizmo != nullptr) {
-		if (instance->selected.size() == 0)
-			return;
+	if (!deselection) {
+		//SELECT AND BOX
+		instance->selected.push_back(newlyclicked);
 
-		instance->original_selected_position = instance->selected[0]->World().position.Get();
-		std::cout << "Holding Gizmo" << std::endl;
+		if (renderer_has != nullptr)
+			instance->CreateGizmoBox(renderer_has, newlyclicked);
+	}
+
+	if (instance->selected.size() == 1) {
+		instance->selected_f = instance->selected[0]->World().GetForward();
+		instance->selected_r = instance->selected[0]->World().GetRight();
+		instance->selected_u = instance->selected[0]->World().GetUp();
+
+		//SPAWN GIZMO
+		instance->CreateGizmoArrow(instance->f_gizmo, instance->gizmo_arrow_drawcall_b, Vector3(0, 180, 0), instance->selected_f);
+		instance->CreateGizmoArrow(instance->r_gizmo, instance->gizmo_arrow_drawcall_r, Vector3(0, -90, 0), instance->selected_r);
+		instance->CreateGizmoArrow(instance->u_gizmo, instance->gizmo_arrow_drawcall_g, Vector3(90, 0, 0), instance->selected_u);
+
+		instance->current_selected_position = instance->selected[0]->World().position.Get();
 	}
 	else {
-		bool deselection = false;
-
-		if (instance->keyboard_shifting) {
-			auto it = std::find(instance->selected.begin(), instance->selected.end(), newlyclicked);
-
-			// DESELECT IF FOUND
-			if (it != instance->selected.end()) {
-				instance->selected.erase(it);
-
-				instance->gizmo_boxes[newlyclicked]->Destroy();
-				instance->gizmo_boxes.erase(newlyclicked);
-
-				deselection = true;
-			}
-		}
-		else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
-			instance->DeselectAll();
-		}
-
-		if (!deselection) {
-			//SELECT AND BOX
-			instance->selected.push_back(newlyclicked);
-
-			if (renderer_has != nullptr)
-				instance->CreateGizmoBox(renderer_has, newlyclicked);
-		}
-
-		if (instance->selected.size() == 1) {
-			instance->selected_f = instance->selected[0]->World().GetForward();
-			instance->selected_r = instance->selected[0]->World().GetRight();
-			instance->selected_u = instance->selected[0]->World().GetUp();
-
-			//SPAWN GIZMO
-			instance->CreateGizmoArrow(instance->f_gizmo, instance->gizmo_arrow_drawcall_b, Vector3(0, 180, 0), instance->selected_f);
-			instance->CreateGizmoArrow(instance->r_gizmo, instance->gizmo_arrow_drawcall_r, Vector3(0, -90, 0), instance->selected_r);
-			instance->CreateGizmoArrow(instance->u_gizmo, instance->gizmo_arrow_drawcall_g, Vector3(90, 0, 0), instance->selected_u);
-
-			instance->current_selected_position = instance->selected[0]->World().position.Get();
-		}
-		else {
-			//DELETE GIZMO
-			for (auto& gizmoptr : instance->gizmo_arrows)
-			{
-				if (*gizmoptr != nullptr) {
-					(*gizmoptr)->Destroy();
-					(*gizmoptr) = nullptr;
-				}
+		//DELETE GIZMO
+		for (auto& gizmoptr : instance->gizmo_arrows)
+		{
+			if (*gizmoptr != nullptr) {
+				(*gizmoptr)->Destroy();
+				(*gizmoptr) = nullptr;
 			}
 		}
 	}
@@ -265,7 +245,7 @@ void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcal
 	//SELECTED SPECIFIC THINGS
 	auto rot = Quaternion::Euler(rotation);
 	out_g->Local().rotation.Set(this->selected[0]->World().rotation.Get() * rot);
-	out_g->TranslateWorld(direction * gizmo_offset_distance);
+	out_g->World().position.Set(out_g->World().position.Get() + (direction * gizmo_offset_distance));
 }
 
 void gbe::Editor::CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed)
@@ -285,13 +265,6 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 	auto sdlevent = static_cast<SDL_Event*>(rawwindowevent);
 
 	ImGui_ImplSDL2_ProcessEvent(sdlevent);
-
-	//CHECK SCREENSHOT BUTTON
-	if (sdlevent->type == SDL_KEYDOWN) {
-		if (sdlevent->key.keysym.sym == SDLK_p) {
-			this->mrenderpipeline->ToggleRecording();
-		}
-	}
 
 	//CHECK SHIFT CLICK
 	if (sdlevent->key.keysym.sym == SDLK_LSHIFT) {
@@ -332,7 +305,36 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 					});
 
 				if (has_renderer) {
-					SelectSingle(newlyclicked);
+					if (newlyclicked->Get_is_editor())
+					{
+						//CHECK IF OTHER IS A GIZMO
+						for (auto& gizmoptr : instance->gizmo_arrows)
+						{
+							if (newlyclicked == (*gizmoptr)) {
+								instance->held_gizmo = *gizmoptr;
+							}
+						}
+
+						if (instance->held_gizmo != nullptr) {
+							if (instance->selected.size() == 0)
+								return;
+
+							//FIND DIRECTION
+							if (instance->held_gizmo == instance->f_gizmo)
+								instance->current_hold_direction = instance->selected_f;
+							if (instance->held_gizmo == instance->r_gizmo)
+								instance->current_hold_direction = instance->selected_r;
+							if (instance->held_gizmo == instance->u_gizmo)
+								instance->current_hold_direction = instance->selected_u;
+
+							instance->original_selected_position = instance->selected[0]->World().position.Get();
+							auto point_on_cursor = Vector3::GetClosestPointOnLineGivenLine(instance->original_selected_position, instance->current_hold_direction, camera_pos, mousedir);
+
+							instance->current_hold_offset = point_on_cursor - instance->original_selected_position;
+						}
+					}
+					else //NOT A GIZMO, JUST A NORMAL OBJECT
+						SelectSingle(newlyclicked);
 				}
 			}
 			else { //NOTHING WAS CLICKED
@@ -369,10 +371,10 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 
 				Editor::RegisterAction(
 					[=]() {
-						what_was_edited->SetWorldPosition(newpos);
+						what_was_edited->World().position.Set(newpos);
 					},
 					[=]() {
-						what_was_edited->SetWorldPosition(oldpos);
+						what_was_edited->World().position.Set(oldpos);
 					});
 
 				this->held_gizmo = nullptr;
@@ -414,19 +416,9 @@ void gbe::Editor::Update()
 
 		if (held_gizmo != nullptr) {
 			//FIND POSITION TO TRANSFORM THE SELECTED OBJECT
-			//FIND DIRECTION
-			Vector3 transformDirection;
-			if (held_gizmo == f_gizmo)
-				transformDirection = this->selected_f;
-			if (held_gizmo == r_gizmo)
-				transformDirection = this->selected_r;
-			if (held_gizmo == u_gizmo)
-				transformDirection = this->selected_u;
-
-			// Find the closest point on the line segments
-			this->current_selected_position = Vector3::GetClosestPointOnLineGivenLine(original_selected_position, transformDirection, camera_pos, mousedir);
-
-			selected[0]->SetWorldPosition(this->current_selected_position);
+			this->current_selected_position = Vector3::GetClosestPointOnLineGivenLine(original_selected_position, current_hold_direction, camera_pos, mousedir);
+			this->current_selected_position -= this->current_hold_offset;
+			selected[0]->World().position.Set(this->current_selected_position);
 		}
 
 		Vector3 cam_toselected = this->current_selected_position - camera_pos;
@@ -461,7 +453,7 @@ void gbe::Editor::PresentFrame()
 	ImGui::Render();
 }
 
-void gbe::Editor::RenderPass(VkCommandBuffer cmd)
+void gbe::Editor::RenderPass(vulkan::CommandBuffer* cmd)
 {
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd->GetData());
 }

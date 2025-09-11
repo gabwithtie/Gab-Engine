@@ -2,13 +2,17 @@
 
 #include "Global/Time.h"
 #include "Objects/Root.h"
+#include "Window/gbe_window.h"
+#include "Graphics/gbe_graphics.h"
 
 //EXTERNALS
-#include "Ext/AnimoBuilderWrapper/AnimoBuilderWrapper.h"
-#include "Ext/AnimoBuilder/AnimoBuilder.h"
+#include "Ext/AnitoBuilderWrapper/AnitoBuilderWrapper.h"
+#include "Ext/AnitoBuilderWrapper/BuilderBlock.h"
+#include "Ext/AnitoBuilder/AnitoBuilder.h"
 
 namespace gbe {
 	class Camera;
+	class Editor;
 
 	class Engine {
 	public:
@@ -20,13 +24,22 @@ namespace gbe {
 	private:
 		static Engine* instance;
 
-		Time _time;
+		//COMPONENT OBJECTS
+		Window window;
+		RenderPipeline renderpipeline;
+
+		//EDITOR
+		Editor* editor = nullptr;
+
+		//TIME
+		Time time;
 		double timeleft_stepping = 0;
 		EngineState state = EngineState::Edit;
 
+		//SCENE MANAGEMENT
 		SerializedObject* pre_play_scenedata = nullptr;
-		Root* current_root;
-		Root* queued_rootchange;
+		Root* current_root = nullptr;
+		Root* queued_rootchange = nullptr;
 		std::vector<Object*> persistents;
 		void InitializeRoot();
 	public:

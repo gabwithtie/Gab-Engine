@@ -1,7 +1,10 @@
 ﻿set(CURRENT_CMAKE_LIB gbe_engine_src)
 
 set(GABENGINE_INCLUDE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
+message("SET: GABENGINE_INCLUDE_DIRECTORY -> " ${GABENGINE_INCLUDE_DIRECTORY})
 
+#EXTERNAL LIBRARIES (DEPENDENCIES)
+add_subdirectory("Ext/GabVulkan")
 
 #SUBDIRECTORY LOADING
 add_subdirectory(Math)
@@ -15,9 +18,9 @@ add_subdirectory(Engine)
 add_subdirectory(Editor)
 add_subdirectory(Network)
 
-#EXTERNAL LIBRARIES
-add_subdirectory("Ext/AnimoBuilder")
-add_subdirectory("Ext/AnimoBuilderWrapper")
+#EXTERNAL LIBRARIES (EXTENSIONS)
+add_subdirectory("Ext/AnitoBuilder")
+add_subdirectory("Ext/AnitoBuilderWrapper")
 
 add_library(${CURRENT_CMAKE_LIB} INTERFACE)
 
@@ -33,8 +36,9 @@ target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_engine)
 target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_network)
 
 #EXTERNAL LIBARIES
-target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_animobuilder)
-target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_animobuilderwrapper)
+target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_gabvulkan)
+target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_anitobuilder)
+target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_anitobuilderwrapper)
 
 
 get_target_property(LINKED_LIBS ${CURRENT_CMAKE_LIB} INTERFACE_LINK_LIBRARIES)

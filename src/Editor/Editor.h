@@ -6,6 +6,8 @@
 
 #include "Engine/gbe_engine.h"
 
+#include "Ext/GabVulkan/Objects.h"
+
 #include "Gui/InspectorData.h"
 #include "Gui/CreditsWindow.h"
 #include "Gui/InspectorWindow.h"
@@ -56,6 +58,8 @@ namespace gbe {
 		//ARROW GIZMOS
 		float gizmo_fixed_depth = 10.0f;
 		float gizmo_offset_distance = 1.0f;
+		Vector3 current_hold_offset;
+		Vector3 current_hold_direction;
 		Vector3 current_selected_position;
 		Vector3 original_selected_position;
 		Vector3 selected_f;
@@ -97,7 +101,7 @@ namespace gbe {
 		void Update();
 		void ProcessRawWindowEvent(void* rawwindowevent);
 		void PresentFrame();
-		void RenderPass(VkCommandBuffer cmd);
+		void RenderPass(vulkan::CommandBuffer* cmd);
 		void CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcall, Vector3 rotation, Vector3 direction);
 		void CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed);
 	};

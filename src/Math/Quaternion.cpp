@@ -30,7 +30,7 @@ gbe::Quaternion gbe::Quaternion::Euler(Vector3 euler)
 }
 
 gbe::Vector3 gbe::Quaternion::ToEuler() {
-	return Vector3(glm::eulerAngles(*this));
+	return Vector3(glm::degrees(glm::eulerAngles(*this)));
 }
 
 gbe::Quaternion::operator glm::quat() const

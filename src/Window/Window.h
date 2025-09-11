@@ -23,16 +23,13 @@ namespace gbe {
 
     class Window {
     private:
-        SDL_Window* implemented_window;
-        SDL_Renderer* implemented_renderer;
-        SDL_GLContext context;
+        SDL_Window* implemented_window = nullptr;
         Vector2Int mousePos;
         Vector2Int dimentions;
 
         std::unordered_map<std::string, std::function<void(void*)>> window_callbacks;
         std::unordered_map<unsigned int, bool> keystates;
         
-        void* (*procaddressfunc)(const char*);
         bool shouldclose = false;
 
         std::queue<gbe::window::WindowEventType> event_queue;
@@ -41,6 +38,8 @@ namespace gbe {
 
         std::vector<std::function<void(void*)>> additionalEventProcessors;
     public:
+        ~Window();
+        Window();
         Window(Vector2Int dimentions);
         void* Get_implemented_window();
 
@@ -48,7 +47,6 @@ namespace gbe {
 
         void UpdateState();
         void SwapBuffers();
-        void Terminate();
 
         bool ShouldClose();
         bool isMinimized();
@@ -62,8 +60,6 @@ namespace gbe {
         Vector2Int GetMousePixelPos();
         Vector2 GetMouseDecimalPos();
         void Set_cursorLock(bool);
-
-        void* (*Get_procaddressfunc())(const char*);
 
         void AddAdditionalEventProcessor(std::function<void(void*)> processor);
 

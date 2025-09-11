@@ -2,22 +2,28 @@
 #include "gbe_engine.h"
 
 #include "Editor/gbe_editor.h"
-#include "Graphics/gbe_graphics.h"
 #include "GUI/gbe_gui.h"
 #include "Math/gbe_math.h"
 #include "Physics/gbe_physics.h"
-#include "Window/gbe_window.h"
 #include "Audio/gbe_audio.h"
 #include "Asset/gbe_asset.h"
 
 namespace gbe {
 	Engine* Engine::instance;
 
-	Engine::Engine()
+	Engine::Engine() : 
+		window(Vector2Int(1280, 720)),
+		renderpipeline(this->window, this->window.Get_dimentions())
 	{
 		instance = this;
-		this->current_root = nullptr;
-		this->queued_rootchange = nullptr;
+
+		//EDITOR SETUP
+		editor = new Editor(&renderpipeline, &window, this, &time);
+		if (editor != nullptr) {
+			this->window.AddAdditionalEventProcessor([=](void* newevent) {
+				editor->ProcessRawWindowEvent(newevent);
+				});
+		}
 	}
 
 	bool Engine::ChangeRoot(Root* newroot)
@@ -83,14 +89,14 @@ namespace gbe {
 
 			gbe::Engine::ChangeRoot(newroot);
 
-			instance->_time.scale = 0;
+			instance->time.scale = 0;
 			Console::Log("Entering Edit Mode...");
 		}
 		if (_state == EngineState::Play) {
 			if(instance->state == EngineState::Edit)
 				instance->pre_play_scenedata = new SerializedObject(instance->current_root->Serialize());
 
-			instance->_time.scale = 1;
+			instance->time.scale = 1;
 
 			auto objlist = instance->current_root->GetHandler<PhysicsObject>()->t_object_list;
 			for (const auto physicsobject : objlist) {
@@ -105,7 +111,7 @@ namespace gbe {
 
 		}
 		if (_state == EngineState::Paused) {
-			instance->_time.scale = 0;
+			instance->time.scale = 0;
 		}
 
 		instance->state = _state;
@@ -117,28 +123,7 @@ namespace gbe {
 
 	void Engine::Run()
 	{
-		//WINDOW
-		Window* mWindow = new Window(Vector2Int(1280, 720));
-
-#pragma region Rendering Pipeline Setup
-		//RenderPipeline setup
-		auto mRenderPipeline = new RenderPipeline(mWindow, mWindow->Get_dimentions());
-#pragma endregion
-		//GLOBAL RUNTIME COMPONENTS
-		this->_time = Time();
-#pragma region Audio Pipeline Setup
-		auto mAudioPipeline = new audio::AudioPipeline();
-		//mAudioPipeline->Init();
-#pragma endregion
-#pragma region Editor Setup
-		auto mEditor = new gbe::Editor(mRenderPipeline, mWindow, this, &this->_time);
-		mWindow->AddAdditionalEventProcessor([mEditor](void* newevent) {
-			mEditor->ProcessRawWindowEvent(newevent);
-			});
-#pragma endregion
 #pragma region Asset Loading
-		//AUDIO CACHING
-
 		//MESH CACHING
 		auto cube_mesh = new asset::Mesh("DefaultAssets/3D/default/cube.obj.gbe");
 		auto sphere_mesh = new asset::Mesh("DefaultAssets/3D/default/sphere.obj.gbe");
@@ -149,34 +134,27 @@ namespace gbe {
 		auto armadillo_mesh = new asset::Mesh("DefaultAssets/3D/test/armadillo.obj.gbe");
 		auto bunny_mesh = new asset::Mesh("DefaultAssets/3D/test/bunny.obj.gbe");
 		auto pot_mesh = new asset::Mesh("DefaultAssets/3D/test/teapot.obj.gbe");
-
-
 		//SHADER CACHING
 		auto unlitShader = new asset::Shader("DefaultAssets/Shaders/unlit.shader.gbe");
 		auto gridShader = new asset::Shader("DefaultAssets/Shaders/grid.shader.gbe");
 		auto wireShader = new asset::Shader("DefaultAssets/Shaders/wireframe.shader.gbe");
-
 		//TEXTURE CACHING
 		auto test_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/test.img.gbe");
 		auto logo_tex = new asset::Texture("DefaultAssets/Tex/UI/logo.img.gbe");
-
 		//MATERIAL CACHING
 		auto unlit_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-		unlit_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
 		auto grid_mat = new asset::Material("DefaultAssets/Materials/grid.mat.gbe");
 		auto wire_mat = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
 
 		//DRAW CALL CACHING X PRIMITIVES CACHING
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, mRenderPipeline->RegisterDrawCall(cube_mesh, grid_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, mRenderPipeline->RegisterDrawCall(sphere_mesh, grid_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, mRenderPipeline->RegisterDrawCall(plane_mesh, grid_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, mRenderPipeline->RegisterDrawCall(capsule_mesh, grid_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, renderpipeline.RegisterDrawCall(cube_mesh, grid_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, renderpipeline.RegisterDrawCall(sphere_mesh, grid_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, renderpipeline.RegisterDrawCall(plane_mesh, grid_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, renderpipeline.RegisterDrawCall(capsule_mesh, grid_mat));
 
 		//TYPE SERIALIZER REGISTERING
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), RenderObject::Create);
-
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RigidObject).name(), RigidObject::Create);
-
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(BoxCollider).name(), BoxCollider::Create);
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(SphereCollider).name(), SphereCollider::Create);
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(CapsuleCollider).name(), CapsuleCollider::Create);
@@ -240,7 +218,7 @@ namespace gbe {
 		editor_input->SetParent(this->current_root);
 		auto editor_camera_controller = new FlyingCameraControl();
 		editor_camera_controller->SetParent(editor_input);
-		PerspectiveCamera* editor_cam = new PerspectiveCamera(mWindow);
+		PerspectiveCamera* editor_cam = new PerspectiveCamera(&this->window);
 		editor_cam->SetParent(editor_camera_controller);
 		Engine::MakePersistent(editor_input);
 		editor_input->Set_is_editor();
@@ -250,74 +228,43 @@ namespace gbe {
 		player_input->SetParent(this->current_root);
 		auto camera_controller = new FlyingCameraControl();
 		camera_controller->SetParent(player_input);
-		PerspectiveCamera* player_cam = new PerspectiveCamera(mWindow);
+		PerspectiveCamera* player_cam = new PerspectiveCamera(&this->window);
 		player_cam->SetParent(camera_controller);
 		Engine::MakePersistent(player_input);
 #pragma endregion
 
 #pragma region scene objects
-
-		//CALL THE BUILDER
-		const auto enable_builder = false;
-		const auto box_scene = true;
-		const auto test_scene = false;
-
-		if (enable_builder) {
-			//NEW BUILDER
-			auto newbuilder = new ext::AnimoBuilder::AnimoBuilderObject();
-			newbuilder->SetBaseParams({
-				.pillarInterval = 6,
-				.beamInterval = 3
-				});
-			newbuilder->SetParent(this->current_root);
-
-			newbuilder->AddPillar(Vector3(30, 0, 2));
-			newbuilder->AddPillar(Vector3(30, 0, -8));
-			newbuilder->AddPillar(Vector3(24, 0, -8));
-			newbuilder->AddPillar(Vector3(24, 0, -2));
-			newbuilder->AddPillar(Vector3(-24, 0, -2));
-			newbuilder->AddPillar(Vector3(-24, 0, -8));
-			newbuilder->AddPillar(Vector3(-30, 0, -8));
-			newbuilder->AddPillar(Vector3(-30, 0, 2));
-			newbuilder->AddPillar(Vector3(30, 0, 2)); //loop back
-		}
-
-		if (box_scene) {
-			for (size_t x = 0; x < 10; x++)
-			{
-				for (size_t z = 0; z < 10; z++)
-				{
-					create_primitive(RenderObject::PrimitiveType::cube, Vector3(x, 5, z), Vector3(0.6f), Quaternion::Euler(Vector3(0)), false);
-				}
-			}
-
-			create_primitive(RenderObject::PrimitiveType::cube, Vector3(0, -3, 0), Vector3(20, 1, 20), Quaternion::Euler(Vector3(0)));
-		}
-
-		this->Set_state(EngineState::Edit);
+		Vector3 cubecorners[4] = {
+			Vector3(-2, 0, -2),
+			Vector3(2, 0, -2),
+			Vector3(2, 0, 2),
+			Vector3(-2, 0, 2),
+		};
+		auto builder_cube = ext::AnitoBuilder::BuilderBlock::CreateBlock(cubecorners, 4);
+		builder_cube->SetParent(this->current_root);
 #pragma endregion
 
 #pragma endregion
 #pragma region MAIN LOOP
 
 		/// MAIN GAME LOOP
-		while (!mWindow->ShouldClose())
+		while (!this->window.ShouldClose())
 		{
 			if (this->state == Engine::EngineState::Paused) {
 				if (this->timeleft_stepping > 0)
-					this->_time.scale = 1;
+					this->time.scale = 1;
 				else
-					this->_time.scale = 0;
+					this->time.scale = 0;
 			}
 
 			/* Poll for and process events */
-			mWindow->UpdateState();
+			this->window.UpdateState();
 			gbe::window::WindowEventType windoweventtype;
-			while (mWindow->PollEvents(windoweventtype))
+			while (this->window.PollEvents(windoweventtype))
 			{
 				if (windoweventtype == gbe::window::WindowEventType::RESIZE) {
-					auto newdimensions = mWindow->Get_dimentions();
-					mRenderPipeline->SetResolution(newdimensions);
+					auto newdimensions = this->window.Get_dimentions();
+					renderpipeline.SetResolution(newdimensions);
 				}
 			}
 
@@ -340,7 +287,7 @@ namespace gbe {
 						input_customer->TryReceive(action, changed);
 							});
 				}
-				}, mWindow);
+				}, &this->window);
 
 			//Update GUI system
 
@@ -351,10 +298,10 @@ namespace gbe {
 
 			//Update Render pipeline
 			//EDITOR UPDATE
-			mEditor->PrepareFrame();
-			mEditor->Update();
+			editor->PrepareFrame();
+			editor->Update();
 			//<----------MORE EDITOR FUNCTIONS GO HERE
-			mEditor->PresentFrame();
+			editor->PresentFrame();
 			//ENGINE UPDATE
 			this->current_root->GetHandler<LightObject>()->DoOnEnabled([](LightObject* light) {
 				RenderPipeline::Get_Instance()->TryPushLight(light->GetData(), false);
@@ -381,11 +328,11 @@ namespace gbe {
 			else {
 				throw std::runtime_error("No cameras rendering scene.");
 			}
-			mRenderPipeline->RenderFrame(viewm, projm, nearclip, farclip);
+			renderpipeline.RenderFrame(viewm, projm, nearclip, farclip);
 			//mGUIPipeline->DrawActiveCanvas();
 
 			//Update the window
-			mWindow->SwapBuffers();
+			this->window.SwapBuffers();
 
 			//Update other handlers
 			auto physicshandler_generic = this->current_root->GetHandler<PhysicsObject>();
@@ -409,13 +356,13 @@ namespace gbe {
 
 				instance->timeleft_stepping -= deltatime;
 				};
-			this->_time.TickFixed(onTick);
+			this->time.TickFixed(onTick);
 
-			mInputSystem->ResetStates(mWindow);
+			mInputSystem->ResetStates(&this->window);
 
 			//Queued root change
 			if (this->queued_rootchange != nullptr) {
-				mEditor->PrepareSceneChange();
+				editor->PrepareSceneChange();
 
 				for (const auto persistent : this->persistents)
 				{
@@ -455,7 +402,5 @@ namespace gbe {
 			}
 		}
 #pragma endregion
-		mRenderPipeline->CleanUp();
-		mWindow->Terminate();
 	}
 }

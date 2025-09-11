@@ -60,6 +60,6 @@ target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_gui)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_editor)
 
 #EXTERNALS
-target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_ext_animobuilder)
+target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_ext_anitobuilder)
 
 message("[GABENGINE] LOADED: " ${CMAKE_CURRENT_SOURCE_DIR})

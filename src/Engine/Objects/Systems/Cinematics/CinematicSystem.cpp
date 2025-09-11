@@ -48,7 +48,7 @@ void gbe::CinematicSystem::SpawnNode()
 
 	//POSITIONS
 	newGizmo->Local().scale.Set(Vector3(0.1f, 0.1f, 1.0f));
-	newGizmo->SetWorldPosition(current_camera->World().position.Get());
+	newGizmo->World().position.Set(current_camera->World().position.Get());
 	newGizmo->Local().rotation.Set(current_camera->World().rotation.Get());
 
 	//NEW NODE
@@ -97,6 +97,6 @@ void gbe::CinematicSystem::InvokeUpdate(float deltatime)
 	const auto curpos = Vector3::Lerp(fromnode->position, tonode->position, norm_t);
 	const auto currot = Quaternion::Lerp(fromnode->rotation, tonode->rotation, norm_t);
 
-	this->cur_cam->SetWorldPosition(curpos);
+	this->cur_cam->World().position.Set(curpos);
 	this->cur_cam->Local().rotation.Set(currot);
 }

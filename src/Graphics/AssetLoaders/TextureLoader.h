@@ -1,21 +1,18 @@
 #pragma once
-
+#include "Ext/GabVulkan/Objects.h"
 #include "Asset/gbe_asset.h"
 #include "Math/gbe_math.h"
-#include <vulkan/vulkan.h>
 #include <stb_image.h>
 #include <functional>
 #include <unordered_map>
 #include <stack>
 
 namespace gbe {
-	namespace gfx {
+	namespace gfx {		
 		struct TextureData {
-			VkImageView textureImageView;
-			VkImage textureImage;
-
-			VkDeviceMemory textureImageMemory;
-			VkSampler textureSampler;
+			vulkan::ImageView* textureImageView;
+			vulkan::Image* textureImage;
+			vulkan::Sampler* textureSampler;
 
 			VkDescriptorSet DS;
 
@@ -23,20 +20,19 @@ namespace gbe {
 			unsigned int height;
 		};
 
+		typedef std::function<VkDescriptorSet(gbe::vulkan::Sampler*, gbe::vulkan::ImageView*)> GbeUiCallbackFunction;
+
 		class TextureLoader : public asset::AssetLoader<asset::Texture, asset::data::TextureImportData, asset::data::TextureLoadData, TextureData> {
 		private:
-			VkDevice* vkdevice;
-			VkPhysicalDevice* vkphysicaldevice;
 			TextureData defaultImage;
-
-			static std::function<VkDescriptorSet(VkSampler, VkImageView)> Ui_Callback;
+			static GbeUiCallbackFunction Ui_Callback;
 		protected:
 			TextureData LoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) override;
 			void UnLoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) override;
 		public:
+			void AssignSelfAsLoader() override;
 			static TextureData& GetDefaultImage();
-			const static void Set_Ui_Callback(std::function<VkDescriptorSet(VkSampler, VkImageView)> func);
-			void PassDependencies(VkDevice* vkdevice, VkPhysicalDevice* vkphysicaldevice);
+			const static void Set_Ui_Callback(GbeUiCallbackFunction func);
 		};
 	}
 }

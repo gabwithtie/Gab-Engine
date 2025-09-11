@@ -38,7 +38,7 @@ void gbe::LineRenderer::InvokeEarlyUpdate()
 
 		Vector3 new_pos = (v1 + v2) * 0.5f;
 
-		this->SetWorldPosition(new_pos);
+		this->World().position.Set(new_pos);
 
 		Vector3 delta_pos = (this->camera->World().position.Get() - new_pos);
 		Vector3 to_eye = delta_pos.Normalize();

@@ -31,8 +31,8 @@ namespace gbe {
 				return;
 
 			auto sensitivity = 0.2f;
-			this->mCam->Local().position.Set(this->mCam->Local().position.Get() + (this->mCam->Local().GetUp() * (value->delta.y * sensitivity)));
-			this->mCam->Local().position.Set(this->mCam->Local().position.Get() + (this->mCam->Local().GetRight() * (value->delta.x * sensitivity)));
+			this->mCam->World().position.Set(this->mCam->World().position.Get() + (this->mCam->World().GetUp() * (value->delta.y * sensitivity)));
+			this->mCam->World().position.Set(this->mCam->World().position.Get() + (this->mCam->World().GetRight() * (value->delta.x * sensitivity)));
 		});
 
 		this->inputreceivers.push_back(mousemiddledrag);
@@ -42,7 +42,7 @@ namespace gbe {
 				return;
 
 			auto delta = this->mCam->World().GetForward() * (value->delta.y * 1.f);
-			this->mCam->Local().position.Set(this->mCam->Local().position.Get() + delta);
+			this->mCam->World().position.Set(this->mCam->World().position.Get() + delta);
 			});
 
 		this->inputreceivers.push_back(mousescroll);

@@ -18,11 +18,13 @@ const std::unordered_map<gbe::RenderObject::PrimitiveType, std::string> gbe::Ren
 	{ PrimitiveType::plane, "Plane" }
 };
 
-gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
+gbe::RenderObject::RenderObject(DrawCall* mDrawCall, int order)
 {
+	this->order = order;
+
 	if (mDrawCall != nullptr) {
 		this->mDrawCall = mDrawCall;
-		to_update = this->mDrawCall->RegisterCall(this, this->GetWorldMatrix());
+		to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->GetWorldMatrix(), order);
 	}
 
 	auto texture_field = new gbe::editor::InspectorAsset<TextureLoader, asset::Texture>();
@@ -39,15 +41,15 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 
 	auto refresh_field = new gbe::editor::InspectorButton();
 	refresh_field->name = "Refresh Drawcall";
-	refresh_field->onpress = [this]() {
+	refresh_field->onpress = [=]() {
 		auto old_drawcall = this->mDrawCall;
 		if(old_drawcall != nullptr)
-			old_drawcall->UnRegisterCall(this);
+			RenderPipeline::Get_Instance()->UnRegisterCall(this);
 
 		this->_mat->setOverride("colortex", this->_tex);
 
 		this->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(this->_mesh, this->_mat);
-		this->to_update = this->mDrawCall->RegisterCall(this, this->GetWorldMatrix());
+		this->to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->GetWorldMatrix(), order);
 		};
 
 	this->inspectorData->fields.push_back(texture_field);
@@ -56,16 +58,18 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 	this->inspectorData->fields.push_back(refresh_field);
 }
 
-gbe::RenderObject::RenderObject(PrimitiveType _ptype)
+gbe::RenderObject::RenderObject(PrimitiveType _ptype, int order)
 {
+	this->order = order;
+
 	this->mDrawCall = primitive_drawcalls[_ptype];
-	to_update = this->mDrawCall->RegisterCall(this, this->GetWorldMatrix());
+	to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->GetWorldMatrix(), order);
 	this->ptype = _ptype;
 }
 
 gbe::RenderObject::~RenderObject()
 {
-	this->mDrawCall->UnRegisterCall(this);
+	RenderPipeline::Get_Instance()->UnRegisterCall(this);
 }
 
 void gbe::RenderObject::InvokeEarlyUpdate()
@@ -80,10 +84,10 @@ void gbe::RenderObject::On_Change_enabled(bool _to) {
 	Object::On_Change_enabled(_to);
 
 	if (_to) {
-		to_update = this->mDrawCall->RegisterCall(this, this->GetWorldMatrix());
+		to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->GetWorldMatrix(), this->order);
 	}
 	else {
-		this->mDrawCall->UnRegisterCall(this);
+		RenderPipeline::Get_Instance()->UnRegisterCall(this);
 		to_update = nullptr;
 	}
 }
@@ -130,7 +134,7 @@ gbe::Object* gbe::RenderObject::Create(gbe::SerializedObject data) {
 		newobj->_mat->setOverride("colortex", newobj->_tex);
 
 		newobj->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(newobj->_mesh, newobj->_mat);
-		newobj->to_update = newobj->mDrawCall->RegisterCall(newobj, newobj->GetWorldMatrix());
+		newobj->to_update = RenderPipeline::Get_Instance()->RegisterCall(newobj, newobj->mDrawCall, newobj->GetWorldMatrix(), newobj->order);
 
 		return newobj;
 	}
