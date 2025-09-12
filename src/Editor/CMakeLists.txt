@@ -25,6 +25,9 @@ target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_engine)
 find_package(imgui CONFIG REQUIRED)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE imgui::imgui)
 
+find_package(unofficial-imguizmo CONFIG REQUIRED)
+target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE unofficial::imguizmo::imguizmo)
+
 find_package(Vulkan REQUIRED)
 if (Vulkan_FOUND)
 	target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE ${Vulkan_LIBRARIES})

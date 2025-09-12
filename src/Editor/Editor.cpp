@@ -82,20 +82,6 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 		*/
 
 	//============================GIZMOS============================//
-	this->gizmo_arrow_mesh = new asset::Mesh("DefaultAssets/3D/editor/arrow.obj.gbe");
-	
-	auto gizmoshader = new asset::Shader("DefaultAssets/Shaders/gizmo.shader.gbe");
-
-	auto mat_r = new asset::Material("DefaultAssets/Materials/gizmo.mat.gbe");
-	auto mat_g = new asset::Material("DefaultAssets/Materials/gizmo.mat.gbe");
-	auto mat_b = new asset::Material("DefaultAssets/Materials/gizmo.mat.gbe");
-	mat_r->setOverride("color", Vector4(1, 0, 0, 1.0f));
-	mat_g->setOverride("color", Vector4(0, 1, 0, 1.0f));
-	mat_b->setOverride("color", Vector4(0, 0, 1, 1.0f));
-	this->gizmo_arrow_drawcall_r = this->mrenderpipeline->RegisterDrawCall(this->gizmo_arrow_mesh, mat_r);
-	this->gizmo_arrow_drawcall_g = this->mrenderpipeline->RegisterDrawCall(this->gizmo_arrow_mesh, mat_g);
-	this->gizmo_arrow_drawcall_b = this->mrenderpipeline->RegisterDrawCall(this->gizmo_arrow_mesh, mat_b);
-
 	//CREATE GIZMO BOX ASSETS
 	auto wireshader = new asset::Shader("DefaultAssets/Shaders/wireframe.shader.gbe");
 
@@ -114,10 +100,12 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 }
 
 void gbe::Editor::SelectSingle(Object* other) {
-	auto newlyclicked = other;
+	if (other->Get_is_editor())
+		return;
+
 	RenderObject* renderer_has = nullptr;
 
-	newlyclicked->CallRecursively([&](Object* child) {
+	other->CallRecursively([&](Object* child) {
 		auto renderer_check = dynamic_cast<RenderObject*>(child);
 
 		if (renderer_check != nullptr) {
@@ -125,71 +113,32 @@ void gbe::Editor::SelectSingle(Object* other) {
 		}
 		});
 
-	//CHECK IF OTHER IS A GIZMO
-	for (auto& gizmoptr : instance->gizmo_arrows)
-	{
-		if (newlyclicked == (*gizmoptr)) {
-			instance->held_gizmo = *gizmoptr;
+
+	bool deselection = false;
+
+	if (instance->keyboard_shifting) {
+		auto it = std::find(instance->selected.begin(), instance->selected.end(), other);
+
+		// DESELECT IF FOUND
+		if (it != instance->selected.end()) {
+			instance->selected.erase(it);
+
+			instance->gizmo_boxes[other]->Destroy();
+			instance->gizmo_boxes.erase(other);
+
+			deselection = true;
 		}
 	}
-
-	if (instance->held_gizmo != nullptr) {
-		if (instance->selected.size() == 0)
-			return;
-
-		instance->original_selected_position = instance->selected[0]->World().position.Get();
-		std::cout << "Holding Gizmo" << std::endl;
+	else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
+		instance->DeselectAll();
 	}
-	else {
-		bool deselection = false;
 
-		if (instance->keyboard_shifting) {
-			auto it = std::find(instance->selected.begin(), instance->selected.end(), newlyclicked);
+	if (!deselection) {
+		//SELECT AND BOX
+		instance->selected.push_back(other);
 
-			// DESELECT IF FOUND
-			if (it != instance->selected.end()) {
-				instance->selected.erase(it);
-
-				instance->gizmo_boxes[newlyclicked]->Destroy();
-				instance->gizmo_boxes.erase(newlyclicked);
-
-				deselection = true;
-			}
-		}
-		else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
-			instance->DeselectAll();
-		}
-
-		if (!deselection) {
-			//SELECT AND BOX
-			instance->selected.push_back(newlyclicked);
-
-			if (renderer_has != nullptr)
-				instance->CreateGizmoBox(renderer_has, newlyclicked);
-		}
-
-		if (instance->selected.size() == 1) {
-			instance->selected_f = instance->selected[0]->World().GetForward();
-			instance->selected_r = instance->selected[0]->World().GetRight();
-			instance->selected_u = instance->selected[0]->World().GetUp();
-
-			//SPAWN GIZMO
-			instance->CreateGizmoArrow(instance->f_gizmo, instance->gizmo_arrow_drawcall_b, Vector3(0, 180, 0), instance->selected_f);
-			instance->CreateGizmoArrow(instance->r_gizmo, instance->gizmo_arrow_drawcall_r, Vector3(0, -90, 0), instance->selected_r);
-			instance->CreateGizmoArrow(instance->u_gizmo, instance->gizmo_arrow_drawcall_g, Vector3(90, 0, 0), instance->selected_u);
-
-			instance->current_selected_position = instance->selected[0]->World().position.Get();
-		}
-		else {
-			//DELETE GIZMO
-			for (auto& gizmoptr : instance->gizmo_arrows)
-			{
-				if (*gizmoptr != nullptr) {
-					(*gizmoptr)->Destroy();
-					(*gizmoptr) = nullptr;
-				}
-			}
-		}
+		if (renderer_has != nullptr)
+			instance->CreateGizmoBox(renderer_has, other);
 	}
 }
 
@@ -236,30 +185,6 @@ void gbe::Editor::Redo()
 
 	instance->action_stack[instance->cur_action_index].action_done();
 	instance->cur_action_index++;
-}
-
-void gbe::Editor::CreateGizmoArrow(gbe::PhysicsObject*& out_g, DrawCall* drawcall, Vector3 rotation, Vector3 direction) {
-	if (out_g == nullptr || !Object::ValidateObject(out_g)) {
-		auto newGizmo = new RigidObject(true);
-		newGizmo->SetParent(mengine->GetCurrentRoot());
-		newGizmo->Local().scale.Set(Vector3(0.1f, 0.1f, (gizmo_offset_distance * 2.0f)));
-		newGizmo->Set_is_editor();
-		
-		BoxCollider* FGizmo_collider = new BoxCollider();
-		FGizmo_collider->SetParent(newGizmo);
-		FGizmo_collider->Local().position.Set(Vector3(0, 0, 0));
-		FGizmo_collider->Set_is_editor();
-		RenderObject* platform_renderer = new RenderObject(drawcall);
-		platform_renderer->SetParent(newGizmo);
-		platform_renderer->Set_is_editor();
-
-		out_g = newGizmo;
-	}
-
-	//SELECTED SPECIFIC THINGS
-	auto rot = Quaternion::Euler(rotation);
-	out_g->Local().rotation.Set(this->selected[0]->World().rotation.Get() * rot);
-	out_g->TranslateWorld(direction * gizmo_offset_distance);
 }
 
 void gbe::Editor::CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed)
@@ -327,15 +252,6 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 					//CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED NOTHING
 					this->selected.clear();
 
-					//DELETE GIZMOS
-					for (auto& gizmoptr : this->gizmo_arrows)
-					{
-						if (*gizmoptr != nullptr) {
-							(*gizmoptr)->Destroy();
-							(*gizmoptr) = nullptr;
-						}
-					}
-
 					//CLEAR BOXES
 					for (auto& gizmoptr : this->gizmo_boxes)
 					{
@@ -349,21 +265,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 	if (sdlevent->type == SDL_MOUSEBUTTONUP) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT) {
 			//COMMIT HELD GIZMO ACTION
-			if (this->held_gizmo != nullptr) {
-				auto newpos = instance->selected[0]->World().position.Get();
-				auto oldpos = instance->original_selected_position;
-				auto what_was_edited = Editor::instance->selected[0];
-
-				Editor::RegisterAction(
-					[=]() {
-						what_was_edited->SetWorldPosition(newpos);
-					},
-					[=]() {
-						what_was_edited->SetWorldPosition(oldpos);
-					});
-
-				this->held_gizmo = nullptr;
-			}
+			
 		}
 	}
 }
@@ -399,32 +301,7 @@ void gbe::Editor::Update()
 		Vector3 camera_pos = current_camera->World().position.Get();
 		auto mousedir = current_camera->ScreenToRay(mwindow->GetMouseDecimalPos());
 
-		if (held_gizmo != nullptr) {
-			//FIND POSITION TO TRANSFORM THE SELECTED OBJECT
-			//FIND DIRECTION
-			Vector3 transformDirection;
-			if (held_gizmo == f_gizmo)
-				transformDirection = this->selected_f;
-			if (held_gizmo == r_gizmo)
-				transformDirection = this->selected_r;
-			if (held_gizmo == u_gizmo)
-				transformDirection = this->selected_u;
-
-			// Find the closest point on the line segments
-			this->current_selected_position = Vector3::GetClosestPointOnLineGivenLine(original_selected_position, transformDirection, camera_pos, mousedir);
-
-			selected[0]->SetWorldPosition(this->current_selected_position);
-		}
-
-		Vector3 cam_toselected = this->current_selected_position - camera_pos;
-		cam_toselected = cam_toselected.Normalize();
-
-		Vector3 finalgizmopos = camera_pos + (cam_toselected * this->gizmo_fixed_depth);
-
-		//UPDATE THE POSITION OF ALL GIZMOS
-		this->f_gizmo->Local().position.Set(finalgizmopos + (gizmo_offset_distance * this->selected_f));
-		this->r_gizmo->Local().position.Set(finalgizmopos + (gizmo_offset_distance * this->selected_r));
-		this->u_gizmo->Local().position.Set(finalgizmopos + (gizmo_offset_distance * this->selected_u));
+		
 	}
 
 	//==============================IMGUI==============================//
