@@ -10,20 +10,6 @@
 unsigned int gbe::Object::next_avail_id = 0;
 std::unordered_map<unsigned int, gbe::Object*> gbe::Object::valid_objects;
 
-void gbe::Object::MatToTrans(Transform* target, Matrix4 mat)
-{
-	glm::vec3 scale;
-	glm::quat rotation;
-	glm::vec3 translation;
-	glm::vec3 skew;
-	glm::vec4 perspective;
-	glm::decompose(mat, scale, rotation, translation, skew, perspective);
-
-	target->position.Set(translation);
-	target->rotation.Set(rotation);
-	target->scale.Set(scale);
-}
-
 void gbe::Object::OnLocalTransformationChange(TransformChangeType changetype)
 {
 	auto worldmat = this->parent_matrix * this->local.GetMatrix();
@@ -33,11 +19,11 @@ void gbe::Object::OnLocalTransformationChange(TransformChangeType changetype)
 		child->OnExternalTransformationChange(changetype, worldmat);
 	}
 
-	MatToTrans(&this->world, worldmat);
+	this->world.SetMatrix(worldmat);
 
 	if (isnan(this->local.GetMatrix()[0][0])) {
-		std::cout << "NAN transform" << std::endl;
-		this->MatToTrans(&this->local, Matrix4(1.0f));
+		std::cerr << "NAN transform, resetting transform." << std::endl;
+		this->local.Reset();
 	}
 }
 
@@ -51,16 +37,34 @@ void gbe::Object::OnExternalTransformationChange(TransformChangeType changetype,
 		child->OnExternalTransformationChange(changetype, worldmat);
 	}
 
-	MatToTrans(&this->world, worldmat);
+	this->world.SetMatrix(worldmat);
+
+	if (isnan(this->local.GetMatrix()[0][0])) {
+		std::cerr << "NAN transform, resetting transform." << std::endl;
+		this->local.Reset();
+	}
 }
 
-gbe::Object::Object()
+gbe::Object::Object():
+	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
+	world([](TransformChangeType type) {})
 {
+	//TRANSFORM
 	this->parent_matrix = Matrix4(1.0f);
 	this->parent = nullptr;
 
 	OnLocalTransformationChange(TransformChangeType::ALL);
 	OnExternalTransformationChange(TransformChangeType::ALL, this->parent_matrix);
+
+	this->world.position.AddCallback([this](Vector3 oldval, Vector3 newval) {
+		this->Local().position.Set(Vector3(parent_matrix.Inverted() * Vector4(newval, 1.0f)));
+		});
+	this->world.scale.AddCallback([this](Vector3 oldval, Vector3 newval) {
+		throw new std::runtime_error("Direct world scale editing not supported yet.");
+		});
+	this->world.rotation.AddCallback([this](Quaternion oldval, Quaternion newval) {
+		throw new std::runtime_error("Direct world rotation editing not supported yet.");
+		});
 
 	//INSPECTOR DATA
 	inspectorData = new editor::InspectorData();
@@ -96,32 +100,9 @@ gbe::Matrix4 gbe::Object::GetWorldMatrix(bool include_local_scale)
 
 void gbe::Object::SetLocalMatrix(Matrix4 mat)
 {
-	MatToTrans(&this->local, mat);
+	this->local.SetMatrix(mat);
 
 	OnLocalTransformationChange(TransformChangeType::ALL);
-}
-
-void gbe::Object::SetWorldPosition(Vector3 vector)
-{
-	auto world_pos = this->World().position.Get();
-
-	this->TranslateWorld(-world_pos);
-	this->TranslateWorld(vector);
-}
-
-void gbe::Object::TranslateWorld(Vector3 vector)
-{
-	auto curmat = this->local.GetMatrix();
-
-	auto curloc = glm::vec3(curmat[3]);
-	curloc += (glm::vec3)vector;
-	auto newrow4 = glm::vec4(curloc, curmat[3][3]);
-
-	curmat[3] = newrow4;
-
-	MatToTrans(&this->local, curmat);
-
-	OnLocalTransformationChange(TransformChangeType::TRANSLATION);
 }
 
 void gbe::Object::OnEnterHierarchy(Object* newChild)

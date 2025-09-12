@@ -98,67 +98,64 @@ void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& n
     if (window.isMinimized())
         return;
 
-    //Vulkan preparation
+    //=============VULKAN PREP============//
     vulkanInstance->PrepareFrame();
     
+    //=============SETUP DRAW FIELD============//
+    VkViewport viewport{};
+    viewport.width = static_cast<float>(vulkan::SwapChain::GetActive()->GetExtent().width);
+    viewport.height = static_cast<float>(vulkan::SwapChain::GetActive()->GetExtent().height);
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, &viewport);
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = vulkan::SwapChain::GetActive()->GetExtent();
+    vkCmdSetScissor(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, &scissor);
+
     //Render DrawCalls -> Engine-specific code
     projmat[1][1] = -projmat[1][1]; //Flip Y axis for Vulkan
 
-    for (const auto &pair : this->drawcalls)
+    for (const auto& pair : this->sortedcalls)
     {
-		const auto& draworder = pair.first;
-		const auto& drawcallbatch = pair.second;
-
-        for (const auto& drawcall : drawcallbatch)
+        for (const auto& call_ptr : pair.second)
         {
+			const auto& callinstance = this->calls[call_ptr];
+
             //SYNC FIRST
-            drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex());
+            callinstance.drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex(), callinstance);
 
             //USE SHADER
-            auto shaderasset = drawcall->get_material()->getShader();
+            auto shaderasset = callinstance.drawcall->get_material()->getShader();
             const auto& currentshaderdata = shaderloader.GetAssetData(shaderasset);
             vkCmdBindPipeline(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipeline);
 
-            VkViewport viewport{};
-            viewport.width = static_cast<float>(vulkan::SwapChain::GetActive()->GetExtent().width);
-            viewport.height = static_cast<float>(vulkan::SwapChain::GetActive()->GetExtent().height);
-            viewport.x = 0.0f;
-            viewport.y = 0.0f;
-            viewport.minDepth = 0.0f;
-            viewport.maxDepth = 1.0f;
-            vkCmdSetViewport(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, &viewport);
-
-            VkRect2D scissor{};
-            scissor.offset = { 0, 0 };
-            scissor.extent = vulkan::SwapChain::GetActive()->GetExtent();
-            vkCmdSetScissor(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, &scissor);
-
             //RENDER MESH
-            const auto& curmesh = this->meshloader.GetAssetData(drawcall->get_mesh());
-			
+            const auto& curmesh = this->meshloader.GetAssetData(callinstance.drawcall->get_mesh());
+
             //UPDATE GLOBAL UBO
-            for (int dc_i = 0; dc_i < drawcall->get_call_count(); dc_i++) {
-                auto& callinstance = drawcall->get_call_instance(dc_i);
+            callinstance.ApplyOverride<Matrix4>(callinstance.model, "model", vulkanInstance->GetCurrentFrameIndex());
+            callinstance.ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex());
+            callinstance.ApplyOverride<Matrix4>(viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
 
-                drawcall->ApplyOverride<Matrix4>(callinstance.model, "model", vulkanInstance->GetCurrentFrameIndex(), callinstance);
-                drawcall->ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex(), callinstance);
-                drawcall->ApplyOverride<Matrix4>(viewmat, "view", vulkanInstance->GetCurrentFrameIndex(), callinstance);
+            VkBuffer vertexBuffers[] = { curmesh.vertexBuffer->GetData() };
+            VkDeviceSize offsets[] = { 0 };
+            vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
 
-                VkBuffer vertexBuffers[] = { curmesh.vertexBuffer->GetData()};
-                VkDeviceSize offsets[] = { 0 };
-                vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
-
-                std::vector<VkDescriptorSet> bindingsets;
-                for (auto& set : callinstance.allocdescriptorSets)
-                {
-                    bindingsets.push_back(set[vulkanInstance->GetCurrentFrameIndex()]);
-                }
-
-                vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
-
-                vkCmdBindIndexBuffer(vulkanInstance->GetCurrentCommandBuffer()->GetData(), curmesh.indexBuffer->GetData(), 0, VK_INDEX_TYPE_UINT16);
-                vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(curmesh.loaddata->indices.size()), 1, 0, 0, 0);
+            std::vector<VkDescriptorSet> bindingsets;
+            for (auto& set : callinstance.allocdescriptorSets)
+            {
+                bindingsets.push_back(set[vulkanInstance->GetCurrentFrameIndex()]);
             }
+
+            vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
+
+            vkCmdBindIndexBuffer(vulkanInstance->GetCurrentCommandBuffer()->GetData(), curmesh.indexBuffer->GetData(), 0, VK_INDEX_TYPE_UINT16);
+            vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(curmesh.loaddata->indices.size()), 1, 0, 0, 0);
+
         }
     }
 
@@ -300,14 +297,9 @@ std::vector<unsigned char> gbe::RenderPipeline::ScreenShot(bool write_file) {
 
 gbe::gfx::DrawCall* gbe::RenderPipeline::RegisterDrawCall(asset::Mesh* mesh, asset::Material* material)
 {
-	auto newdrawcall = new DrawCall(mesh, material, &shaderloader.GetAssetData(material->getShader()), vulkanInstance->Get_maxFrames(), 0);
+    auto newdrawcall = new DrawCall(mesh, material, &shaderloader.GetAssetData(material->getShader()), vulkanInstance->Get_maxFrames());
 
-	if (this->drawcalls.find(newdrawcall->get_order()) == this->drawcalls.end()) {
-		this->drawcalls.insert_or_assign(newdrawcall->get_order(), std::vector<DrawCall*>{ newdrawcall });
-	}
-	else {
-		this->drawcalls[newdrawcall->get_order()].push_back(newdrawcall);
-	}
+    this->drawcalls.push_back(newdrawcall);
 
     return newdrawcall;
 }
@@ -322,4 +314,198 @@ DrawCall* gbe::RenderPipeline::RegisterDefaultDrawCall(asset::Mesh* mesh, asset:
 DrawCall* gbe::RenderPipeline::GetDefaultDrawCall()
 {
     return this->default_drawcall;
+}
+
+gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order)
+{
+    bool exists = this->calls.find(instance_id) != this->calls.end();
+    
+    if (exists)
+		throw new std::runtime_error("Instance already registered!");
+
+    //FORCE UPDATE OVERRIDES
+    for (size_t m_i = 0; m_i < drawcall->get_material()->getOverrideCount(); m_i++)
+    {
+        std::string id;
+        auto& overridedata = drawcall->get_material()->getOverride(m_i, id);
+        overridedata.handled_change = false; // Reset handled change for new call
+    }
+
+    CallInstance newinst{};
+    newinst.drawcall = drawcall;
+    newinst.order = order;
+    newinst.shaderdata = drawcall->get_shaderdata();
+
+    //BUFFERS
+    for (const auto& block : drawcall->get_shaderdata()->uniformblocks)
+    {
+        auto newblockbuffer = CallInstance::UniformBlockBuffer{};
+        newblockbuffer.block_name = block.name;
+
+        // Create uniform buffer for each block
+        VkDeviceSize bufferSize = block.block_size;
+
+        newblockbuffer.uboPerFrame.resize(vulkanInstance->Get_maxFrames());
+        newblockbuffer.uboMappedPerFrame.resize(vulkanInstance->Get_maxFrames());
+
+        for (size_t i = 0; i < vulkanInstance->Get_maxFrames(); i++) {
+            //MM_note: will be freed by unregister call instance.
+            newblockbuffer.uboPerFrame[i] = new vulkan::Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+            vulkan::VirtualDevice::GetActive()->MapMemory(newblockbuffer.uboPerFrame[i]->GetMemory(), 0, bufferSize, 0, &newblockbuffer.uboMappedPerFrame[i]);
+        }
+
+        newinst.uniformBuffers.push_back(newblockbuffer);
+    }
+    //Textures
+    for (const auto& field : drawcall->get_shaderdata()->uniformfields)
+    {
+        if (field.type == asset::Shader::UniformFieldType::TEXTURE)
+        {
+            CallInstance::UniformTexture newtexture{};
+            newtexture.texture_name = field.name;
+            // Leave image view and sampler for the texture default
+            auto defaultImage = TextureLoader::GetDefaultImage();
+            newtexture.imageView = defaultImage.textureImageView;
+            newtexture.sampler = defaultImage.textureSampler;
+
+            newinst.uniformTextures.push_back(newtexture);
+        }
+    }
+
+    //DESCRIPTOR POOL
+    std::vector<VkDescriptorPoolSize> poolSizes{};
+    for (const auto& set : drawcall->get_shaderdata()->binding_sets)
+    {
+        for (const auto& binding : set)
+        {
+            poolSizes.push_back({
+                    .type = binding.descriptorType,
+                    .descriptorCount = static_cast<uint32_t>(vulkanInstance->Get_maxFrames())
+                });
+        }
+    }
+
+    newinst.descriptorPool = new vulkan::DescriptorPool(poolSizes, vulkanInstance->Get_maxFrames() * drawcall->get_shaderdata()->descriptorSetLayouts.size());
+
+    //DESCRIPTOR SETS
+    auto setcount = drawcall->get_shaderdata()->descriptorSetLayouts.size();
+    newinst.allocdescriptorSets.resize(setcount);
+
+    for (size_t set_i = 0; set_i < setcount; set_i++)
+    {
+        auto& descriptorSetLayout = drawcall->get_shaderdata()->descriptorSetLayouts[set_i];
+
+        std::vector<VkDescriptorSetLayout> layoutsperframe(vulkanInstance->Get_maxFrames(), descriptorSetLayout);
+
+        VkDescriptorSetAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool = newinst.descriptorPool->GetData();
+        allocInfo.descriptorSetCount = static_cast<uint32_t>(vulkanInstance->Get_maxFrames());
+        allocInfo.pSetLayouts = layoutsperframe.data();
+
+        newinst.allocdescriptorSets[set_i].resize(vulkanInstance->Get_maxFrames());
+        if (vkAllocateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), &allocInfo, newinst.allocdescriptorSets[set_i].data()) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate descriptor sets!");
+        }
+    }
+
+    for (size_t f_i = 0; f_i < vulkanInstance->Get_maxFrames(); f_i++) {
+        std::vector<VkWriteDescriptorSet> descriptorWrites{};
+
+        for (const auto& uniformblock : newinst.uniformBuffers)
+        {
+            ShaderData::ShaderBlock blockinfo{};
+
+            bool found_block = drawcall->get_shaderdata()->FindUniformBlock(uniformblock.block_name, blockinfo);
+            if (!found_block)
+                throw std::runtime_error("Failed to find uniform block: " + uniformblock.block_name);
+
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = uniformblock.uboPerFrame[f_i]->GetData();
+            bufferInfo.offset = 0;
+            bufferInfo.range = blockinfo.block_size;
+
+            //CREATE THE WRITE DATA
+            VkWriteDescriptorSet descriptorWrite{};
+
+            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet = newinst.allocdescriptorSets[blockinfo.set][f_i];
+            descriptorWrite.dstBinding = blockinfo.binding;
+            descriptorWrite.dstArrayElement = 0;
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrite.descriptorCount = 1;
+            descriptorWrite.pBufferInfo = &bufferInfo;
+
+            descriptorWrites.push_back(descriptorWrite);
+        }
+
+
+        for (const auto& uniformtex : newinst.uniformTextures)
+        {
+            VkDescriptorImageInfo imageInfo{};
+
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = uniformtex.imageView->GetData();
+            imageInfo.sampler = uniformtex.sampler->GetData();
+
+            //FIND THE BINDING INDEX
+            ShaderData::ShaderField fieldinfo;
+            ShaderData::ShaderBlock blockinfo;
+            drawcall->get_shaderdata()->FindUniformField(uniformtex.texture_name, fieldinfo, blockinfo);
+            //CREATE THE WRITE DATA
+            VkWriteDescriptorSet descriptorWrite{};
+
+            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet = newinst.allocdescriptorSets[fieldinfo.set][f_i];
+            descriptorWrite.dstBinding = fieldinfo.binding;
+            descriptorWrite.dstArrayElement = 0;
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptorWrite.descriptorCount = 1;
+            descriptorWrite.pImageInfo = &imageInfo;
+
+            descriptorWrites.push_back(descriptorWrite);
+        }
+
+        vkUpdateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+    }
+
+    //COMMITTING
+    this->calls.insert_or_assign(instance_id, newinst);
+    if (sortedcalls.find(order) == sortedcalls.end())
+        sortedcalls[order] = std::vector<void*>();
+    sortedcalls.find(order)->second.push_back(instance_id);
+
+    return &this->calls[instance_id].model;
+}
+
+void gbe::RenderPipeline::UnRegisterCall(void* instance_id)
+{
+    auto it = this->calls.find(instance_id);
+    bool exists = it != this->calls.end();
+    
+    if (!exists)
+		throw new std::runtime_error("CallInstance does not exist!");
+
+    vulkan::VirtualDevice::GetActive()->DeviceWaitIdle();
+
+    for (size_t i = 0; i < it->second.uniformBuffers.size(); i++)
+    {
+        for (size_t j = 0; j < it->second.uniformBuffers[i].uboPerFrame.size(); j++)
+        {
+            vulkan::VirtualDevice::GetActive()->UnMapMemory(it->second.uniformBuffers[i].uboPerFrame[j]->GetMemory());
+            delete it->second.uniformBuffers[i].uboPerFrame[j];
+        }
+    }
+
+    auto& sortvec = sortedcalls.find(it->second.order)->second;
+    for (size_t i = 0; i < sortvec.size(); i++)
+    {
+        if (sortvec[i] == instance_id) {
+            sortvec.erase(sortvec.begin() + i);
+            break;
+        }
+    }
+
+    this->calls.erase(instance_id);
 }

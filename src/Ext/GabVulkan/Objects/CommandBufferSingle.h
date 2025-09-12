@@ -15,13 +15,15 @@ namespace gbe::vulkan {
 
 
         inline void Begin(CommandPool* pool = nullptr) {
+            if (pool == nullptr)
+                commandPool = CommandPool::GetActive()->GetData();
+            else
+                commandPool = pool->GetData();
+
             VkCommandBufferAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            if (pool == nullptr)
-                allocInfo.commandPool = CommandPool::GetActive()->GetData();
-            else
-                allocInfo.commandPool = pool->GetData();
+            allocInfo.commandPool = commandPool;
             allocInfo.commandBufferCount = 1;
 
             vkAllocateCommandBuffers(VirtualDevice::GetActive()->GetData(), &allocInfo, &(this->data));

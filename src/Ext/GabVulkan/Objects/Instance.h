@@ -191,7 +191,7 @@ namespace gbe::vulkan {
             }
 
             //======================DISPLAY SETUP========================
-            this->CreateDepthResources();
+            this->InitializePipelineAttachments();
             this->swapchain->InitializeFramebuffers(depthImageView, renderPass);
 
             //======================SYNCHRONIZATION SETUP========================
@@ -255,18 +255,24 @@ namespace gbe::vulkan {
         }
 
         inline void RefreshPipelineObjects() {
-            this->CleanPipelineObjects();
+            vkDeviceWaitIdle(VirtualDevice::GetActive()->GetData());
+
+            //DELETE PipelineObjects
+			delete swapchain;
+            delete renderPass;
+
+            //DELETE PipelineAttachments
+            delete depthImage;
+            delete depthImageView;
+
             this->InitializePipelineObjects();
-            this->CreateDepthResources();
+            this->InitializePipelineAttachments();
             this->swapchain->InitializeFramebuffers(depthImageView, renderPass);
         }
 
-        inline void CleanPipelineObjects() {
-            vkDeviceWaitIdle(VirtualDevice::GetActive()->GetData());
-        }
-
-        inline void CreateDepthResources()
+        inline void InitializePipelineAttachments()
         {
+            //==============DEPTH=================//
             auto depthformat = PhysicalDevice::GetActive()->FindSupportedFormat(
                 { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
                 VK_IMAGE_TILING_OPTIMAL,
@@ -352,6 +358,7 @@ namespace gbe::vulkan {
 
         inline void PushFrame() {
             vkCmdEndRenderPass(commandBuffers[currentFrame]->GetData());
+            commandBuffers[currentFrame]->End();
 
             VkSubmitInfo submitInfo{};
             submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

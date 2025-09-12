@@ -25,7 +25,7 @@ void gbe::ParticleSystem::InvokeUpdate(float deltatime)
 		auto random_local_pos = gbe::Vector3(d.x * rand_01(), d.y * rand_01(), d.z * rand_01());
 
 		auto new_particle = this->particle_create(this);
-		new_particle->SetWorldPosition(this->World().position.Get() + random_local_pos);
+		new_particle->World().position.Set(this->World().position.Get() + random_local_pos);
 
 		this->particles.insert_or_assign(new_particle, 0);
 	}

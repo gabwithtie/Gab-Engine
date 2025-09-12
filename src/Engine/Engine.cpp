@@ -234,45 +234,14 @@ namespace gbe {
 #pragma endregion
 
 #pragma region scene objects
-
-		//CALL THE BUILDER
-		const auto enable_builder = false;
-		const auto box_scene = true;
-		const auto test_scene = false;
-
-		if (enable_builder) {
-			//NEW BUILDER
-			auto newbuilder = new ext::AnimoBuilder::AnimoBuilderObject();
-			newbuilder->SetBaseParams({
-				.pillarInterval = 6,
-				.beamInterval = 3
-				});
-			newbuilder->SetParent(this->current_root);
-
-			newbuilder->AddPillar(Vector3(30, 0, 2));
-			newbuilder->AddPillar(Vector3(30, 0, -8));
-			newbuilder->AddPillar(Vector3(24, 0, -8));
-			newbuilder->AddPillar(Vector3(24, 0, -2));
-			newbuilder->AddPillar(Vector3(-24, 0, -2));
-			newbuilder->AddPillar(Vector3(-24, 0, -8));
-			newbuilder->AddPillar(Vector3(-30, 0, -8));
-			newbuilder->AddPillar(Vector3(-30, 0, 2));
-			newbuilder->AddPillar(Vector3(30, 0, 2)); //loop back
-		}
-
-		if (box_scene) {
-			for (size_t x = 0; x < 10; x++)
-			{
-				for (size_t z = 0; z < 10; z++)
-				{
-					create_primitive(RenderObject::PrimitiveType::cube, Vector3(x, 5, z), Vector3(0.6f), Quaternion::Euler(Vector3(0)), false);
-				}
-			}
-
-			create_primitive(RenderObject::PrimitiveType::cube, Vector3(0, -3, 0), Vector3(20, 1, 20), Quaternion::Euler(Vector3(0)));
-		}
-
-		this->Set_state(EngineState::Edit);
+		Vector3 cubecorners[4] = {
+			Vector3(-2, 0, -2),
+			Vector3(2, 0, -2),
+			Vector3(2, 0, 2),
+			Vector3(-2, 0, 2),
+		};
+		auto builder_cube = ext::AnitoBuilder::BuilderBlock::CreateBlock(cubecorners, 4);
+		builder_cube->SetParent(this->current_root);
 #pragma endregion
 
 #pragma endregion

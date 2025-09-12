@@ -4,6 +4,9 @@
 
 #include "Graphics/gbe_graphics.h"
 #include "Engine/gbe_engine.h"
+#include "Physics/gbe_physics.h"
+
+#include "Ext/GabVulkan/Objects.h"
 
 #include "Ext/GabVulkan/Objects.h"
 
@@ -100,9 +103,10 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 }
 
 void gbe::Editor::SelectSingle(Object* other) {
-	if (other->Get_is_editor())
-		return;
+	if(other->Get_is_editor())
+		throw std::runtime_error("Cannot select editor object.");
 
+	auto newlyclicked = other;
 	RenderObject* renderer_has = nullptr;
 
 	other->CallRecursively([&](Object* child) {
@@ -226,28 +230,9 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 
 			//OBJECT SELECTION
 			Vector3 ray_dir = mousedir * 10000.0f;
-			auto result = physics::Raycast(camera_pos, ray_dir);
-			if (result.result && Object::ValidateObject(result.other)) {
-				auto newlyclicked = result.other;
+			auto result = physics::RaycastAll(camera_pos, ray_dir);
 
-				//CHECK IF OTHER HAS A RENDERER, IF NONE, DONT CLICK
-				bool has_renderer = false;
-				RenderObject* renderer_has = nullptr;
-
-				newlyclicked->CallRecursively([&](Object* child) {
-					auto renderer_check = dynamic_cast<RenderObject*>(child);
-
-					if (renderer_check != nullptr) {
-						has_renderer = true;
-						renderer_has = renderer_check;
-					}
-					});
-
-				if (has_renderer) {
-					SelectSingle(newlyclicked);
-				}
-			}
-			else { //NOTHING WAS CLICKED
+			if (!result.result) { //NOTHING WAS CLICKED
 				if (!this->keyboard_shifting) { //NOT MULTISELECTING
 					//CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED NOTHING
 					this->selected.clear();
@@ -259,6 +244,87 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 					}
 					this->gizmo_boxes.clear();
 				}
+			}
+			else {
+				Object* closest_obj = nullptr;
+				float sqrdist_of_closest = INFINITY;
+				bool gizmo_in_ray = false;
+
+				const auto CheckClosest = [&](Object* obj) {
+					if (!Object::ValidateObject(obj))
+						return;
+					Vector3 toobj = obj->World().position.Get() - camera_pos;
+					float curdist = toobj.SqrMagnitude();
+					if (curdist < sqrdist_of_closest) {
+						sqrdist_of_closest = curdist;
+						closest_obj = obj;
+					}
+					};
+
+
+				//Look for gizmo, otherwise, just select closest valid object
+				for (size_t i = 0; i < result.others.size(); i++)
+				{
+					auto objinray = result.others[i];
+
+					if (!Object::ValidateObject(objinray))
+						continue;
+
+					//CHECK IF OTHER HAS A RENDERER, IF NONE, DONT CLICK
+					bool has_renderer = false;
+					RenderObject* renderer_has = nullptr;
+
+					objinray->CallRecursively([&](Object* child) {
+						auto renderer_check = dynamic_cast<RenderObject*>(child);
+
+						if (renderer_check != nullptr) {
+							has_renderer = true;
+							renderer_has = renderer_check;
+						}
+						});
+
+					if (!has_renderer)
+						continue;
+
+					if (objinray->Get_is_editor())
+					{
+						if (instance->selected.size() > 0) //Dont try to select gizmo if nothing is selected
+							for (auto& gizmoptr : instance->gizmo_arrows)
+							{
+								if (objinray == (*gizmoptr)) {
+									if(closest_obj != nullptr && !closest_obj->Get_is_editor())
+										sqrdist_of_closest = INFINITY; //Reset closest if gizmo is found
+
+									gizmo_in_ray = true; // If gizmo in ray, dont look for non-gizmo objects
+									CheckClosest(*gizmoptr);
+								}
+							}
+					}
+					else if(!gizmo_in_ray){
+						CheckClosest(objinray);
+					}
+				}
+
+				if (gizmo_in_ray) {
+					instance->held_gizmo = static_cast<PhysicsObject*>(closest_obj);
+
+					//FIND DIRECTION
+					if (instance->held_gizmo == instance->f_gizmo)
+						instance->current_hold_direction = instance->selected_f;
+					else if (instance->held_gizmo == instance->r_gizmo)
+						instance->current_hold_direction = instance->selected_r;
+					else if (instance->held_gizmo == instance->u_gizmo)
+						instance->current_hold_direction = instance->selected_u;
+					else
+						throw new std::runtime_error("Gizmo selection error.");
+
+					instance->original_selected_position = instance->selected[0]->World().position.Get();
+					auto point_on_cursor = Vector3::GetClosestPointOnLineGivenLine(instance->original_selected_position, instance->current_hold_direction, camera_pos, mousedir);
+
+					instance->current_hold_offset = point_on_cursor - instance->original_selected_position;
+				}
+				else
+					SelectSingle(closest_obj);
 			}
 		}
 	}

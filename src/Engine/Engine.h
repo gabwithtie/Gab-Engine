@@ -6,8 +6,9 @@
 #include "Graphics/gbe_graphics.h"
 
 //EXTERNALS
-#include "Ext/AnimoBuilderWrapper/AnimoBuilderWrapper.h"
-#include "Ext/AnimoBuilder/AnimoBuilder.h"
+#include "Ext/AnitoBuilderWrapper/AnitoBuilderWrapper.h"
+#include "Ext/AnitoBuilderWrapper/BuilderBlock.h"
+#include "Ext/AnitoBuilder/AnitoBuilder.h"
 
 namespace gbe {
 	class Camera;

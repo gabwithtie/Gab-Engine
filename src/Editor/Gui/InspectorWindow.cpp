@@ -222,7 +222,6 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 
 bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* field)
 {
-
 	ImGui::Text(label.c_str()); // Optional: Display a label for the entire vector field
 	ImGui::SameLine();
 

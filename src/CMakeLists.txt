@@ -19,8 +19,8 @@ add_subdirectory(Editor)
 add_subdirectory(Network)
 
 #EXTERNAL LIBRARIES (EXTENSIONS)
-add_subdirectory("Ext/AnimoBuilder")
-add_subdirectory("Ext/AnimoBuilderWrapper")
+add_subdirectory("Ext/AnitoBuilder")
+add_subdirectory("Ext/AnitoBuilderWrapper")
 
 add_library(${CURRENT_CMAKE_LIB} INTERFACE)
 
@@ -37,8 +37,8 @@ target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_network)
 
 #EXTERNAL LIBARIES
 target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_gabvulkan)
-target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_animobuilder)
-target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_animobuilderwrapper)
+target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_anitobuilder)
+target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_anitobuilderwrapper)
 
 
 get_target_property(LINKED_LIBS ${CURRENT_CMAKE_LIB} INTERFACE_LINK_LIBRARIES)

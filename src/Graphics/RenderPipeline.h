@@ -29,6 +29,7 @@
 #include "AssetLoaders/MeshLoader.h"
 #include "AssetLoaders/MaterialLoader.h"
 #include "Window/gbe_window.h"
+#include "Data/CallInstance.h"
 
 namespace cv {
 	class Mat;
@@ -46,12 +47,6 @@ namespace gbe {
 		Editor* editor;
 		Vector2Int resolution;
 
-		//Rendering
-		DrawCall* default_drawcall;
-		std::map<int, std::vector<DrawCall*>> drawcalls;
-		std::list<gfx::Light*> lights_this_frame;
-		const int maxlights = 10;
-
 		//Loaders
 		ShaderLoader shaderloader;
 		MeshLoader meshloader;
@@ -62,6 +57,15 @@ namespace gbe {
 		//CAPTURING
 		VkImage* mostrecent_screenshot = nullptr;
 
+		//============RUNTIME=======================//
+		DrawCall* default_drawcall;
+		std::vector<DrawCall*> drawcalls;
+		std::list<gfx::Light*> lights_this_frame;
+		const int maxlights = 10;
+
+		std::unordered_map<void*, CallInstance> calls;
+		std::map<int, std::vector<void*>> sortedcalls;
+		
 		//============DYNAMICALLY ALLOCATED=======================//
 		vulkan::Instance* vulkanInstance;
 		
@@ -81,5 +85,8 @@ namespace gbe {
 		
 		void RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& nearclip, float& farclip);
 		std::vector<unsigned char> ScreenShot(bool write_file = false);
+
+		Matrix4* RegisterCall(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order = 0);
+		void UnRegisterCall(void* instance_id);
 	};
 }

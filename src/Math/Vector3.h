@@ -27,7 +27,7 @@ namespace gbe{
 		const float* Get_Ptr();
 
 		static const Vector3 zero;
-		inline static Vector3 Lerp(Vector3& a, Vector3& b, float t) {
+		inline static Vector3 Lerp(const Vector3& a, const Vector3& b, float t) {
 			auto d = b - a;
 			d *= t;
 			auto tv = a + d;
@@ -40,6 +40,9 @@ namespace gbe{
 				};
 
 			return a + gbe::Vector3(d.x * rand_01(), d.y * rand_01(), d.z * rand_01());
+		}
+		inline static const Vector3 Mid(const Vector3& a, const Vector3& b) {
+			return Lerp(a, b, 0.5f);
 		}
 		inline std::string ToString() {
 			std::stringstream sstream;

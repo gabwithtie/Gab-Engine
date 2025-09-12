@@ -68,12 +68,19 @@ const float* gbe::Vector3::Get_Ptr() {
 const gbe::Vector3 gbe::Vector3::zero = gbe::Vector3(0, 0, 0);
 
 gbe::Vector3 gbe::Vector3::GetClosestPointOnLineGivenLine(const Vector3& a, const Vector3& adir, const Vector3& b, const Vector3& bdir) {
-	auto cdir = a - b;
-	
-	auto top = -(adir.Dot(bdir) * bdir.Dot(cdir)) + (adir.Dot(cdir) * bdir.Dot(bdir));
-	auto bottom = (adir.Dot(adir) * bdir.Dot(bdir)) - (adir.Dot(bdir) * adir.Dot(bdir));
+    Vector3 cdir = a - b;
 
-	auto t = -top / bottom;
+    // Check for parallelism to prevent division by zero
+    auto bottom = (adir.Dot(adir) * bdir.Dot(bdir)) - (adir.Dot(bdir) * adir.Dot(bdir));
+    const float epsilon = 1e-6f; // A small tolerance for floating-point comparison
 
-	return a + (adir * t);
+    if (std::abs(bottom) < epsilon) {
+        auto t_parallel = cdir.Dot(adir) / adir.Dot(adir);
+        return a + (adir * t_parallel);
+    }
+
+    auto top = -(adir.Dot(bdir) * bdir.Dot(cdir)) + (adir.Dot(cdir) * bdir.Dot(bdir));
+    auto t = -top / bottom;
+
+    return a + (adir * t);
 }

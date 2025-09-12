@@ -100,7 +100,7 @@ namespace gbe::vulkan {
 
             for (auto& vkimg : swapchain_vkimages)
             {
-                swapChainImages.push_back(new Image(vkimg));
+                swapChainImages.push_back(new Image(vkimg, VK_IMAGE_LAYOUT_UNDEFINED, chosenFormat.format, swapchainExtent.width, swapchainExtent.height));
             }
 
             //Image views

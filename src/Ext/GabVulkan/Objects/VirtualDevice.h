@@ -77,5 +77,9 @@ namespace gbe::vulkan {
         {
             vkUnmapMemory(this->data, memory);
         }
+
+        inline void DeviceWaitIdle() {
+			vkDeviceWaitIdle(this->data);
+        }
     };
 }

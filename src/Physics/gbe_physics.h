@@ -5,6 +5,7 @@
 #include "PhysicsPipeline.h"
 #include "Rigidbody.h"
 #include "Raycast.h"
+#include "RaycastAll.h"
 #include "TriggerRigidBody.h"
 #include "ColliderData/ColliderData.h"
 #include "ColliderData/BoxColliderData.h"

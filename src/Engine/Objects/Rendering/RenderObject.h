@@ -21,6 +21,8 @@ namespace gbe {
 			return PrimitiveTypeStrs.at(_ptype);
 		}
 	private:
+		int order;
+
 		//PRIMITIVES CACHE
 		static std::unordered_map<PrimitiveType, gfx::DrawCall*> primitive_drawcalls;
 
@@ -40,8 +42,8 @@ namespace gbe {
 			primitive_drawcalls.insert_or_assign(ptype, drawtype);
 		}
 
-		RenderObject(gfx::DrawCall* mDrawCall);
-		RenderObject(PrimitiveType ptype);
+		RenderObject(gfx::DrawCall* mDrawCall, int order = 0);
+		RenderObject(PrimitiveType ptype, int order = 0);
 		virtual ~RenderObject();
 
 		SerializedObject Serialize() override;

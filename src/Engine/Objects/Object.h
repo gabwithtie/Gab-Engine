@@ -33,10 +33,8 @@ namespace gbe {
 
 		std::list<Object*> children;
 
-		Transform local = Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); });
-		Transform world = Transform([](TransformChangeType type) {});
-
-		void MatToTrans(Transform* target, Matrix4 mat);
+		Transform local;
+		Transform world;
 		
 		Matrix4 parent_matrix;
 	protected:
@@ -110,8 +108,6 @@ namespace gbe {
 		Transform& Local();
 		Matrix4 GetWorldMatrix(bool include_local_scale = true);
 		void SetLocalMatrix(Matrix4 mat);
-		void SetWorldPosition(Vector3 vector);
-		void TranslateWorld(Vector3 vector);
 
 		virtual void OnEnterHierarchy(Object* newChild);
 		virtual void OnExitHierarchy(Object* newChild);

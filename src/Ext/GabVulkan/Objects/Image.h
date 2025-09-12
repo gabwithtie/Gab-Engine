@@ -43,9 +43,15 @@ namespace gbe::vulkan {
             vkFreeMemory(VirtualDevice::GetActive()->GetData(), imageMemory, nullptr);
         }
 
-        inline Image(const VkImage& createdimage)
+        inline Image(const VkImage& createdimage, VkImageLayout _layout, VkFormat _format, uint32_t x, uint32_t y)
         {
             this->data = createdimage;
+
+			layout = _layout;
+			format = _format;
+			width = x;
+			height = y;
+            tiling = VK_IMAGE_TILING_OPTIMAL;
         }
         inline Image(uint32_t _width, uint32_t _height, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties)
         {
