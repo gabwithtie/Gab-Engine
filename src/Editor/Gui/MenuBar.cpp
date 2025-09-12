@@ -32,6 +32,15 @@ void gbe::editor::MenuBar::DrawSelf()
 		}
 		ImGui::EndMenu();
 	}
+	if (ImGui::BeginMenu("Window")) {
+		for (const auto& window : this->windows)
+		{
+			if (ImGui::MenuItem(window->GetWindowId().c_str())) {
+				window->Set_is_open(true);
+			}
+		}
+		ImGui::EndMenu();
+	}
 }
 
 bool gbe::editor::MenuBar::ext_Begin()

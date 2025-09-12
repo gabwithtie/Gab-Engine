@@ -34,12 +34,17 @@ target_link_libraries(${PROJECT_NAME} PRIVATE $<IF:$<TARGET_EXISTS:SDL2_mixer::S
 message("[GABENGINE] Project install prefix at: " "${CMAKE_INSTALL_PREFIX}")
 message("[GABENGINE] Including VCPKG at: " "${CMAKE_TOOLCHAIN_FILE}")
 
-#COPY BASE ASSETS TO BUILD TARGET COMMAND
-add_custom_target(COPY_ASSETS_COMMAND
+#RELOAD BASE ASSETS TO BUILD
+
+add_custom_target(RELOAD_ASSETS
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/DefaultAssets"
 )
 
-#SHADER COMPILATION
+#==================SHADER COMPILATION==================
+#reconfiguration dependency
+file(GLOB CONFIGURE_DEPENDS VERT_PATHS "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets/shaders/*.vert")
+file(GLOB CONFIGURE_DEPENDS FRAG_PATHS "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets/shaders/*.frag")
+
 set(ENGINE_TOOL_DIR "${CMAKE_CURRENT_LIST_DIR}/vcpkg_installed/${ENGINE_ARCHITECTURE}-${ENGINE_PLATFORM}/tools")
 message("[GABENGINE] Tool directory at:" ${ENGINE_TOOL_DIR})
 
@@ -48,7 +53,7 @@ function(COMPILE_SHADER SRCNAME)
   set(SRCPATH "$<TARGET_FILE_DIR:${PROJECT_NAME}>/DefaultAssets/shaders/${SRCNAME}")
   set(TARGET_NAME "${SRCNAME}_COMPILATION")
   add_custom_target(${TARGET_NAME}
-      COMMAND "${ENGINE_TOOL_DIR}/shaderc/glslc.exe" "${SRCPATH}" -o "${SRCPATH}.spv"
+      COMMAND "${ENGINE_TOOL_DIR}/shaderc/glslc.exe" "${SRCPATH}" -g -o "${SRCPATH}.spv"
   )
   list(APPEND COMPILED_SHADER_FILES ${TARGET_NAME})
   set(COMPILED_SHADER_FILES "${COMPILED_SHADER_FILES}" PARENT_SCOPE)
@@ -80,9 +85,12 @@ endforeach()
 add_custom_target(COMPILE_SHADERS ALL DEPENDS ${COMPILED_SHADER_FILES})
 add_custom_target(GENERATE_SHADERMETAS ALL DEPENDS ${SHADER_META_FILES})
 
-add_dependencies(COMPILE_SHADERS COPY_ASSETS_COMMAND)
+#COMMAND SEQUENCING
+add_dependencies(COMPILE_SHADERS RELOAD_ASSETS)
 add_dependencies(GENERATE_SHADERMETAS COMPILE_SHADERS)
 add_dependencies(${PROJECT_NAME} GENERATE_SHADERMETAS)
+
+
 
 #COPY DLL TO BUILD
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

@@ -11,10 +11,18 @@ namespace gbe {
 	namespace editor {
 		class GuiWindow : public GuiElement{
 		protected:
-			virtual std::string GetWindowId() = 0;
+			bool is_open = false;
 		private:
 			bool ext_Begin() override;
 			void ext_End() override;
+		public:
+			inline bool Get_is_open() {
+				return is_open;
+			}
+			inline void Set_is_open(bool newstate) {
+				is_open = newstate;
+			}
+			virtual std::string GetWindowId() = 0;
 		};
 	}
 }

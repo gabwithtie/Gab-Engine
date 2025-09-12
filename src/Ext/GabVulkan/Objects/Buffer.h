@@ -7,6 +7,7 @@ namespace gbe::vulkan {
     class Buffer : public VulkanObject<VkBuffer, Buffer> {
     private:
         VkDeviceMemory bufferMemory;
+        unsigned int _size; //for debug
     protected:
     public:
 
@@ -24,6 +25,8 @@ namespace gbe::vulkan {
         }
 
         inline Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
+            _size = size;
+            
             VkBufferCreateInfo bufferInfo{};
             bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
             bufferInfo.size = size;

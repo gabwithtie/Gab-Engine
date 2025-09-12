@@ -2,11 +2,14 @@
 
 
 layout(set = 0, binding = 0) uniform Transform {
-    vec4 color;
     mat4 model;
     mat4 view;
     mat4 proj;
 } transform;
+
+layout(set = 1, binding = 1) uniform Shading {
+    vec4 color_a;
+} shading;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -22,5 +25,5 @@ void main() {
 
     fragTexCoord = inTexCoord;
     fragNormal = inNormal;
-    vertColor = transform.color;
+    vertColor = vec4(inColor, 1.0f);
 }

@@ -5,6 +5,7 @@
 
 #include "../Utility/DebugCallback.h"
 #include "../Utility/ValidationLayers.h"
+#include "../Utility/DebugObjectName.h"
 
 #include <algorithm>
 #include <array>
@@ -96,6 +97,7 @@ namespace gbe::vulkan {
 
             //DEBUG
             VkDebugUtilsMessengerCreateInfoEXT debug_messenger_create_info{};
+
             if (enableValidationLayers) {
                 instInfo.enabledLayerCount = static_cast<uint32_t>(ValidationLayers::validationLayerNames.size());
                 instInfo.ppEnabledLayerNames = ValidationLayers::validationLayerNames.data();
@@ -106,7 +108,17 @@ namespace gbe::vulkan {
                 debug_messenger_create_info.pfnUserCallback = UserDebugCallback;
                 debug_messenger_create_info.pUserData = nullptr; // Optional
 
-                instInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debug_messenger_create_info;
+                instInfo.pNext = &debug_messenger_create_info;
+
+                VkValidationFeatureEnableEXT enables[] = { 
+                    VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+                    VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT
+                };
+                VkValidationFeaturesEXT features{};
+                features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+                features.enabledValidationFeatureCount = 2;
+                features.pEnabledValidationFeatures = enables;
+				debug_messenger_create_info.pNext = &features;
             }
             else {
                 instInfo.enabledLayerCount = 0;
@@ -117,6 +129,7 @@ namespace gbe::vulkan {
             CheckSuccess(vkCreateInstance(&instInfo, nullptr, &this->data));
 
             if (enableValidationLayers) {
+                vulkan::DebugObjectName::Init((PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(this->data, "vkSetDebugUtilsObjectNameEXT"));
                 auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(this->data, "vkCreateDebugUtilsMessengerEXT");
                 if (func != nullptr) {
                     func(this->data, &debug_messenger_create_info, nullptr, &debugMessenger);
@@ -136,8 +149,7 @@ namespace gbe::vulkan {
 
             //===================DEVICE SET UP===================//
             const std::vector<const char*> deviceExtensionNames = {
-                VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-                VK_KHR_MAINTENANCE1_EXTENSION_NAME
+                VK_KHR_SWAPCHAIN_EXTENSION_NAME
             };
 
             bool founddevice = false;

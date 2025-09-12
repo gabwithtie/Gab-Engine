@@ -35,7 +35,7 @@ void gbe::editor::GizmoLayer::DrawSelf()
         view_mat,
         proj_mat,
         ImGuizmo::TRANSLATE | ImGuizmo::ROTATE,
-        ImGuizmo::WORLD,
+        ImGuizmo::LOCAL,
         model_mat
     );
 

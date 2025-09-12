@@ -123,7 +123,7 @@ void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& n
     {
         for (const auto& call_ptr : pair.second)
         {
-			const auto& callinstance = this->calls[call_ptr];
+            const auto& callinstance = this->calls[call_ptr];
 
             //SYNC FIRST
             callinstance.drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex(), callinstance);
@@ -146,16 +146,14 @@ void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& n
             vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
 
             std::vector<VkDescriptorSet> bindingsets;
-            for (auto& set : callinstance.allocdescriptorSets)
+            for (auto& set : callinstance.allocdescriptorSets_perframe[vulkanInstance->GetCurrentFrameIndex()])
             {
-                bindingsets.push_back(set[vulkanInstance->GetCurrentFrameIndex()]);
+                bindingsets.push_back(set.second);
             }
 
             vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
-
             vkCmdBindIndexBuffer(vulkanInstance->GetCurrentCommandBuffer()->GetData(), curmesh.indexBuffer->GetData(), 0, VK_INDEX_TYPE_UINT16);
             vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(curmesh.loaddata->indices.size()), 1, 0, 0, 0);
-
         }
     }
 
@@ -356,6 +354,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         }
 
         newinst.uniformBuffers.push_back(newblockbuffer);
+		std::cout << "Allocated buffer: " << block.name << " of size " << bufferSize << " bytes.\n";
     }
     //Textures
     for (const auto& field : drawcall->get_shaderdata()->uniformfields)
@@ -373,28 +372,31 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         }
     }
 
-    //DESCRIPTOR POOL
-    std::vector<VkDescriptorPoolSize> poolSizes{};
-    for (const auto& set : drawcall->get_shaderdata()->binding_sets)
-    {
-        for (const auto& binding : set)
-        {
-            poolSizes.push_back({
-                    .type = binding.descriptorType,
-                    .descriptorCount = static_cast<uint32_t>(vulkanInstance->Get_maxFrames())
-                });
+    //Descriptor Pool
+    std::map<VkDescriptorType, uint32_t> descriptorTypeCounts;
+
+    for (const auto& set : drawcall->get_shaderdata()->binding_sets) {
+        for (const auto& binding : set.second) {
+            descriptorTypeCounts[binding.descriptorType]++;
         }
+    }
+
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    for (const auto& pair : descriptorTypeCounts) {
+        poolSizes.push_back({
+            pair.first,
+            pair.second * vulkanInstance->Get_maxFrames() // Multiply by frames in flight
+            });
     }
 
     newinst.descriptorPool = new vulkan::DescriptorPool(poolSizes, vulkanInstance->Get_maxFrames() * drawcall->get_shaderdata()->descriptorSetLayouts.size());
 
     //DESCRIPTOR SETS
     auto setcount = drawcall->get_shaderdata()->descriptorSetLayouts.size();
-    newinst.allocdescriptorSets.resize(setcount);
+    newinst.allocdescriptorSets_perframe.resize(vulkanInstance->Get_maxFrames());
 
-    for (size_t set_i = 0; set_i < setcount; set_i++)
-    {
-        auto& descriptorSetLayout = drawcall->get_shaderdata()->descriptorSetLayouts[set_i];
+    for (const auto& pair : drawcall->get_shaderdata()->descriptorSetLayouts) {
+        auto& descriptorSetLayout = drawcall->get_shaderdata()->descriptorSetLayouts[pair.first];
 
         std::vector<VkDescriptorSetLayout> layoutsperframe(vulkanInstance->Get_maxFrames(), descriptorSetLayout);
 
@@ -404,9 +406,15 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         allocInfo.descriptorSetCount = static_cast<uint32_t>(vulkanInstance->Get_maxFrames());
         allocInfo.pSetLayouts = layoutsperframe.data();
 
-        newinst.allocdescriptorSets[set_i].resize(vulkanInstance->Get_maxFrames());
-        if (vkAllocateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), &allocInfo, newinst.allocdescriptorSets[set_i].data()) != VK_SUCCESS) {
+        std::vector<VkDescriptorSet> sets(vulkanInstance->Get_maxFrames());
+        if (vkAllocateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), &allocInfo, sets.data()) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate descriptor sets!");
+        }
+
+        // Store each set in the correct frame/set slot
+        for (size_t f_i = 0; f_i < vulkanInstance->Get_maxFrames(); f_i++) {
+            // The set index (set_i) should correspond to the Vulkan set number
+            newinst.allocdescriptorSets_perframe[f_i][pair.first] = sets[f_i];
         }
     }
 
@@ -430,7 +438,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             VkWriteDescriptorSet descriptorWrite{};
 
             descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = newinst.allocdescriptorSets[blockinfo.set][f_i];
+            descriptorWrite.dstSet = newinst.allocdescriptorSets_perframe[f_i][blockinfo.set];
             descriptorWrite.dstBinding = blockinfo.binding;
             descriptorWrite.dstArrayElement = 0;
             descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -438,6 +446,8 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             descriptorWrite.pBufferInfo = &bufferInfo;
 
             descriptorWrites.push_back(descriptorWrite);
+
+			std::cout << "Descriptor Write: Binding at " << blockinfo.binding << " in Set " << blockinfo.set << " for Block " << blockinfo.name << " of size " << blockinfo.block_size << " bytes.\n";
         }
 
 
@@ -457,7 +467,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             VkWriteDescriptorSet descriptorWrite{};
 
             descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = newinst.allocdescriptorSets[fieldinfo.set][f_i];
+            descriptorWrite.dstSet = newinst.allocdescriptorSets_perframe[f_i][fieldinfo.set];
             descriptorWrite.dstBinding = fieldinfo.binding;
             descriptorWrite.dstArrayElement = 0;
             descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

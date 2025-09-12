@@ -19,8 +19,11 @@
 gbe::Editor* gbe::Editor::instance = nullptr;
 
 gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime):
+	menubar(this->windows),
+
 	spawnWindow(this->selected),
 	inspectorwindow(this->selected),
+	
 	gizmoLayer(this->selected)
 {
 	instance = this;
@@ -328,13 +331,15 @@ void gbe::Editor::Update()
 	}
 
 	//==============================IMGUI==============================//
-	this->inspectorwindow.Draw();
-	this->spawnWindow.Draw();
-	this->stateWindow.Draw();
-	this->consoleWindow.Draw();
-	this->hierarchyWindow.Draw();
 	this->menubar.Draw();
 	this->gizmoLayer.Draw();
+
+	for (const auto& window : this->windows)
+	{
+		if (window->Get_is_open())
+			window->Draw();
+	}
+
 }
 
 void gbe::Editor::PresentFrame()

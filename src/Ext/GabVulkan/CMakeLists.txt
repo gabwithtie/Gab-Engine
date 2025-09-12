@@ -1,7 +1,7 @@
 set(LIB_NAME "gbe_ext_gabvulkan")
 message("[GBE EXTERNAL] Building Library "${LIB_NAME})
 
-add_library(${LIB_NAME} "GabVulkan.cpp" "VulkanObjectSingleton.h" "Objects/Sampler.h" "Objects/DescriptorPool.h" "Objects/Framebuffer.h" "Objects/RenderPass.h" "Objects/Structures/FrameSyncronizationObject.h" "Utility/ValidationLayers.h" "Objects/CommandBuffer.h")
+add_library(${LIB_NAME} "GabVulkan.cpp" "VulkanObjectSingleton.h" "Objects/Sampler.h" "Objects/DescriptorPool.h" "Objects/Framebuffer.h" "Objects/RenderPass.h" "Objects/Structures/FrameSyncronizationObject.h" "Utility/ValidationLayers.h" "Objects/CommandBuffer.h" "Utility/DebugObjectName.cpp")
 
 find_package(Vulkan REQUIRED)
 if (Vulkan_FOUND)

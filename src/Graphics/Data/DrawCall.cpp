@@ -63,7 +63,7 @@ namespace gbe {
                 VkWriteDescriptorSet descriptorWrite{};
 
                 descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                descriptorWrite.dstSet = callinst.allocdescriptorSets[fieldinfo.set][frameindex];
+                descriptorWrite.dstSet = callinst.allocdescriptorSets_perframe[frameindex].at(fieldinfo.set);
                 descriptorWrite.dstBinding = fieldinfo.binding;
                 descriptorWrite.dstArrayElement = 0;
                 descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

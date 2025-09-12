@@ -43,18 +43,29 @@ namespace gbe {
 		//RECORDING
 		bool is_recording = false;
 
-		//BOX GIZMOS
-		asset::Material* gizmo_box_mat;
-		std::unordered_map<gbe::Object*, RenderObject*> gizmo_boxes;
+		//DOCKS
+		editor::MenuBar menubar;
 
-		//COMPONENTS
+		//WINDOWS
 		editor::HierarchyWindow hierarchyWindow;
 		editor::InspectorWindow inspectorwindow;
 		editor::SpawnWindow spawnWindow;
 		editor::StateWindow stateWindow;
 		editor::ConsoleWindow consoleWindow;
-		editor::MenuBar menubar;
+
+		std::list<editor::GuiWindow*> windows = {
+			&hierarchyWindow,
+			&inspectorwindow,
+			&spawnWindow,
+			&stateWindow,
+			&consoleWindow
+		};
+
+		//LAYERS
 		editor::GizmoLayer gizmoLayer;
+		//BOX GIZMOS
+		asset::Material* gizmo_box_mat;
+		std::unordered_map<gbe::Object*, RenderObject*> gizmo_boxes;
 
 	public:
 		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime);

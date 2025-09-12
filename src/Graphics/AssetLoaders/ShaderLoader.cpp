@@ -1,5 +1,7 @@
 #include "ShaderLoader.h"
 
+#include "Ext/GabVulkan/Utility/DebugObjectName.h"
+
 gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, asset::data::ShaderLoadData* data) {
 	//============READING============//
 	auto vertpath = asset->Get_asset_directory() + importdata.vert;
@@ -34,10 +36,10 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	gbe::asset::serialization::gbeParser::PopulateClass(fragMeta, fragmetapath);
 
 	//============DESCRIPTOR LAYOUT SETUP============//
-	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+	std::map<unsigned int, VkDescriptorSetLayout> descriptorSetLayouts;
 
 	//BINDINGS
-	std::vector<std::vector<VkDescriptorSetLayoutBinding>> binding_sets;
+	std::map<unsigned int, std::vector<VkDescriptorSetLayoutBinding>> binding_sets;
 	std::vector<ShaderData::ShaderBlock> uniformblocks;
 	std::vector<ShaderData::ShaderField> uniformfields;
 
@@ -49,14 +51,12 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		ubo_Binding.stageFlags = flags;
 		ubo_Binding.pImmutableSamplers = nullptr; // Optional
 
-		if (binding_sets.size() <= ubo.set)
-			for (size_t i = binding_sets.size(); i <= ubo.set; i++)
-			{
-				binding_sets.push_back({});
-			}
-
-		auto& bset = binding_sets[ubo.set];
-		bset.push_back(ubo_Binding);
+		auto it = binding_sets.find(ubo.set);
+		if (it == binding_sets.end()) {
+			binding_sets.insert_or_assign(ubo.set, std::vector<VkDescriptorSetLayoutBinding>());
+		}
+		binding_sets[ubo.set].push_back(ubo_Binding);
+		
 
 		ShaderData::ShaderBlock block{};
 		block.binding = ubo.binding;
@@ -130,14 +130,11 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		color_sampler_Binding.pImmutableSamplers = nullptr;
 		color_sampler_Binding.stageFlags = flags;
 
-		if (binding_sets.size() <= meta.set)
-			for (size_t i = binding_sets.size(); i <= meta.set; i++)
-			{
-				binding_sets.push_back({});
-			}
-
-		auto& bset = binding_sets[meta.set];
-		bset.push_back(color_sampler_Binding);
+		auto it = binding_sets.find(meta.set);
+		if (it == binding_sets.end()) {
+			binding_sets.insert_or_assign(meta.set, std::vector<VkDescriptorSetLayoutBinding>());
+		}
+		binding_sets[meta.set].push_back(color_sampler_Binding);
 
 		ShaderData::ShaderField field{};
 		field.name = meta.name;
@@ -166,8 +163,8 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	{
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = static_cast<uint32_t>(set.size());
-		layoutInfo.pBindings = set.data();
+		layoutInfo.bindingCount = static_cast<uint32_t>(set.second.size());
+		layoutInfo.pBindings = set.second.data();
 		layoutInfo.pNext = nullptr;
 
 		VkDescriptorSetLayout newsetlayout;
@@ -176,7 +173,7 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 			throw std::runtime_error("failed to create descriptor set layout!");
 		}
 
-		descriptorSetLayouts.push_back(newsetlayout);
+		descriptorSetLayouts.insert_or_assign(set.first, newsetlayout);
 	}
 
 	
@@ -343,11 +340,16 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 
 	//Pipeline layout
 	VkPipelineLayout newpipelineLayout;
+	auto layoutlist = std::vector<VkDescriptorSetLayout>{};
+	for (const auto& dsl : descriptorSetLayouts)
+	{
+		layoutlist.push_back(dsl.second);
+	}
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-	pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+	pipelineLayoutInfo.pSetLayouts = layoutlist.data();
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
@@ -371,14 +373,15 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	pipelineInfo.layout = newpipelineLayout;
 	pipelineInfo.renderPass = vulkan::RenderPass::GetActive()->GetData();
 	pipelineInfo.subpass = 0;
-	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-	pipelineInfo.basePipelineIndex = -1; // Optional
 
 	VkPipeline newgraphicsPipeline;
 	VkResult newgraphicsPipeline_result = vkCreateGraphicsPipelines(vulkan::VirtualDevice::GetActive()->GetData(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newgraphicsPipeline);
 	if (newgraphicsPipeline_result != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
+
+	vulkan::DebugObjectName::NameVkObject(VK_OBJECT_TYPE_PIPELINE, (uint64_t)newgraphicsPipeline, importdata.vert + ":" + importdata.frag);
+
 
 	//Cleanup
 	vkDestroyShaderModule(vulkan::VirtualDevice::GetActive()->GetData(), vertShader, nullptr);
@@ -399,7 +402,7 @@ void gbe::gfx::ShaderLoader::UnLoadAsset_(asset::Shader* asset, const asset::dat
 	auto shaderdata = this->GetAssetData(asset);
 	for (const auto& setlayout : shaderdata.descriptorSetLayouts)
 	{
-		vkDestroyDescriptorSetLayout(vulkan::VirtualDevice::GetActive()->GetData(), setlayout, nullptr);
+		vkDestroyDescriptorSetLayout(vulkan::VirtualDevice::GetActive()->GetData(), setlayout.second, nullptr);
 	}
 	vkDestroyPipelineLayout(vulkan::VirtualDevice::GetActive()->GetData(), shaderdata.pipelineLayout, nullptr);
 	vkDestroyPipeline(vulkan::VirtualDevice::GetActive()->GetData(), shaderdata.pipeline, nullptr);

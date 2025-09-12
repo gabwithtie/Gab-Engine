@@ -133,21 +133,11 @@ namespace gbe {
 		auto capsule_mesh = new asset::Mesh("DefaultAssets/3D/default/capsule.obj.gbe");
 		auto plane_mesh = new asset::Mesh("DefaultAssets/3D/default/plane.obj.gbe");
 		//MESH CACHING
-		auto lucy_mesh = new asset::Mesh("DefaultAssets/3D/test/lucy.obj.gbe");
-		auto armadillo_mesh = new asset::Mesh("DefaultAssets/3D/test/armadillo.obj.gbe");
-		auto bunny_mesh = new asset::Mesh("DefaultAssets/3D/test/bunny.obj.gbe");
-		auto pot_mesh = new asset::Mesh("DefaultAssets/3D/test/teapot.obj.gbe");
 		//SHADER CACHING
-		auto unlitShader = new asset::Shader("DefaultAssets/Shaders/unlit.shader.gbe");
 		auto gridShader = new asset::Shader("DefaultAssets/Shaders/grid.shader.gbe");
-		auto wireShader = new asset::Shader("DefaultAssets/Shaders/wireframe.shader.gbe");
 		//TEXTURE CACHING
-		auto test_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/test.img.gbe");
-		auto logo_tex = new asset::Texture("DefaultAssets/Tex/UI/logo.img.gbe");
 		//MATERIAL CACHING
-		auto unlit_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
 		auto grid_mat = new asset::Material("DefaultAssets/Materials/grid.mat.gbe");
-		auto wire_mat = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
 
 		//DRAW CALL CACHING X PRIMITIVES CACHING
 		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, renderpipeline.RegisterDrawCall(cube_mesh, grid_mat));

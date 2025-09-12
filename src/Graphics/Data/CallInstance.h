@@ -25,7 +25,7 @@ namespace gbe::gfx {
         std::vector<UniformBlockBuffer> uniformBuffers;
         std::vector<UniformTexture> uniformTextures;
         vulkan::DescriptorPool* descriptorPool;
-        std::vector<std::vector<VkDescriptorSet>> allocdescriptorSets;
+        std::vector<std::map<unsigned int, VkDescriptorSet>> allocdescriptorSets_perframe;
 
         inline bool GetBlock(std::string name, UniformBlockBuffer& out_block) const
         {
