@@ -17,8 +17,13 @@ namespace gbe {
 
 			bool is_reparenting = false;
 			gbe::Object* reparentee;
+			std::vector<gbe::Object*>& selected;
 		public:
-			std::vector<gbe::Object*>* selected;
+			inline InspectorWindow(std::vector<gbe::Object*>& _selected):
+				selected(_selected)
+			{
+
+			}
 		};
 	}
 }

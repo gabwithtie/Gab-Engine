@@ -20,7 +20,7 @@ namespace gbe {
     }
 
     Vector2 Camera::WorldToScreen(Vector3 worldpos) {
-        auto inv_proj = glm::inverse(this->getproj());
+        auto inv_proj = glm::inverse(this->GetProjectionMat());
         auto inv_view = glm::inverse(this->GetViewMat());
         auto initial_pos = inv_proj * inv_view * Vector4(worldpos, 1.0f);
         auto final_pos = Vector3(initial_pos.x, -initial_pos.y, initial_pos.z) * (1.0f / initial_pos.w);
@@ -33,7 +33,7 @@ namespace gbe {
 
     Vector3 Camera::ScreenToRay(Vector2 normalizedscreenpos)
     {
-        auto inv_proj = glm::inverse(this->getproj());
+        auto inv_proj = glm::inverse(this->GetProjectionMat());
         auto inv_view = glm::inverse(this->GetViewMat());
         auto initialdir = inv_view * inv_proj * Vector4(normalizedscreenpos.x, normalizedscreenpos.y, 1, 1);
         Vector3 finaldir = Vector3(initialdir.x, initialdir.y, initialdir.z) * (1.0f / initialdir.w);
@@ -46,7 +46,7 @@ namespace gbe {
     {
     }
 
-    Matrix4 PerspectiveCamera::getproj()
+    Matrix4 PerspectiveCamera::GetProjectionMat()
     {
         return glm::perspective(glm::radians(this->angles), (float)mWindow->Get_dimentions().x / mWindow->Get_dimentions().y, this->nearClip, this->farClip);
     }
@@ -55,7 +55,7 @@ namespace gbe {
     {
     }
 
-    Matrix4 OrthographicCamera::getproj()
+    Matrix4 OrthographicCamera::GetProjectionMat()
     {
         return glm::ortho(-orthoRange, orthoRange, -orthoRange, orthoRange, this->nearClip, this->farClip);
     }

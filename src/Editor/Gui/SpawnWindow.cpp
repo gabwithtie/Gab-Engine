@@ -8,8 +8,8 @@ void gbe::editor::SpawnWindow::DrawSelf()
 
 	Object* parent = Engine::GetCurrentRoot();
 
-	if ((*this->selected).size() > 0)
-		parent = (*this->selected)[0];
+	if (this->selected.size() > 0)
+		parent = this->selected[0];
 
 	Object* newobj = nullptr;
 

@@ -24,7 +24,7 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall, int order)
 
 	if (mDrawCall != nullptr) {
 		this->mDrawCall = mDrawCall;
-		to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->GetWorldMatrix(), order);
+		to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->World().GetMatrix(), order);
 	}
 
 	auto texture_field = new gbe::editor::InspectorAsset<TextureLoader, asset::Texture>();
@@ -49,7 +49,7 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall, int order)
 		this->_mat->setOverride("colortex", this->_tex);
 
 		this->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(this->_mesh, this->_mat);
-		this->to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->GetWorldMatrix(), order);
+		this->to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->World().GetMatrix(), order);
 		};
 
 	this->inspectorData->fields.push_back(texture_field);
@@ -63,7 +63,7 @@ gbe::RenderObject::RenderObject(PrimitiveType _ptype, int order)
 	this->order = order;
 
 	this->mDrawCall = primitive_drawcalls[_ptype];
-	to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->GetWorldMatrix(), order);
+	to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->World().GetMatrix(), order);
 	this->ptype = _ptype;
 }
 
@@ -77,14 +77,14 @@ void gbe::RenderObject::InvokeEarlyUpdate()
 	if (to_update == nullptr)
 		return;
 
-	*to_update = this->GetWorldMatrix();
+	*to_update = this->World().GetMatrix();
 }
 
 void gbe::RenderObject::On_Change_enabled(bool _to) {
 	Object::On_Change_enabled(_to);
 
 	if (_to) {
-		to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->GetWorldMatrix(), this->order);
+		to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->World().GetMatrix(), this->order);
 	}
 	else {
 		RenderPipeline::Get_Instance()->UnRegisterCall(this);
@@ -134,7 +134,7 @@ gbe::Object* gbe::RenderObject::Create(gbe::SerializedObject data) {
 		newobj->_mat->setOverride("colortex", newobj->_tex);
 
 		newobj->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(newobj->_mesh, newobj->_mat);
-		newobj->to_update = RenderPipeline::Get_Instance()->RegisterCall(newobj, newobj->mDrawCall, newobj->GetWorldMatrix(), newobj->order);
+		newobj->to_update = RenderPipeline::Get_Instance()->RegisterCall(newobj, newobj->mDrawCall, newobj->World().GetMatrix(), newobj->order);
 
 		return newobj;
 	}

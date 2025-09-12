@@ -30,7 +30,7 @@ gbe::Matrix4 gbe::Transform::GetMatrix(bool include_scale) const
 		return this->updated_matrix_without_scale;
 }
 
-void gbe::Transform::OnComponentChange(TransformChangeType value)
+void gbe::Transform::OnComponentChange(TransformChangeType value, bool silent)
 {
 	auto newmat = Matrix4();
 	newmat = glm::translate(newmat, this->position.Get());
@@ -42,7 +42,7 @@ void gbe::Transform::OnComponentChange(TransformChangeType value)
 
 	this->updated_matrix_with_scale = newmat;
 
-	if (this->onChange)
+	if (!silent && this->onChange)
 		this->onChange(value);
 }
 
@@ -72,7 +72,7 @@ gbe::Transform::Transform(std::function<void(TransformChangeType)> func) : gbe::
 	this->onChange = func;
 }
 
-void gbe::Transform::SetMatrix(Matrix4 mat) {
+void gbe::Transform::SetMatrix(Matrix4 mat, bool silent) {
 
 	Vector3 _scale;
 	Vector3 _position;
@@ -88,6 +88,8 @@ void gbe::Transform::SetMatrix(Matrix4 mat) {
 	this->rotation.Get() = _rotation;
 
 	UpdateAxisVectors();
+
+	OnComponentChange(TransformChangeType::ALL, silent);
 }
 
 gbe::Transform::Transform(Matrix4 mat) {

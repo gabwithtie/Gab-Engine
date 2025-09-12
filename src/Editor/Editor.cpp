@@ -1,6 +1,12 @@
-#include <typeinfo>
-
 #include "Editor.h"
+
+#include <imgui.h>
+#include <imgui_impl_vulkan.h>
+#include <imgui_impl_sdl2.h>
+
+#include <ImGuizmo.h>
+
+#include <typeinfo>
 
 #include "Graphics/gbe_graphics.h"
 #include "Engine/gbe_engine.h"
@@ -12,17 +18,18 @@
 
 gbe::Editor* gbe::Editor::instance = nullptr;
 
-gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engine, Time* _mtime)
+gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime):
+	spawnWindow(this->selected),
+	inspectorwindow(this->selected),
+	gizmoLayer(this->selected)
 {
 	instance = this;
 
-	this->mengine = engine;
 	this->mwindow = window;
 	this->mrenderpipeline = renderpipeline;
 	this->mtime = _mtime;
 
-	//1: create descriptor pool for IMGUI
-	// the size of the pool is very oversize, but it's copied from imgui demo itself.
+	//===========================IMGUI=============================//
 	VkDescriptorPoolSize pool_sizes[] =
 	{
 		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -54,15 +61,8 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 		return ImGui_ImplVulkan_AddTexture(sampler->GetData(), imgview->GetData(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 			});
 
-	// 2: initialize imgui library
-
-	//this initializes the core structures of imgui
-	ImGui::CreateContext();
-
-	//this initializes imgui for SDL
-	ImGui_ImplSDL2_InitForVulkan(static_cast<SDL_Window*>(window->Get_implemented_window()));
-
-	//this initializes imgui for Vulkan
+	ImGui::CreateContext(); //init self
+	ImGui_ImplSDL2_InitForVulkan(static_cast<SDL_Window*>(window->Get_implemented_window())); //init for sdl
 	ImGui_ImplVulkan_InitInfo init_info = {};
 	init_info.Instance = vulkan::Instance::GetActive()->GetData();
 	init_info.PhysicalDevice = vulkan::PhysicalDevice::GetActive()->GetData();
@@ -73,8 +73,7 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 	init_info.ImageCount = 3;
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	init_info.RenderPass = vulkan::RenderPass::GetActive()->GetData();
-
-	ImGui_ImplVulkan_Init(&init_info);
+	ImGui_ImplVulkan_Init(&init_info); //init for vulkan
 
 	/*
 	//add the destroy the imgui created structures
@@ -90,16 +89,6 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Engine* engi
 
 	this->gizmo_box_mat = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
 	this->gizmo_box_mat->setOverride("color", Vector4(1, 1, 0, 1.0f));
-
-	//============================UI SCREENS============================//
-	this->hierarchyWindow = new gbe::editor::HierarchyWindow();
-	this->inspectorwindow = new gbe::editor::InspectorWindow();
-	this->consoleWindow = new gbe::editor::ConsoleWindow();
-	this->spawnWindow = new gbe::editor::SpawnWindow();
-	this->spawnWindow->selected = &this->selected;
-	this->stateWindow = new gbe::editor::StateWindow();
-	this->inspectorwindow->selected = &this->selected;
-	this->menubar = new gbe::editor::MenuBar();
 }
 
 void gbe::Editor::SelectSingle(Object* other) {
@@ -157,8 +146,10 @@ void gbe::Editor::DeselectAll() {
 	instance->gizmo_boxes.clear();
 }
 
-void gbe::Editor::RegisterAction(std::function<void()> action_done, std::function<void()> undo)
+void gbe::Editor::CommitAction(std::function<void()> action_done, std::function<void()> undo)
 {
+	action_done();
+
 	EditorAction newaction = {
 		.action_done = action_done,
 		.undo = undo
@@ -224,7 +215,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT && !this->pointer_inUi) {
 
 			//RAYCAST MECHANICS
-			auto current_camera = this->mengine->GetActiveCamera();
+			auto current_camera = Engine::GetActiveCamera();
 			Vector3 camera_pos = current_camera->World().position.Get();
 			auto mousedir = current_camera->ScreenToRay(mwindow->GetMouseDecimalPos());
 
@@ -286,45 +277,13 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 					if (!has_renderer)
 						continue;
 
-					if (objinray->Get_is_editor())
+					if (!objinray->Get_is_editor())
 					{
-						if (instance->selected.size() > 0) //Dont try to select gizmo if nothing is selected
-							for (auto& gizmoptr : instance->gizmo_arrows)
-							{
-								if (objinray == (*gizmoptr)) {
-									if(closest_obj != nullptr && !closest_obj->Get_is_editor())
-										sqrdist_of_closest = INFINITY; //Reset closest if gizmo is found
-
-									gizmo_in_ray = true; // If gizmo in ray, dont look for non-gizmo objects
-									CheckClosest(*gizmoptr);
-								}
-							}
-					}
-					else if(!gizmo_in_ray){
 						CheckClosest(objinray);
 					}
 				}
-
-				if (gizmo_in_ray) {
-					instance->held_gizmo = static_cast<PhysicsObject*>(closest_obj);
-
-					//FIND DIRECTION
-					if (instance->held_gizmo == instance->f_gizmo)
-						instance->current_hold_direction = instance->selected_f;
-					else if (instance->held_gizmo == instance->r_gizmo)
-						instance->current_hold_direction = instance->selected_r;
-					else if (instance->held_gizmo == instance->u_gizmo)
-						instance->current_hold_direction = instance->selected_u;
-					else
-						throw new std::runtime_error("Gizmo selection error.");
-
-					instance->original_selected_position = instance->selected[0]->World().position.Get();
-					auto point_on_cursor = Vector3::GetClosestPointOnLineGivenLine(instance->original_selected_position, instance->current_hold_direction, camera_pos, mousedir);
-
-					instance->current_hold_offset = point_on_cursor - instance->original_selected_position;
-				}
-				else
-					SelectSingle(closest_obj);
+				
+				SelectSingle(closest_obj);
 			}
 		}
 	}
@@ -338,7 +297,6 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 
 void gbe::Editor::PrepareSceneChange() {
 	this->DeselectAll();
-	this->hierarchyWindow->root = nullptr;
 }
 
 void gbe::Editor::UpdateSelectionGui(Object* newlyclicked) {
@@ -350,8 +308,9 @@ void gbe::Editor::PrepareFrame()
 	//imgui new frame
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
-
 	ImGui::NewFrame();
+	ImGuizmo::BeginFrame();
+
 
 	auto& ui_io = ImGui::GetIO();
 
@@ -363,23 +322,19 @@ void gbe::Editor::Update()
 {
 	//==============================EDITOR UPDATE==============================//
 	if (selected.size() == 1) {
-		auto current_camera = this->mengine->GetActiveCamera();
+		auto current_camera = Engine::GetActiveCamera();
 		Vector3 camera_pos = current_camera->World().position.Get();
 		auto mousedir = current_camera->ScreenToRay(mwindow->GetMouseDecimalPos());
-
-		
 	}
 
 	//==============================IMGUI==============================//
-	if (this->hierarchyWindow->root == nullptr)
-		this->hierarchyWindow->root = mengine->GetCurrentRoot();
-	
-	this->inspectorwindow->Draw();
-	this->spawnWindow->Draw();
-	this->stateWindow->Draw();
-	this->consoleWindow->Draw();
-	this->hierarchyWindow->Draw();
-	this->menubar->Draw();
+	this->inspectorwindow.Draw();
+	this->spawnWindow.Draw();
+	this->stateWindow.Draw();
+	this->consoleWindow.Draw();
+	this->hierarchyWindow.Draw();
+	this->menubar.Draw();
+	this->gizmoLayer.Draw();
 }
 
 void gbe::Editor::PresentFrame()

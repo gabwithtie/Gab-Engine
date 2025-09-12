@@ -42,7 +42,7 @@ void gbe::editor::ModelExport::Export(std::string path)
 		for (const auto& vertex : mesh->Get_load_data().vertices)
 		{
 			asset::data::Vertex newvert = asset::data::Vertex(vertex);
-			auto newpos = renderer->GetWorldMatrix() * Vector4(vertex.pos, 1.0);
+			auto newpos = renderer->World().GetMatrix() * Vector4(vertex.pos, 1.0);
 
 			newvert.pos = Vector3(newpos);
 

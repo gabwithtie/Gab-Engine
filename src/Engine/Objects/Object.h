@@ -9,8 +9,10 @@
 
 #include <list>
 #include <functional>
+#include <algorithm>
 
 #include "Math/gbe_math.h"
+
 
 namespace gbe {
 	class Root;
@@ -20,6 +22,13 @@ namespace gbe {
 	}
 
 	class Object {
+	public:
+		enum ObjectStateName
+		{
+			TRANSFORMED_LOCAL,
+			TRANSFORMED_USER,
+			TRANSFORMED_WORLD_NOT_LOCAL
+		};
 	private:
 		static std::unordered_map<unsigned int, Object*> valid_objects;
 		static unsigned int next_avail_id;
@@ -32,6 +41,9 @@ namespace gbe {
 		bool is_editor = false;
 
 		std::list<Object*> children;
+
+		//A smart way to keep track of states and whether some external objects have already read the state or not.
+		std::unordered_map<ObjectStateName, std::vector<void*>> state_checkers;
 
 		Transform local;
 		Transform world;
@@ -48,6 +60,7 @@ namespace gbe {
 
 		editor::InspectorData* inspectorData;
 	public:
+
 		Object();
 		virtual ~Object();
 		inline void Set_is_editor() {
@@ -57,6 +70,32 @@ namespace gbe {
 			{
 				this->GetChildAt(i)->Set_is_editor();
 			}
+		}
+		inline void PushState(ObjectStateName state) {
+			auto it = this->state_checkers.find(state);
+
+			if (it != this->state_checkers.end())
+			{
+				it->second.clear();
+			}
+			else {
+				this->state_checkers.insert_or_assign(state, std::vector<void*>());
+			}
+		}
+		inline bool CheckState(ObjectStateName state, void* checker) {
+			auto it = this->state_checkers.find(state);
+
+			if (it != this->state_checkers.end())
+			{
+				auto check_it = std::find(it->second.begin(), it->second.end(), checker);
+
+				if (check_it == it->second.end()) {
+					it->second.push_back(checker);
+					return true;
+				}
+			}
+
+			return false;
 		}
 		inline static bool ValidateObject(Object* obj){
 			auto objid = obj->id;
@@ -106,8 +145,6 @@ namespace gbe {
 
 		Transform& World();
 		Transform& Local();
-		Matrix4 GetWorldMatrix(bool include_local_scale = true);
-		void SetLocalMatrix(Matrix4 mat);
 
 		virtual void OnEnterHierarchy(Object* newChild);
 		virtual void OnExitHierarchy(Object* newChild);

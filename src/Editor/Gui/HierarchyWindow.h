@@ -6,15 +6,14 @@
 
 #include <string>
 
+#include "Engine/gbe_engine.h"
+
 namespace gbe {
 	namespace editor {
-
 		class HierarchyWindow : public GuiWindow {
 			void DrawSelf() override;
 			std::string GetWindowId() override;
 			void DrawChildList(Object* parent, std::string label, unsigned int id = 0);
-		public:
-			Root* root;
 		};
 	}
 }

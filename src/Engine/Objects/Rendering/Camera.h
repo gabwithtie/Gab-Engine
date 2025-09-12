@@ -23,7 +23,7 @@ namespace gbe {
         Vector3 WorldUp = Vector3(0, 1, 0);
 
         Matrix4 GetViewMat();
-        virtual Matrix4 getproj() = 0;
+        virtual Matrix4 GetProjectionMat() = 0;
         Vector3 ScreenToRay(Vector2 normalizedscreenpos);
         Vector2 WorldToScreen(Vector3 worldpos);
     };
@@ -34,7 +34,7 @@ namespace gbe {
         OrthographicCamera(Window* mWindow);
 
         // Inherited via GDCamera
-        virtual Matrix4 getproj() override;
+        virtual Matrix4 GetProjectionMat() override;
     };
 
     struct PerspectiveCamera : public Camera {
@@ -43,6 +43,6 @@ namespace gbe {
         PerspectiveCamera(Window* mWindow);
 
         // Inherited via GDCamera
-        virtual Matrix4 getproj() override;
+        virtual Matrix4 GetProjectionMat() override;
     };
 }

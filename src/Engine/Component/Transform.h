@@ -13,7 +13,7 @@ namespace gbe {
 		std::function<void(TransformChangeType)> onChange;
 
 		void UpdateAxisVectors();
-		void OnComponentChange(TransformChangeType type);
+		void OnComponentChange(TransformChangeType type, bool silent = false);
 
 		//AXIS VECTORS
 		Vector3 Right;
@@ -46,7 +46,7 @@ namespace gbe {
 		Transform(std::function<void(TransformChangeType)> onChange);
 		Transform(Matrix4 mat);
 
-		void SetMatrix(Matrix4 mat);
+		void SetMatrix(Matrix4 mat, bool silent = false);
 		Matrix4 GetMatrix(bool include_scale = true) const;
 	};
 }

@@ -7,7 +7,7 @@
 
 void gbe::editor::InspectorWindow::DrawSelf() {
 	//OBJECT INSPECTOR
-	if ((*this->selected).size() == 0) {
+	if (this->selected.size() == 0) {
 		if (this->is_reparenting) {
 			std::string cur_label = typeid(*this->reparentee).name();
 			ImGui::Text(("Select a new object at the hierarchy to reparent [" + cur_label + "]").c_str());
@@ -16,15 +16,15 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 			ImGui::Text("Nothing Selected.");
 		}
 	}
-	else if ((*this->selected).size() == 1)
+	else if (this->selected.size() == 1)
 	{
 		if (is_reparenting)
 		{
 			auto reparentee_id = this->reparentee->Get_id();
-			auto new_parent_id = (*this->selected)[0]->Get_id();
+			auto new_parent_id = this->selected[0]->Get_id();
 			auto old_parent_id = this->reparentee->GetParent()->Get_id();
 
-			Editor::RegisterAction(
+			Editor::CommitAction(
 				[=]() {
 					auto _reparentee = Engine::GetCurrentRoot()->GetObjectWithId(reparentee_id);
 					auto _newparent = Engine::GetCurrentRoot()->GetObjectWithId(new_parent_id);
@@ -39,31 +39,29 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 				}
 			);
 
-			this->reparentee->SetParent((*this->selected)[0]);
-			this->reparentee = nullptr;
 			this->is_reparenting = false;
 
 			Console::Log("Successfully reparented object.");
 		}
 
 		std::string cur_label = "";
-		cur_label += typeid(*(*this->selected)[0]).name();
+		cur_label += typeid(*this->selected[0]).name();
 
 		ImGui::Text(cur_label.c_str());
 
 		//FOR ONLY ONE
-		auto inspectordata = (*this->selected)[0]->GetInspectorData();
+		auto inspectordata = this->selected[0]->GetInspectorData();
 
 		//DRAW THE BUILT IN INSPECTORS PER OBJECT
 
 		ImGui::SeparatorText("Quick Actions:");
-		bool _enabled = (*this->selected)[0]->Get_enabled_self();
+		bool _enabled = this->selected[0]->Get_enabled_self();
 		if (ImGui::Checkbox("Enabled", &_enabled)) {
-			(*this->selected)[0]->Set_enabled(_enabled);
+			this->selected[0]->Set_enabled(_enabled);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Re-Parent")) {
-			this->reparentee = (*this->selected)[0];
+			this->reparentee = this->selected[0];
 			this->is_reparenting = true;
 			Editor::DeselectAll();
 
@@ -72,15 +70,13 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 		ImGui::SameLine();
 		if (ImGui::Button("Destroy")) {
 
-			auto parent_id = (*this->selected)[0]->GetParent()->Get_id();
-			auto destroy_id = (*this->selected)[0]->Get_id();
-			auto respawn_info = (*this->selected)[0]->Serialize();
+			auto parent_id = this->selected[0]->GetParent()->Get_id();
+			auto destroy_id = this->selected[0]->Get_id();
+			auto respawn_info = this->selected[0]->Serialize();
 
-			(*this->selected)[0]->Destroy();
-			
 			Editor::DeselectAll();
 
-			Editor::RegisterAction(
+			Editor::CommitAction(
 				[=]() {
 					Engine::GetCurrentRoot()->GetObjectWithId(destroy_id)->Destroy();
 				},
@@ -97,55 +93,55 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 
 		ImGui::SeparatorText("Transform:");
 
-		auto changed_id = (*this->selected)[0]->Get_id();
+		auto changed_id = this->selected[0]->Get_id();
 
-		Vector3 position_gui_wrap = (*this->selected)[0]->Local().position.Get();
+		Vector3 position_gui_wrap = this->selected[0]->Local().position.Get();
 		Vector3 position_gui_wrap_old = position_gui_wrap;
 		if (this->DrawVector3Field("Position:", &position_gui_wrap)) {
-			(*this->selected)[0]->Local().position.Set(position_gui_wrap);
-
-			Editor::RegisterAction(
+			Editor::CommitAction(
 				[=]() {
 					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
 					modified->Local().position.Set(position_gui_wrap);
+					selected[0]->PushState(Object::TRANSFORMED_USER);
 				},
 				[=]() {
 					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
 					modified->Local().position.Set(position_gui_wrap_old);
+					selected[0]->PushState(Object::TRANSFORMED_USER);
 				}
 			);
 		}
 
-		Vector3 scale_gui_wrap = (*this->selected)[0]->Local().scale.Get();
+		Vector3 scale_gui_wrap = this->selected[0]->Local().scale.Get();
 		Vector3 scale_gui_wrap_old = scale_gui_wrap;
 		if (this->DrawVector3Field("Scale:", &scale_gui_wrap)) {
-			(*this->selected)[0]->Local().scale.Set(scale_gui_wrap);
-
-			Editor::RegisterAction(
+			Editor::CommitAction(
 				[=]() {
 					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
 					modified->Local().scale.Set(scale_gui_wrap);
+					selected[0]->PushState(Object::TRANSFORMED_USER);
 				},
 				[=]() {
 					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
 					modified->Local().scale.Set(scale_gui_wrap_old);
+					selected[0]->PushState(Object::TRANSFORMED_USER);
 				}
 			);
 		}
 
-		Vector3 rot_gui_wrap = (*this->selected)[0]->Local().rotation.Get().ToEuler();
+		Vector3 rot_gui_wrap = this->selected[0]->Local().rotation.Get().ToEuler();
 		Vector3 rot_gui_wrap_old = rot_gui_wrap;
 		if (this->DrawVector3Field("Rotation:", &rot_gui_wrap)) {
-			(*this->selected)[0]->Local().rotation.Set(Quaternion::Euler(rot_gui_wrap));
-
-			Editor::RegisterAction(
+			Editor::CommitAction(
 				[=]() {
 					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
 					modified->Local().rotation.Set(Quaternion::Euler(rot_gui_wrap));
+					selected[0]->PushState(Object::TRANSFORMED_USER);
 				},
 				[=]() {
 					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
 					modified->Local().rotation.Set(Quaternion::Euler(rot_gui_wrap_old));
+					selected[0]->PushState(Object::TRANSFORMED_USER);
 				}
 			);
 		}
@@ -208,10 +204,10 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 	}
 
 	//EXPORTING
-	if ((*this->selected).size() > 0) {
+	if (this->selected.size() > 0) {
 		ImGui::SeparatorText("Exporting");
 		if (ImGui::Button("Merge and export selected.")) {
-			ModelExport modelexporter(*selected);
+			ModelExport modelexporter(selected);
 
 			modelexporter.Export("merged.obj");
 

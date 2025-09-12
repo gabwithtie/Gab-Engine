@@ -1,5 +1,8 @@
 #include "Engine.h"
-#include "gbe_engine.h"
+
+#include "Ext/AnitoBuilderWrapper/AnitoBuilderWrapper.h"
+#include "Ext/AnitoBuilderWrapper/BuilderBlock.h"
+#include "Ext/AnitoBuilder/AnitoBuilder.h"
 
 #include "Editor/gbe_editor.h"
 #include "GUI/gbe_gui.h"
@@ -18,7 +21,7 @@ namespace gbe {
 		instance = this;
 
 		//EDITOR SETUP
-		editor = new Editor(&renderpipeline, &window, this, &time);
+		editor = new Editor(&renderpipeline, &window, &time);
 		if (editor != nullptr) {
 			this->window.AddAdditionalEventProcessor([=](void* newevent) {
 				editor->ProcessRawWindowEvent(newevent);
@@ -240,7 +243,7 @@ namespace gbe {
 			Vector3(2, 0, 2),
 			Vector3(-2, 0, 2),
 		};
-		auto builder_cube = ext::AnitoBuilder::BuilderBlock::CreateBlock(cubecorners, 4);
+		auto builder_cube = new ext::AnitoBuilder::BuilderBlock(cubecorners, 4);
 		builder_cube->SetParent(this->current_root);
 #pragma endregion
 
@@ -319,9 +322,9 @@ namespace gbe {
 			if (current_camera != nullptr) {
 				pos = current_camera->World().position.Get();
 				forward = current_camera->World().GetForward();
-				frustrum = current_camera->getproj() * current_camera->GetViewMat();
+				frustrum = current_camera->GetProjectionMat() * current_camera->GetViewMat();
 				viewm = current_camera->GetViewMat();
-				projm = current_camera->getproj();
+				projm = current_camera->GetProjectionMat();
 				nearclip = current_camera->nearClip;
 				farclip = current_camera->farClip;
 			}

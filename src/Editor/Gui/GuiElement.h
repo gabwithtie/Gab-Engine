@@ -3,10 +3,6 @@
 #include <typeinfo>
 #include <string>
 
-#include <imgui.h>
-#include <imgui_impl_vulkan.h>
-#include <imgui_impl_sdl2.h>
-
 namespace gbe {
 	namespace editor {
 		class GuiElement {

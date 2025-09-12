@@ -1,11 +1,5 @@
 #pragma once
 
-#include <imgui.h>
-#include <imgui_impl_vulkan.h>
-#include <imgui_impl_sdl2.h>
-
-#include <ImGuizmo.h>
-
 #include "Engine/gbe_engine.h"
 
 #include "Ext/GabVulkan/Objects.h"
@@ -18,6 +12,7 @@
 #include "Gui/HierarchyWindow.h"
 #include "Gui/ConsoleWindow.h"
 #include "Gui/MenuBar.h"
+#include "Gui/GizmoLayer.h"
 
 namespace gbe {
 	class RenderPipeline;
@@ -29,7 +24,6 @@ namespace gbe {
 		static Editor* instance;
 
 		Window* mwindow;
-		Engine* mengine;
 		RenderPipeline* mrenderpipeline;
 		Time* mtime;
 
@@ -53,18 +47,20 @@ namespace gbe {
 		asset::Material* gizmo_box_mat;
 		std::unordered_map<gbe::Object*, RenderObject*> gizmo_boxes;
 
-		//WINDOWS
-		editor::HierarchyWindow* hierarchyWindow;
-		editor::InspectorWindow* inspectorwindow;
-		editor::SpawnWindow* spawnWindow;
-		editor::StateWindow* stateWindow;
-		editor::ConsoleWindow* consoleWindow;
-		editor::MenuBar* menubar;
+		//COMPONENTS
+		editor::HierarchyWindow hierarchyWindow;
+		editor::InspectorWindow inspectorwindow;
+		editor::SpawnWindow spawnWindow;
+		editor::StateWindow stateWindow;
+		editor::ConsoleWindow consoleWindow;
+		editor::MenuBar menubar;
+		editor::GizmoLayer gizmoLayer;
+
 	public:
-		Editor(RenderPipeline* renderpipeline, Window* window, Engine* engine, Time* _mtime);
+		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime);
 		static void SelectSingle(Object* other);
 		static void DeselectAll();
-		static void RegisterAction(std::function<void()> redo, std::function<void()> undo);
+		static void CommitAction(std::function<void()> redo, std::function<void()> undo);
 		static void Undo();
 		static void Redo();
 		void PrepareSceneChange();

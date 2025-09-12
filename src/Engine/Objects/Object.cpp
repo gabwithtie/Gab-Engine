@@ -12,6 +12,8 @@ std::unordered_map<unsigned int, gbe::Object*> gbe::Object::valid_objects;
 
 void gbe::Object::OnLocalTransformationChange(TransformChangeType changetype)
 {
+	this->PushState(ObjectStateName::TRANSFORMED_LOCAL);
+
 	auto worldmat = this->parent_matrix * this->local.GetMatrix();
 
 	for (auto child : this->children)
@@ -19,7 +21,8 @@ void gbe::Object::OnLocalTransformationChange(TransformChangeType changetype)
 		child->OnExternalTransformationChange(changetype, worldmat);
 	}
 
-	this->world.SetMatrix(worldmat);
+	//silent because only reflecting
+	this->world.SetMatrix(worldmat, true);
 
 	if (isnan(this->local.GetMatrix()[0][0])) {
 		std::cerr << "NAN transform, resetting transform." << std::endl;
@@ -29,6 +32,8 @@ void gbe::Object::OnLocalTransformationChange(TransformChangeType changetype)
 
 void gbe::Object::OnExternalTransformationChange(TransformChangeType changetype, Matrix4 newparentmatrix)
 {
+	this->PushState(ObjectStateName::TRANSFORMED_WORLD_NOT_LOCAL);
+
 	this->parent_matrix = newparentmatrix;
 	auto worldmat = this->parent_matrix * this->local.GetMatrix();
 
@@ -37,7 +42,8 @@ void gbe::Object::OnExternalTransformationChange(TransformChangeType changetype,
 		child->OnExternalTransformationChange(changetype, worldmat);
 	}
 
-	this->world.SetMatrix(worldmat);
+	//silent because only reflecting
+	this->world.SetMatrix(worldmat, true);
 
 	if (isnan(this->local.GetMatrix()[0][0])) {
 		std::cerr << "NAN transform, resetting transform." << std::endl;
@@ -93,18 +99,6 @@ gbe::Transform& gbe::Object::Local()
 	return this->local;
 }
 
-gbe::Matrix4 gbe::Object::GetWorldMatrix(bool include_local_scale)
-{
-	return this->parent_matrix * this->Local().GetMatrix(include_local_scale);
-}
-
-void gbe::Object::SetLocalMatrix(Matrix4 mat)
-{
-	this->local.SetMatrix(mat);
-
-	OnLocalTransformationChange(TransformChangeType::ALL);
-}
-
 void gbe::Object::OnEnterHierarchy(Object* newChild)
 {
 	Object* current = this->parent;
@@ -128,6 +122,9 @@ gbe::Object* gbe::Object::GetParent()
 
 void gbe::Object::SetParent(Object* newParent)
 {
+	if (newParent == this->parent)
+		return;
+
 	if (parent != nullptr) {
 		auto propagate_upwards = [this](Object* message) {
 			Object* current = this->parent;
@@ -157,7 +154,7 @@ void gbe::Object::SetParent(Object* newParent)
 			});
 		newParent->children.push_back(this);
 
-		this->parent_matrix = newParent->GetWorldMatrix();
+		this->parent_matrix = newParent->World().GetMatrix();
 	}
 
 	this->parent = newParent;

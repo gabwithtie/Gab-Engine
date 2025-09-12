@@ -11,8 +11,13 @@ namespace gbe {
 		class SpawnWindow : public GuiWindow {
 			void DrawSelf() override;
 			std::string GetWindowId() override;
+			std::vector<gbe::Object*>& selected;
 		public:
-			std::vector<gbe::Object*>* selected;
+			inline SpawnWindow(std::vector<gbe::Object*>& _selected) :
+				selected(_selected)
+			{
+
+			}
 		};
 	}
 }

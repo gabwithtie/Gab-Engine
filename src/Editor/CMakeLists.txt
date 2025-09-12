@@ -13,6 +13,7 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	 "Gui/StateWindow.cpp"
 	 "Gui/SpawnWindow.cpp"
 	 "Gui/ConsoleWindow.cpp"
+	 "Gui/GizmoLayer.cpp"
 
 	 "Utility/ModelExport.cpp"
 )

@@ -7,13 +7,13 @@ gbe::PhysicsObject::~PhysicsObject()
 void gbe::PhysicsObject::OnLocalTransformationChange(TransformChangeType type)
 {
 	Object::OnLocalTransformationChange(type);
-	this->body->InjectCurrentTransformMatrix(this->GetWorldMatrix(false));
+	this->body->InjectCurrentTransformMatrix(this->World().GetMatrix(false));
 }
 
 void gbe::PhysicsObject::OnExternalTransformationChange(TransformChangeType type, Matrix4 parentmat)
 {
 	Object::OnExternalTransformationChange(type, parentmat);
-	this->body->InjectCurrentTransformMatrix(this->GetWorldMatrix(false));
+	this->body->InjectCurrentTransformMatrix(this->World().GetMatrix(false));
 }
 
 void gbe::PhysicsObject::UpdateCollider(Collider* what)

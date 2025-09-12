@@ -14,6 +14,10 @@ namespace gbe{
 		Vector3(float);
 		Vector3(const glm::vec3& glmvec);
 
+		inline const static Vector3 Up() {
+			return Vector3(0, 1, 0);
+		}
+
 		float SqrMagnitude() const;
 		Vector3 Cross(Vector3) const;
 		Vector3 Normalize() const;
