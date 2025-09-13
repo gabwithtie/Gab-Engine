@@ -5,7 +5,7 @@
 
 gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const asset::data::MeshImportData & importdata, asset::data::MeshLoadData * loaddata)
 {
-    auto meshpath = asset->Get_asset_directory() + importdata.path;
+    auto meshpath = asset->Get_asset_filepath().parent_path() / importdata.path;
 
     //Read mesh file here
     tinyobj::attrib_t attrib;
@@ -13,7 +13,9 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, meshpath.c_str())) {
+    auto pathstr = meshpath.generic_string();
+    auto pathcstr = pathstr.c_str();
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, meshpath.string().c_str())) {
         throw std::runtime_error(warn + err);
     }
 

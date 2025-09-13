@@ -47,7 +47,7 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
 	//INSTANCE INFO
     this->vulkanInstance = new vulkan::Instance(resolution.x, resolution.y, allextensions, enableValidationLayers);
     vulkan::Instance::SetActive(this->vulkanInstance);
-
+	
     //SDL SURFACE
     VkSurfaceKHR sdl_surface;
     SDL_Vulkan_CreateSurface(implemented_window, vulkanInstance->GetData(), &sdl_surface);
@@ -56,6 +56,13 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
 
     //Vulkan Initialization
     vulkanInstance->Init(surfaceobject);
+
+    //Instance renderer init
+	const bool use_custom_renderer = false;
+    if (use_custom_renderer) {
+        this->renderer = new vulkan::DeferredRenderer(resolution.x, resolution.y, vulkanInstance->GetDepthImageView()); //freed by vulkan instance
+        this->vulkanInstance->SetCustomRenderer(this->renderer);
+    }
 
 	//Asset Loaders
     this->shaderloader.AssignSelfAsLoader();
@@ -75,22 +82,6 @@ void RenderPipeline::SetCameraShader(asset::Shader* camshader) {
 
 void gbe::RenderPipeline::SetResolution(Vector2Int newresolution) {
 	this->resolution = newresolution;
-}
-
-
-//========== RUNTIME THINGS ==========//
-bool RenderPipeline::TryPushLight(gfx::Light* data, bool priority) {
-
-    if (this->lights_this_frame.size() == this->maxlights)
-        return false;
-
-    if (priority) {
-        this->lights_this_frame.push_front(data);
-        return true;
-    }
-
-    this->lights_this_frame.push_back(data);
-    return true;
 }
 
 void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& nearclip, float& farclip)
@@ -129,7 +120,7 @@ void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& n
             callinstance.drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex(), callinstance);
 
             //USE SHADER
-            auto shaderasset = callinstance.drawcall->get_material()->getShader();
+            auto shaderasset = callinstance.drawcall->get_material()->Get_load_data().shader;
             const auto& currentshaderdata = shaderloader.GetAssetData(shaderasset);
             vkCmdBindPipeline(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipeline);
 
@@ -295,7 +286,7 @@ std::vector<unsigned char> gbe::RenderPipeline::ScreenShot(bool write_file) {
 
 gbe::gfx::DrawCall* gbe::RenderPipeline::RegisterDrawCall(asset::Mesh* mesh, asset::Material* material)
 {
-    auto newdrawcall = new DrawCall(mesh, material, &shaderloader.GetAssetData(material->getShader()), vulkanInstance->Get_maxFrames());
+    auto newdrawcall = new DrawCall(mesh, material, &shaderloader.GetAssetData(material->Get_load_data().shader), vulkanInstance->Get_maxFrames());
 
     this->drawcalls.push_back(newdrawcall);
 
@@ -326,7 +317,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
     {
         std::string id;
         auto& overridedata = drawcall->get_material()->getOverride(m_i, id);
-        overridedata.handled_change = false; // Reset handled change for new call
+        overridedata.registered_change = false; // Reset handled change for new call
     }
 
     CallInstance newinst{};
@@ -421,18 +412,20 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
     for (size_t f_i = 0; f_i < vulkanInstance->Get_maxFrames(); f_i++) {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
 
-        for (const auto& uniformblock : newinst.uniformBuffers)
+        std::vector<VkDescriptorBufferInfo> bufferInfos(newinst.uniformBuffers.size());
+        for (size_t i_i = 0; i_i < newinst.uniformBuffers.size(); i_i++)
         {
+            const auto& uniformblock = newinst.uniformBuffers[i_i];
+
             ShaderData::ShaderBlock blockinfo{};
 
             bool found_block = drawcall->get_shaderdata()->FindUniformBlock(uniformblock.block_name, blockinfo);
             if (!found_block)
                 throw std::runtime_error("Failed to find uniform block: " + uniformblock.block_name);
 
-            VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = uniformblock.uboPerFrame[f_i]->GetData();
-            bufferInfo.offset = 0;
-            bufferInfo.range = blockinfo.block_size;
+            bufferInfos[i_i].buffer = uniformblock.uboPerFrame[f_i]->GetData();
+            bufferInfos[i_i].offset = 0;
+            bufferInfos[i_i].range = blockinfo.block_size;
 
             //CREATE THE WRITE DATA
             VkWriteDescriptorSet descriptorWrite{};
@@ -443,21 +436,21 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             descriptorWrite.dstArrayElement = 0;
             descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pBufferInfo = &bufferInfo;
+            descriptorWrite.pBufferInfo = &bufferInfos[i_i];
 
             descriptorWrites.push_back(descriptorWrite);
 
 			std::cout << "Descriptor Write: Binding at " << blockinfo.binding << " in Set " << blockinfo.set << " for Block " << blockinfo.name << " of size " << blockinfo.block_size << " bytes.\n";
         }
 
-
-        for (const auto& uniformtex : newinst.uniformTextures)
+        std::vector<VkDescriptorImageInfo> imageInfos(newinst.uniformTextures.size());
+        for (size_t i_i = 0; i_i < newinst.uniformTextures.size(); i_i++)
         {
-            VkDescriptorImageInfo imageInfo{};
+            const auto& uniformtex = newinst.uniformTextures[i_i];
 
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = uniformtex.imageView->GetData();
-            imageInfo.sampler = uniformtex.sampler->GetData();
+            imageInfos[i_i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfos[i_i].imageView = uniformtex.imageView->GetData();
+            imageInfos[i_i].sampler = uniformtex.sampler->GetData();
 
             //FIND THE BINDING INDEX
             ShaderData::ShaderField fieldinfo;
@@ -472,7 +465,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             descriptorWrite.dstArrayElement = 0;
             descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pImageInfo = &imageInfo;
+            descriptorWrite.pImageInfo = &imageInfos[i_i];
 
             descriptorWrites.push_back(descriptorWrite);
         }

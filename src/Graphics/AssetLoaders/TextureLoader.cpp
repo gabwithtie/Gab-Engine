@@ -6,7 +6,7 @@
 gbe::gfx::GbeUiCallbackFunction gbe::gfx::TextureLoader::Ui_Callback;
 
 gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* loaddata) {
-	std::string pathstr = target->Get_asset_directory() + importdata.filename;
+	const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.filename;
 
 	stbi_uc* pixels;
 	int tex_width;
@@ -14,7 +14,11 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
 	int colorchannels;
 
 	stbi_set_flip_vertically_on_load(true);
-	pixels = stbi_load(pathstr.c_str(), &tex_width, &tex_height, &colorchannels, 4);
+	pixels = stbi_load(pathstr.string().c_str(), &tex_width, &tex_height, &colorchannels, 4);
+
+	if(pixels == nullptr) {
+		throw std::runtime_error("Failed to load texture image!");
+	}
 
 	//GET PIXEL COLORS HERE
 

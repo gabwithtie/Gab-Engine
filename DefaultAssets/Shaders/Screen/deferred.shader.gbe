@@ -1,0 +1,7 @@
+{
+  "asset_id": "screen_deferred",
+  "vert": "frame.vert.spv",
+  "vert_meta": "frame.vert.json",
+  "frag": "deferred.frag.spv",
+  "frag_meta": "deferred.frag.json",
+}

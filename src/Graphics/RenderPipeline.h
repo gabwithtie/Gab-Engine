@@ -17,13 +17,12 @@
 #include "Ext/GabVulkan/Objects.h"
 #include "Ext/GabVulkan/Utility/ValidationLayers.h"
 #include "Ext/GabVulkan/Utility/MemoryBarrier.h"
+#include "Ext/GabVulkan/Components/DeferredRenderer/DeferredRenderer.h"
 
 #include "Math/gbe_math.h"
 #include "Asset/gbe_asset.h"
 
 #include "Data/DrawCall.h"
-#include "Data/Light.h"
-#include "Data/Framebuffer.h"
 #include "AssetLoaders/TextureLoader.h"
 #include "AssetLoaders/ShaderLoader.h"
 #include "AssetLoaders/MeshLoader.h"
@@ -31,11 +30,17 @@
 #include "Window/gbe_window.h"
 #include "Data/CallInstance.h"
 
+
 namespace cv {
 	class Mat;
 }
 
 namespace gbe {
+	//Take vulkan light struct as our own
+	namespace gfx {
+		typedef gbe::vulkan::LightData Light;
+	}
+
 	using namespace gfx;
 	class Editor;
 
@@ -53,21 +58,18 @@ namespace gbe {
 		TextureLoader textureloader;
 		MaterialLoader materialloader;
 
-
-		//CAPTURING
 		VkImage* mostrecent_screenshot = nullptr;
 
 		//============RUNTIME=======================//
 		DrawCall* default_drawcall;
 		std::vector<DrawCall*> drawcalls;
-		std::list<gfx::Light*> lights_this_frame;
-		const int maxlights = 10;
 
 		std::unordered_map<void*, CallInstance> calls;
 		std::map<int, std::vector<void*>> sortedcalls;
 		
 		//============DYNAMICALLY ALLOCATED=======================//
 		vulkan::Instance* vulkanInstance;
+		vulkan::DeferredRenderer* renderer; //owned by vulkanInstance
 		
 	public:
 		static RenderPipeline* Get_Instance();
@@ -79,7 +81,6 @@ namespace gbe {
 
 		void AssignEditor(Editor* editor);
 		void SetCameraShader(asset::Shader* postprocess);
-		bool TryPushLight(gfx::Light* data, bool priority = false);
 
 		void SetResolution(Vector2Int newresolution);
 		

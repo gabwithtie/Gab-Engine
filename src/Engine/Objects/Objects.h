@@ -27,5 +27,3 @@
 #include "Controllers/FlyingCameraControl.h"
 #include "Controllers/GenericController.h"
 #include "Controllers/OrbitalControl.h"
-
-#include "Systems/Cinematics/CinematicSystem.h"

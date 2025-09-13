@@ -30,67 +30,58 @@ target_link_libraries(${PROJECT_NAME}
 find_package(SDL2_mixer CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>)
 
-#DEBUGGING PROJECT FILES
+#DEBUGGING PROJECT FILES/TOOLS
 message("[GABENGINE] Project install prefix at: " "${CMAKE_INSTALL_PREFIX}")
 message("[GABENGINE] Including VCPKG at: " "${CMAKE_TOOLCHAIN_FILE}")
-
-#RELOAD BASE ASSETS TO BUILD
-
-add_custom_target(RELOAD_ASSETS
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/DefaultAssets"
-)
-
-#==================SHADER COMPILATION==================
-#reconfiguration dependency
-file(GLOB CONFIGURE_DEPENDS VERT_PATHS "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets/shaders/*.vert")
-file(GLOB CONFIGURE_DEPENDS FRAG_PATHS "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets/shaders/*.frag")
 
 set(ENGINE_TOOL_DIR "${CMAKE_CURRENT_LIST_DIR}/vcpkg_installed/${ENGINE_ARCHITECTURE}-${ENGINE_PLATFORM}/tools")
 message("[GABENGINE] Tool directory at:" ${ENGINE_TOOL_DIR})
 
-set(COMPILED_SHADER_FILES "")
-function(COMPILE_SHADER SRCNAME)
-  set(SRCPATH "$<TARGET_FILE_DIR:${PROJECT_NAME}>/DefaultAssets/shaders/${SRCNAME}")
-  set(TARGET_NAME "${SRCNAME}_COMPILATION")
-  add_custom_target(${TARGET_NAME}
-      COMMAND "${ENGINE_TOOL_DIR}/shaderc/glslc.exe" "${SRCPATH}" -g -o "${SRCPATH}.spv"
-  )
-  list(APPEND COMPILED_SHADER_FILES ${TARGET_NAME})
-  set(COMPILED_SHADER_FILES "${COMPILED_SHADER_FILES}" PARENT_SCOPE)
-endfunction()
+#RELOAD BASE ASSETS TO BUILD
+add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/DefaultAssets"
+)
 
-set(SHADER_META_FILES "")
-function(DECOMPILE_SHADER SRCNAME)
-  set(SRCPATH "$<TARGET_FILE_DIR:${PROJECT_NAME}>/DefaultAssets/shaders/${SRCNAME}")
-  set(TARGET_NAME "${SRCNAME}_DECOMPILATION")
-  add_custom_target(${TARGET_NAME}
-    COMMAND "${ENGINE_TOOL_DIR}/spirv-cross/spirv-cross.exe" --output "${SRCPATH}.json" "${SRCPATH}.spv" --reflect
-  )
-  list(APPEND SHADER_META_FILES ${TARGET_NAME})
-  set(SHADER_META_FILES "${SHADER_META_FILES}" PARENT_SCOPE)
-endfunction()
+#==================SHADER COMPILATION==================
+# Define a variable for the output directory
+message("[GABENGINE] Shader output directory at: " ${CMAKE_BINARY_DIR})
 
-file(GLOB VERT_PATHS "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets/shaders/*.vert")
-file(GLOB FRAG_PATHS "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets/shaders/*.frag")
+#reconfiguration dependency
+file(GLOB_RECURSE CONFIGURE_DEPENDS VERT_PATHS "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets/shaders/*.vert")
+file(GLOB_RECURSE CONFIGURE_DEPENDS FRAG_PATHS "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets/shaders/*.frag")
+
+#Collect Files
+file(GLOB_RECURSE VERT_PATHS "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets/shaders/*.vert")
+file(GLOB_RECURSE FRAG_PATHS "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets/shaders/*.frag")
 
 set(SHADER_FILEPATHS ${VERT_PATHS})
 list(APPEND SHADER_FILEPATHS ${FRAG_PATHS})
 
+set(SHADER_FILEPATHS_REL "")
 foreach(SHADER_FILEPATH ${SHADER_FILEPATHS})
-    get_filename_component(SHADER_FILENAME "${SHADER_FILEPATH}" NAME)
-    COMPILE_SHADER(${SHADER_FILENAME})
-    DECOMPILE_SHADER(${SHADER_FILENAME})
+    CMAKE_PATH(RELATIVE_PATH SHADER_FILEPATH BASE_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" OUTPUT_VARIABLE REL_PATH)
+    list(APPEND SHADER_FILEPATHS_REL ${REL_PATH})
+    message("[GABENGINE] Found shader: " ${REL_PATH})
 endforeach()
 
-add_custom_target(COMPILE_SHADERS ALL DEPENDS ${COMPILED_SHADER_FILES})
-add_custom_target(GENERATE_SHADERMETAS ALL DEPENDS ${SHADER_META_FILES})
 
-#COMMAND SEQUENCING
-add_dependencies(COMPILE_SHADERS RELOAD_ASSETS)
-add_dependencies(GENERATE_SHADERMETAS COMPILE_SHADERS)
-add_dependencies(${PROJECT_NAME} GENERATE_SHADERMETAS)
-
-
+foreach(SRCRELPATH ${SHADER_FILEPATHS_REL})
+    set(OGPATH "${CMAKE_CURRENT_LIST_DIR}/${SRCRELPATH}")
+  set(DSTPATH "${CMAKE_BINARY_DIR}/${SRCRELPATH}")
+  add_custom_command(
+      OUTPUT "${DSTPATH}.spv"
+      COMMAND "${ENGINE_TOOL_DIR}/shaderc/glslc.exe" "${OGPATH}" -g -o "${DSTPATH}.spv"
+      MAIN_DEPENDENCY "${OGPATH}"
+      DEPENDS ${OGPATH}
+  )
+  set(SRCPATH "${CMAKE_BINARY_DIR}/${SRCRELPATH}")
+  add_custom_command(
+      OUTPUT "${SRCPATH}.json"
+    COMMAND "${ENGINE_TOOL_DIR}/spirv-cross/spirv-cross.exe" --output "${SRCPATH}.json" "${SRCPATH}.spv" --reflect
+    MAIN_DEPENDENCY "${SRCPATH}.spv"
+    DEPENDS ${OGPATH}
+  )
+endforeach()
 
 #COPY DLL TO BUILD
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

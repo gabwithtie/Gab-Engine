@@ -37,10 +37,17 @@ namespace gbe {
             std::string id;
             auto& overridedata = this->get_material()->getOverride(m_i, id);
 
-            if (overridedata.handled_change == false)
-                overrideHandledList[id].clear();
-			else if (overrideHandledList[id].size() >= MAX_FRAMES_IN_FLIGHT)
-                continue;
+            if (overridedata.registered_change == false)
+            {
+				overrideHandledList.insert_or_assign(id, std::vector<int>()); //reset handled list for this id
+            }
+            else {
+                for (const auto& frame_handled : overrideHandledList[id])
+                {
+					if (frame_handled == frameindex) //already handled this frame
+                        continue;
+                }
+            }
 
             //CONFIRM UNIFORM FIELD EXISTS
             ShaderData::ShaderField fieldinfo;
@@ -51,7 +58,7 @@ namespace gbe {
 
             if (overridedata.type == asset::Shader::UniformFieldType::TEXTURE)
             {
-                auto findtexturedata = TextureLoader::GetAssetData(overridedata.value_tex.Get_asset());
+                auto findtexturedata = TextureLoader::GetAssetData(overridedata.value_tex);
 
                 //CREATE NEW DESCRIPTOR WRITE
                 VkDescriptorImageInfo imageInfo{};
@@ -79,7 +86,7 @@ namespace gbe {
 
 			overrideHandledList[id].push_back(frameindex);
 
-            overridedata.handled_change = true;
+            overridedata.registered_change = true;
         }
 
         return true;

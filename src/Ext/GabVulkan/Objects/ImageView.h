@@ -7,8 +7,12 @@
 
 namespace gbe::vulkan {
 	class ImageView : public VulkanObject<VkImageView, ImageView> {
-
+        Image* image;
 	public:
+        inline Image* Get_image() {
+            return image;
+        }
+
 		inline void RegisterDependencies() override {
 
 		}
@@ -19,6 +23,8 @@ namespace gbe::vulkan {
 
         inline ImageView(Image* image, VkImageAspectFlags aspectflags)
         {
+            this->image = image;
+
             VkImageViewCreateInfo viewInfo{};
             viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             viewInfo.image = image->GetData();

@@ -14,11 +14,6 @@ void LightObject::Set_Intensity(float intensity) {
 	this->changed = true;
 }
 
-void gbe::LightObject::Set_ShadowmapResolutions(int res)
-{
-	this->GetData()->SetShadowmapResolution(res);
-}
-
 void gbe::LightObject::OnLocalTransformationChange(TransformChangeType type)
 {
 	Object::OnLocalTransformationChange(type);

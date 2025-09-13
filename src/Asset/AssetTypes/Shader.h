@@ -44,7 +44,7 @@ namespace gbe {
 				TEXTURE,
 			};
 
-			Shader(std::string path);
+			Shader(std::filesystem::path path);
 
 			//OVERRIDE FUNCTIONS
 			template <typename TValue>

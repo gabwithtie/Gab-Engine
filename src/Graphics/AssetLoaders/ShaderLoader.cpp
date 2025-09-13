@@ -4,12 +4,12 @@
 
 gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, asset::data::ShaderLoadData* data) {
 	//============READING============//
-	auto vertpath = asset->Get_asset_directory() + importdata.vert;
-	auto fragpath = asset->Get_asset_directory() + importdata.frag;
-	auto vertmetapath = asset->Get_asset_directory() + importdata.vert_meta;
-	auto fragmetapath = asset->Get_asset_directory() + importdata.frag_meta;
+	auto vertpath = asset->Get_asset_filepath().parent_path() / importdata.vert;
+	auto fragpath = asset->Get_asset_filepath().parent_path() / importdata.frag;
+	auto vertmetapath = asset->Get_asset_filepath().parent_path() / importdata.vert_meta;
+	auto fragmetapath = asset->Get_asset_filepath().parent_path() / importdata.frag_meta;
 
-	auto readfile = [](std::string path) {
+	auto readfile = [](std::filesystem::path path) {
 		std::ifstream file(path, std::ios::ate | std::ios::binary);
 		if (!file.is_open()) {
 			throw std::runtime_error("failed to open file!");
@@ -36,12 +36,18 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	gbe::asset::serialization::gbeParser::PopulateClass(fragMeta, fragmetapath);
 
 	//============DESCRIPTOR LAYOUT SETUP============//
-	std::map<unsigned int, VkDescriptorSetLayout> descriptorSetLayouts;
+	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
 	//BINDINGS
-	std::map<unsigned int, std::vector<VkDescriptorSetLayoutBinding>> binding_sets;
+	std::vector<std::vector<VkDescriptorSetLayoutBinding>> binding_sets;
 	std::vector<ShaderData::ShaderBlock> uniformblocks;
 	std::vector<ShaderData::ShaderField> uniformfields;
+
+	const auto PrepareBindingSetIndex = [&](unsigned int set) {
+		while (binding_sets.size() <= set) {
+			binding_sets.push_back(std::vector<VkDescriptorSetLayoutBinding>());
+		}
+	};
 
 	const auto AddUboBinding = [&](const ShaderStageMeta& stagemeta, const ShaderStageMeta::UboMeta& ubo, VkShaderStageFlags flags) {
 		VkDescriptorSetLayoutBinding ubo_Binding{};
@@ -51,12 +57,8 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		ubo_Binding.stageFlags = flags;
 		ubo_Binding.pImmutableSamplers = nullptr; // Optional
 
-		auto it = binding_sets.find(ubo.set);
-		if (it == binding_sets.end()) {
-			binding_sets.insert_or_assign(ubo.set, std::vector<VkDescriptorSetLayoutBinding>());
-		}
+		PrepareBindingSetIndex(ubo.set);
 		binding_sets[ubo.set].push_back(ubo_Binding);
-		
 
 		ShaderData::ShaderBlock block{};
 		block.binding = ubo.binding;
@@ -130,10 +132,7 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		color_sampler_Binding.pImmutableSamplers = nullptr;
 		color_sampler_Binding.stageFlags = flags;
 
-		auto it = binding_sets.find(meta.set);
-		if (it == binding_sets.end()) {
-			binding_sets.insert_or_assign(meta.set, std::vector<VkDescriptorSetLayoutBinding>());
-		}
+		PrepareBindingSetIndex(meta.set);
 		binding_sets[meta.set].push_back(color_sampler_Binding);
 
 		ShaderData::ShaderField field{};
@@ -159,12 +158,14 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		AddTextureBinding(meta, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	//COMPILE BINDINGS
-	for (auto& set : binding_sets)
+	for (size_t i = 0; i < binding_sets.size(); i++)
 	{
+		auto& bindlist = binding_sets[i];
+
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = static_cast<uint32_t>(set.second.size());
-		layoutInfo.pBindings = set.second.data();
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindlist.size());
+		layoutInfo.pBindings = bindlist.data();
 		layoutInfo.pNext = nullptr;
 
 		VkDescriptorSetLayout newsetlayout;
@@ -173,7 +174,7 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 			throw std::runtime_error("failed to create descriptor set layout!");
 		}
 
-		descriptorSetLayouts.insert_or_assign(set.first, newsetlayout);
+		descriptorSetLayouts.push_back(newsetlayout);
 	}
 
 	
@@ -340,16 +341,11 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 
 	//Pipeline layout
 	VkPipelineLayout newpipelineLayout;
-	auto layoutlist = std::vector<VkDescriptorSetLayout>{};
-	for (const auto& dsl : descriptorSetLayouts)
-	{
-		layoutlist.push_back(dsl.second);
-	}
-
+	
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-	pipelineLayoutInfo.pSetLayouts = layoutlist.data();
+	pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
@@ -382,14 +378,25 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 
 	vulkan::DebugObjectName::NameVkObject(VK_OBJECT_TYPE_PIPELINE, (uint64_t)newgraphicsPipeline, importdata.vert + ":" + importdata.frag);
 
-
 	//Cleanup
 	vkDestroyShaderModule(vulkan::VirtualDevice::GetActive()->GetData(), vertShader, nullptr);
 	vkDestroyShaderModule(vulkan::VirtualDevice::GetActive()->GetData(), fragShader, nullptr);
 
+	std::map<unsigned int, std::vector<VkDescriptorSetLayoutBinding>> binding_sets_map;
+	std::map<unsigned int, VkDescriptorSetLayout> setlayout_map;
+
+	for (size_t i = 0; i < binding_sets.size(); i++)
+	{
+		if (binding_sets[i].size() == 0)
+			continue;
+
+		binding_sets_map[i] = binding_sets[i];
+		setlayout_map[i] = descriptorSetLayouts[i];
+	}
+
 	return ShaderData{
-		binding_sets,
-		descriptorSetLayouts,
+		binding_sets_map,
+		setlayout_map,
 		uniformblocks,
 		uniformfields,
 		newpipelineLayout,

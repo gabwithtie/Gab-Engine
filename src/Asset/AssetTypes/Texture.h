@@ -22,7 +22,7 @@ namespace gbe {
 
 		class Texture : public BaseAsset<Texture, data::TextureImportData, data::TextureLoadData> {
 		public:
-			Texture(std::string asset_path);
+			Texture(std::filesystem::path asset_path);
 		};
 	}
 }

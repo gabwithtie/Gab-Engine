@@ -43,7 +43,6 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Objects/GenericObject.cpp"
 
 	"Objects/Systems/ParticleSystem.cpp"
-	"Objects/Systems/Cinematics/CinematicSystem.cpp"
 	"ObjectHandlers/ColliderHandler.cpp"
 
 	"Serialization/HierarchySerializer.cpp"

@@ -99,21 +99,21 @@ gbe::SerializedObject gbe::RenderObject::Serialize() {
 
 	std::string mesh_str;
 	if (this->_mesh != nullptr)
-		mesh_str = this->_mesh->Get_asset_filepath();
+		mesh_str = this->_mesh->Get_asset_filepath().string();
 	else
 		mesh_str = "";
 	data.serialized_variables.insert_or_assign("mesh", mesh_str);
 
 	std::string tex_str;
 	if (this->_tex != nullptr)
-		tex_str = this->_tex->Get_asset_filepath();
+		tex_str = this->_tex->Get_asset_filepath().string();
 	else
 		tex_str = "";
 	data.serialized_variables.insert_or_assign("tex", tex_str);
 
 	std::string mat_str;
 	if (this->_tex != nullptr)
-		mat_str = this->_mat->Get_asset_filepath();
+		mat_str = this->_mat->Get_asset_filepath().string();
 	else
 		mat_str = "";
 	data.serialized_variables.insert_or_assign("mat", mat_str);

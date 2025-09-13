@@ -3,6 +3,7 @@
 #include "Asset/BaseAsset.h"
 
 #include "Math/gbe_math.h"
+#include <filesystem>
 
 namespace gbe {
 	namespace asset {
@@ -26,7 +27,7 @@ namespace gbe {
 
 		class Mesh : public BaseAsset<Mesh, data::MeshImportData, data::MeshLoadData> {
 		public:
-			Mesh(std::string path);
+			Mesh(std::filesystem::path path);
 		};
 	}
 }

@@ -2,8 +2,12 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
+
 #include "Asset/AssetLoading/AssetLoader.h"
 #include "Asset/Parsing/gbeParser.h"
+
+namespace fs = std::filesystem;
 
 namespace gbe {
 	namespace asset {
@@ -15,15 +19,11 @@ namespace gbe {
 		namespace internal {
 			class BaseAsset_base {
 			protected:
-				std::string asset_directory;
-				std::string asset_filepath;
+				std::filesystem::path asset_filepath;
 				bool destroy_queued;
 				BaseImportData base_import_data;
 			public:
-				inline std::string Get_asset_directory() {
-					return asset_directory;
-				}
-				inline std::string Get_asset_filepath() {
+				inline std::filesystem::path Get_asset_filepath() {
 					return asset_filepath;
 				}
 			};
@@ -36,22 +36,19 @@ namespace gbe {
 
 			TLoadData load_data;
 		public:
-			BaseAsset(std::string asset_path) {
-				gbe::asset::serialization::gbeParser::PopulateClass(this->base_import_data, asset_path);
+			BaseAsset(std::filesystem::path asset_path) {
 				gbe::asset::serialization::gbeParser::PopulateClass(this->import_data, asset_path);
 				
 				this->asset_filepath = asset_path;
-				this->asset_directory = asset_path;
 
-				while (this->asset_directory.back() != '/')
-				{
-					this->asset_directory.pop_back();
-				}
+				std::string filename_with_ext = asset_path.filename().string();
+				size_t dot_pos = filename_with_ext.find('.');
+				if (dot_pos != std::string::npos)
+					this->base_import_data.asset_id = filename_with_ext.substr(0, dot_pos);
+				else
+					this->base_import_data.asset_id = filename_with_ext;
 				
 				AssetLoader_base<TFinal, TImportData, TLoadData>::LoadAsset(static_cast<TFinal*>(this), this->import_data, &this->load_data);
-			}
-			std::string Get_asset_directory() {
-				return this->asset_directory;
 			}
 			std::string Get_assetId() {
 				return this->base_import_data.asset_id;
@@ -59,8 +56,11 @@ namespace gbe {
 			bool Get_destroy_queued() {
 				return this->destroy_queued;
 			}
-			const TLoadData Get_load_data() {
+			const TLoadData& Get_load_data() {
 				return this->load_data;
+			}
+			inline static TFinal* GetAssetById(std::string id) {
+				return AssetLoader_base<TFinal, TImportData, TLoadData>::GetAsset(id);
 			}
 		};
 	}

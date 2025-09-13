@@ -7,6 +7,8 @@
 #include "../Utility/ValidationLayers.h"
 #include "../Utility/DebugObjectName.h"
 
+#include "../Components/Renderer.h"
+
 #include <algorithm>
 #include <array>
 #include <vector>
@@ -48,6 +50,8 @@ namespace gbe::vulkan {
         std::vector<CommandBuffer*> commandBuffers; //buffers per frame
         std::vector<FrameSyncronizationObject*> frameSynchronizationObjects; //sync objects per frame
 
+		Renderer* customRenderer = nullptr;
+
     public:
         inline void RegisterDependencies() override {
 
@@ -71,6 +75,14 @@ namespace gbe::vulkan {
 
         inline Surface* GetSurface() {
             return surface;
+        }
+
+        inline ImageView* GetDepthImageView() {
+            return depthImageView;
+		}
+
+        inline void SetCustomRenderer(Renderer* renderer) {
+			this->customRenderer = renderer;
         }
 
         inline Instance(unsigned int _x, unsigned int _y, std::vector<const char*>& allextensions, bool _enableValidationLayers) {
@@ -206,6 +218,10 @@ namespace gbe::vulkan {
             this->InitializePipelineAttachments();
             this->swapchain->InitializeFramebuffers(depthImageView, renderPass);
 
+            if (customRenderer != nullptr) {
+                
+            }
+
             //======================SYNCHRONIZATION SETUP========================
             this->frameSynchronizationObjects.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -277,6 +293,8 @@ namespace gbe::vulkan {
             delete depthImage;
             delete depthImageView;
 
+            this->customRenderer->Refresh();
+
             this->InitializePipelineObjects();
             this->InitializePipelineAttachments();
             this->swapchain->InitializeFramebuffers(depthImageView, renderPass);
@@ -316,6 +334,8 @@ namespace gbe::vulkan {
             delete depthImage;
             delete depthImageView;
             delete commandPool;
+            delete customRenderer;
+
             for (size_t i = 0; i < commandBuffers.size(); i++)
             {
                 delete commandBuffers[i];
@@ -349,23 +369,28 @@ namespace gbe::vulkan {
             commandBuffers[currentFrame]->Begin();
 
             //==============RENDER PASS START================
-            VkRenderPassBeginInfo renderPassBeginInfo{};
-            renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassBeginInfo.renderPass = renderPass->GetData();
-            renderPassBeginInfo.framebuffer = swapchain->GetFramebuffer(currentSwapchainImage)->GetData();
+            if (customRenderer == nullptr) {
+                VkRenderPassBeginInfo renderPassBeginInfo{};
+                renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                renderPassBeginInfo.renderPass = renderPass->GetData();
+                renderPassBeginInfo.framebuffer = swapchain->GetFramebuffer(currentSwapchainImage)->GetData();
 
-            renderPassBeginInfo.renderArea.offset = { 0, 0 };
-            renderPassBeginInfo.renderArea.extent = swapchain->GetExtent();
+                renderPassBeginInfo.renderArea.offset = { 0, 0 };
+                renderPassBeginInfo.renderArea.extent = swapchain->GetExtent();
 
-            std::array<VkClearValue, 2> clearValues{};
-            float clear_brightness = 0.3f;
-            clearValues[0].color = { {clear_brightness, clear_brightness, clear_brightness, 1.0f} };
-            clearValues[1].depthStencil = { 1.0f, 0 };
+                std::array<VkClearValue, 2> clearValues{};
+                float clear_brightness = 0.3f;
+                clearValues[0].color = { {clear_brightness, clear_brightness, clear_brightness, 1.0f} };
+                clearValues[1].depthStencil = { 1.0f, 0 };
 
-            renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-            renderPassBeginInfo.pClearValues = clearValues.data();
+                renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+                renderPassBeginInfo.pClearValues = clearValues.data();
 
-            vkCmdBeginRenderPass(commandBuffers[currentFrame]->GetData(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+                vkCmdBeginRenderPass(commandBuffers[currentFrame]->GetData(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+            }
+            else {
+
+            }
         }
 
         inline void PushFrame() {

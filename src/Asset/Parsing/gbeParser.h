@@ -12,12 +12,9 @@ namespace gbe {
 		namespace serialization {
 			class gbeParser {
 			public:
-				inline static bool ValidateDirectory(std::string directory) {
-					// Create a std::filesystem::path object from the string
-					std::filesystem::path p(directory);
-
+				inline static bool ValidateDirectory(std::filesystem::path directory) {
 					// Get the parent path (which is the folder/directory)
-					std::filesystem::path folderPath = p.parent_path();
+					std::filesystem::path folderPath = directory.parent_path();
 
 					if (std::filesystem::create_directory(folderPath)) {
 						return false;
@@ -28,16 +25,16 @@ namespace gbe {
 				}
 
 				template<class TImportData>
-				static void PopulateClass(TImportData& target, std::string asset_path) {
+				static void PopulateClass(TImportData& target, std::filesystem::path asset_path) {
 					std::string buffer;
 					TImportData datareceiver;
-					auto ec = glz::read_file_json<glz::opts{.error_on_unknown_keys = false}>(datareceiver, asset_path, buffer);
+					auto ec = glz::read_file_json<glz::opts{.error_on_unknown_keys = false}>(datareceiver, asset_path.string(), buffer);
 					target = datareceiver;
 					std::cout << ec << std::endl;
 				}
 
 				template<class TExportData>
-				static void ExportClass(TExportData& target, std::string asset_path) {
+				static void ExportClass(TExportData& target, std::filesystem::path asset_path) {
 					ValidateDirectory(asset_path);
 					std::ofstream file(asset_path);
 					auto ec = glz::write_json(target);

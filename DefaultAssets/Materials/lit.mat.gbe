@@ -1,0 +1,27 @@
+{
+	"shader": "lit",
+	"overrides": [
+		{
+			"id": "color",
+			"value_vec4": [ 1, 1, 1, 1 ]
+		},
+		{
+			"id": "light_color",
+			"value_vec3": [ 1, 1, 1, 1 ]
+		},
+		{
+			"id": "light_direction",
+			"value_vec3": [ 0, -1, 0 ]
+		},
+		{
+			"id": "specular",
+			"value_single": 0.5
+		},
+		{
+			"id": "tint",
+			"value_vec3": [ 0.1, 0.1, 0.1 ]
+		}
+
+
+	]
+}

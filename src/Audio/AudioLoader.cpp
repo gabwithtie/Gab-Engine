@@ -2,8 +2,8 @@
 
 gbe::audio::AudioData gbe::audio::AudioLoader::LoadAsset_(asset::Audio* asset, const asset::data::AudioImportData& importdata, asset::data::AudioLoadData* data)
 {
-	auto directory = asset->Get_asset_directory() + importdata.filename;
-	auto new_audio_data = Mix_LoadWAV(directory.c_str());
+	auto directory = asset->Get_asset_filepath() / importdata.filename;
+	auto new_audio_data = Mix_LoadWAV(directory.string().c_str());
 	if (new_audio_data == nullptr)
 		throw std::exception("Audio Failed to Load!");
 

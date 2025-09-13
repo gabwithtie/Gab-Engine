@@ -64,7 +64,7 @@ namespace gbe {
 		//LAYERS
 		editor::GizmoLayer gizmoLayer;
 		//BOX GIZMOS
-		asset::Material* gizmo_box_mat;
+		asset::Material* gizmo_box_mat = nullptr;
 		std::unordered_map<gbe::Object*, RenderObject*> gizmo_boxes;
 
 	public:

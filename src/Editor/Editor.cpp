@@ -85,13 +85,6 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 		ImGui_ImplVulkan_Shutdown();
 		});
 		*/
-
-	//============================GIZMOS============================//
-	//CREATE GIZMO BOX ASSETS
-	auto wireshader = new asset::Shader("DefaultAssets/Shaders/wireframe.shader.gbe");
-
-	this->gizmo_box_mat = new asset::Material("DefaultAssets/Materials/wireframe.mat.gbe");
-	this->gizmo_box_mat->setOverride("color", Vector4(1, 1, 0, 1.0f));
 }
 
 void gbe::Editor::SelectSingle(Object* other) {
@@ -187,6 +180,11 @@ void gbe::Editor::Redo()
 
 void gbe::Editor::CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed)
 {
+	if(this->gizmo_box_mat == nullptr) {
+		this->gizmo_box_mat = asset::Material::GetAssetById("wireframe");
+		this->gizmo_box_mat->setOverride("color", Vector4(1, 1, 0, 1.0f));
+	}
+
 	if (boxed->Get_DrawCall() == nullptr)
 		return;
 

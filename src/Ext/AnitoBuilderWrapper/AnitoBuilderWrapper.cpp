@@ -1,5 +1,6 @@
 #include "AnitoBuilderWrapper.h"
 
+#include "Engine/gbe_engine.h"
 #include "Editor/gbe_editor.h"
 #include "Ext/AnitoBuilder/AnitoBuilder.h"
 
@@ -51,37 +52,37 @@ void gbe::ext::AnitoBuilder::AnimoBuilderObject::CreateMesh(gfx::DrawCall* drawc
 gbe::ext::AnitoBuilder::AnimoBuilderObject::AnimoBuilderObject()
 {
 	//DRAWCALL CACHING OF DEFAULT BOX
-	auto cube_mesh = new asset::Mesh("DefaultAssets/3D/default/cube.obj.gbe");
-	auto cube_mat = new asset::Material("DefaultAssets/Materials/grid.mat.gbe");
+	auto cube_mesh = asset::Mesh::GetAssetById("cube");
+	auto cube_mat = asset::Material::GetAssetById("grid");
 	this->cube_drawcall = RenderPipeline::Get_Instance()->RegisterDrawCall(cube_mesh, cube_mat);
 
 	//DRAWCALL CACHING OF EVERYTHING ELSE
 	//MESH AND DRAWCALLS FOR ANIMOBUILDER
-	auto roof_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-	auto roof_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/roof.img.gbe");
+	auto roof_mat = asset::Material::GetAssetById("unlit");
+	auto roof_tex = asset::Texture::GetAssetById("roof");
 	roof_mat->setOverride("colortex", roof_tex);
-	auto roof_m = new asset::Mesh("DefaultAssets/3D/builder/roof.obj.gbe");
+	auto roof_m = asset::Mesh::GetAssetById("roof");
 	auto roof_dc = RenderPipeline::Get_Instance()->RegisterDrawCall(roof_m, roof_mat);
 	drawcall_dictionary.insert_or_assign("roof", roof_dc);
 
-	auto window_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-	//auto window_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/window.img.gbe");
+	auto window_mat = asset::Material::GetAssetById("unlit");
+	//auto window_tex = asset::Texture::GetAssetById("window");
 	//window_mat->setOverride("colortex", roof_tex);
-	auto window_m = new asset::Mesh("DefaultAssets/3D/builder/window.obj.gbe");
+	auto window_m = asset::Mesh::GetAssetById("window");
 	auto window_dc = RenderPipeline::Get_Instance()->RegisterDrawCall(window_m, window_mat);
 	//drawcall_dictionary.insert_or_assign("window", window_dc);
 
-	auto pillar_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-	auto pillar_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/pillar.img.gbe");
+	auto pillar_mat = asset::Material::GetAssetById("unlit");
+	auto pillar_tex = asset::Texture::GetAssetById("pillar");
 	pillar_mat->setOverride("colortex", pillar_tex);
-	auto pillar_m = new asset::Mesh("DefaultAssets/3D/builder/pillar.obj.gbe");
+	auto pillar_m = asset::Mesh::GetAssetById("pillar");
 	auto pillar_dc = RenderPipeline::Get_Instance()->RegisterDrawCall(pillar_m, pillar_mat);
 	drawcall_dictionary.insert_or_assign("pillar", pillar_dc);
 
-	auto wall_mat = new asset::Material("DefaultAssets/Materials/unlit.mat.gbe");
-	auto wall_tex = new asset::Texture("DefaultAssets/Tex/Maps/Model/wall.img.gbe");
+	auto wall_mat = asset::Material::GetAssetById("unlit");
+	auto wall_tex = asset::Texture::GetAssetById("wall");
 	wall_mat->setOverride("colortex", wall_tex);
-	auto wall_m = new asset::Mesh("DefaultAssets/3D/builder/wall.obj.gbe");
+	auto wall_m = asset::Mesh::GetAssetById("wall");
 	auto wall_dc = RenderPipeline::Get_Instance()->RegisterDrawCall(wall_m, wall_mat);
 	drawcall_dictionary.insert_or_assign("wall", wall_dc);
 

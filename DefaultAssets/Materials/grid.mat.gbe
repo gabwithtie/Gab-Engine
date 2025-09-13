@@ -1,3 +1,9 @@
 {
-	"shader": "grid"
+	"shader": "grid",
+	"overrides": [
+		{
+			"id": "color_a",
+			"value_vec4": [1,1,1,1]
+		}
+	]
 }

@@ -181,10 +181,10 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 							auto cur = assetlist[n]->Get_asset_filepath();
 
 							const bool is_selected = (cur == assetfield->choice_label.c_str());
-							if (ImGui::Selectable(cur.c_str(), is_selected))
+							if (ImGui::Selectable(cur.string().c_str(), is_selected))
 							{
 								*assetfield->choice = assetlist[n];
-								assetfield->choice_label = cur;
+								assetfield->choice_label = cur.string();
 							}
 
 							// Set the initial focus when opening the combo (scrolling to the item if needed)

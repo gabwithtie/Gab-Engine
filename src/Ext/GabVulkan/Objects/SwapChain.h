@@ -114,7 +114,7 @@ namespace gbe::vulkan {
         inline void InitializeFramebuffers(ImageView* depthImageView, RenderPass* renderPass) {
             this->swapChainFramebuffers.resize(this->swapChainImageViews.size());
             for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-                std::array<VkImageView, 2> attachments = {
+                std::vector<VkImageView> attachments = {
                     swapChainImageViews[i]->GetData(),
                     depthImageView->GetData()
                 };

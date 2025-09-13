@@ -3,10 +3,9 @@
 #SUBDIRECTORY LOADING
 add_library(${CURRENT_CMAKE_LIB} STATIC
 	"RenderPipeline.cpp"
-	"Data/Light.cpp"
 	"Data/DrawCall.cpp"
 	
-	"Data/Skybox.cpp"
+	
 	
 	"AssetLoaders/TextureLoader.cpp" "AssetLoaders/ShaderLoader.h"
 	"AssetLoaders/ShaderLoader.cpp"

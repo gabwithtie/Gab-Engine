@@ -15,7 +15,7 @@ namespace gbe::vulkan {
 
         }
 
-        inline Framebuffer(uint32_t x, uint32_t y, RenderPass* renderpass, std::array<VkImageView, 2>& attachments) {
+        inline Framebuffer(uint32_t x, uint32_t y, RenderPass* renderpass, std::vector<VkImageView>& attachments) {
             VkFramebufferCreateInfo framebufferInfo{};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = renderpass->GetData();

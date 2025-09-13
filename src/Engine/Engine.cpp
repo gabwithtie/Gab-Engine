@@ -127,23 +127,22 @@ namespace gbe {
 	void Engine::Run()
 	{
 #pragma region Asset Loading
-		//MESH CACHING
-		auto cube_mesh = new asset::Mesh("DefaultAssets/3D/default/cube.obj.gbe");
-		auto sphere_mesh = new asset::Mesh("DefaultAssets/3D/default/sphere.obj.gbe");
-		auto capsule_mesh = new asset::Mesh("DefaultAssets/3D/default/capsule.obj.gbe");
-		auto plane_mesh = new asset::Mesh("DefaultAssets/3D/default/plane.obj.gbe");
-		//MESH CACHING
-		//SHADER CACHING
-		auto gridShader = new asset::Shader("DefaultAssets/Shaders/grid.shader.gbe");
-		//TEXTURE CACHING
-		//MATERIAL CACHING
-		auto grid_mat = new asset::Material("DefaultAssets/Materials/grid.mat.gbe");
+		asset::BatchLoader::LoadAssetsFromDirectory("DefaultAssets");
+
+		//MESH FINDING
+		auto cube_mesh = asset::Mesh::GetAssetById("cube");
+		auto sphere_mesh = asset::Mesh::GetAssetById("sphere");
+		auto capsule_mesh = asset::Mesh::GetAssetById("capsule");
+		auto plane_mesh = asset::Mesh::GetAssetById("plane");
+		//MATERIAL FINDING
+		auto grid_mat = asset::Material::GetAssetById("grid");
+		auto lit_mat = asset::Material::GetAssetById("lit");
 
 		//DRAW CALL CACHING X PRIMITIVES CACHING
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, renderpipeline.RegisterDrawCall(cube_mesh, grid_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, renderpipeline.RegisterDrawCall(sphere_mesh, grid_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, renderpipeline.RegisterDrawCall(plane_mesh, grid_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, renderpipeline.RegisterDrawCall(capsule_mesh, grid_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, renderpipeline.RegisterDrawCall(cube_mesh, lit_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, renderpipeline.RegisterDrawCall(sphere_mesh, lit_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, renderpipeline.RegisterDrawCall(plane_mesh, lit_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, renderpipeline.RegisterDrawCall(capsule_mesh, lit_mat));
 
 		//TYPE SERIALIZER REGISTERING
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), RenderObject::Create);
@@ -297,7 +296,7 @@ namespace gbe {
 			editor->PresentFrame();
 			//ENGINE UPDATE
 			this->current_root->GetHandler<LightObject>()->DoOnEnabled([](LightObject* light) {
-				RenderPipeline::Get_Instance()->TryPushLight(light->GetData(), false);
+				
 				});
 
 			auto pos = Vector3::zero;
