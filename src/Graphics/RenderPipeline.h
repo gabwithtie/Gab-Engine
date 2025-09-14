@@ -72,6 +72,18 @@ namespace gbe {
 		vulkan::DeferredRenderer* renderer; //owned by vulkanInstance
 		
 	public:
+		struct FrameRenderInfo {
+			//Camera info
+			Vector3 camera_pos;
+			Matrix4 viewmat;
+			Matrix4 projmat;
+			float nearclip;
+			float farclip;
+			
+			//Environment info
+			std::vector<gfx::Light*> lightdatas;
+		};
+
 		static RenderPipeline* Get_Instance();
 		
 		RenderPipeline(gbe::Window&, Vector2Int);
@@ -84,7 +96,7 @@ namespace gbe {
 
 		void SetResolution(Vector2Int newresolution);
 		
-		void RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& nearclip, float& farclip);
+		void RenderFrame(const FrameRenderInfo& frameinfo);
 		std::vector<unsigned char> ScreenShot(bool write_file = false);
 
 		Matrix4* RegisterCall(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order = 0);

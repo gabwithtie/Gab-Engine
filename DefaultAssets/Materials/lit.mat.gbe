@@ -3,11 +3,11 @@
 	"overrides": [
 		{
 			"id": "color",
-			"value_vec4": [ 1, 1, 1, 1 ]
+			"value_vec3": [ 1, 1, 1 ]
 		},
 		{
 			"id": "light_color",
-			"value_vec3": [ 1, 1, 1, 1 ]
+			"value_vec3": [ 1, 1, 1]
 		},
 		{
 			"id": "light_direction",
@@ -19,7 +19,7 @@
 		},
 		{
 			"id": "tint",
-			"value_vec3": [ 0.1, 0.1, 0.1 ]
+			"value_vec3": [ 0.5, 0.1, 0.1 ]
 		}
 
 

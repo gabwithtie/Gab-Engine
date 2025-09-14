@@ -8,25 +8,30 @@ namespace gbe::vulkan {
 	class FrameSyncronizationObject {
 	private:
 		VkSemaphore imageAvailableSemaphore;
-		VkSemaphore renderFinishedSemaphore;
+		std::vector<VkSemaphore> renderFinishedSemaphores;
 		VkFence inFlightFence;
 
 	public:
 		VkSemaphore* Get_imageAvailableSemaphore_ptr() {return &imageAvailableSemaphore;}
-		VkSemaphore* Get_renderFinishedSemaphore_ptr() {return &renderFinishedSemaphore;}
+		VkSemaphore* Get_renderFinishedSemaphore_ptr(int swapchainimageindex) {return &renderFinishedSemaphores[swapchainimageindex];}
 		VkFence* Get_inFlightFence_ptr() {return &inFlightFence;}
 
 		VkSemaphore Get_imageAvailableSemaphore() const { return imageAvailableSemaphore; }
-		VkSemaphore Get_renderFinishedSemaphore() const { return renderFinishedSemaphore; }
+		VkSemaphore Get_renderFinishedSemaphore(int swapchainimageindex) const { return renderFinishedSemaphores[swapchainimageindex]; }
 		VkFence Get_inFlightFence() const { return inFlightFence; }
 
 		inline ~FrameSyncronizationObject() {
-			vkDestroySemaphore(VirtualDevice::GetActive()->GetData(), renderFinishedSemaphore, nullptr);
+			
+			for (size_t i = 0; i < renderFinishedSemaphores.size(); i++)
+			{
+				vkDestroySemaphore(VirtualDevice::GetActive()->GetData(), renderFinishedSemaphores[i], nullptr);
+			}
+
 			vkDestroySemaphore(VirtualDevice::GetActive()->GetData(), imageAvailableSemaphore, nullptr);
 			vkDestroyFence(VirtualDevice::GetActive()->GetData(), inFlightFence, nullptr);
 		}
 
-		inline FrameSyncronizationObject() {
+		inline FrameSyncronizationObject(unsigned int swapchainimagecount) {
 			VkSemaphoreCreateInfo semaphoreInfo{};
 			semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -34,12 +39,15 @@ namespace gbe::vulkan {
 			fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 			fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-			if (vkCreateSemaphore(VirtualDevice::GetActive()->GetData(), &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
-				vkCreateSemaphore(VirtualDevice::GetActive()->GetData(), &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS ||
-				vkCreateFence(VirtualDevice::GetActive()->GetData(), &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS) {
+			vkCreateSemaphore(VirtualDevice::GetActive()->GetData(), &semaphoreInfo, nullptr, &imageAvailableSemaphore);
 
-				throw std::runtime_error("failed to create synchronization objects for a frame!");
+			renderFinishedSemaphores.resize(swapchainimagecount);
+			for (size_t i = 0; i < swapchainimagecount; i++)
+			{
+				vkCreateSemaphore(VirtualDevice::GetActive()->GetData(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]);
 			}
+			
+			vkCreateFence(VirtualDevice::GetActive()->GetData(), &fenceInfo, nullptr, &inFlightFence);
 		}
 	};
 }

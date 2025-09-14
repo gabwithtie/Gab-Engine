@@ -226,7 +226,7 @@ namespace gbe::vulkan {
             this->frameSynchronizationObjects.resize(MAX_FRAMES_IN_FLIGHT);
 
             for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                frameSynchronizationObjects[i] = new FrameSyncronizationObject();
+                frameSynchronizationObjects[i] = new FrameSyncronizationObject(this->swapchain->GetImageCount());
             }
         }
 
@@ -409,7 +409,7 @@ namespace gbe::vulkan {
             submitInfo.commandBufferCount = 1;
             submitInfo.pCommandBuffers = commandBuffers[currentFrame]->GetDataPtr();
 
-            VkSemaphore signalSemaphores[] = { frameSynchronizationObjects[currentFrame]->Get_renderFinishedSemaphore()};
+            VkSemaphore signalSemaphores[] = { frameSynchronizationObjects[currentFrame]->Get_renderFinishedSemaphore(currentSwapchainImage)};
             submitInfo.signalSemaphoreCount = 1;
             submitInfo.pSignalSemaphores = signalSemaphores;
 

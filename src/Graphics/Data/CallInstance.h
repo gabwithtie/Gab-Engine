@@ -57,10 +57,12 @@ namespace gbe::gfx {
             const auto& blockaddr = reinterpret_cast<char*>(blockbuffer.uboMappedPerFrame[frameindex]);
             const auto& finaladdr = blockaddr + fieldinfo.offset;
 
-            if (sizeof(valueref) != fieldinfo.size)
-                throw std::runtime_error("Data size mismatch. Can Result in unexpected behaviour.");
+            const auto& sizeofvalue = sizeof(valueref);
 
-            memcpy(finaladdr, &valueref, fieldinfo.size);
+            if (sizeofvalue > fieldinfo.size)
+                throw std::runtime_error("Input size is larger than destination size.");
+
+            memcpy(finaladdr, &valueref, sizeofvalue);
 
             return true;
         }

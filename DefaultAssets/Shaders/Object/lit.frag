@@ -23,7 +23,7 @@ layout(set = 0, binding = 1) uniform Light {
 };
 
 //Set 1: Object Data
-layout(set = 0, binding = 1) uniform Tints {
+layout(set = 1, binding = 1) uniform Shading {
     vec3 color;
     vec3 tint;
     float specular;
@@ -50,5 +50,5 @@ void main() {
     
     // Final color
     vec3 result = ambient + diffuse + specular;
-    outColor = vec4(result, 1.0);
+    outColor = vec4(1,1,1, 1.0);
 }

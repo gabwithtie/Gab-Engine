@@ -234,6 +234,14 @@ namespace gbe {
 		};
 		auto builder_cube = new ext::AnitoBuilder::BuilderBlock(cubecorners, 4);
 		builder_cube->SetParent(this->current_root);
+
+		auto dirlight_ro = new RigidObject();
+		auto dirlight_col = new SphereCollider();
+		dirlight_col->SetParent(dirlight_ro);
+		auto dirlight = new DirectionalLight();
+		dirlight->SetParent(dirlight_ro);
+		dirlight_ro->SetParent(this->current_root);
+
 #pragma endregion
 
 #pragma endregion
@@ -288,45 +296,35 @@ namespace gbe {
 				updatable->InvokeEarlyUpdate();
 				});
 
-			//Update Render pipeline
-			//EDITOR UPDATE
+			//=======================RENDERING======================//
+			//EDITOR pushing
 			editor->PrepareFrame();
 			editor->Update();
-			//<----------MORE EDITOR FUNCTIONS GO HERE
 			editor->PresentFrame();
-			//ENGINE UPDATE
-			this->current_root->GetHandler<LightObject>()->DoOnEnabled([](LightObject* light) {
-				
-				});
 
-			auto pos = Vector3::zero;
-			auto forward = Vector3::zero;
-			auto frustrum = Matrix4();
-			auto viewm = Matrix4();
-			auto projm = Matrix4();
-			auto nearclip = 0.0f;
-			auto farclip = 0.0f;
+			RenderPipeline::FrameRenderInfo frameinfo{};
+
+			//Lights colating
+			this->current_root->GetHandler<LightObject>()->DoOnEnabled([&](LightObject* light) {
+				frameinfo.lightdatas.push_back(light->GetData());
+			});
 
 			Camera* current_camera = GetActiveCamera();
 			if (current_camera != nullptr) {
-				pos = current_camera->World().position.Get();
-				forward = current_camera->World().GetForward();
-				frustrum = current_camera->GetProjectionMat() * current_camera->GetViewMat();
-				viewm = current_camera->GetViewMat();
-				projm = current_camera->GetProjectionMat();
-				nearclip = current_camera->nearClip;
-				farclip = current_camera->farClip;
+				frameinfo.camera_pos = current_camera->World().position.Get();
+				frameinfo.farclip = current_camera->farClip;
+				frameinfo.nearclip = current_camera->nearClip;
+				frameinfo.viewmat = current_camera->GetViewMat();
+				frameinfo.projmat = current_camera->GetProjectionMat();
 			}
 			else {
 				throw std::runtime_error("No cameras rendering scene.");
 			}
-			renderpipeline.RenderFrame(viewm, projm, nearclip, farclip);
-			//mGUIPipeline->DrawActiveCanvas();
+			renderpipeline.RenderFrame(frameinfo);
 
-			//Update the window
 			this->window.SwapBuffers();
 
-			//Update other handlers
+			//======================Physics and Normal/Late Update=======================//
 			auto physicshandler_generic = this->current_root->GetHandler<PhysicsObject>();
 			auto physicshandler = static_cast<PhysicsHandler*>(physicshandler_generic);
 			auto updatehandler = this->current_root->GetHandler<Update>();
@@ -352,7 +350,7 @@ namespace gbe {
 
 			mInputSystem->ResetStates(&this->window);
 
-			//Queued root change
+			//=======================DELETION======================//
 			if (this->queued_rootchange != nullptr) {
 				editor->PrepareSceneChange();
 
@@ -367,7 +365,6 @@ namespace gbe {
 				}
 			}
 
-			//Delete all queued for deletions
 			std::list<Object*> toDeleteRoots;
 
 			this->current_root->CallRecursively([&toDeleteRoots](Object* object) {

@@ -40,6 +40,10 @@ namespace gbe::vulkan {
             return swapchainExtent;
         }
 
+        inline unsigned int GetImageCount() {
+            return swapChainImages.size();
+        }
+
         inline ~SwapChain() {
             for (size_t i = 0; i < swapChainImages.size(); i++) {
                 delete swapChainImages[i];

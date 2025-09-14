@@ -3,14 +3,7 @@
 using namespace gbe;
 
 void LightObject::Set_Color(Vector3 color) {
-	this->Color = color;
-	this->changed = true;
-}
-float LightObject::Get_Intensity() {
-	return this->intensity;
-}
-void LightObject::Set_Intensity(float intensity) {
-	this->intensity = intensity;
+	this->GetData()->color = color;
 	this->changed = true;
 }
 

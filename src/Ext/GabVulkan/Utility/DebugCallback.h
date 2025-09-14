@@ -33,7 +33,7 @@ namespace gbe::vulkan {
         }
         else if (messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
             std::cerr << "validation ERROR: " << pCallbackData->pMessage << std::endl;
-            //throw VulkanException("validation ERROR");
+            throw VulkanException("validation ERROR");
         }
         else
             std::cerr << "validation LOG: " << pCallbackData->pMessage << std::endl;

@@ -84,7 +84,7 @@ void gbe::RenderPipeline::SetResolution(Vector2Int newresolution) {
 	this->resolution = newresolution;
 }
 
-void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& nearclip, float& farclip)
+void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 {
     if (window.isMinimized())
         return;
@@ -108,6 +108,7 @@ void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& n
     vkCmdSetScissor(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, &scissor);
 
     //Render DrawCalls -> Engine-specific code
+    auto projmat = frameinfo.viewmat;
     projmat[1][1] = -projmat[1][1]; //Flip Y axis for Vulkan
 
     for (const auto& pair : this->sortedcalls)
@@ -130,7 +131,26 @@ void gbe::RenderPipeline::RenderFrame(Matrix4 viewmat, Matrix4 projmat, float& n
             //UPDATE GLOBAL UBO
             callinstance.ApplyOverride<Matrix4>(callinstance.model, "model", vulkanInstance->GetCurrentFrameIndex());
             callinstance.ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex());
-            callinstance.ApplyOverride<Matrix4>(viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
+            callinstance.ApplyOverride<Matrix4>(frameinfo.viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
+
+            callinstance.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
+
+            std::map<Light::LightType, int> tally;
+
+            for (const auto& light : frameinfo.lightdatas)
+            {
+                switch (light->type)
+                {
+                case Light::DIRECTIONAL:
+                    if (tally[Light::DIRECTIONAL] == 0) { // limit to one directional light
+                        callinstance.ApplyOverride<Vector3>(light->direction, "light_direction", vulkanInstance->GetCurrentFrameIndex());
+                        callinstance.ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex());
+                    }
+                    break;
+                }
+
+                tally[light->type]++;
+            }
 
             VkBuffer vertexBuffers[] = { curmesh.vertexBuffer->GetData() };
             VkDeviceSize offsets[] = { 0 };

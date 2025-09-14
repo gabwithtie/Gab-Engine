@@ -38,8 +38,9 @@ set(ENGINE_TOOL_DIR "${CMAKE_CURRENT_LIST_DIR}/vcpkg_installed/${ENGINE_ARCHITEC
 message("[GABENGINE] Tool directory at:" ${ENGINE_TOOL_DIR})
 
 #RELOAD BASE ASSETS TO BUILD
-add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/DefaultAssets"
+add_custom_target(
+    COPY_ASSETS_TARGET
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/DefaultAssets" "${CMAKE_BINARY_DIR}/DefaultAssets"
 )
 
 #==================SHADER COMPILATION==================
@@ -64,24 +65,35 @@ foreach(SHADER_FILEPATH ${SHADER_FILEPATHS})
     message("[GABENGINE] Found shader: " ${REL_PATH})
 endforeach()
 
-
+set(SHADER_OUTPUTS "")
 foreach(SRCRELPATH ${SHADER_FILEPATHS_REL})
-    set(OGPATH "${CMAKE_CURRENT_LIST_DIR}/${SRCRELPATH}")
+  set(OGPATH "${CMAKE_CURRENT_LIST_DIR}/${SRCRELPATH}")
   set(DSTPATH "${CMAKE_BINARY_DIR}/${SRCRELPATH}")
   add_custom_command(
-      OUTPUT "${DSTPATH}.spv"
-      COMMAND "${ENGINE_TOOL_DIR}/shaderc/glslc.exe" "${OGPATH}" -g -o "${DSTPATH}.spv"
-      MAIN_DEPENDENCY "${OGPATH}"
-      DEPENDS ${OGPATH}
+    OUTPUT "${DSTPATH}.spv"
+    COMMAND "${ENGINE_TOOL_DIR}/shaderc/glslc.exe" "${OGPATH}" -g -o "${DSTPATH}.spv"
+    MAIN_DEPENDENCY "${OGPATH}"
   )
   set(SRCPATH "${CMAKE_BINARY_DIR}/${SRCRELPATH}")
   add_custom_command(
-      OUTPUT "${SRCPATH}.json"
+    OUTPUT "${SRCPATH}.json"
     COMMAND "${ENGINE_TOOL_DIR}/spirv-cross/spirv-cross.exe" --output "${SRCPATH}.json" "${SRCPATH}.spv" --reflect
     MAIN_DEPENDENCY "${SRCPATH}.spv"
-    DEPENDS ${OGPATH}
   )
+
+  message("[GABENGINE] Prepared compilation of: ${TARGETNAME}.spv || ${TARGETNAME}.json")
+
+  list(APPEND SHADER_OUTPUTS "${DSTPATH}.spv")
+  list(APPEND SHADER_OUTPUTS "${SRCPATH}.json")
 endforeach()
+
+add_custom_target(COMPILESHADERSTARGET ALL
+    DEPENDS ${SHADER_OUTPUTS}
+    COMMENT "Compiling all shaders"
+)
+
+add_dependencies(COMPILESHADERSTARGET COPY_ASSETS_TARGET)
+add_dependencies(${PROJECT_NAME} COMPILESHADERSTARGET)
 
 #COPY DLL TO BUILD
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

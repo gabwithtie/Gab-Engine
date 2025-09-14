@@ -44,10 +44,9 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	std::vector<ShaderData::ShaderField> uniformfields;
 
 	const auto PrepareBindingSetIndex = [&](unsigned int set) {
-		while (binding_sets.size() <= set) {
-			binding_sets.push_back(std::vector<VkDescriptorSetLayoutBinding>());
-		}
-	};
+		if (binding_sets.size() < set + 1)
+			binding_sets.resize(set + 1);
+		};
 
 	const auto AddUboBinding = [&](const ShaderStageMeta& stagemeta, const ShaderStageMeta::UboMeta& ubo, VkShaderStageFlags flags) {
 		VkDescriptorSetLayoutBinding ubo_Binding{};
@@ -158,6 +157,7 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		AddTextureBinding(meta, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	//COMPILE BINDINGS
+	descriptorSetLayouts.resize(binding_sets.size());
 	for (size_t i = 0; i < binding_sets.size(); i++)
 	{
 		auto& bindlist = binding_sets[i];
@@ -170,11 +170,9 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 
 		VkDescriptorSetLayout newsetlayout;
 
-		if (vkCreateDescriptorSetLayout(vulkan::VirtualDevice::GetActive()->GetData(), &layoutInfo, nullptr, &newsetlayout) != VK_SUCCESS) {
+		if (vkCreateDescriptorSetLayout(vulkan::VirtualDevice::GetActive()->GetData(), &layoutInfo, nullptr, &descriptorSetLayouts[i]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create descriptor set layout!");
 		}
-
-		descriptorSetLayouts.push_back(newsetlayout);
 	}
 
 	
