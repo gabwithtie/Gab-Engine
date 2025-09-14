@@ -108,7 +108,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
     vkCmdSetScissor(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, &scissor);
 
     //Render DrawCalls -> Engine-specific code
-    auto projmat = frameinfo.viewmat;
+    auto projmat = frameinfo.projmat;
     projmat[1][1] = -projmat[1][1]; //Flip Y axis for Vulkan
 
     for (const auto& pair : this->sortedcalls)
@@ -117,13 +117,12 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         {
             const auto& callinstance = this->calls[call_ptr];
 
-            //SYNC FIRST
-            callinstance.drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex(), callinstance);
-
             //USE SHADER
             auto shaderasset = callinstance.drawcall->get_material()->Get_load_data().shader;
             const auto& currentshaderdata = shaderloader.GetAssetData(shaderasset);
             vkCmdBindPipeline(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipeline);
+            
+            callinstance.drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex(), callinstance);
 
             //RENDER MESH
             const auto& curmesh = this->meshloader.GetAssetData(callinstance.drawcall->get_mesh());

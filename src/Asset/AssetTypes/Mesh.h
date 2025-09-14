@@ -17,6 +17,7 @@ namespace gbe {
 				Vector3 normal;
 				Vector3 color;
 				Vector2 texCoord;
+				Vector3 tangent;
 			};
 			struct MeshLoadData {
 				std::vector<Vertex> vertices;

@@ -235,11 +235,16 @@ namespace gbe {
 		auto builder_cube = new ext::AnitoBuilder::BuilderBlock(cubecorners, 4);
 		builder_cube->SetParent(this->current_root);
 
-		auto dirlight_ro = new RigidObject();
+		auto dirlight_ro = new RigidObject(true);
 		auto dirlight_col = new SphereCollider();
 		dirlight_col->SetParent(dirlight_ro);
 		auto dirlight = new DirectionalLight();
 		dirlight->SetParent(dirlight_ro);
+		auto arrow_drawcall = renderpipeline.RegisterDrawCall(asset::Mesh::GetAssetById("arrow"), asset::Material::GetAssetById("wireframe"));
+		auto dirlight_gizmo = new RenderObject(arrow_drawcall);
+		dirlight_gizmo->SetParent(dirlight_ro);
+		dirlight_gizmo->Local().position.Set(Vector3(0, 0, 1.0f));
+		dirlight_gizmo->Local().scale.Set(Vector3(0.2, 0.2, -1.0f));
 		dirlight_ro->SetParent(this->current_root);
 
 #pragma endregion

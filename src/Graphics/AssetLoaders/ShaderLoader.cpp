@@ -242,6 +242,12 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		.format = VK_FORMAT_R32G32B32_SFLOAT,
 		.offset = offsetof(asset::data::Vertex, color),
 		});
+	attributeDescriptions.push_back({
+		.location = 4,
+		.binding = 0,
+		.format = VK_FORMAT_R32G32B32_SFLOAT,
+		.offset = offsetof(asset::data::Vertex, tangent),
+		});
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());

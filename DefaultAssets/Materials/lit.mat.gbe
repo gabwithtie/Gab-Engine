@@ -7,21 +7,39 @@
 		},
 		{
 			"id": "light_color",
-			"value_vec3": [ 1, 1, 1]
+			"value_vec3": [ 1, 1, 1 ]
 		},
 		{
-			"id": "light_direction",
-			"value_vec3": [ 0, -1, 0 ]
-		},
-		{
-			"id": "specular",
-			"value_single": 0.5
+			"id": "metallic",
+			"value_single": 10
 		},
 		{
 			"id": "tint",
-			"value_vec3": [ 0.5, 0.1, 0.1 ]
+			"value_vec3": [ 0.0, 0.0, 0.0 ]
+		},
+		{
+			"id": "color_tex",
+			"value_tex": "brick_diff"
+		},
+		{
+			"id": "has_color_tex",
+			"value_single": 1
+		},
+		{
+			"id": "normal_tex",
+			"value_tex": "brick_norm"
+		},
+		{
+			"id": "has_normal_tex",
+			"value_single": 1
+		},
+		{
+			"id": "arm_tex",
+			"value_tex": "brick_arm"
+		},
+		{
+			"id": "has_arm_tex",
+			"value_single": 1
 		}
-
-
 	]
 }

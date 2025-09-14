@@ -71,7 +71,7 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
                 .pos = pos,
                 .normal = {nx, ny, nz},
                 .color = {1, 1, 1},
-                .texCoord = {tx, ty},
+                .texCoord = {tx, ty}
                 };
 
                 if (uniqueVertices.count(key) == 0)
@@ -82,6 +82,53 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
                 indices.push_back(vertices.size());
                 vertices.push_back(vertex);
             }
+
+            if (fv == 3) {
+                // Get the three vertices of the current face
+                asset::data::Vertex& v0 = vertices[cur_face[0]];
+                asset::data::Vertex& v1 = vertices[cur_face[1]];
+                asset::data::Vertex& v2 = vertices[cur_face[2]];
+
+                // Get position and texcoord data
+                Vector3 pos1 = v0.pos;
+                Vector3 pos2 = v1.pos;
+                Vector3 pos3 = v2.pos;
+
+                Vector2 uv1 = v0.texCoord;
+                Vector2 uv2 = v1.texCoord;
+                Vector2 uv3 = v2.texCoord;
+
+                // Calculate edge vectors in 3D and UV space
+                Vector3 edge1 = pos2 - pos1;
+                Vector3 edge2 = pos3 - pos1;
+                Vector2 uvEdge1 = uv2 - uv1;
+                Vector2 uvEdge2 = uv3 - uv1;
+
+                float determinant = (uvEdge1.x * uvEdge2.y) - (uvEdge2.x * uvEdge1.y);
+
+                // If determinant is close to zero, it means the UVs are degenerate.
+                if (abs(determinant) > 0.0001f) {
+                    float invDet = 1.0f / determinant;
+
+                    // Calculate tangent
+                    Vector3 tangent;
+                    tangent.x = invDet * (uvEdge2.y * edge1.x - uvEdge1.y * edge2.x);
+                    tangent.y = invDet * (uvEdge2.y * edge1.y - uvEdge1.y * edge2.y);
+                    tangent.z = invDet * (uvEdge2.y * edge1.z - uvEdge1.y * edge2.z);
+
+                    // Assign tangent to all three vertices
+                    v0.tangent = tangent;
+                    v1.tangent = tangent;
+                    v2.tangent = tangent;
+                }
+                else {
+                    // Assign a default tangent (e.g., perpendicular to the normal)
+                    v0.tangent = Vector3(1.0f, 0.0f, 0.0f);
+                    v1.tangent = Vector3(1.0f, 0.0f, 0.0f);
+                    v2.tangent = Vector3(1.0f, 0.0f, 0.0f);
+                }
+            }
+
             index_offset += fv;
 
             // per-face material

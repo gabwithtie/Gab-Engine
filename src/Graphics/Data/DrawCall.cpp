@@ -56,7 +56,25 @@ namespace gbe {
             if (!found)
                 continue;
 
-            if (overridedata.type == asset::Shader::UniformFieldType::TEXTURE)
+            if (overridedata.type == asset::Shader::UniformFieldType::BOOL) {
+                callinst.ApplyOverride<bool>(overridedata.value_bool, id, frameindex);
+            }
+            else if (overridedata.type == asset::Shader::UniformFieldType::FLOAT) {
+                callinst.ApplyOverride<float>(overridedata.value_float, id, frameindex);
+            }
+            else if (overridedata.type == asset::Shader::UniformFieldType::INT) {
+                callinst.ApplyOverride<int>(overridedata.value_float, id, frameindex);
+            }
+            else if (overridedata.type == asset::Shader::UniformFieldType::VEC2) {
+                callinst.ApplyOverride<Vector2>(overridedata.value_vec2, id, frameindex);
+            }
+            else if (overridedata.type == asset::Shader::UniformFieldType::VEC3) {
+                callinst.ApplyOverride<Vector3>(overridedata.value_vec3, id, frameindex);
+            }
+            else if (overridedata.type == asset::Shader::UniformFieldType::VEC4) {
+                callinst.ApplyOverride<Vector4>(overridedata.value_vec4, id, frameindex);
+            }
+            else if (overridedata.type == asset::Shader::UniformFieldType::TEXTURE)
             {
                 auto findtexturedata = TextureLoader::GetAssetData(overridedata.value_tex);
 
@@ -79,9 +97,6 @@ namespace gbe {
 
                 vkUpdateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), static_cast<uint32_t>(1), &descriptorWrite, 0, nullptr);
 
-            }
-            else if (overridedata.type == asset::Shader::UniformFieldType::VEC4) {
-                callinst.ApplyOverride<Vector4>(overridedata.value_vec4, id, frameindex);
             }
 
 			overrideHandledList[id].push_back(frameindex);
