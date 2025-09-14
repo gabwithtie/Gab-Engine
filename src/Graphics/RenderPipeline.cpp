@@ -364,7 +364,6 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         }
 
         newinst.uniformBuffers.push_back(newblockbuffer);
-		std::cout << "Allocated buffer: " << block.name << " of size " << bufferSize << " bytes.\n";
     }
     //Textures
     for (const auto& field : drawcall->get_shaderdata()->uniformfields)
@@ -458,8 +457,6 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             descriptorWrite.pBufferInfo = &bufferInfos[i_i];
 
             descriptorWrites.push_back(descriptorWrite);
-
-			std::cout << "Descriptor Write: Binding at " << blockinfo.binding << " in Set " << blockinfo.set << " for Block " << blockinfo.name << " of size " << blockinfo.block_size << " bytes.\n";
         }
 
         std::vector<VkDescriptorImageInfo> imageInfos(newinst.uniformTextures.size());

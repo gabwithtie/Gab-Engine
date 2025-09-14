@@ -45,9 +45,6 @@ namespace gbe::vulkan {
         }
 
         inline ~SwapChain() {
-            for (size_t i = 0; i < swapChainImages.size(); i++) {
-                delete swapChainImages[i];
-            }
             for (size_t i = 0; i < swapChainImageViews.size(); i++) {
                 delete swapChainImageViews[i];
             }
@@ -115,16 +112,13 @@ namespace gbe::vulkan {
             }
 		}
 
-        inline void InitializeFramebuffers(ImageView* depthImageView, RenderPass* renderPass) {
-            this->swapChainFramebuffers.resize(this->swapChainImageViews.size());
+        inline void InitializeFramebuffers(std::vector<VkImageView> attachments, RenderPass* renderPass) {
+this->swapChainFramebuffers.resize(this->swapChainImageViews.size());
             for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-                std::vector<VkImageView> attachments = {
-                    swapChainImageViews[i]->GetData(),
-                    depthImageView->GetData()
-                };
-
-                swapChainFramebuffers[i] = new Framebuffer(swapchainExtent.width, swapchainExtent.height, renderPass, attachments);
+                std::vector<VkImageView> attachmentsperfb(attachments);
+                attachmentsperfb.insert(attachmentsperfb.begin(), swapChainImageViews[i]->GetData());
+                swapChainFramebuffers[i] = new Framebuffer(swapchainExtent.width, swapchainExtent.height, renderPass, attachmentsperfb);
             }
         }
-	};
+    };
 }

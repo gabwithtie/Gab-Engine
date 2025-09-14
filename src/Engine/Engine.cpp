@@ -303,9 +303,7 @@ namespace gbe {
 
 			//=======================RENDERING======================//
 			//EDITOR pushing
-			editor->PrepareFrame();
-			editor->Update();
-			editor->PresentFrame();
+			editor->PrepareUpdate();
 
 			RenderPipeline::FrameRenderInfo frameinfo{};
 

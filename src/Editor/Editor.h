@@ -76,10 +76,8 @@ namespace gbe {
 		static void Redo();
 		void PrepareSceneChange();
 		void UpdateSelectionGui(Object* newlyclicked);
-		void PrepareFrame();
-		void Update();
+		void PrepareUpdate();
 		void ProcessRawWindowEvent(void* rawwindowevent);
-		void PresentFrame();
 		void RenderPass(vulkan::CommandBuffer* cmd);
 		void CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed);
 	};

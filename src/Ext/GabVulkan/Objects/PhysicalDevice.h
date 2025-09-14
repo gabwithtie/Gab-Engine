@@ -11,8 +11,8 @@ namespace gbe::vulkan {
 	class PhysicalDevice : public VulkanObject<VkPhysicalDevice, PhysicalDevice>, public VulkanObjectSingleton<PhysicalDevice> {
 		uint32_t graphicsQueueIndex = UINT32_MAX;
 		uint32_t presentQueueIndex = UINT32_MAX;
-		VkPhysicalDeviceFeatures supportedFeatures;
 		VkPhysicalDeviceProperties properties;
+		VkPhysicalDeviceFeatures supportedFeatures;
 		VkSurfaceCapabilitiesKHR capabilities;
 		std::vector<VkSurfaceFormatKHR> formats;
 		std::vector<VkPresentModeKHR> presentModes;
@@ -39,6 +39,11 @@ namespace gbe::vulkan {
 		inline uint32_t Get_presentQueueIndex() const {
 			return presentQueueIndex;
 		}
+		inline void Refresh() {
+			vkGetPhysicalDeviceProperties(this->data, &properties);
+			vkGetPhysicalDeviceFeatures(this->data, &supportedFeatures);
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->data, Surface::GetActive()->GetData(), &capabilities);
+		}
 
 		inline void RegisterDependencies() override {
 
@@ -51,9 +56,7 @@ namespace gbe::vulkan {
 		inline PhysicalDevice(VkPhysicalDevice vkphysicaldevice) {
 			this->data = vkphysicaldevice;
 
-			vkGetPhysicalDeviceProperties(this->data, &properties);
-			vkGetPhysicalDeviceFeatures(this->data, &supportedFeatures);
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->data, Surface::GetActive()->GetData(), &capabilities);
+			Refresh();
 
 			uint32_t formatCount;
 			vkGetPhysicalDeviceSurfaceFormatsKHR(this->data, Surface::GetActive()->GetData(), &formatCount, nullptr);

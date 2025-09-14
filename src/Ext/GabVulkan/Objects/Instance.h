@@ -30,8 +30,8 @@ namespace gbe::vulkan {
         VkDebugUtilsMessengerEXT debugMessenger = nullptr;
         bool enableValidationLayers = false;
 
-        unsigned int x;
-        unsigned int y;
+        int &x;
+        int &y;
         int MAX_FRAMES_IN_FLIGHT = 2;
 
         //STATES
@@ -85,9 +85,10 @@ namespace gbe::vulkan {
 			this->customRenderer = renderer;
         }
 
-        inline Instance(unsigned int _x, unsigned int _y, std::vector<const char*>& allextensions, bool _enableValidationLayers) {
-            this->x = _x;
-            this->y = _y;
+        inline Instance(int &_x, int &_y, std::vector<const char*>& allextensions, bool _enableValidationLayers):
+            x(_x),
+            y(_y)
+        {
             enableValidationLayers = _enableValidationLayers;
 
             VkApplicationInfo appInfo{};
@@ -216,7 +217,7 @@ namespace gbe::vulkan {
 
             //======================DISPLAY SETUP========================
             this->InitializePipelineAttachments();
-            this->swapchain->InitializeFramebuffers(depthImageView, renderPass);
+            this->swapchain->InitializeFramebuffers({ depthImageView->GetData() }, renderPass);
 
             if (customRenderer != nullptr) {
                 
@@ -231,6 +232,8 @@ namespace gbe::vulkan {
         }
 
         inline void InitializePipelineObjects() {
+            PhysicalDevice::GetActive()->Refresh();
+
             //==============SWAPCHAIN================
             //format selection
             VkSurfaceFormatKHR chosenFormat;
@@ -251,22 +254,13 @@ namespace gbe::vulkan {
             }
 
             //swapchain extent selection
-            VkExtent2D swapchainExtent;
+            VkExtent2D swapchainExtent = {
+                static_cast<uint32_t>(this->x),
+                static_cast<uint32_t>(this->y)
+            };
 
-            if (PhysicalDevice::GetActive()->Get_capabilities().currentExtent.width != std::numeric_limits<uint32_t>::max()) {
-                swapchainExtent = PhysicalDevice::GetActive()->Get_capabilities().currentExtent;
-            }
-            else {
-                VkExtent2D actualExtent = {
-                    static_cast<uint32_t>(this->x),
-                    static_cast<uint32_t>(this->y)
-                };
-
-                actualExtent.width = std::clamp(actualExtent.width, PhysicalDevice::GetActive()->Get_capabilities().minImageExtent.width, PhysicalDevice::GetActive()->Get_capabilities().maxImageExtent.width);
-                actualExtent.height = std::clamp(actualExtent.height, PhysicalDevice::GetActive()->Get_capabilities().minImageExtent.height, PhysicalDevice::GetActive()->Get_capabilities().maxImageExtent.height);
-
-                swapchainExtent = actualExtent;
-            }
+            swapchainExtent.width = std::clamp(swapchainExtent.width, PhysicalDevice::GetActive()->Get_capabilities().minImageExtent.width, PhysicalDevice::GetActive()->Get_capabilities().maxImageExtent.width);
+            swapchainExtent.height = std::clamp(swapchainExtent.height, PhysicalDevice::GetActive()->Get_capabilities().minImageExtent.height, PhysicalDevice::GetActive()->Get_capabilities().maxImageExtent.height);
 
             //Image count determination
             uint32_t imageCount = PhysicalDevice::GetActive()->Get_capabilities().minImageCount + 1;
@@ -293,11 +287,13 @@ namespace gbe::vulkan {
             delete depthImage;
             delete depthImageView;
 
-            this->customRenderer->Refresh();
+            if (customRenderer != nullptr) {
+                this->customRenderer->Refresh();
+            }
 
             this->InitializePipelineObjects();
             this->InitializePipelineAttachments();
-            this->swapchain->InitializeFramebuffers(depthImageView, renderPass);
+            this->swapchain->InitializeFramebuffers({depthImageView->GetData()}, renderPass);
         }
 
         inline void InitializePipelineAttachments()

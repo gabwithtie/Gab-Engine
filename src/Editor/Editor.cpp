@@ -304,7 +304,7 @@ void gbe::Editor::UpdateSelectionGui(Object* newlyclicked) {
 	
 }
 
-void gbe::Editor::PrepareFrame()
+void gbe::Editor::PrepareUpdate()
 {
 	//imgui new frame
 	ImGui_ImplVulkan_NewFrame();
@@ -317,10 +317,7 @@ void gbe::Editor::PrepareFrame()
 
 	this->pointer_inUi = ui_io.WantCaptureMouse;
 	this->keyboard_inUi = ui_io.WantCaptureKeyboard;
-}
 
-void gbe::Editor::Update()
-{
 	//==============================EDITOR UPDATE==============================//
 	if (selected.size() == 1) {
 		auto current_camera = Engine::GetActiveCamera();
@@ -338,14 +335,6 @@ void gbe::Editor::Update()
 			window->Draw();
 	}
 
-}
-
-void gbe::Editor::PresentFrame()
-{
-	//BEFORE YOU DRAW THE EDITOR, IMPLEMENT THE SCREEN RECORDING
-	
-
-	//AFTER RECORDING, DO THE RENDER
 	ImGui::Render();
 }
 

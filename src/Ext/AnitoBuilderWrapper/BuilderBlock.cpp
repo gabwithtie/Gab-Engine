@@ -32,7 +32,7 @@ namespace gbe::ext::AnitoBuilder {
 
 			handle->Local().position.Set(Vector3::Mid(seg.first, seg.second) + Vector3(0, height * 0.5f, 0));
 			handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
-			handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.1f));
+			handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
 
 			this->handles.push_back(handle);
 		}
@@ -52,7 +52,7 @@ namespace gbe::ext::AnitoBuilder {
 
 			handle->Local().position.Set(Vector3::Mid(seg.first, seg.second) + Vector3(0, height * 0.5f, 0));
 			handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
-			handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.1f));
+			handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
 		}
 	}
 
