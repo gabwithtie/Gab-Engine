@@ -37,6 +37,11 @@ namespace gbe {
 			STATIC_ROT_X = 1 << 3,
 			STATIC_ROT_Y = 1 << 4,
 			STATIC_ROT_Z = 1 << 5,
+			STATIC_SCALE_X = 1 << 6,
+			STATIC_SCALE_Y = 1 << 7,
+			STATIC_SCALE_Z = 1 << 8,
+
+			IS_STATE_MANAGED = 1 << 9
 		};
 	private:
 		static std::unordered_map<unsigned int, Object*> valid_objects;

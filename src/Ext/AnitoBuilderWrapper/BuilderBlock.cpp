@@ -39,6 +39,9 @@ namespace gbe::ext::AnitoBuilder {
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_POS_Y);
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_ROT_X);
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_ROT_Z);
+			handle->PushEditorFlag(Object::EditorFlags::STATIC_SCALE_Y);
+			handle->PushEditorFlag(Object::EditorFlags::STATIC_SCALE_Z);
+			handle->PushEditorFlag(Object::EditorFlags::IS_STATE_MANAGED);
 
 			this->handles.push_back(handle);
 		}
