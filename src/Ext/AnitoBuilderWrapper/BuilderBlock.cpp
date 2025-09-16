@@ -5,6 +5,8 @@
 namespace gbe::ext::AnitoBuilder {
 	BuilderBlock::BuilderBlock(gbe::Vector3 corners[4], float height)
 	{
+		this->SetName("Anito Builder Block");
+
 		this->height = height;
 		auto base_center = Vector3::Mid(Vector3::Mid(corners[0], corners[1]), Vector3::Mid(corners[2], corners[3]));
 
@@ -33,6 +35,10 @@ namespace gbe::ext::AnitoBuilder {
 			handle->Local().position.Set(Vector3::Mid(seg.first, seg.second) + Vector3(0, height * 0.5f, 0));
 			handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
 			handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
+
+			handle->PushEditorFlag(Object::EditorFlags::STATIC_POS_Y);
+			handle->PushEditorFlag(Object::EditorFlags::STATIC_ROT_X);
+			handle->PushEditorFlag(Object::EditorFlags::STATIC_ROT_Z);
 
 			this->handles.push_back(handle);
 		}

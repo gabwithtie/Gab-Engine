@@ -5,7 +5,6 @@
 #include "Ext/AnitoBuilder/AnitoBuilder.h"
 
 #include "Editor/gbe_editor.h"
-#include "GUI/gbe_gui.h"
 #include "Math/gbe_math.h"
 #include "Physics/gbe_physics.h"
 #include "Audio/gbe_audio.h"

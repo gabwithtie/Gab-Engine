@@ -29,10 +29,21 @@ namespace gbe {
 			TRANSFORMED_USER,
 			TRANSFORMED_WORLD_NOT_LOCAL
 		};
+		enum EditorFlags
+		{
+			STATIC_POS_X = 1 << 0,
+			STATIC_POS_Y = 1 << 1,
+			STATIC_POS_Z = 1 << 2,
+			STATIC_ROT_X = 1 << 3,
+			STATIC_ROT_Y = 1 << 4,
+			STATIC_ROT_Z = 1 << 5,
+		};
 	private:
 		static std::unordered_map<unsigned int, Object*> valid_objects;
 		static unsigned int next_avail_id;
 		unsigned int id = 0;
+
+		std::string name = "Object";
 
 		bool enabled_hierarchy = true;
 		bool enabled_self = true;
@@ -44,6 +55,7 @@ namespace gbe {
 
 		//A smart way to keep track of states and whether some external objects have already read the state or not.
 		std::unordered_map<ObjectStateName, std::vector<void*>> state_checkers;
+		EditorFlags editor_flags = (EditorFlags)0;
 
 		Transform local;
 		Transform world;
@@ -71,6 +83,14 @@ namespace gbe {
 				this->GetChildAt(i)->Set_is_editor();
 			}
 		}
+
+		inline std::string GetName() {
+			return this->name;
+		}
+		inline void SetName(std::string newname) {
+			this->name = newname;
+		}
+
 		inline void PushState(ObjectStateName state) {
 			auto it = this->state_checkers.find(state);
 
@@ -97,6 +117,13 @@ namespace gbe {
 
 			return false;
 		}
+		inline bool GetEditorFlag(EditorFlags flag) {
+			return (this->editor_flags & flag) == flag;
+		}
+		inline void PushEditorFlag(EditorFlags flag) {
+			this->editor_flags = (EditorFlags)(this->editor_flags | flag);
+		}
+
 		inline static bool ValidateObject(Object* obj){
 			auto objid = obj->id;
 			if (valid_objects.find(objid) == valid_objects.end())

@@ -55,6 +55,9 @@ gbe::Object::Object():
 	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
 	world([](TransformChangeType type) {})
 {
+	//Name
+	this->name = typeid(*this).name();
+
 	//TRANSFORM
 	this->parent_matrix = Matrix4(1.0f);
 	this->parent = nullptr;

@@ -39,7 +39,7 @@ void gbe::editor::HierarchyWindow::DrawChildList(Object* parent, std::string lab
 			button_label += "[";
 			button_label += std::to_string(i);
 			button_label += "] : ";
-			button_label += typeid(*child).name();
+			button_label += child->GetName();
 
 			if (!child->Get_is_editor())
 				this->DrawChildList(child, button_label, id);
