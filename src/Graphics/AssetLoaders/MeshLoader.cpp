@@ -3,140 +3,93 @@
 #include "../RenderPipeline.h"
 #include "Ext/GabVulkan/Objects.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <iostream>
+#include <vector>
+#include <map>
+
+using namespace gbe::asset::data;
+
 gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const asset::data::MeshImportData & importdata, asset::data::MeshLoadData * loaddata)
 {
     auto meshpath = asset->Get_asset_filepath().parent_path() / importdata.path;
 
-    //Read mesh file here
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
-
     auto pathstr = meshpath.generic_string();
     auto pathcstr = pathstr.c_str();
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, meshpath.string().c_str())) {
-        throw std::runtime_error(warn + err);
-    }
-
+    
     std::vector<asset::data::Vertex> vertices = {};
     std::vector<uint16_t> indices = {};
-    std::unordered_map<std::string, uint32_t> uniqueVertices;
     std::vector<std::vector<uint16_t>> faces = {};
 
-    // Loop over shapes
-    for (size_t s = 0; s < shapes.size(); s++) {
-        // Loop over faces(polygon)
-        size_t index_offset = 0;
-        for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
-            size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(pathcstr,
+        aiProcess_Triangulate |
+        aiProcess_GenSmoothNormals |
+        aiProcess_CalcTangentSpace |
+        aiProcess_FlipUVs);
 
-            std::vector<uint16_t> cur_face = {};
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+        std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+		throw new std::runtime_error("Failed to load mesh");
+    }
 
-            // Loop over vertices in the face.
-            for (size_t v = 0; v < fv; v++) {
-                // access to vertex
-                tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+    std::map<Vertex, uint16_t> unique_vertices;
 
-                tinyobj::real_t vx = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
-                tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
-                tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
+    aiMesh* mesh = scene->mMeshes[0];
 
-                Vector3 pos = { vx, vy, vz };
-                std::string key = pos.ToString();
+    // Iterate over each face
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+        aiFace face_obj = mesh->mFaces[i];
 
-                // Check if `normal_index` is zero or positive. negative = no normal data
-                tinyobj::real_t nx = 0;
-                tinyobj::real_t ny = 0;
-                tinyobj::real_t nz = 0;
-                if (idx.normal_index >= 0) {
-                    nx = attrib.normals[3 * size_t(idx.normal_index) + 0];
-                    ny = attrib.normals[3 * size_t(idx.normal_index) + 1];
-                    nz = attrib.normals[3 * size_t(idx.normal_index) + 2];
-                }
+        // A temporary vector to hold the indices for the current face
+        std::vector<uint16_t> current_face_indices;
 
-                // Check if `texcoord_index` is zero or positive. negative = no texcoord data
-                tinyobj::real_t tx = 0;
-                tinyobj::real_t ty = 0;
-                if (idx.texcoord_index >= 0) {
-                    tx = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
-                    ty = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
-                }
-                // Optional: vertex colors
-                // tinyobj::real_t red   = attrib.colors[3*size_t(idx.vertex_index)+0];
-                // tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
-                // tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
+        // Iterate over each index in the face
+        for (unsigned int j = 0; j < face_obj.mNumIndices; j++) {
+            unsigned int assimp_vertex_index = face_obj.mIndices[j];
 
-                asset::data::Vertex vertex{
-                .pos = pos,
-                .normal = {nx, ny, nz},
-                .color = {1, 1, 1},
-                .texCoord = {tx, ty}
-                };
+            Vertex vertex;
 
-                if (uniqueVertices.count(key) == 0)
-                {
-                    uniqueVertices[key] = static_cast<uint32_t>(vertices.size());
-                }
-                cur_face.push_back(vertices.size());
-                indices.push_back(vertices.size());
+            // Populate the temporary vertex object
+            if (mesh->HasPositions()) {
+                vertex.pos.x = mesh->mVertices[assimp_vertex_index].x;
+                vertex.pos.y = mesh->mVertices[assimp_vertex_index].y;
+                vertex.pos.z = mesh->mVertices[assimp_vertex_index].z;
+            }
+
+            if (mesh->HasNormals()) {
+                vertex.normal.x = mesh->mNormals[assimp_vertex_index].x;
+                vertex.normal.y = mesh->mNormals[assimp_vertex_index].y;
+                vertex.normal.z = mesh->mNormals[assimp_vertex_index].z;
+            }
+
+            if (mesh->HasTextureCoords(0)) {
+                vertex.texCoord.x = mesh->mTextureCoords[0][assimp_vertex_index].x;
+                vertex.texCoord.y = mesh->mTextureCoords[0][assimp_vertex_index].y;
+            }
+
+            if (mesh->HasTangentsAndBitangents()) {
+                vertex.tangent.x = mesh->mTangents[assimp_vertex_index].x;
+                vertex.tangent.y = mesh->mTangents[assimp_vertex_index].y;
+                vertex.tangent.z = mesh->mTangents[assimp_vertex_index].z;
+            }
+
+            // Deduplication logic
+            if (unique_vertices.find(vertex) == unique_vertices.end()) {
+                unique_vertices[vertex] = static_cast<uint16_t>(vertices.size());
                 vertices.push_back(vertex);
             }
 
-            if (fv == 3) {
-                // Get the three vertices of the current face
-                asset::data::Vertex& v0 = vertices[cur_face[0]];
-                asset::data::Vertex& v1 = vertices[cur_face[1]];
-                asset::data::Vertex& v2 = vertices[cur_face[2]];
-
-                // Get position and texcoord data
-                Vector3 pos1 = v0.pos;
-                Vector3 pos2 = v1.pos;
-                Vector3 pos3 = v2.pos;
-
-                Vector2 uv1 = v0.texCoord;
-                Vector2 uv2 = v1.texCoord;
-                Vector2 uv3 = v2.texCoord;
-
-                // Calculate edge vectors in 3D and UV space
-                Vector3 edge1 = pos2 - pos1;
-                Vector3 edge2 = pos3 - pos1;
-                Vector2 uvEdge1 = uv2 - uv1;
-                Vector2 uvEdge2 = uv3 - uv1;
-
-                float determinant = (uvEdge1.x * uvEdge2.y) - (uvEdge2.x * uvEdge1.y);
-
-                // If determinant is close to zero, it means the UVs are degenerate.
-                if (abs(determinant) > 0.0001f) {
-                    float invDet = 1.0f / determinant;
-
-                    // Calculate tangent
-                    Vector3 tangent;
-                    tangent.x = invDet * (uvEdge2.y * edge1.x - uvEdge1.y * edge2.x);
-                    tangent.y = invDet * (uvEdge2.y * edge1.y - uvEdge1.y * edge2.y);
-                    tangent.z = invDet * (uvEdge2.y * edge1.z - uvEdge1.y * edge2.z);
-
-                    // Assign tangent to all three vertices
-                    v0.tangent = tangent;
-                    v1.tangent = tangent;
-                    v2.tangent = tangent;
-                }
-                else {
-                    // Assign a default tangent (e.g., perpendicular to the normal)
-                    v0.tangent = Vector3(1.0f, 0.0f, 0.0f);
-                    v1.tangent = Vector3(1.0f, 0.0f, 0.0f);
-                    v2.tangent = Vector3(1.0f, 0.0f, 0.0f);
-                }
-            }
-
-            index_offset += fv;
-
-            // per-face material
-            shapes[s].mesh.material_ids[f];
-
-            //Commit
-            faces.push_back(cur_face);
+            // Add the index to both the main indices vector and the current face's indices vector
+            uint16_t deduplicated_index = unique_vertices[vertex];
+            indices.push_back(deduplicated_index);
+            current_face_indices.push_back(deduplicated_index);
         }
+
+        // Add the completed face to the faces vector
+        faces.push_back(current_face_indices);
     }
 
     //VULKAN MESH SETUP vvvvvvvvvvv

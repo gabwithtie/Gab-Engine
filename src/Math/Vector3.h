@@ -18,6 +18,10 @@ namespace gbe{
 			return Vector3(0, 1, 0);
 		}
 
+		inline bool isfinite() {
+			return std::isfinite(x) && std::isfinite(y) && std::isfinite(z);
+		}
+
 		float SqrMagnitude() const;
 		Vector3 Cross(Vector3) const;
 		Vector3 Normalize() const;

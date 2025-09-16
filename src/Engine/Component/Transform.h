@@ -29,13 +29,19 @@ namespace gbe {
 		const Vector3& GetUp();
 		const Vector3& GetForward();
 
-		TrackedVariable<Vector3> position = TrackedVariable<Vector3>([this](Vector3 old, Vector3 var) {
-			this->OnComponentChange(TransformChangeType::TRANSLATION); 
+		TrackedVariable<Vector3> position = TrackedVariable<Vector3>([this](Vector3 old, Vector3 newvar) {
+			if(!newvar.isfinite())
+				throw new std::runtime_error("NAN position set.");
+			this->OnComponentChange(TransformChangeType::TRANSLATION);
 			});
-		TrackedVariable<Vector3> scale = TrackedVariable<Vector3>([this](Vector3 old, Vector3 var) {
-			this->OnComponentChange(TransformChangeType::SCALE); 
+		TrackedVariable<Vector3> scale = TrackedVariable<Vector3>([this](Vector3 old, Vector3 newvar) {
+			if (!newvar.isfinite())
+				throw new std::runtime_error("NAN position set.");
+			this->OnComponentChange(TransformChangeType::SCALE);
 			});
-		TrackedVariable<Quaternion> rotation = TrackedVariable<Quaternion>([this](Quaternion old, Quaternion var) {
+		TrackedVariable<Quaternion> rotation = TrackedVariable<Quaternion>([this](Quaternion old, Quaternion newvar) {
+			if (!isfinite(newvar.x) || !isfinite(newvar.y) || !isfinite(newvar.z) || !isfinite(newvar.w))
+				throw new std::runtime_error("NAN position set.");
 			this->OnComponentChange(TransformChangeType::ROTATION);
 			});
 

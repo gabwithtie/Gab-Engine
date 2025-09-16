@@ -17,9 +17,6 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 find_package(Stb REQUIRED)
 target_include_directories(${CURRENT_CMAKE_LIB} PRIVATE ${Stb_INCLUDE_DIR})
 
-find_package(glad CONFIG REQUIRED)
-target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE glad::glad)
-
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_editor)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_ext_gabvulkan)
@@ -30,6 +27,9 @@ IF (WIN32)
 ELSE()
 # set stuff for other systems
 ENDIF()
+
+find_package(assimp CONFIG REQUIRED)
+target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE assimp::assimp)
 
 find_package(OpenCV REQUIRED)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE opencv_core opencv_highgui)

@@ -7,6 +7,12 @@ gbe::PhysicsObject::~PhysicsObject()
 void gbe::PhysicsObject::OnLocalTransformationChange(TransformChangeType type)
 {
 	Object::OnLocalTransformationChange(type);
+	auto const& wmatrix = this->World().GetMatrix(false);
+	if(isnan(wmatrix[0][0])) {
+		throw std::runtime_error("Passing NAN matrix to physics.");
+		return;
+	}
+
 	this->body->InjectCurrentTransformMatrix(this->World().GetMatrix(false));
 }
 

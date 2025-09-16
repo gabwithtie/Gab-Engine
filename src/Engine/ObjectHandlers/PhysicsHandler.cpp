@@ -46,7 +46,7 @@ void gbe::PhysicsHandler::Update(double dt)
 		Quaternion newrot;
 
 		ro->Get_data()->PassTransformationData(newpos, newrot);
-		if (isnan(newpos.x))
+		if (!newpos.isfinite())
 		{
 			std::cerr << "NAN physics transform, skipping update." << std::endl;
 			continue;

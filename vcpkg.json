@@ -17,16 +17,16 @@
 
     "openal-soft",
 
-    "glad",
-    "vulkan-sdk-components",
-    "vulkan-validationlayers",
-    "vk-bootstrap",
 
     "glaze",
     "stb",
-    "spirv-cross",
     "opencv2",
+    "assimp",
+    "spirv-cross",
 
+
+    "vulkan-sdk-components",
+    "vulkan-validationlayers",
     {
       "name": "imgui",
       "features": [ "vulkan-binding", "sdl2-binding" ]
