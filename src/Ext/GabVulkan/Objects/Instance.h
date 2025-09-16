@@ -12,6 +12,9 @@
 #include <algorithm>
 #include <array>
 #include <vector>
+#include <stack>
+#include <queue>
+#include <list>
 
 #include "Image.h"
 #include "ImageView.h"
@@ -52,6 +55,9 @@ namespace gbe::vulkan {
 
 		Renderer* customRenderer = nullptr;
 
+        //==============DELETION QUEUES================//
+		std::vector<Buffer*> bufferDeletionQueue;
+
     public:
         inline void RegisterDependencies() override {
 
@@ -83,6 +89,9 @@ namespace gbe::vulkan {
 
         inline void SetCustomRenderer(Renderer* renderer) {
 			this->customRenderer = renderer;
+        }
+        inline void QueueBufferDeletion(Buffer* buffer) {
+			this->bufferDeletionQueue.push_back(buffer);
         }
 
         inline Instance(int &_x, int &_y, std::vector<const char*>& allextensions, bool _enableValidationLayers):
@@ -392,6 +401,17 @@ namespace gbe::vulkan {
         inline void PushFrame() {
             vkCmdEndRenderPass(commandBuffers[currentFrame]->GetData());
             commandBuffers[currentFrame]->End();
+
+			//DEALLOCATE RESOURCES HERE IF NEEDED
+            for (size_t i = 0; i < bufferDeletionQueue.size(); i++)
+            {
+				if (bufferDeletionQueue.front()->GetFrameIndexBelongsTo() == currentFrame) {
+					bufferDeletionQueue[i]->UnbindFrame();
+					delete bufferDeletionQueue[i];
+					bufferDeletionQueue.erase(bufferDeletionQueue.begin() + i);
+					i--;
+				}
+            }
 
             VkSubmitInfo submitInfo{};
             submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

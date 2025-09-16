@@ -8,25 +8,32 @@ namespace gbe::vulkan {
     private:
         VkDeviceMemory bufferMemory;
         unsigned int _size; //for debug
+        int frame_index = -1;
     protected:
     public:
 
-        inline ~Buffer(){
-            vkDestroyBuffer(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
-            vkFreeMemory(VirtualDevice::GetActive()->GetData(), bufferMemory, nullptr);
+        ~Buffer();
+
+        inline void UnbindFrame() {
+			frame_index = -1;
         }
 
         VkDeviceMemory GetMemory() {
             return bufferMemory;
         }
 
+        inline int GetFrameIndexBelongsTo() {
+			return frame_index;
+        }
+
         inline void RegisterDependencies() override {
 
         }
 
-        inline Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
+        inline Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, int frame_index = -1) {
             _size = size;
-            
+            this->frame_index = frame_index;
+
             VkBufferCreateInfo bufferInfo{};
             bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
             bufferInfo.size = size;

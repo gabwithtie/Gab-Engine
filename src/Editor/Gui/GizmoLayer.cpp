@@ -6,6 +6,10 @@
 
 void gbe::editor::GizmoLayer::DrawSelf()
 {
+    // Only operate if exactly one object is selected
+    if (selected.size() != 1)
+        return;
+
     // Get references
     auto camera = Engine::GetActiveCamera();
     auto cam_view = camera->GetViewMat();
@@ -14,24 +18,16 @@ void gbe::editor::GizmoLayer::DrawSelf()
     // Convert GLM matrices to C-style arrays for ImGuizmo
     float view_mat[16];
     float proj_mat[16];
-    float grid_mat[16];
+    float model_mat[16];
 
     // Copy GLM data to C-style arrays
     memcpy(view_mat, cam_view.Get_Ptr(), sizeof(float) * 16);
     memcpy(proj_mat, cam_proj.Get_Ptr(), sizeof(float) * 16);
-    memcpy(grid_mat, gbe::Matrix4(1.0f).Get_Ptr(), sizeof(float) * 16);
-
-    ImGuizmo::DrawGrid(view_mat, proj_mat, grid_mat, 100.0f);
-
-	// Only operate if exactly one object is selected
-    if (selected.size() != 1)
-        return;
-
-    //Prepare object model matrix
-    float model_mat[16];
     memcpy(model_mat, selected[0]->World().GetMatrix().Get_Ptr(), sizeof(float) * 16);
 
+
     // IMGUI SETUP
+	ImGuizmo::AllowAxisFlip(false);
     ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList());
     ImVec2 windowsize = ImGui::GetMainViewport()->Size;
     ImVec2 windowpos = ImGui::GetMainViewport()->Pos;
@@ -62,6 +58,7 @@ void gbe::editor::GizmoLayer::DrawSelf()
         ImGuizmo::LOCAL,
         model_mat
     );
+
 
     // Check if the gizmo was actively used
     if (ImGuizmo::IsUsing()) {

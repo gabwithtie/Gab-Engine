@@ -2,6 +2,7 @@
 
 #include "../VulkanObject.h"
 #include "../VulkanObjectSingleton.h"
+#include "VirtualDevice.h"
 
 namespace gbe::vulkan {
 	class CommandPool : public VulkanObject<VkCommandPool, CommandPool>, public VulkanObjectSingleton<CommandPool> {

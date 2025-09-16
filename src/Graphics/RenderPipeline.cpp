@@ -358,7 +358,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
 
         for (size_t i = 0; i < vulkanInstance->Get_maxFrames(); i++) {
             //MM_note: will be freed by unregister call instance.
-            newblockbuffer.uboPerFrame[i] = new vulkan::Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            newblockbuffer.uboPerFrame[i] = new vulkan::Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, i);
 
             vulkan::VirtualDevice::GetActive()->MapMemory(newblockbuffer.uboPerFrame[i]->GetMemory(), 0, bufferSize, 0, &newblockbuffer.uboMappedPerFrame[i]);
         }
@@ -423,6 +423,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         // Store each set in the correct frame/set slot
         for (size_t f_i = 0; f_i < vulkanInstance->Get_maxFrames(); f_i++) {
             // The set index (set_i) should correspond to the Vulkan set number
+            vulkan::DebugObjectName::NameVkObject(VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)sets[f_i], "DS_" + std::to_string(f_i));
             newinst.allocdescriptorSets_perframe[f_i][pair.first] = sets[f_i];
         }
     }
@@ -505,8 +506,6 @@ void gbe::RenderPipeline::UnRegisterCall(void* instance_id)
     
     if (!exists)
 		throw new std::runtime_error("CallInstance does not exist!");
-
-    vulkan::VirtualDevice::GetActive()->DeviceWaitIdle();
 
     for (size_t i = 0; i < it->second.uniformBuffers.size(); i++)
     {
