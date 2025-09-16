@@ -37,7 +37,6 @@ namespace gbe {
 			});
 		TrackedVariable<Quaternion> rotation = TrackedVariable<Quaternion>([this](Quaternion old, Quaternion var) {
 			this->OnComponentChange(TransformChangeType::ROTATION);
-			this->UpdateAxisVectors();
 			});
 
 		void Reset();

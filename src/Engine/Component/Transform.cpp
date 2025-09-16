@@ -8,18 +8,22 @@ gbe::Transform::Transform()
 	this->Right = Vector3(1, 0, 0);
 	this->Up = Vector3(0, 1, 0);
 	this->Forward = Vector3(0, 0, 1);
-	this->position.Set(Vector3::zero);
-	this->scale.Set(Vector3(1.0f));
-	this->rotation.Set(Quaternion());
+
+	this->scale.Get() = Vector3(1.0f);
+	this->position.Get() = Vector3::zero;
+	this->rotation.Get() = Quaternion();
+
+	OnComponentChange(TransformChangeType::ALL, true);
 }
 
 void gbe::Transform::Reset() {
 	this->Right = Vector3(1, 0, 0);
 	this->Up = Vector3(0, 1, 0);
 	this->Forward = Vector3(0, 0, 1);
-	this->position.Set(Vector3::zero);
-	this->scale.Set(Vector3(1.0f));
-	this->rotation.Set(Quaternion());
+
+	this->scale.Get() = Vector3(1.0f);
+	this->position.Get() = Vector3::zero;
+	this->rotation.Get() = Quaternion();
 }
 
 gbe::Matrix4 gbe::Transform::GetMatrix(bool include_scale) const
@@ -41,6 +45,9 @@ void gbe::Transform::OnComponentChange(TransformChangeType value, bool silent)
 	newmat = glm::scale(newmat, this->scale.Get());
 
 	this->updated_matrix_with_scale = newmat;
+
+	if (value == TransformChangeType::ROTATION)
+		this->UpdateAxisVectors();
 
 	if (!silent && this->onChange)
 		this->onChange(value);

@@ -2,7 +2,7 @@ set(LIB_NAME "gbe_ext_anitobuilderwrapper")
 message("[GBE EXTERNAL] Building Library "${LIB_NAME})
 
 
-add_library(${LIB_NAME} "AnitoBuilderWrapper.cpp"  "BuilderBlock.cpp")
+add_library(${LIB_NAME} "AnitoBuilderWrapper.cpp"  "BuilderBlock.cpp" "BuilderBlockSet.h")
 
 message("[GBE EXTERNAL] Including directory: "${GABENGINE_INCLUDE_DIRECTORY})
 
