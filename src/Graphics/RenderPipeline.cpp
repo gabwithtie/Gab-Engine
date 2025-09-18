@@ -365,6 +365,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
 
         newinst.uniformBuffers.push_back(newblockbuffer);
     }
+    std::unordered_map<std::string, std::vector<unsigned int> uniformTextureArrays;
     //Textures
     for (const auto& field : drawcall->get_shaderdata()->uniformfields)
     {
@@ -381,6 +382,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
                 newtexture.sampler = defaultImage.textureSampler;
 
                 newinst.uniformTextures.push_back(newtexture);
+                uniformTextureArrays[field.name].push_back(newinst.uniformTextures,size() - 1);
             }
         }
     }
@@ -468,14 +470,16 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         }
 
         std::vector<std::vector<VkDescriptorImageInfo>> imageInfos(newinst.uniformTextures.size());
-        for (size_t i_i = 0; i_i < newinst.uniformTextures.size(); i_i++)
+        for (size_t i_i = 0; i_i < uniformTextureArrays.size(); i_i++)
         {
-            const auto& uniformtex = newinst.uniformTextures[i_i];
-
-            imageInfos[i_i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfos[i_i].imageView = uniformtex.imageView->GetData();
-            imageInfos[i_i].sampler = uniformtex.sampler->GetData();
-
+            unsigned int texindex = uniformTextureArrays[i_i];
+            const auto& uniformtex = newinst.uniformTextures[texindex];
+        
+            for (size_t i_j = 0; i_j < uniformTextureArrays[i_i].size(); i_j++){
+            imageInfos[texindex].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfos[texindex].imageView = uniformtex.imageView->GetData();
+            imageInfos[texindex].sampler = uniformtex.sampler->GetData(); 
+            }
             //FIND THE BINDING INDEX
             ShaderData::ShaderField fieldinfo;
             ShaderData::ShaderBlock blockinfo;
@@ -488,8 +492,8 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             descriptorWrite.dstBinding = fieldinfo.binding;
             descriptorWrite.dstArrayElement = 0;
             descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pImageInfo = &imageInfos[i_i];
+            descriptorWrite.descriptorCount = 
+            descriptorWrite.pImageInfo = imageInfos[i_i].data();
 
             descriptorWrites.push_back(descriptorWrite);
         }

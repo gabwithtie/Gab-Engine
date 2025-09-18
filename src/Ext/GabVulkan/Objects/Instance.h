@@ -281,7 +281,10 @@ namespace gbe::vulkan {
             SwapChain::SetActive(swapchain);
 
             //==============RENDERPASS================
-            renderPass = new RenderPass(chosenFormat.format);
+            if(this->customRenderer != nullptr)
+                  renderPass = this->customRenderer->GetRenderPass();
+            else
+                   renderPass = new RenderPass(chosenFormat.format);
             RenderPass::SetActive(renderPass);
         }
 
