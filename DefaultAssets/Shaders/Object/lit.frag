@@ -20,11 +20,19 @@ layout(set = 2, binding = 1) uniform sampler2D color_tex;
 layout(set = 2, binding = 2) uniform sampler2D normal_tex;
 layout(set = 2, binding = 3) uniform sampler2D arm_tex;
 
-//Set 0: Global Data
+//=================LIGHTING====================//
+const int MAX_LIGHTS = 10;
+
+// Shadowmaps (should be an array)
+layout(set = 2, binding = 4) uniform sampler2D shadow_tex[MAX_LIGHTS]; // Example array
+
+// Set 0: Global Data — lights (should be an array)
 layout(set = 0, binding = 1) uniform Light {
     vec3 light_color;
     vec3 light_direction;
-};
+    int light_type;
+    float light_range;
+} lights[MAX_LIGHTS]; // Example array with a defined size
 
 //Set 1: Object Data
 layout(set = 1, binding = 1) uniform Shading {
@@ -41,44 +49,48 @@ void main() {
 
     //locals
     vec3 _color;
-    if(has_color_tex > 0)
+    if(has_color_tex > 0) //ALBEDO TEXTURE
         _color = _color_fromtex;
     else
         _color = color;
     vec3 _tint = tint;
     vec3 _normal = fragN;
-    if (has_normal_tex > 0) {
-        // Sample normal from the normal map, converting from [0, 1] to [-1, 1] range
+    if (has_normal_tex > 0) { //NORMAL TEXTURE
         vec3 normal_from_map = texture(normal_tex, fragTexCoord).rgb * 2.0 - 1.0;
-        // Create TBN matrix
         mat3 TBN = mat3(fragT, fragB, fragN);
-        // Transform the normal from tangent space to world space
         _normal = TBN * normal_from_map;
     }
     float _metallic = metallic;
-    float _roughness = 0.5; // You can set a default roughness value
-
-    if(has_arm_tex > 0) {
+    float _roughness = 0.5;
+    if(has_arm_tex > 0) { //ARM TEXTURE
         vec3 arm_data = texture(arm_tex, fragTexCoord).rgb;
-        _roughness = arm_data.g; // Green channel for roughness
-        _metallic = arm_data.b;  // Blue channel for metallic
+        _roughness = arm_data.g;
+        _metallic = arm_data.b; 
     }
     _normal = normalize(_normal);
 
-    //Lighting
-    vec3 lightdelta = normalize(-light_direction);
+    vec3 final_result = _tint;
 
-    // Diffuse component
-    float diff = max(dot(_normal, lightdelta), 0.0);
-    vec3 diffuse = _color * diff;
-    
-    // Specular component
-    vec3 viewDir = normalize(camera_pos - fragPos);
-    vec3 reflectDir = reflect(-lightdelta, _normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), (1.0 - _roughness) * 128.0 + 1.0); // Modifying specular calculation
-    vec3 specular = vec3(spec, spec, spec) * _metallic; // Multiply specular by metallic
-    
-    // Final color
-    vec3 result = _tint + diffuse + specular;
-    outColor = vec4(result, 1.0);
+    // Loop through each light
+    for (int i = 0; i < MAX_LIGHTS; ++i) {
+        // Lighting
+        vec3 lightdelta = normalize(-lights[i].light_direction);
+
+        // Diffuse component
+        float diff = max(dot(_normal, lightdelta), 0.0);
+        vec3 diffuse = _color * diff * lights[i].light_color; // Use the light's color
+
+        // Specular component
+        vec3 viewDir = normalize(camera_pos - fragPos);
+        vec3 reflectDir = reflect(-lightdelta, _normal);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), (1.0 - _roughness) * 128.0 + 1.0);
+        vec3 specular = vec3(spec, spec, spec) * _metallic * lights[i].light_color;
+
+        final_result += diffuse + specular;
+
+        // NOTE: You would add shadow mapping calculations here
+        // e.g., sample from shadow_tex[i]
+    }
+
+    outColor = vec4(final_result, 1.0);
 }

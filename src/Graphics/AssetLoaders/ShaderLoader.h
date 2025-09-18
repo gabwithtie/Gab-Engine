@@ -20,6 +20,7 @@ namespace gbe {
 				std::string type;
 				unsigned int set;
 				unsigned int binding;
+				std::vector<int> array;
 			};
 			struct UboType {
 				struct UboTypeMember {
@@ -37,6 +38,7 @@ namespace gbe {
 				unsigned int block_size;
 				unsigned int set;
 				unsigned int binding;
+				std::vector<int> array;
 			};
 			std::unordered_map<std::string, UboType> types;
 			std::vector<TextureMeta> textures;
@@ -49,6 +51,7 @@ namespace gbe {
 				size_t block_size = 0;
 				unsigned int set = 0;
 				unsigned int binding = 0;
+				unsigned int array_size = 1;
 			};
 
 			struct ShaderField {
@@ -57,6 +60,7 @@ namespace gbe {
 				unsigned int set = 0;
 				unsigned int binding = 0;
 				asset::Shader::UniformFieldType type;
+				unsigned int array_size = 1;
 				size_t offset = 0; // Offset in bytes
 				size_t size = 0; // Offset in bytes
 			};

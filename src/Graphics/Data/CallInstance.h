@@ -18,6 +18,7 @@ namespace gbe::gfx {
 
         struct UniformTexture {
             std::string texture_name;
+            unsigned int array_index;
             vulkan::ImageView* imageView;
             vulkan::Sampler* sampler;
         };

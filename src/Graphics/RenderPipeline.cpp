@@ -351,7 +351,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         newblockbuffer.block_name = block.name;
 
         // Create uniform buffer for each block
-        VkDeviceSize bufferSize = block.block_size;
+        VkDeviceSize bufferSize = block.block_size * block.array_size;
 
         newblockbuffer.uboPerFrame.resize(vulkanInstance->Get_maxFrames());
         newblockbuffer.uboMappedPerFrame.resize(vulkanInstance->Get_maxFrames());
@@ -370,14 +370,18 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
     {
         if (field.type == asset::Shader::UniformFieldType::TEXTURE)
         {
-            CallInstance::UniformTexture newtexture{};
-            newtexture.texture_name = field.name;
-            // Leave image view and sampler for the texture default
-            auto defaultImage = TextureLoader::GetDefaultImage();
-            newtexture.imageView = defaultImage.textureImageView;
-            newtexture.sampler = defaultImage.textureSampler;
+            for (size_t i = 0; i < field.array_size; i++)
+            {
+                CallInstance::UniformTexture newtexture{};
+                newtexture.array_index = i;
+                newtexture.texture_name = field.name;
+                // Leave image view and sampler for the texture default
+                auto defaultImage = TextureLoader::GetDefaultImage();
+                newtexture.imageView = defaultImage.textureImageView;
+                newtexture.sampler = defaultImage.textureSampler;
 
-            newinst.uniformTextures.push_back(newtexture);
+                newinst.uniformTextures.push_back(newtexture);
+            }
         }
     }
 
@@ -431,7 +435,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
     for (size_t f_i = 0; f_i < vulkanInstance->Get_maxFrames(); f_i++) {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
 
-        std::vector<VkDescriptorBufferInfo> bufferInfos(newinst.uniformBuffers.size());
+        std::vector<std::vector<VkDescriptorBufferInfo>> bufferInfos(newinst.uniformBuffers.size());
         for (size_t i_i = 0; i_i < newinst.uniformBuffers.size(); i_i++)
         {
             const auto& uniformblock = newinst.uniformBuffers[i_i];
@@ -442,9 +446,12 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             if (!found_block)
                 throw std::runtime_error("Failed to find uniform block: " + uniformblock.block_name);
 
-            bufferInfos[i_i].buffer = uniformblock.uboPerFrame[f_i]->GetData();
-            bufferInfos[i_i].offset = 0;
-            bufferInfos[i_i].range = blockinfo.block_size;
+            bufferInfos[i_i].resize(blockinfo.array_size);
+            for (uint32_t j = 0; j < blockinfo.array_size; ++j) {
+                bufferInfos[i_i][j].buffer = uniformblock.uboPerFrame[f_i]->GetData();
+                bufferInfos[i_i][j].offset = j * blockinfo.block_size;
+                bufferInfos[i_i][j].range = blockinfo.block_size;
+            }
 
             //CREATE THE WRITE DATA
             VkWriteDescriptorSet descriptorWrite{};
@@ -454,13 +461,13 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             descriptorWrite.dstBinding = blockinfo.binding;
             descriptorWrite.dstArrayElement = 0;
             descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pBufferInfo = &bufferInfos[i_i];
+            descriptorWrite.descriptorCount = blockinfo.array_size;
+            descriptorWrite.pBufferInfo = bufferInfos[i_i].data();
 
             descriptorWrites.push_back(descriptorWrite);
         }
 
-        std::vector<VkDescriptorImageInfo> imageInfos(newinst.uniformTextures.size());
+        std::vector<std::vector<VkDescriptorImageInfo>> imageInfos(newinst.uniformTextures.size());
         for (size_t i_i = 0; i_i < newinst.uniformTextures.size(); i_i++)
         {
             const auto& uniformtex = newinst.uniformTextures[i_i];

@@ -52,7 +52,12 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		VkDescriptorSetLayoutBinding ubo_Binding{};
 		ubo_Binding.binding = ubo.binding;
 		ubo_Binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		ubo_Binding.descriptorCount = 1;
+		
+		if(ubo.array.size() > 0)
+			ubo_Binding.descriptorCount = ubo.array[0];
+		else
+			ubo_Binding.descriptorCount = 1;
+		
 		ubo_Binding.stageFlags = flags;
 		ubo_Binding.pImmutableSamplers = nullptr; // Optional
 
@@ -64,6 +69,7 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		block.set = ubo.set;
 		block.name = ubo.name;
 		block.block_size = ubo.block_size;
+		block.array_size = ubo_Binding.descriptorCount;
 
 		ShaderData::ShaderField* prevfield = nullptr; //To set the size correctly
 		for (const auto& member : stagemeta.types.at(ubo.type).members)
@@ -126,7 +132,12 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	const auto AddTextureBinding = [&](const ShaderStageMeta::TextureMeta& meta, VkShaderStageFlags flags) {
 		VkDescriptorSetLayoutBinding color_sampler_Binding{};
 		color_sampler_Binding.binding = meta.binding;
-		color_sampler_Binding.descriptorCount = 1;
+
+		if (meta.array.size() > 0)
+			color_sampler_Binding.descriptorCount = meta.array[0];
+		else
+			color_sampler_Binding.descriptorCount = 1;
+
 		color_sampler_Binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		color_sampler_Binding.pImmutableSamplers = nullptr;
 		color_sampler_Binding.stageFlags = flags;
@@ -141,6 +152,7 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		field.binding = meta.binding;
 		field.type = gbe::asset::Shader::UniformFieldType::TEXTURE; // Default to TEXTURE, can be changed later
 		field.offset = 0; // Offset is not applicable for textures, set to 0
+		field.array_size = color_sampler_Binding.descriptorCount;
 		uniformfields.push_back(field);
 	};
 
