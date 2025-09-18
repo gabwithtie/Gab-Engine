@@ -241,6 +241,7 @@ namespace gbe {
 
 		auto dirlight = new DirectionalLight();
 		dirlight->SetName("Directional Light");
+		dirlight->SetParent(this->current_root);
 
 #pragma endregion
 

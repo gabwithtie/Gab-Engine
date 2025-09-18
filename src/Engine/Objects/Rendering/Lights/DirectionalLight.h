@@ -5,8 +5,8 @@
 namespace gbe {
 	class DirectionalLight : public gbe::LightObject {
 	public:
+		DirectionalLight();
 		// Inherited via Light
 		virtual gfx::Light* GetData() override;
-		void InitializeEditorSubObjects() override;
 	};
 }

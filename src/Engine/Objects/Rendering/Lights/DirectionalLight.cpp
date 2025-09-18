@@ -1,7 +1,11 @@
 #include "DirectionalLight.h"
 
 #include "Engine/Objects/Physics/RigidObject.h"
+#include "Engine/Objects/Physics/Collider/BoxCollider.h"
+
 #include "Engine/Objects/Rendering/RenderObject.h"
+
+#include "Engine/Engine.h"
 
 using namespace gbe;
 using namespace gbe::gfx;
@@ -16,16 +20,23 @@ gfx::Light* gbe::DirectionalLight::GetData()
     return &this->mLight;
 }
 
-void gbe::DirectionalLight::InitializeEditorSubObjects()
+gbe::DirectionalLight::DirectionalLight()
 {
-	auto dirlight_ro = new RigidObject(true);
-	dirlight_ro->SetParent(this);
-	dirlight_ro->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
-	dirlight_ro->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
+    if (Engine::Get_state() == Engine::EngineState::Edit) {
+        auto dirlight_ro = new RigidObject(true);
+        dirlight_ro->SetParent(this);
+        dirlight_ro->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
+        dirlight_ro->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 
-	auto arrow_drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("arrow"), asset::Material::GetAssetById("wireframe"));
-	auto dirlight_gizmo = new RenderObject(arrow_drawcall);
-	dirlight_gizmo->SetParent(dirlight_ro);
-	dirlight_gizmo->Local().position.Set(Vector3(0, 0, 1.0f));
-	dirlight_gizmo->Local().scale.Set(Vector3(0.2, 0.2, -1.0f));
+        auto dirlight_col = new BoxCollider();
+        dirlight_col->Local().scale.Set(Vector3(0.5, 0.5, 1.0f));
+        dirlight_col->Local().position.Set(Vector3(0, 0, 0.5f));
+        dirlight_col->SetParent(dirlight_ro);
+
+        auto arrow_drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("arrow"), asset::Material::GetAssetById("wireframe"));
+        auto dirlight_gizmo = new RenderObject(arrow_drawcall);
+        dirlight_gizmo->SetParent(dirlight_ro);
+        dirlight_gizmo->Local().position.Set(Vector3(0, 0, 1.0f));
+        dirlight_gizmo->Local().scale.Set(Vector3(0.2, 0.2, -1.0f));
+    }
 }

@@ -77,10 +77,6 @@ namespace gbe {
 		}
 
 		editor::InspectorData* inspectorData;
-
-		inline virtual void InitializeEditorSubObjects() {
-
-		}
 	public:
 
 		Object();

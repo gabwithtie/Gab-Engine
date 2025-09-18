@@ -98,10 +98,6 @@ gbe::Object::Object():
 	this->id = next_avail_id;
 	next_avail_id++;
 	valid_objects.insert_or_assign(this->id, this);
-
-	if (Engine::Get_state() == Engine::EngineState::Edit) {
-		this->InitializeEditorSubObjects();
-	}
 }
 
 gbe::Object::~Object(){
