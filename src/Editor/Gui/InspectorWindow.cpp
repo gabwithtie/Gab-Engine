@@ -9,8 +9,7 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 	//OBJECT INSPECTOR
 	if (this->selected.size() == 0) {
 		if (this->is_reparenting) {
-			std::string cur_label = typeid(*this->reparentee).name();
-			ImGui::Text(("Select a new object at the hierarchy to reparent [" + cur_label + "]").c_str());
+			ImGui::Text(("Select a new object at the hierarchy to reparent [" + this->reparentee->GetName() + "]").c_str());
 		}
 		else {
 			ImGui::Text("Nothing Selected.");
@@ -45,7 +44,7 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 		}
 
 		std::string cur_label = "";
-		cur_label += typeid(*this->selected[0]).name();
+		cur_label += this->selected[0]->GetName();
 
 		ImGui::Text(cur_label.c_str());
 
@@ -93,71 +92,72 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 			}
 		}
 
-		ImGui::SeparatorText("Transform:");
+		if (ImGui::CollapsingHeader("Transform")) {
 
-		auto changed_id = this->selected[0]->Get_id();
+			auto changed_id = this->selected[0]->Get_id();
 
-		Vector3 position_gui_wrap = this->selected[0]->Local().position.Get();
-		Vector3 position_gui_wrap_old = position_gui_wrap;
-		if (this->DrawVector3Field("Position:", &position_gui_wrap,
-			!this->selected[0]->GetEditorFlag(Object::STATIC_POS_X),
-			!this->selected[0]->GetEditorFlag(Object::STATIC_POS_Y),
-			!this->selected[0]->GetEditorFlag(Object::STATIC_POS_Z)
+			Vector3 position_gui_wrap = this->selected[0]->Local().position.Get();
+			Vector3 position_gui_wrap_old = position_gui_wrap;
+			if (this->DrawVector3Field("Position:", &position_gui_wrap,
+				!this->selected[0]->GetEditorFlag(Object::STATIC_POS_X),
+				!this->selected[0]->GetEditorFlag(Object::STATIC_POS_Y),
+				!this->selected[0]->GetEditorFlag(Object::STATIC_POS_Z)
 			)) {
-			Editor::CommitAction(
-				[=]() {
-					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
-					modified->Local().position.Set(position_gui_wrap);
-					selected[0]->PushState(Object::TRANSFORMED_USER);
-				},
-				[=]() {
-					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
-					modified->Local().position.Set(position_gui_wrap_old);
-					selected[0]->PushState(Object::TRANSFORMED_USER);
-				}
-			);
-		}
+				Editor::CommitAction(
+					[=]() {
+						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
+						modified->Local().position.Set(position_gui_wrap);
+						selected[0]->PushState(Object::TRANSFORMED_USER);
+					},
+					[=]() {
+						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
+						modified->Local().position.Set(position_gui_wrap_old);
+						selected[0]->PushState(Object::TRANSFORMED_USER);
+					}
+				);
+			}
 
-		Vector3 scale_gui_wrap = this->selected[0]->Local().scale.Get();
-		Vector3 scale_gui_wrap_old = scale_gui_wrap;
-		if (this->DrawVector3Field("Scale:", &scale_gui_wrap,
-			!this->selected[0]->GetEditorFlag(Object::STATIC_SCALE_X),
-			!this->selected[0]->GetEditorFlag(Object::STATIC_SCALE_Y),
-			!this->selected[0]->GetEditorFlag(Object::STATIC_SCALE_Z)
-		)) {
-			Editor::CommitAction(
-				[=]() {
-					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
-					modified->Local().scale.Set(scale_gui_wrap);
-					selected[0]->PushState(Object::TRANSFORMED_USER);
-				},
-				[=]() {
-					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
-					modified->Local().scale.Set(scale_gui_wrap_old);
-					selected[0]->PushState(Object::TRANSFORMED_USER);
-				}
-			);
-		}
+			Vector3 scale_gui_wrap = this->selected[0]->Local().scale.Get();
+			Vector3 scale_gui_wrap_old = scale_gui_wrap;
+			if (this->DrawVector3Field("Scale:", &scale_gui_wrap,
+				!this->selected[0]->GetEditorFlag(Object::STATIC_SCALE_X),
+				!this->selected[0]->GetEditorFlag(Object::STATIC_SCALE_Y),
+				!this->selected[0]->GetEditorFlag(Object::STATIC_SCALE_Z)
+			)) {
+				Editor::CommitAction(
+					[=]() {
+						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
+						modified->Local().scale.Set(scale_gui_wrap);
+						selected[0]->PushState(Object::TRANSFORMED_USER);
+					},
+					[=]() {
+						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
+						modified->Local().scale.Set(scale_gui_wrap_old);
+						selected[0]->PushState(Object::TRANSFORMED_USER);
+					}
+				);
+			}
 
-		Vector3 rot_gui_wrap = this->selected[0]->Local().rotation.Get().ToEuler();
-		Vector3 rot_gui_wrap_old = rot_gui_wrap;
-		if (this->DrawVector3Field("Rotation:", &rot_gui_wrap
-			, !this->selected[0]->GetEditorFlag(Object::STATIC_ROT_X)
-			, !this->selected[0]->GetEditorFlag(Object::STATIC_ROT_Y)
-			, !this->selected[0]->GetEditorFlag(Object::STATIC_ROT_Z)
-		)) {
-			Editor::CommitAction(
-				[=]() {
-					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
-					modified->Local().rotation.Set(Quaternion::Euler(rot_gui_wrap));
-					selected[0]->PushState(Object::TRANSFORMED_USER);
-				},
-				[=]() {
-					auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
-					modified->Local().rotation.Set(Quaternion::Euler(rot_gui_wrap_old));
-					selected[0]->PushState(Object::TRANSFORMED_USER);
-				}
-			);
+			Vector3 rot_gui_wrap = this->selected[0]->Local().rotation.Get().ToEuler();
+			Vector3 rot_gui_wrap_old = rot_gui_wrap;
+			if (this->DrawVector3Field("Rotation:", &rot_gui_wrap
+				, !this->selected[0]->GetEditorFlag(Object::STATIC_ROT_X)
+				, !this->selected[0]->GetEditorFlag(Object::STATIC_ROT_Y)
+				, !this->selected[0]->GetEditorFlag(Object::STATIC_ROT_Z)
+			)) {
+				Editor::CommitAction(
+					[=]() {
+						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
+						modified->Local().rotation.Set(Quaternion::Euler(rot_gui_wrap));
+						selected[0]->PushState(Object::TRANSFORMED_USER);
+					},
+					[=]() {
+						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(changed_id);
+						modified->Local().rotation.Set(Quaternion::Euler(rot_gui_wrap_old));
+						selected[0]->PushState(Object::TRANSFORMED_USER);
+					}
+				);
+			}
 		}
 
 		if (inspectordata->fields.size() > 0) {
@@ -232,43 +232,29 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 
 bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* field, bool x_interactable, bool y_interactable, bool z_interactable)
 {
-	ImGui::Text(label.c_str()); // Optional: Display a label for the entire vector field
-	ImGui::SameLine();
-
-	auto remaining_width = ImGui::GetContentRegionAvail().x;
-	auto per_width = remaining_width * (1.0f / 3.0f);
-
 	ImGui::PushID(label.c_str());
 
-	// Input for X component
-	ImGui::SetNextItemWidth(per_width); // Adjust width as needed
-	bool changed_x = false;
-	if (x_interactable)
-		changed_x = ImGui::InputFloat("##X", &field->x, 0.0f, 0.0f, "%.3f");
-	else
-		ImGui::Text("X: %.3f", &field->x);
-	ImGui::SameLine();
+	float vec_arr[3] = { field->x, field->y, field->z };
 
-	// Input for Y component
-	ImGui::SetNextItemWidth(per_width);
-	bool changed_y = false;
-	if (y_interactable)
-		changed_y = ImGui::InputFloat("##Y", &field->y, 0.0f, 0.0f, "%.3f");
-	else
-		ImGui::Text("Y: %.3f", &field->y);
+	std::string floatlabel = "##" + label;
+	ImGui::Text(label.c_str());
 	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-1);
+	bool changed = ImGui::DragFloat3(floatlabel.c_str(), vec_arr);
 
-	// Input for Z component
-	ImGui::SetNextItemWidth(per_width);
-	bool changed_z = false;
-	if (z_interactable)
-		changed_z = ImGui::InputFloat("##Z", &field->z, 0.0f, 0.0f, "%.3f");
-	else
-		ImGui::Text("Z: %.3f", &field->z);
+	if (changed)
+	{
+		if (x_interactable)
+			field->x = vec_arr[0];
+		if (y_interactable)
+			field->y = vec_arr[1];
+		if (z_interactable)
+			field->z = vec_arr[2];
+	}
 
 	ImGui::PopID();
 	
-	return changed_x || changed_y || changed_z;
+	return changed;
 }
 
 std::string gbe::editor::InspectorWindow::GetWindowId()

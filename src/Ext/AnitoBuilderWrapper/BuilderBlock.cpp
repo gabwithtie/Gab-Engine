@@ -11,118 +11,153 @@ namespace gbe::ext::AnitoBuilder {
 		this->SetName("Anito Builder Block");
 
 		this->height = height;
-		
-		AddBlock(corners);
+
+		for (size_t i = 0; i < 4; i++)
+		{
+			this->position_pool.push_back(corners[i]);
+		}
+
+		int corner_ptrs[4] = {
+			0,
+			1,
+			2,
+			3,
+		};
+
+		AddBlock(corner_ptrs);
 	}
 
-	void BuilderBlock::RecalculateTransformations(BuilderBlockSet* adjusted) {
-		for (size_t s = 0; s < this->sets.size(); s++)
-		{
-			const auto& segments = this->sets[s];
+	void BuilderBlock::UpdateHandleSegment(int s, int i)
+	{
+		i %= this->sets[s].size();
 
-			for (size_t i = 0; i < segments.size(); i++)
+		auto& seg = this->sets[s][i].first;
+		auto handle = this->sets[s][i].second;
+
+		auto delta_right = handle->Local().GetRight() * (handle->Local().scale.Get().x);
+		auto delta_up = -Vector3(0, height * 0.5f, 0);
+
+		this->position_pool[seg.first] = handle->Local().position.Get() - delta_right + delta_up;
+		this->position_pool[seg.second] = handle->Local().position.Get() + delta_right + delta_up;
+	}
+
+	inline void BuilderBlock::SetSegment(int s, int i, int point_index, Vector3 newpoint)
+	{
+		i %= this->sets[s].size();
+
+		auto& seg = this->sets[s][i].first;
+		auto handle = this->sets[s][i].second;
+
+		if(point_index == 0)
+			this->position_pool[seg.first] = newpoint;
+		else
+			this->position_pool[seg.second] = newpoint;
+
+		Vector3 delta = this->position_pool[seg.first] - this->position_pool[seg.second];
+		float half_mag = delta.Magnitude() * 0.5f;
+
+		handle->Local().position.Set(Vector3::Mid(this->position_pool[seg.first], this->position_pool[seg.second]) + Vector3(0, height * 0.5f, 0));
+		handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
+		handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
+	}
+
+	void BuilderBlock::InvokeUpdate(float deltatime) {
+		BuilderBlockSet* moved_obj = nullptr;
+		int moved_pos_l = -1;
+		int moved_pos_r = -1;
+
+		for (size_t s = 0; s < sets.size(); s++) {
+			for (size_t i = 0; i < sets[s].size(); i++)
 			{
-				if (adjusted == handles[s][i]) //Do not recalculate user-edited anymore.
+				auto& l = GetHandle(s, i);
+				bool moved = l.second->CheckState(Object::ObjectStateName::TRANSFORMED_USER, this);
+
+				if (moved) {
+					moved_obj = l.second;
+					UpdateHandleSegment(s, i);
+					moved_pos_l = l.first.first;
+					moved_pos_r = l.first.second;
+					break;
+				}
+			}
+
+			if (moved_obj != nullptr)
+				break;
+		}
+
+		for (size_t s = 0; s < sets.size(); s++) {
+			for (size_t i = 0; i < sets[s].size(); i++)
+			{
+				auto& l = GetHandle(s, i);
+
+				if (l.second == moved_obj)
 					continue;
 
-				const auto& seg = segments[i];
-				auto handle = handles[s][i];
-
-				Vector3 delta = seg.first - seg.second;
-				float half_mag = delta.Magnitude() * 0.5f;
-
-				handle->Local().position.Set(Vector3::Mid(seg.first, seg.second) + Vector3(0, height * 0.5f, 0));
-				handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
+				if (l.first.first == moved_pos_l)
+					SetSegment(s, i, 0, position_pool[moved_pos_l]);
+				if (l.first.first == moved_pos_r)
+					SetSegment(s, i, 0, position_pool[moved_pos_r]);
+				if (l.first.second == moved_pos_l)
+					SetSegment(s, i, 1, position_pool[moved_pos_l]);
+				if (l.first.second == moved_pos_r)
+					SetSegment(s, i, 1, position_pool[moved_pos_r]);
 			}
 		}
 	}
 
-	void BuilderBlock::InvokeUpdate(float deltatime) {
-		bool moved_any = false;
-		BuilderBlockSet* moved_obj = nullptr;
-
-		for (size_t s = 0; s < handles.size(); s++)
-			for (size_t i = 0; i < handles[s].size(); i++)
-			{
-				const auto& handle = handles[s][i];
-
-				bool moved = handle->CheckState(Object::ObjectStateName::TRANSFORMED_USER, this);
-
-				if (moved) {
-					moved_any = true;
-
-					if (moved_obj == nullptr)
-						moved_obj = handle;
-					else if (moved_obj != handle)
-						throw new std::runtime_error("Moving two handles at the same time is unsupported.");
-
-					auto& seg = sets[s][i];
-
-					auto delta_right = handle->Local().GetRight() * (handle->Local().scale.Get().x);
-					auto delta_up = -Vector3(0, height * 0.5f, 0);
-
-					seg.first = handle->Local().position.Get() - delta_right + delta_up;
-					seg.second = handle->Local().position.Get() + delta_right + delta_up;
-
-					sets[s][i] = seg;
-					GetSegment(s, i - 1).second = seg.first;
-					GetSegment(s, i + 1).first = seg.second;
-				}
-			}
-
-		if (moved_any)
-			RecalculateTransformations(moved_obj);
-	}
-
 	void BuilderBlock::AddBlock(BuilderBlockSet* root_handle) {
-		int src_set;
-		std::pair<Vector3, Vector3> src_seg;
+		SetSeg src_seg;
 
-		for (size_t s = 0; s < handles.size(); s++)
-			for (size_t i = 0; i < handles[s].size(); i++)
+		for (size_t s = 0; s < sets.size(); s++)
+			for (size_t i = 0; i < sets[s].size(); i++)
 			{
-				const auto& handle = handles[s][i];
+				const auto& handle = sets[s][i].second;
 
 				if (handle == root_handle) {
-					src_set = s;
-					src_seg = sets[s][i];
+					src_seg = sets[s][i].first;
 				}
 			}
 
-		Vector3 seg_dir = src_seg.second - src_seg.first;
+		Vector3 seg_dir = this->position_pool[src_seg.second] - this->position_pool[src_seg.first];
 		Vector3 seg_3rd_dir = seg_dir.Cross(Vector3::Up()).Normalize();
 
-		std::vector<Vector3> corners = {
-			src_seg.first,
+		int poolindex = position_pool.size();
+		this->position_pool.push_back(this->position_pool[src_seg.second] - seg_3rd_dir);
+		this->position_pool.push_back(this->position_pool[src_seg.first] - seg_3rd_dir);
+
+		std::vector<int> corners = {
 			src_seg.second,
-			src_seg.second + seg_3rd_dir,
-			src_seg.first + seg_3rd_dir,
+			src_seg.first,
+			poolindex + 1,
+			poolindex,
 		};
 
 		AddBlock(corners.data(), root_handle);
 	}
 
-	void BuilderBlock::AddBlock(Vector3 corners[4], BuilderBlockSet* root_handle) {
-		auto base_center = Vector3::Mid(Vector3::Mid(corners[0], corners[1]), Vector3::Mid(corners[2], corners[3]));
+	void BuilderBlock::AddBlock(int corners[4], BuilderBlockSet* root_handle) {
 
-		std::vector<std::pair<Vector3, Vector3>> segments = {
+		std::vector<SetSeg> src_segments = {
 			{corners[0], corners[1]},
 			{corners[1], corners[2]},
 			{corners[2], corners[3]},
 			{corners[3], corners[0]},
 		};
-		std::vector<BuilderBlockSet*> handle_set;
+
+		auto base_center = Vector3::Mid(Vector3::Mid(position_pool[corners[0]], position_pool[corners[1]]), Vector3::Mid(position_pool[corners[2]], position_pool[corners[3]]));
+		
+		std::vector<BlockSet> newset;
 
 		int starting_index = 0;
 
 		if (root_handle != nullptr) {
-			handle_set.push_back(root_handle);
+			newset.push_back({ {corners[0], corners[1]}, root_handle });
 			starting_index = 1;
 		}
 
-		for (size_t i = starting_index; i < segments.size(); i++)
+		for (size_t i = starting_index; i < src_segments.size(); i++)
 		{
-			const auto& seg = segments[i];
+			const auto& src_seg = src_segments[i];
 
 			auto handle = new BuilderBlockSet(this);
 			auto handle_ro = new RigidObject(true);
@@ -141,17 +176,18 @@ namespace gbe::ext::AnitoBuilder {
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_SCALE_Z);
 			handle->PushEditorFlag(Object::EditorFlags::IS_STATE_MANAGED);
 			
-			handle_set.push_back(handle);
+			handle_ro->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
+			
+			newset.push_back({ src_seg, handle });
 
-			Vector3 delta = seg.first - seg.second;
+			Vector3 delta = position_pool[src_seg.first] - position_pool[src_seg.second];
 			float half_mag = delta.Magnitude() * 0.5f;
 
-			handle->Local().position.Set(Vector3::Mid(seg.first, seg.second) + Vector3(0, height * 0.5f, 0));
+			handle->Local().position.Set(Vector3::Mid(position_pool[src_seg.first], position_pool[src_seg.second]) + Vector3(0, height * 0.5f, 0));
 			handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
 			handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
 		}
 
-		this->sets.push_back(segments);
-		this->handles.push_back(handle_set);
+		this->sets.push_back(newset);
 	}
 }

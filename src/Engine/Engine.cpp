@@ -57,9 +57,9 @@ namespace gbe {
 		{
 			if (!cam->Get_enabled())
 				continue;
-			if (instance->Get_state() == EngineState::Edit && !cam->Get_is_editor())
+			if (instance->Get_state() == EngineState::Edit && !cam->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE))
 				continue;
-			if (instance->Get_state() != EngineState::Edit && cam->Get_is_editor())
+			if (instance->Get_state() != EngineState::Edit && cam->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE))
 				continue;
 
 			current_camera = cam;
@@ -81,15 +81,19 @@ namespace gbe {
 		physics::PhysicsPipeline::PushContext(physicshandler->GetLocalPipeline());
 	}
 
-	void Engine::Set_state(Engine::EngineState _state) {
+	void Engine::Set_state(Engine::EngineState _state, bool change_scene) {
 		if (_state == EngineState::Edit) {
-			if (instance->pre_play_scenedata == nullptr)
-				instance->pre_play_scenedata = new SerializedObject(instance->current_root->Serialize());
+			if (change_scene) {
+				if (instance->current_root == nullptr)
+					instance->current_root = instance->CreateBlankRoot();
+				if (instance->pre_play_scenedata == nullptr)
+					instance->pre_play_scenedata = new SerializedObject(instance->current_root->Serialize());
 
-			auto newroot = gbe::Engine::CreateBlankRoot();
-			newroot->Deserialize(*instance->pre_play_scenedata);
+				auto newroot = gbe::Engine::CreateBlankRoot();
+				newroot->Deserialize(*instance->pre_play_scenedata);
 
-			gbe::Engine::ChangeRoot(newroot);
+				gbe::Engine::ChangeRoot(newroot);
+			}
 
 			instance->time.scale = 0;
 			Console::Log("Entering Edit Mode...");
@@ -165,7 +169,7 @@ namespace gbe {
 #pragma region Root Loaders
 		this->current_root = this->CreateBlankRoot();
 		this->InitializeRoot();
-
+		this->Set_state(EngineState::Edit, false);
 #pragma region scene singletons
 		//Spawn funcs
 		auto create_mesh = [&](gfx::DrawCall* drawcall, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
@@ -212,7 +216,8 @@ namespace gbe {
 		PerspectiveCamera* editor_cam = new PerspectiveCamera(&this->window);
 		editor_cam->SetParent(editor_camera_controller);
 		Engine::MakePersistent(editor_input);
-		editor_input->Set_is_editor();
+		editor_cam->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
+		editor_input->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 
 		//PLAYER CAMERA
 		auto player_input = new InputPlayer(player_name);
@@ -234,17 +239,8 @@ namespace gbe {
 		auto builder_cube = new ext::AnitoBuilder::BuilderBlock(cubecorners, 4);
 		builder_cube->SetParent(this->current_root);
 
-		auto dirlight_ro = new RigidObject(true);
-		auto dirlight_col = new SphereCollider();
-		dirlight_col->SetParent(dirlight_ro);
 		auto dirlight = new DirectionalLight();
-		dirlight->SetParent(dirlight_ro);
-		auto arrow_drawcall = renderpipeline.RegisterDrawCall(asset::Mesh::GetAssetById("arrow"), asset::Material::GetAssetById("wireframe"));
-		auto dirlight_gizmo = new RenderObject(arrow_drawcall);
-		dirlight_gizmo->SetParent(dirlight_ro);
-		dirlight_gizmo->Local().position.Set(Vector3(0, 0, 1.0f));
-		dirlight_gizmo->Local().scale.Set(Vector3(0.2, 0.2, -1.0f));
-		dirlight_ro->SetParent(this->current_root);
+		dirlight->SetName("Directional Light");
 
 #pragma endregion
 
@@ -281,9 +277,9 @@ namespace gbe {
 						continue;
 					if (input_player->get_player_name() != name)
 						continue;
-					if (this->Get_state() == EngineState::Edit && !input_player->Get_is_editor())
+					if (this->Get_state() == EngineState::Edit && !input_player->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE))
 						continue;
-					if (this->Get_state() != EngineState::Edit && input_player->Get_is_editor())
+					if (this->Get_state() != EngineState::Edit && input_player->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE))
 						continue;
 
 					for (auto controller : input_player->controllers.t_object_list)
@@ -334,21 +330,20 @@ namespace gbe {
 
 			auto onTick = [=](double deltatime) {
 				physicshandler->Update(deltatime);
-
-				float delta_f = (float)deltatime;
-
-				//Normal Update
-				updatehandler->DoOnEnabled([delta_f](Update* updatable) {
-					updatable->InvokeUpdate(delta_f);
-					});
-				//Late Update
-				lateupdatehandler->DoOnEnabled([delta_f](LateUpdate* updatable) {
-					updatable->InvokeLateUpdate(delta_f);
-					});
-
-				instance->timeleft_stepping -= deltatime;
 				};
+
+			this->time.UpdateTime();
 			this->time.TickFixed(onTick);
+
+			//Normal Update
+			updatehandler->DoOnEnabled([this](Update* updatable) {
+				updatable->InvokeUpdate(this->time.GetDeltaTime());
+				});
+			//Late Update
+			lateupdatehandler->DoOnEnabled([this](LateUpdate* updatable) {
+				updatable->InvokeLateUpdate(this->time.GetDeltaTime());
+				});
+			instance->timeleft_stepping -= this->time.GetDeltaTime();
 
 			mInputSystem->ResetStates(&this->window);
 

@@ -88,8 +88,12 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 }
 
 void gbe::Editor::SelectSingle(Object* other) {
-	if(other->Get_is_editor())
-		throw std::runtime_error("Cannot select editor object.");
+	if(other->GetEditorFlag(Object::SELECT_PARENT_INSTEAD)) {
+		if(other->GetParent() != nullptr)
+			other = other->GetParent();
+		else
+			throw std::runtime_error("Object has SELECT_PARENT_INSTEAD flag but no parent.");
+	}
 
 	auto newlyclicked = other;
 	RenderObject* renderer_has = nullptr;
@@ -191,7 +195,7 @@ void gbe::Editor::CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxe
 	auto newDrawcall = this->mrenderpipeline->RegisterDrawCall(boxed->Get_DrawCall()->get_mesh(), this->gizmo_box_mat);
 	RenderObject* box_renderer = new RenderObject(newDrawcall);
 	box_renderer->SetParent(boxed);
-	box_renderer->Set_is_editor();
+	box_renderer->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 
 	gizmo_boxes.insert_or_assign(rootboxed, box_renderer);
 }
@@ -278,10 +282,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 					if (!has_renderer)
 						continue;
 
-					if (!objinray->Get_is_editor())
-					{
-						CheckClosest(objinray);
-					}
+					CheckClosest(objinray);
 				}
 				
 				SelectSingle(closest_obj);

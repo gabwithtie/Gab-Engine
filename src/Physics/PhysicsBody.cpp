@@ -26,7 +26,7 @@ void gbe::physics::PhysicsBody::InjectCurrentTransformMatrix(Matrix4 pos)
 	this->motionstate->setWorldTransform(this->transform);
 }
 
-void gbe::physics::PhysicsBody::PassTransformationData(Vector3& pos, Quaternion& rot)
+void gbe::physics::PhysicsBody::PullTransformationData(Vector3& pos, Quaternion& rot)
 {
 	if (!active)
 		return;

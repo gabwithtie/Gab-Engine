@@ -7,5 +7,6 @@ namespace gbe {
 	public:
 		// Inherited via Light
 		virtual gfx::Light* GetData() override;
+		void InitializeEditorSubObjects() override;
 	};
 }

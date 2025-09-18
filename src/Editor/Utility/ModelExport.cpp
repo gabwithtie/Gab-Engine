@@ -20,7 +20,7 @@ void gbe::editor::ModelExport::Export(std::string path)
 		root_object->CallRecursively([&](Object* obj) {
 			RenderObject* target = dynamic_cast<RenderObject*>(obj);
 
-			if (target != nullptr && !target->Get_is_editor()) {
+			if (target != nullptr && !target->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE)) {
 				auto it = std::find(renderers.begin(), renderers.end(), target);
 
 				// Check if the value was found

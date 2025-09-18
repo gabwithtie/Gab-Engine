@@ -33,6 +33,9 @@ gbe::PhysicsHandler::PhysicsHandler()
 
 void gbe::PhysicsHandler::Update(double dt)
 {
+	if (dt == 0)
+		return;
+
 	this->localpipeline->Tick(dt);
 
 	for (auto po : this->t_object_list) {
@@ -45,14 +48,14 @@ void gbe::PhysicsHandler::Update(double dt)
 		Vector3 newpos;
 		Quaternion newrot;
 
-		ro->Get_data()->PassTransformationData(newpos, newrot);
+		ro->Get_data()->PullTransformationData(newpos, newrot);
 		if (!newpos.isfinite())
 		{
 			std::cerr << "NAN physics transform, skipping update." << std::endl;
 			continue;
 		}
-		ro->Local().position.Set(newpos);
-		ro->Local().rotation.Set(newrot);
+		ro->World().position.Set(newpos);
+		ro->World().rotation.Set(newrot);
 
 		for (auto fv : this->forcevolume_handler.t_object_list)
 		{

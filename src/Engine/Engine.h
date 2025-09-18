@@ -40,10 +40,10 @@ namespace gbe {
 	public:
 		Engine();
 
-		inline EngineState Get_state() {
-			return this->state;
+		inline static EngineState Get_state() {
+			return instance->state;
 		}
-		static void Set_state(EngineState _state);
+		static void Set_state(EngineState _state, bool change_scene = true);
 		static void Step(double dur);
 		static bool ChangeRoot(Root* newroot);
 		static Root* CreateBlankRoot();

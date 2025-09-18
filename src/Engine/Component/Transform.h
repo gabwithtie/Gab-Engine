@@ -36,12 +36,12 @@ namespace gbe {
 			});
 		TrackedVariable<Vector3> scale = TrackedVariable<Vector3>([this](Vector3 old, Vector3 newvar) {
 			if (!newvar.isfinite())
-				throw new std::runtime_error("NAN position set.");
+				throw new std::runtime_error("NAN scale set.");
 			this->OnComponentChange(TransformChangeType::SCALE);
 			});
 		TrackedVariable<Quaternion> rotation = TrackedVariable<Quaternion>([this](Quaternion old, Quaternion newvar) {
 			if (!isfinite(newvar.x) || !isfinite(newvar.y) || !isfinite(newvar.z) || !isfinite(newvar.w))
-				throw new std::runtime_error("NAN position set.");
+				throw new std::runtime_error("NAN rotation set.");
 			this->OnComponentChange(TransformChangeType::ROTATION);
 			});
 

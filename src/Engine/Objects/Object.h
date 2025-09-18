@@ -41,7 +41,9 @@ namespace gbe {
 			STATIC_SCALE_Y = 1 << 7,
 			STATIC_SCALE_Z = 1 << 8,
 
-			IS_STATE_MANAGED = 1 << 9
+			IS_STATE_MANAGED = 1 << 9,
+			SELECT_PARENT_INSTEAD = 1 << 10,
+			EXCLUDE_FROM_OBJECT_TREE = 1 << 11
 		};
 	private:
 		static std::unordered_map<unsigned int, Object*> valid_objects;
@@ -54,7 +56,6 @@ namespace gbe {
 		bool enabled_self = true;
 
 		bool isDestroyQueued = false;
-		bool is_editor = false;
 
 		std::list<Object*> children;
 
@@ -76,18 +77,14 @@ namespace gbe {
 		}
 
 		editor::InspectorData* inspectorData;
+
+		inline virtual void InitializeEditorSubObjects() {
+
+		}
 	public:
 
 		Object();
 		virtual ~Object();
-		inline void Set_is_editor() {
-			this->is_editor = true;
-			size_t childcount = GetChildCount();
-			for (size_t i = 0; i < childcount; i++)
-			{
-				this->GetChildAt(i)->Set_is_editor();
-			}
-		}
 
 		inline std::string GetName() {
 			return this->name;
@@ -164,9 +161,6 @@ namespace gbe {
 		}
 		inline bool Get_enabled_self() {
 			return this->enabled_self;
-		}
-		inline bool Get_is_editor() {
-			return this->is_editor;
 		}
 		inline void Set_id(unsigned int _id) {
 			this->id = _id;

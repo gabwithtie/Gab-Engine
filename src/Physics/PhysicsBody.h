@@ -29,7 +29,7 @@ namespace gbe {
 			bool active = true;
 		public:
 			void InjectCurrentTransformMatrix(Matrix4);
-			void PassTransformationData(Vector3&, Quaternion&);
+			void PullTransformationData(Vector3&, Quaternion&);
 			void PassTransformationMatrix(Matrix4&);
 
 			btCollisionObject* Get_wrapped_data();

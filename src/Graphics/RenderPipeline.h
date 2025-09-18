@@ -86,9 +86,9 @@ namespace gbe {
 		static RenderPipeline* Get_Instance();
 		
 		RenderPipeline(gbe::Window&, Vector2Int);
-		DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material);
-		DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
-		DrawCall* GetDefaultDrawCall();
+		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material);
+		static DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
+		static DrawCall* GetDefaultDrawCall();
 
 		void AssignEditor(Editor* editor);
 		void SetCameraShader(asset::Shader* postprocess);

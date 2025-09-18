@@ -17,13 +17,11 @@ gbe::Transform::Transform()
 }
 
 void gbe::Transform::Reset() {
-	this->Right = Vector3(1, 0, 0);
-	this->Up = Vector3(0, 1, 0);
-	this->Forward = Vector3(0, 0, 1);
-
 	this->scale.Get() = Vector3(1.0f);
 	this->position.Get() = Vector3::zero;
 	this->rotation.Get() = Quaternion();
+
+	OnComponentChange(TransformChangeType::ALL, true);
 }
 
 gbe::Matrix4 gbe::Transform::GetMatrix(bool include_scale) const
@@ -45,6 +43,11 @@ void gbe::Transform::OnComponentChange(TransformChangeType value, bool silent)
 	newmat = glm::scale(newmat, this->scale.Get());
 
 	this->updated_matrix_with_scale = newmat;
+
+	if(!this->updated_matrix_without_scale.isfinite())
+		throw std::runtime_error("NAN transform matrix generated.");
+	if (!this->updated_matrix_with_scale.isfinite())
+		throw std::runtime_error("NAN transform matrix generated.");
 
 	if (value == TransformChangeType::ROTATION)
 		this->UpdateAxisVectors();
@@ -90,13 +93,19 @@ void gbe::Transform::SetMatrix(Matrix4 mat, bool silent) {
 
 	glm::decompose(mat, _scale, _rotation, _position, skew, perspective);
 
-	this->scale.Get() = _scale;
-	this->position.Get() = _position;
-	this->rotation.Get() = _rotation;
+	if (silent) {
+		this->scale.Get() = _scale;
+		this->position.Get() = _position;
+		this->rotation.Get() = _rotation;
 
-	UpdateAxisVectors();
-
-	OnComponentChange(TransformChangeType::ALL, silent);
+		UpdateAxisVectors();
+		OnComponentChange(TransformChangeType::ALL, silent);
+	}
+	else {
+		this->scale.Set(_scale);
+		this->position.Set(_position);
+		this->rotation.Set(_rotation);
+	}
 }
 
 gbe::Transform::Transform(Matrix4 mat) {
@@ -115,4 +124,5 @@ gbe::Transform::Transform(Matrix4 mat) {
 	this->rotation.Get() = _rotation;
 
 	UpdateAxisVectors();
+	OnComponentChange(TransformChangeType::ALL, true);
 }

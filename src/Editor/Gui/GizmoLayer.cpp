@@ -63,7 +63,7 @@ void gbe::editor::GizmoLayer::DrawSelf()
     // Check if the gizmo was actively used
     if (ImGuizmo::IsUsing()) {
         // Copy the updated data back to your GLM matrix
-        selected[0]->Local().SetMatrix(Matrix4(model_mat));
+        selected[0]->World().SetMatrix(Matrix4(model_mat));
         selected[0]->PushState(Object::TRANSFORMED_USER);
     }
 }

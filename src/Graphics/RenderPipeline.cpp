@@ -305,23 +305,23 @@ std::vector<unsigned char> gbe::RenderPipeline::ScreenShot(bool write_file) {
 
 gbe::gfx::DrawCall* gbe::RenderPipeline::RegisterDrawCall(asset::Mesh* mesh, asset::Material* material)
 {
-    auto newdrawcall = new DrawCall(mesh, material, &shaderloader.GetAssetData(material->Get_load_data().shader), vulkanInstance->Get_maxFrames());
+    auto newdrawcall = new DrawCall(mesh, material, &Instance->shaderloader.GetAssetData(material->Get_load_data().shader), Instance->vulkanInstance->Get_maxFrames());
 
-    this->drawcalls.push_back(newdrawcall);
+    Instance->drawcalls.push_back(newdrawcall);
 
     return newdrawcall;
 }
 
 DrawCall* gbe::RenderPipeline::RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material)
 {
-    this->default_drawcall = RegisterDrawCall(mesh, material);
+    Instance->default_drawcall = RegisterDrawCall(mesh, material);
 
-    return this->default_drawcall;
+    return Instance->default_drawcall;
 }
 
 DrawCall* gbe::RenderPipeline::GetDefaultDrawCall()
 {
-    return this->default_drawcall;
+    return Instance->default_drawcall;
 }
 
 gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order)

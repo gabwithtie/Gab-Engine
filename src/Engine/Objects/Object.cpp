@@ -7,6 +7,8 @@
 
 #include "Editor/gbe_editor.h"
 
+#include "ObjectNamer.h"
+
 unsigned int gbe::Object::next_avail_id = 0;
 std::unordered_map<unsigned int, gbe::Object*> gbe::Object::valid_objects;
 
@@ -55,8 +57,7 @@ gbe::Object::Object():
 	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
 	world([](TransformChangeType type) {})
 {
-	//Name
-	this->name = typeid(*this).name();
+	ObjectNamer::ResetName(this);
 
 	//TRANSFORM
 	this->parent_matrix = Matrix4(1.0f);
@@ -69,10 +70,26 @@ gbe::Object::Object():
 		this->Local().position.Set(Vector3(parent_matrix.Inverted() * Vector4(newval, 1.0f)));
 		});
 	this->world.scale.AddCallback([this](Vector3 oldval, Vector3 newval) {
-		throw new std::runtime_error("Direct world scale editing not supported yet.");
+		Vector3 finalLocalScale;
+
+		if(parent != nullptr) {
+			auto parent_scale = this->parent->World().scale.Get();
+			finalLocalScale = Vector3(
+				newval.x / parent_scale.x,
+				newval.y / parent_scale.y,
+				newval.z / parent_scale.z
+			);
+		}
+		else {
+			finalLocalScale = newval;
+		}
+
+		this->Local().scale.Set(finalLocalScale);
 		});
 	this->world.rotation.AddCallback([this](Quaternion oldval, Quaternion newval) {
-		throw new std::runtime_error("Direct world rotation editing not supported yet.");
+		auto parent_rot = Quaternion(parent_matrix);
+		auto new_local_rot = parent_rot.Inverted() * newval;
+		this->Local().rotation.Set(new_local_rot);
 		});
 
 	//INSPECTOR DATA
@@ -81,6 +98,10 @@ gbe::Object::Object():
 	this->id = next_avail_id;
 	next_avail_id++;
 	valid_objects.insert_or_assign(this->id, this);
+
+	if (Engine::Get_state() == Engine::EngineState::Edit) {
+		this->InitializeEditorSubObjects();
+	}
 }
 
 gbe::Object::~Object(){
@@ -215,7 +236,7 @@ gbe::SerializedObject gbe::Object::Serialize() {
 	std::vector<SerializedObject> serialized_children;
 	for (const auto child : this->children)
 	{
-		if (!child->Get_is_editor())
+		if (!child->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE))
 			serialized_children.push_back(child->Serialize());
 	}
 
