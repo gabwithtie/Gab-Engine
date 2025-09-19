@@ -89,6 +89,8 @@ namespace gbe::vulkan {
 
         inline void SetCustomRenderer(Renderer* renderer) {
 			this->customRenderer = renderer;
+
+            this->RefreshPipelineObjects();
         }
         inline void QueueBufferDeletion(Buffer* buffer) {
 			this->bufferDeletionQueue.push_back(buffer);
@@ -171,7 +173,8 @@ namespace gbe::vulkan {
 
             //===================DEVICE SET UP===================//
             const std::vector<const char*> deviceExtensionNames = {
-                VK_KHR_SWAPCHAIN_EXTENSION_NAME
+                VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+                VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME,
             };
 
             bool founddevice = false;
@@ -281,10 +284,11 @@ namespace gbe::vulkan {
             SwapChain::SetActive(swapchain);
 
             //==============RENDERPASS================
-            if(this->customRenderer != nullptr)
-                  renderPass = this->customRenderer->GetRenderPass();
+            if (this->customRenderer != nullptr)
+                renderPass = this->customRenderer->CreateRenderPass();
             else
-                   renderPass = new RenderPass(chosenFormat.format);
+                renderPass = new RenderPass(chosenFormat.format);
+
             RenderPass::SetActive(renderPass);
         }
 
@@ -371,34 +375,44 @@ namespace gbe::vulkan {
             }
 
             vkResetFences(VirtualDevice::GetActive()->GetData(), 1, frameSynchronizationObjects[currentFrame]->Get_inFlightFence_ptr());
-            
+
             //==============COMMAND BUFFER START================
             vkResetCommandBuffer(commandBuffers[currentFrame]->GetData(), 0);
             commandBuffers[currentFrame]->Begin();
 
             //==============RENDER PASS START================
-            if (customRenderer == nullptr) {
-                VkRenderPassBeginInfo renderPassBeginInfo{};
-                renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                renderPassBeginInfo.renderPass = renderPass->GetData();
-                renderPassBeginInfo.framebuffer = swapchain->GetFramebuffer(currentSwapchainImage)->GetData();
+            VkRenderPassBeginInfo renderPassBeginInfo{};
+            renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            renderPassBeginInfo.renderPass = renderPass->GetData();
+            renderPassBeginInfo.framebuffer = swapchain->GetFramebuffer(currentSwapchainImage)->GetData();
 
-                renderPassBeginInfo.renderArea.offset = { 0, 0 };
-                renderPassBeginInfo.renderArea.extent = swapchain->GetExtent();
+            renderPassBeginInfo.renderArea.offset = { 0, 0 };
+            renderPassBeginInfo.renderArea.extent = swapchain->GetExtent();
 
-                std::array<VkClearValue, 2> clearValues{};
-                float clear_brightness = 0.3f;
-                clearValues[0].color = { {clear_brightness, clear_brightness, clear_brightness, 1.0f} };
-                clearValues[1].depthStencil = { 1.0f, 0 };
+            std::array<VkClearValue, 2> clearValues{};
+            float clear_brightness = 0.3f;
+            clearValues[0].color = { {clear_brightness, clear_brightness, clear_brightness, 1.0f} };
+            clearValues[1].depthStencil = { 1.0f, 0 };
 
-                renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-                renderPassBeginInfo.pClearValues = clearValues.data();
+            renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+            renderPassBeginInfo.pClearValues = clearValues.data();
 
-                vkCmdBeginRenderPass(commandBuffers[currentFrame]->GetData(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-            }
-            else {
+            vkCmdBeginRenderPass(commandBuffers[currentFrame]->GetData(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-            }
+            //BOUNDS
+            VkViewport viewport{};
+            viewport.width = static_cast<float>(vulkan::SwapChain::GetActive()->GetExtent().width);
+            viewport.height = static_cast<float>(vulkan::SwapChain::GetActive()->GetExtent().height);
+            viewport.x = 0.0f;
+            viewport.y = 0.0f;
+            viewport.minDepth = 0.0f;
+            viewport.maxDepth = 1.0f;
+            vkCmdSetViewport(this->GetCurrentCommandBuffer()->GetData(), 0, 1, &viewport);
+
+            VkRect2D scissor{};
+            scissor.offset = { 0, 0 };
+            scissor.extent = vulkan::SwapChain::GetActive()->GetExtent();
+            vkCmdSetScissor(this->GetCurrentCommandBuffer()->GetData(), 0, 1, &scissor);
         }
 
         inline void PushFrame() {

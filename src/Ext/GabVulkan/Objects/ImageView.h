@@ -21,20 +21,20 @@ namespace gbe::vulkan {
             vkDestroyImageView(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
         }
 
-        inline ImageView(Image* image, VkImageAspectFlags aspectflags)
+        inline ImageView(Image* image, VkImageAspectFlags aspectflags, VkImageViewType viewtype = VK_IMAGE_VIEW_TYPE_2D)
         {
             this->image = image;
 
             VkImageViewCreateInfo viewInfo{};
             viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             viewInfo.image = image->GetData();
-            viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            viewInfo.viewType = viewtype;
             viewInfo.format = image->Get_format();
             viewInfo.subresourceRange.aspectMask = aspectflags;
             viewInfo.subresourceRange.baseMipLevel = 0;
             viewInfo.subresourceRange.levelCount = 1;
             viewInfo.subresourceRange.baseArrayLayer = 0;
-            viewInfo.subresourceRange.layerCount = 1;
+            viewInfo.subresourceRange.layerCount = image->Get_layercount();
 
             CheckSuccess(vkCreateImageView(VirtualDevice::GetActive()->GetData(), &viewInfo, nullptr, &this->data));
         }

@@ -18,13 +18,13 @@ const std::unordered_map<gbe::RenderObject::PrimitiveType, std::string> gbe::Ren
 	{ PrimitiveType::plane, "Plane" }
 };
 
-gbe::RenderObject::RenderObject(DrawCall* mDrawCall, int order)
+gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 {
 	this->order = order;
 
 	if (mDrawCall != nullptr) {
 		this->mDrawCall = mDrawCall;
-		to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->World().GetMatrix(), order);
+		to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->World().GetMatrix(), 0);
 	}
 
 	auto texture_field = new gbe::editor::InspectorAsset<TextureLoader, asset::Texture>();
@@ -58,12 +58,12 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall, int order)
 	this->inspectorData->fields.push_back(refresh_field);
 }
 
-gbe::RenderObject::RenderObject(PrimitiveType _ptype, int order)
+gbe::RenderObject::RenderObject(PrimitiveType _ptype)
 {
 	this->order = order;
 
 	this->mDrawCall = primitive_drawcalls[_ptype];
-	to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->World().GetMatrix(), order);
+	to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->World().GetMatrix(), 0);
 	this->ptype = _ptype;
 }
 

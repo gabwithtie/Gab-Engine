@@ -44,25 +44,23 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
     if (enableValidationLayers)
         vulkan::ValidationLayers::Check(allextensions);
 
-	//INSTANCE INFO
+	//1: INSTANCE INFO
     this->vulkanInstance = new vulkan::Instance(resolution.x, resolution.y, allextensions, enableValidationLayers);
     vulkan::Instance::SetActive(this->vulkanInstance);
 	
-    //SDL SURFACE
+    //2: SDL SURFACE
     VkSurfaceKHR sdl_surface;
     SDL_Vulkan_CreateSurface(implemented_window, vulkanInstance->GetData(), &sdl_surface);
     vulkan::Surface* surfaceobject = new vulkan::Surface(sdl_surface, vulkanInstance->GetData());
     //This new() call will be managed by the vulkan instance
 
-    //Vulkan Initialization
+    //3: Vulkan Initialization
     vulkanInstance->Init(surfaceobject);
+    
+    //4: Instance renderer init
+    this->renderer = new vulkan::ForwardRenderer(); //freed by vulkan instance
+    //this->vulkanInstance->SetCustomRenderer(this->renderer);
 
-    //Instance renderer init
-	const bool use_custom_renderer = false;
-    if (use_custom_renderer) {
-        this->renderer = new vulkan::DeferredRenderer(resolution.x, resolution.y, vulkanInstance->GetDepthImageView()); //freed by vulkan instance
-        this->vulkanInstance->SetCustomRenderer(this->renderer);
-    }
 
 	//Asset Loaders
     this->shaderloader.AssignSelfAsLoader();
@@ -92,79 +90,117 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
     //=============VULKAN PREP============//
     vulkanInstance->PrepareFrame();
     
-    //=============SETUP DRAW FIELD============//
-    VkViewport viewport{};
-    viewport.width = static_cast<float>(vulkan::SwapChain::GetActive()->GetExtent().width);
-    viewport.height = static_cast<float>(vulkan::SwapChain::GetActive()->GetExtent().height);
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    vkCmdSetViewport(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, &viewport);
-
-    VkRect2D scissor{};
-    scissor.offset = { 0, 0 };
-    scissor.extent = vulkan::SwapChain::GetActive()->GetExtent();
-    vkCmdSetScissor(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, &scissor);
-
     //Render DrawCalls -> Engine-specific code
     auto projmat = frameinfo.projmat;
     projmat[1][1] = -projmat[1][1]; //Flip Y axis for Vulkan
 
-    for (const auto& pair : this->sortedcalls)
-    {
-        for (const auto& call_ptr : pair.second)
-        {
+    //==================FIRST PASS [0]========================//
+
+    // Loop through each light that casts a shadow.
+    int lightIndex = 0;
+    for (const auto& light : frameinfo.lightdatas) {
+        // Update the light's view and projection matrices.
+        Matrix4 lightViewMat = light->GetViewMatrix();
+        Matrix4 lightProjMat = light->GetProjectionMatrix();
+
+        for (const auto& call_ptr : this->sortedcalls[-1]) {
             const auto& callinstance = this->calls[call_ptr];
 
             //USE SHADER
             auto shaderasset = callinstance.drawcall->get_material()->Get_load_data().shader;
             const auto& currentshaderdata = shaderloader.GetAssetData(shaderasset);
             vkCmdBindPipeline(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipeline);
-            
+
             callinstance.drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex(), callinstance);
 
             //RENDER MESH
             const auto& curmesh = this->meshloader.GetAssetData(callinstance.drawcall->get_mesh());
 
-            //UPDATE GLOBAL UBO
+            //UPDATE OVERRIDES (light)
             callinstance.ApplyOverride<Matrix4>(callinstance.model, "model", vulkanInstance->GetCurrentFrameIndex());
-            callinstance.ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex());
-            callinstance.ApplyOverride<Matrix4>(frameinfo.viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
+            callinstance.ApplyOverride<Matrix4>(lightViewMat, "view", vulkanInstance->GetCurrentFrameIndex());
+            callinstance.ApplyOverride<Matrix4>(lightProjMat, "proj", vulkanInstance->GetCurrentFrameIndex());
 
-            callinstance.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
+            // Use push constants to specify the array layer to write to.
+            uint32_t pushConstantData = lightIndex;
+            vkCmdPushConstants(vulkanInstance->GetCurrentCommandBuffer()->GetData(), currentshaderdata.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &pushConstantData);
 
-            std::map<Light::LightType, int> tally;
-
-            for (const auto& light : frameinfo.lightdatas)
-            {
-                switch (light->type)
-                {
-                case Light::DIRECTIONAL:
-                    if (tally[Light::DIRECTIONAL] == 0) { // limit to one directional light
-                        callinstance.ApplyOverride<Vector3>(light->direction, "light_direction", vulkanInstance->GetCurrentFrameIndex());
-                        callinstance.ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex());
-                    }
-                    break;
-                }
-
-                tally[light->type]++;
-            }
-
+            // Bind vertex/index buffers and draw.
             VkBuffer vertexBuffers[] = { curmesh.vertexBuffer->GetData() };
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
-
+            
             std::vector<VkDescriptorSet> bindingsets;
             for (auto& set : callinstance.allocdescriptorSets_perframe[vulkanInstance->GetCurrentFrameIndex()])
             {
                 bindingsets.push_back(set.second);
             }
-
-            vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
+            
             vkCmdBindIndexBuffer(vulkanInstance->GetCurrentCommandBuffer()->GetData(), curmesh.indexBuffer->GetData(), 0, VK_INDEX_TYPE_UINT16);
             vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(curmesh.loaddata->indices.size()), 1, 0, 0, 0);
         }
+        lightIndex++;
+    }
+
+    //vkCmdNextSubpass(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_SUBPASS_CONTENTS_INLINE);
+
+    //==================SECOND PASS [1]========================//
+
+    for (const auto& call_ptr : sortedcalls[0])
+    {
+        const auto& callinstance = this->calls[call_ptr];
+
+        //USE SHADER
+        auto shaderasset = callinstance.drawcall->get_material()->Get_load_data().shader;
+        const auto& currentshaderdata = shaderloader.GetAssetData(shaderasset);
+        vkCmdBindPipeline(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipeline);
+
+        callinstance.drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex(), callinstance);
+
+        // Use push constants to specify the array layer to write to.
+        uint32_t pushConstantData = 0;
+        vkCmdPushConstants(vulkanInstance->GetCurrentCommandBuffer()->GetData(), currentshaderdata.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &pushConstantData);
+
+        //RENDER MESH
+        const auto& curmesh = this->meshloader.GetAssetData(callinstance.drawcall->get_mesh());
+
+        //UPDATE OVERRIDES
+        callinstance.ApplyOverride<Matrix4>(callinstance.model, "model", vulkanInstance->GetCurrentFrameIndex());
+        callinstance.ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex());
+        callinstance.ApplyOverride<Matrix4>(frameinfo.viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
+
+        callinstance.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
+
+        std::map<Light::LightType, int> tally;
+
+        for (const auto& light : frameinfo.lightdatas)
+        {
+            switch (light->type)
+            {
+            case Light::DIRECTIONAL:
+                if (tally[Light::DIRECTIONAL] == 0) { // limit to one directional light
+                    callinstance.ApplyOverride<Vector3>(light->direction, "light_direction", vulkanInstance->GetCurrentFrameIndex());
+                    callinstance.ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex());
+                }
+                break;
+            }
+
+            tally[light->type]++;
+        }
+
+        VkBuffer vertexBuffers[] = { curmesh.vertexBuffer->GetData() };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
+
+        std::vector<VkDescriptorSet> bindingsets;
+        for (auto& set : callinstance.allocdescriptorSets_perframe[vulkanInstance->GetCurrentFrameIndex()])
+        {
+            bindingsets.push_back(set.second);
+        }
+
+        vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
+        vkCmdBindIndexBuffer(vulkanInstance->GetCurrentCommandBuffer()->GetData(), curmesh.indexBuffer->GetData(), 0, VK_INDEX_TYPE_UINT16);
+        vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(curmesh.loaddata->indices.size()), 1, 0, 0, 0);
     }
 
     //EDITOR/GUI PASS
@@ -351,7 +387,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         newblockbuffer.block_name = block.name;
 
         // Create uniform buffer for each block
-        VkDeviceSize bufferSize = block.block_size * block.array_size;
+        VkDeviceSize bufferSize = block.block_size_aligned * block.array_size;
 
         newblockbuffer.uboPerFrame.resize(vulkanInstance->Get_maxFrames());
         newblockbuffer.uboMappedPerFrame.resize(vulkanInstance->Get_maxFrames());
@@ -365,12 +401,14 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
 
         newinst.uniformBuffers.push_back(newblockbuffer);
     }
-    std::unordered_map<std::string, std::vector<unsigned int> uniformTextureArrays;
+
     //Textures
     for (const auto& field : drawcall->get_shaderdata()->uniformfields)
     {
         if (field.type == asset::Shader::UniformFieldType::TEXTURE)
         {
+            std::vector<CallInstance::UniformTexture> texture_arr = {};
+
             for (size_t i = 0; i < field.array_size; i++)
             {
                 CallInstance::UniformTexture newtexture{};
@@ -381,9 +419,10 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
                 newtexture.imageView = defaultImage.textureImageView;
                 newtexture.sampler = defaultImage.textureSampler;
 
-                newinst.uniformTextures.push_back(newtexture);
-                uniformTextureArrays[field.name].push_back(newinst.uniformTextures,size() - 1);
+                texture_arr.push_back(newtexture);
             }
+
+            newinst.uniformTextures.insert_or_assign(field.name, texture_arr);
         }
     }
 
@@ -451,7 +490,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             bufferInfos[i_i].resize(blockinfo.array_size);
             for (uint32_t j = 0; j < blockinfo.array_size; ++j) {
                 bufferInfos[i_i][j].buffer = uniformblock.uboPerFrame[f_i]->GetData();
-                bufferInfos[i_i][j].offset = j * blockinfo.block_size;
+                bufferInfos[i_i][j].offset = j * blockinfo.block_size_aligned;
                 bufferInfos[i_i][j].range = blockinfo.block_size;
             }
 
@@ -469,21 +508,23 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             descriptorWrites.push_back(descriptorWrite);
         }
 
-        std::vector<std::vector<VkDescriptorImageInfo>> imageInfos(newinst.uniformTextures.size());
-        for (size_t i_i = 0; i_i < uniformTextureArrays.size(); i_i++)
+        std::vector< std::vector<VkDescriptorImageInfo>> imageInfos(newinst.uniformTextures.size());
+        unsigned int info_index = 0;
+        for (const auto& pair: newinst.uniformTextures)
         {
-            unsigned int texindex = uniformTextureArrays[i_i];
-            const auto& uniformtex = newinst.uniformTextures[texindex];
-        
-            for (size_t i_j = 0; i_j < uniformTextureArrays[i_i].size(); i_j++){
-            imageInfos[texindex].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfos[texindex].imageView = uniformtex.imageView->GetData();
-            imageInfos[texindex].sampler = uniformtex.sampler->GetData(); 
+            const auto& arr_size = pair.second.size();
+            imageInfos[info_index].resize(arr_size);
+
+            for (size_t texindex = 0; texindex < arr_size; texindex++) {
+                const auto& uniformtex = pair.second[texindex];
+                imageInfos[info_index][texindex].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                imageInfos[info_index][texindex].imageView = uniformtex.imageView->GetData();
+                imageInfos[info_index][texindex].sampler = uniformtex.sampler->GetData();
             }
             //FIND THE BINDING INDEX
             ShaderData::ShaderField fieldinfo;
             ShaderData::ShaderBlock blockinfo;
-            drawcall->get_shaderdata()->FindUniformField(uniformtex.texture_name, fieldinfo, blockinfo);
+            drawcall->get_shaderdata()->FindUniformField(pair.first, fieldinfo, blockinfo);
             //CREATE THE WRITE DATA
             VkWriteDescriptorSet descriptorWrite{};
 
@@ -492,10 +533,12 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
             descriptorWrite.dstBinding = fieldinfo.binding;
             descriptorWrite.dstArrayElement = 0;
             descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorWrite.descriptorCount = 
-            descriptorWrite.pImageInfo = imageInfos[i_i].data();
+            descriptorWrite.descriptorCount = arr_size;
+            descriptorWrite.pImageInfo = imageInfos[info_index].data();
 
             descriptorWrites.push_back(descriptorWrite);
+
+            info_index++;
         }
 
         vkUpdateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);

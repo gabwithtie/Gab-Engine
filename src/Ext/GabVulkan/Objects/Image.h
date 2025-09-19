@@ -14,6 +14,7 @@ namespace gbe::vulkan {
         VkImageLayout layout;
         uint32_t width;
         uint32_t height;
+        uint32_t layercount = 1;
 
 	public:
 		inline VkDeviceMemory Get_imageMemory() {
@@ -34,6 +35,10 @@ namespace gbe::vulkan {
 		inline uint32_t Get_height() {
 			return height;
 		}
+        inline uint32_t Get_layercount()
+        {
+            return layercount;
+        }
 
 		inline void RegisterDependencies() override {
 
@@ -43,22 +48,35 @@ namespace gbe::vulkan {
             vkFreeMemory(VirtualDevice::GetActive()->GetData(), imageMemory, nullptr);
         }
 
-        inline Image(const VkImage& createdimage, VkImageLayout _layout, VkFormat _format, uint32_t x, uint32_t y)
+        inline Image(
+            const VkImage& createdimage,
+            VkImageLayout _layout,
+            VkFormat _format,
+            uint32_t x, uint32_t y,
+            uint32_t layercount = 1)
         {
             this->data = createdimage;
 
+            this->layercount = layercount;
 			layout = _layout;
 			format = _format;
 			width = x;
 			height = y;
             tiling = VK_IMAGE_TILING_OPTIMAL;
         }
-        inline Image(uint32_t _width, uint32_t _height, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties)
+        inline Image(
+            uint32_t _width, uint32_t _height, 
+            VkFormat _format, 
+            VkImageTiling _tiling, 
+            VkImageUsageFlags usage, 
+            VkMemoryPropertyFlags properties, 
+            uint32_t layercount = 1)
         {
             width = _width;
             height = _height;
             format = _format;
             tiling = _tiling;
+            this->layercount = layercount;
             layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
             VkImageCreateInfo imageInfo{};
@@ -68,7 +86,7 @@ namespace gbe::vulkan {
             imageInfo.extent.height = height;
             imageInfo.extent.depth = 1;
             imageInfo.mipLevels = 1;
-            imageInfo.arrayLayers = 1;
+            imageInfo.arrayLayers = layercount;
             imageInfo.format = format;
             imageInfo.tiling = tiling;
             imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;

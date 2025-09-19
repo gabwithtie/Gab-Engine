@@ -43,12 +43,14 @@ namespace gbe {
 			std::unordered_map<std::string, UboType> types;
 			std::vector<TextureMeta> textures;
 			std::vector<UboMeta> ubos;
+			std::vector<UboMeta> push_constants;
 		};
 
 		struct ShaderData {
 			struct ShaderBlock {
 				std::string name = "";
 				size_t block_size = 0;
+				size_t block_size_aligned = 0;
 				unsigned int set = 0;
 				unsigned int binding = 0;
 				unsigned int array_size = 1;
@@ -61,8 +63,8 @@ namespace gbe {
 				unsigned int binding = 0;
 				asset::Shader::UniformFieldType type;
 				unsigned int array_size = 1;
-				size_t offset = 0; // Offset in bytes
-				size_t size = 0; // Offset in bytes
+				size_t offset = 0;
+				size_t size = 0;
 			};
 
 			std::map<unsigned int, std::vector<VkDescriptorSetLayoutBinding>> binding_sets;

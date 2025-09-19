@@ -16,7 +16,7 @@
 #include "Ext/GabVulkan/Objects.h"
 #include "Ext/GabVulkan/Utility/ValidationLayers.h"
 #include "Ext/GabVulkan/Utility/MemoryBarrier.h"
-#include "Ext/GabVulkan/Components/DeferredRenderer/DeferredRenderer.h"
+#include "Ext/GabVulkan/Components/ForwardRenderer/ForwardRenderer.h"
 
 #include "Math/gbe_math.h"
 #include "Asset/gbe_asset.h"
@@ -28,6 +28,7 @@
 #include "AssetLoaders/MaterialLoader.h"
 #include "Window/gbe_window.h"
 #include "Data/CallInstance.h"
+#include "Data/Light.h"
 
 
 namespace cv {
@@ -35,11 +36,6 @@ namespace cv {
 }
 
 namespace gbe {
-	//Take vulkan light struct as our own
-	namespace gfx {
-		typedef gbe::vulkan::LightData Light;
-	}
-
 	using namespace gfx;
 	class Editor;
 
@@ -68,7 +64,7 @@ namespace gbe {
 		
 		//============DYNAMICALLY ALLOCATED=======================//
 		vulkan::Instance* vulkanInstance;
-		vulkan::DeferredRenderer* renderer; //owned by vulkanInstance
+		vulkan::ForwardRenderer* renderer; //owned by vulkanInstance
 		
 	public:
 		struct FrameRenderInfo {

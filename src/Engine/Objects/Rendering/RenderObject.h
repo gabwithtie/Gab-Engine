@@ -42,8 +42,8 @@ namespace gbe {
 			primitive_drawcalls.insert_or_assign(ptype, drawtype);
 		}
 
-		RenderObject(gfx::DrawCall* mDrawCall, int order = 0);
-		RenderObject(PrimitiveType ptype, int order = 0);
+		RenderObject(gfx::DrawCall* mDrawCall);
+		RenderObject(PrimitiveType ptype);
 		virtual ~RenderObject();
 
 		SerializedObject Serialize() override;

@@ -37,7 +37,7 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 
 	//============DESCRIPTOR LAYOUT SETUP============//
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-
+	
 	//BINDINGS
 	std::vector<std::vector<VkDescriptorSetLayoutBinding>> binding_sets;
 	std::vector<ShaderData::ShaderBlock> uniformblocks;
@@ -48,7 +48,38 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 			binding_sets.resize(set + 1);
 		};
 
-	const auto AddUboBinding = [&](const ShaderStageMeta& stagemeta, const ShaderStageMeta::UboMeta& ubo, VkShaderStageFlags flags) {
+	const auto GetUboSize = [&](const ShaderStageMeta& stagemeta, const ShaderStageMeta::UboMeta& ubo) {
+		size_t total_size = 0;
+
+		for (const auto& member : stagemeta.types.at(ubo.type).members)
+		{
+			if (member.type == "bool") {
+				total_size += sizeof(bool);
+			}
+			else if (member.type == "int") {
+				total_size += sizeof(int);
+			}
+			else if (member.type == "float") {
+				total_size += sizeof(float);
+			}
+			else if (member.type == "vec2") {
+				total_size += sizeof(Vector2);
+			}
+			else if (member.type == "vec3") {
+				total_size += sizeof(Vector3);
+			}
+			else if (member.type == "vec4") {
+				total_size += sizeof(Vector4);
+			}
+			else if (member.type == "mat4") {
+				total_size += sizeof(Matrix4);
+			}
+		}
+
+		return total_size;
+		};
+
+	const auto CreateUboBinding = [&](const ShaderStageMeta& stagemeta, const ShaderStageMeta::UboMeta& ubo, VkShaderStageFlags flags) {
 		VkDescriptorSetLayoutBinding ubo_Binding{};
 		ubo_Binding.binding = ubo.binding;
 		ubo_Binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -61,15 +92,19 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		ubo_Binding.stageFlags = flags;
 		ubo_Binding.pImmutableSamplers = nullptr; // Optional
 
-		PrepareBindingSetIndex(ubo.set);
-		binding_sets[ubo.set].push_back(ubo_Binding);
+			PrepareBindingSetIndex(ubo.set);
+			binding_sets[ubo.set].push_back(ubo_Binding);
 
 		ShaderData::ShaderBlock block{};
 		block.binding = ubo.binding;
 		block.set = ubo.set;
 		block.name = ubo.name;
 		block.block_size = ubo.block_size;
+
 		block.array_size = ubo_Binding.descriptorCount;
+
+		//for blocksize validation
+		size_t total_size = 0;
 
 		ShaderData::ShaderField* prevfield = nullptr; //To set the size correctly
 		for (const auto& member : stagemeta.types.at(ubo.type).members)
@@ -88,24 +123,31 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 
 			if (member.type == "bool") {
 				field.type = gbe::asset::Shader::UniformFieldType::BOOL;
+				total_size += sizeof(bool);
 			}
 			else if (member.type == "int") {
 				field.type = gbe::asset::Shader::UniformFieldType::INT;
+				total_size += sizeof(int);
 			}
 			else if (member.type == "float") {
 				field.type = gbe::asset::Shader::UniformFieldType::FLOAT;
+				total_size += sizeof(float);
 			}
 			else if (member.type == "vec2") {
 				field.type = gbe::asset::Shader::UniformFieldType::VEC2;
+				total_size += sizeof(Vector2);
 			}
 			else if (member.type == "vec3") {
 				field.type = gbe::asset::Shader::UniformFieldType::VEC3;
+				total_size += sizeof(Vector3);
 			}
 			else if (member.type == "vec4") {
 				field.type = gbe::asset::Shader::UniformFieldType::VEC4;
+				total_size += sizeof(Vector4);
 			}
 			else if (member.type == "mat4") {
 				field.type = gbe::asset::Shader::UniformFieldType::MAT4;
+				total_size += sizeof(Matrix4);
 			}
 			
 			//test if there are other fields with the same name
@@ -115,21 +157,23 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 					throw std::runtime_error("Duplicate uniform field found: " + field.name + " in block " + field.block);
 				}
 			}
-			
-			uniformfields.push_back(field);
+				uniformfields.push_back(field);
 
 			prevfield = &uniformfields.back();
 		}
 
 		//for the last element with no next element, set the size to the block size
 		if (prevfield != nullptr) {
-			prevfield->size = ubo.block_size - prevfield->offset;
+			prevfield->size = block.block_size - prevfield->offset;
 		}
+
+		const auto& alignment = vulkan::PhysicalDevice::GetActive()->Get_properties().limits.minUniformBufferOffsetAlignment;
+		block.block_size_aligned = (block.block_size + alignment - 1) & ~(alignment - 1);
 
 		uniformblocks.push_back(block);
 	};
 
-	const auto AddTextureBinding = [&](const ShaderStageMeta::TextureMeta& meta, VkShaderStageFlags flags) {
+	const auto CreateTextureBinding = [&](const ShaderStageMeta::TextureMeta& meta, VkShaderStageFlags flags) {
 		VkDescriptorSetLayoutBinding color_sampler_Binding{};
 		color_sampler_Binding.binding = meta.binding;
 
@@ -138,7 +182,14 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		else
 			color_sampler_Binding.descriptorCount = 1;
 
-		color_sampler_Binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		if(meta.type == "sampler2D")
+			color_sampler_Binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		else if (meta.type == "sampler2DArray")
+			color_sampler_Binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		else
+			color_sampler_Binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+
 		color_sampler_Binding.pImmutableSamplers = nullptr;
 		color_sampler_Binding.stageFlags = flags;
 
@@ -153,20 +204,41 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 		field.type = gbe::asset::Shader::UniformFieldType::TEXTURE; // Default to TEXTURE, can be changed later
 		field.offset = 0; // Offset is not applicable for textures, set to 0
 		field.array_size = color_sampler_Binding.descriptorCount;
+		
 		uniformfields.push_back(field);
 	};
 
 	//LOOP THROUGH UBO BINDINGS
 	for (const auto& ubo : vertMeta.ubos)
-		AddUboBinding(vertMeta, ubo, VK_SHADER_STAGE_VERTEX_BIT);
+		CreateUboBinding(vertMeta, ubo, VK_SHADER_STAGE_VERTEX_BIT);
 	for (const auto& ubo : fragMeta.ubos)
-		AddUboBinding(fragMeta, ubo, VK_SHADER_STAGE_FRAGMENT_BIT);
+		CreateUboBinding(fragMeta, ubo, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	//LOOP THROUGH TEXTURE BINDINGS
 	for (const auto& meta : vertMeta.textures)
-		AddTextureBinding(meta, VK_SHADER_STAGE_VERTEX_BIT);
+		CreateTextureBinding(meta, VK_SHADER_STAGE_VERTEX_BIT);
 	for (const auto& meta : fragMeta.textures)
-		AddTextureBinding(meta, VK_SHADER_STAGE_FRAGMENT_BIT);
+		CreateTextureBinding(meta, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	//Push constants
+	std::vector<VkPushConstantRange> constants = {};
+	for (const auto& meta : vertMeta.push_constants)
+	{
+		VkPushConstantRange pcr{};
+		pcr.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		pcr.offset = 0;
+		pcr.size = GetUboSize(vertMeta, meta);
+		constants.push_back(pcr);
+	}
+	for (const auto& meta : fragMeta.push_constants)
+	{
+		VkPushConstantRange pcr{};
+		pcr.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		pcr.offset = 0;
+		pcr.size = GetUboSize(fragMeta, meta);
+		constants.push_back(pcr);
+	}
+
 
 	//COMPILE BINDINGS
 	descriptorSetLayouts.resize(binding_sets.size());
@@ -362,8 +434,8 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
 	pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+	pipelineLayoutInfo.pushConstantRangeCount = constants.size(); // Optional
+	pipelineLayoutInfo.pPushConstantRanges = constants.data(); // Optional
 
 	if (vkCreatePipelineLayout(vulkan::VirtualDevice::GetActive()->GetData(), &pipelineLayoutInfo, nullptr, &newpipelineLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout!");

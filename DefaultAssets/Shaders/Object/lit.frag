@@ -24,7 +24,7 @@ layout(set = 2, binding = 3) uniform sampler2D arm_tex;
 const int MAX_LIGHTS = 10;
 
 // Shadowmaps (should be an array)
-layout(set = 2, binding = 4) uniform sampler2D shadow_tex[MAX_LIGHTS]; // Example array
+layout(set = 2, binding = 4) uniform sampler2DArray shadow_tex; // Example array
 
 // Set 0: Global Data — lights (should be an array)
 layout(set = 0, binding = 1) uniform Light {

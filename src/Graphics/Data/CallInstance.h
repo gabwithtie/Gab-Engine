@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 namespace gbe::gfx {
     class DrawCall;
 
@@ -24,7 +26,7 @@ namespace gbe::gfx {
         };
 
         std::vector<UniformBlockBuffer> uniformBuffers;
-        std::vector<UniformTexture> uniformTextures;
+        std::unordered_map<std::string, std::vector<UniformTexture>> uniformTextures;
         vulkan::DescriptorPool* descriptorPool;
         std::vector<std::map<unsigned int, VkDescriptorSet>> allocdescriptorSets_perframe;
 
@@ -43,7 +45,7 @@ namespace gbe::gfx {
         }
 
         template<typename T>
-        inline bool ApplyOverride(const T& valueref, std::string target, unsigned int frameindex) const {
+        inline bool ApplyOverride(const T& valueref, std::string target, unsigned int frameindex, unsigned int arrayindex = 0) const {
             ShaderData::ShaderBlock blockinfo;
             ShaderData::ShaderField fieldinfo;
 
@@ -56,7 +58,7 @@ namespace gbe::gfx {
                 return false;
 
             const auto& blockaddr = reinterpret_cast<char*>(blockbuffer.uboMappedPerFrame[frameindex]);
-            const auto& finaladdr = blockaddr + fieldinfo.offset;
+            const auto& finaladdr = blockaddr + fieldinfo.offset + (blockinfo.block_size_aligned * arrayindex);
 
             const auto& sizeofvalue = sizeof(valueref);
 

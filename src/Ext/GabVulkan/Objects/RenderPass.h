@@ -19,6 +19,10 @@ namespace gbe::vulkan {
             vkDestroyRenderPass(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
         }
 
+        inline RenderPass(VkRenderPass existing) {
+            this->data = existing;
+        }
+
         inline RenderPass(VkFormat chosenFormat) {
             VkAttachmentDescription colorAttachment{};
             colorAttachment.format = chosenFormat;
@@ -77,7 +81,6 @@ namespace gbe::vulkan {
             renderPassInfo.pDependencies = &dependency;
 
             CheckSuccess(vkCreateRenderPass(VirtualDevice::GetActive()->GetData(), &renderPassInfo, nullptr, &this->data));
-
         }
     };
 }
