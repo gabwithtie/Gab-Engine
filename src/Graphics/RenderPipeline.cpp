@@ -55,11 +55,9 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
     //This new() call will be managed by the vulkan instance
 
     //3: Vulkan Initialization
-    vulkanInstance->Init(surfaceobject);
-    
-    //4: Instance renderer init
+    vulkanInstance->Init_Surface(surfaceobject);
     this->renderer = new vulkan::ForwardRenderer(); //freed by vulkan instance
-    //this->vulkanInstance->SetCustomRenderer(this->renderer);
+    vulkanInstance->Init_Renderer(this->renderer);
 
 
 	//Asset Loaders
@@ -104,7 +102,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         Matrix4 lightProjMat = light->GetProjectionMatrix();
 
         for (const auto& call_ptr : this->sortedcalls[-1]) {
-            const auto& callinstance = this->calls[call_ptr];
+            const auto& callinstance = this->calls[call_ptr][-1];
 
             //USE SHADER
             auto shaderasset = callinstance.drawcall->get_material()->Get_load_data().shader;
@@ -135,7 +133,8 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
             {
                 bindingsets.push_back(set.second);
             }
-            
+
+            vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
             vkCmdBindIndexBuffer(vulkanInstance->GetCurrentCommandBuffer()->GetData(), curmesh.indexBuffer->GetData(), 0, VK_INDEX_TYPE_UINT16);
             vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(curmesh.loaddata->indices.size()), 1, 0, 0, 0);
         }
@@ -148,7 +147,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
     for (const auto& call_ptr : sortedcalls[0])
     {
-        const auto& callinstance = this->calls[call_ptr];
+        const auto& callinstance = this->calls[call_ptr][0];
 
         //USE SHADER
         auto shaderasset = callinstance.drawcall->get_material()->Get_load_data().shader;
@@ -304,7 +303,7 @@ std::vector<unsigned char> gbe::RenderPipeline::ScreenShot(bool write_file) {
     // Check if source is BGR
     // Note: Not complete, only contains most common and basic BGR surface formats for demonstration purposes
     std::vector<VkFormat> formatsBGR = { VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM };
-    colorSwizzle = (std::find(formatsBGR.begin(), formatsBGR.end(), vulkan::SwapChain::GetActive()->GetFormat().format) != formatsBGR.end());
+    colorSwizzle = (std::find(formatsBGR.begin(), formatsBGR.end(), vulkan::PhysicalDevice::GetActive()->Get_swapchainFormat().format) != formatsBGR.end());
     
     // ppm binary pixel data
     for (uint32_t y = 0; y < this->resolution.y; y++)
@@ -363,8 +362,12 @@ DrawCall* gbe::RenderPipeline::GetDefaultDrawCall()
 gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order)
 {
     bool exists = this->calls.find(instance_id) != this->calls.end();
+    bool exists_index = false;
     
     if (exists)
+        exists_index = this->calls[instance_id].find(order) != this->calls[instance_id].end();
+
+    if (exists_index)
 		throw new std::runtime_error("Instance already registered!");
 
     //FORCE UPDATE OVERRIDES
@@ -545,32 +548,37 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
     }
 
     //COMMITTING
-    this->calls.insert_or_assign(instance_id, newinst);
+    if(!exists)
+        this->calls[instance_id] = {};
+
+    this->calls[instance_id][order] = newinst;
     if (sortedcalls.find(order) == sortedcalls.end())
         sortedcalls[order] = std::vector<void*>();
     sortedcalls.find(order)->second.push_back(instance_id);
 
-    return &this->calls[instance_id].model;
+    return &this->calls[instance_id][order].model;
 }
 
-void gbe::RenderPipeline::UnRegisterCall(void* instance_id)
+void gbe::RenderPipeline::UnRegisterCall(void* instance_id, int order)
 {
-    auto it = this->calls.find(instance_id);
-    bool exists = it != this->calls.end();
+    auto iter = Instance->calls.find(instance_id);
+    bool exists = iter != Instance->calls.end();
     
+    auto callinst = iter->second[order];
+
     if (!exists)
 		throw new std::runtime_error("CallInstance does not exist!");
 
-    for (size_t i = 0; i < it->second.uniformBuffers.size(); i++)
+    for (size_t i = 0; i < callinst.uniformBuffers.size(); i++)
     {
-        for (size_t j = 0; j < it->second.uniformBuffers[i].uboPerFrame.size(); j++)
+        for (size_t j = 0; j < callinst.uniformBuffers[i].uboPerFrame.size(); j++)
         {
-            vulkan::VirtualDevice::GetActive()->UnMapMemory(it->second.uniformBuffers[i].uboPerFrame[j]->GetMemory());
-            delete it->second.uniformBuffers[i].uboPerFrame[j];
+            vulkan::VirtualDevice::GetActive()->UnMapMemory(callinst.uniformBuffers[i].uboPerFrame[j]->GetMemory());
+            delete callinst.uniformBuffers[i].uboPerFrame[j];
         }
     }
 
-    auto& sortvec = sortedcalls.find(it->second.order)->second;
+    auto& sortvec = Instance->sortedcalls.find(callinst.order)->second;
     for (size_t i = 0; i < sortvec.size(); i++)
     {
         if (sortvec[i] == instance_id) {
@@ -579,5 +587,5 @@ void gbe::RenderPipeline::UnRegisterCall(void* instance_id)
         }
     }
 
-    this->calls.erase(instance_id);
+    Instance->calls.erase(instance_id);
 }

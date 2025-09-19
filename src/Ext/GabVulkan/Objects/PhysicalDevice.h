@@ -17,7 +17,18 @@ namespace gbe::vulkan {
 		std::vector<VkSurfaceFormatKHR> formats;
 		std::vector<VkPresentModeKHR> presentModes;
 
+		VkSurfaceFormatKHR swapchainFormat;
+		VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+
 	public:
+		inline VkSurfaceFormatKHR Get_swapchainFormat() {
+			return swapchainFormat;
+		}
+
+		inline VkPresentModeKHR Get_swapchainPresentMode() {
+			return swapchainPresentMode;
+		}
+
 		inline VkSurfaceCapabilitiesKHR Get_capabilities() const {
 			return capabilities;
 		}
@@ -92,6 +103,20 @@ namespace gbe::vulkan {
 			if (graphicsQueueIndex == UINT32_MAX || presentQueueIndex == UINT32_MAX) {
 				throw std::runtime_error("failed to find a suitable queue family!");
 			}
+
+			//format selection
+			for (const auto& availableFormat : formats) {
+				if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+					swapchainFormat = availableFormat;
+					break;
+				}
+			}
+			//presentation mode selection
+			for (const auto& availablePresentMode : presentModes) {
+				if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+					swapchainPresentMode = availablePresentMode;
+				}
+			}
 		}
 
 		inline bool IsCompatible(std::set<std::string> requiredExtensions) const {
@@ -142,6 +167,14 @@ namespace gbe::vulkan {
 			}
 
 			throw std::runtime_error("failed to find supported format!");
+		}
+
+		inline VkFormat GetDepthFormat() {
+			return FindSupportedFormat(
+				{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+				VK_IMAGE_TILING_OPTIMAL,
+				VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+			);
 		}
 	};
 }

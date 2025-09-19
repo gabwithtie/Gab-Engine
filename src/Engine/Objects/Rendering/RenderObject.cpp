@@ -18,6 +18,18 @@ const std::unordered_map<gbe::RenderObject::PrimitiveType, std::string> gbe::Ren
 	{ PrimitiveType::plane, "Plane" }
 };
 
+void gbe::RenderObject::SetShadowCaster(bool v)
+{
+	if (v) {
+		mDrawCall_shadow = RenderPipeline::RegisterDrawCall(this->mDrawCall->get_mesh(), asset::Material::GetAssetById("simple"));
+		to_update_shadow = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall_shadow, this->World().GetMatrix(), -1);
+	}
+	else {
+		RenderPipeline::UnRegisterCall(mDrawCall_shadow, -1);
+		to_update_shadow = nullptr;
+	}
+}
+
 gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 {
 	this->order = order;
@@ -29,15 +41,15 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 
 	auto texture_field = new gbe::editor::InspectorAsset<TextureLoader, asset::Texture>();
 	texture_field->name = "Texture";
-	texture_field->choice = (asset::internal::BaseAsset_base**)&this->_tex;
+	texture_field->choice = (asset::internal::BaseAsset_base**)&this->input_tex;
 
 	auto mesh_field = new gbe::editor::InspectorAsset<MeshLoader, asset::Mesh>();
 	mesh_field->name = "Mesh";
-	mesh_field->choice = (asset::internal::BaseAsset_base**)&this->_mesh;
+	mesh_field->choice = (asset::internal::BaseAsset_base**)&this->input_mesh;
 
 	auto mat_field = new gbe::editor::InspectorAsset<MaterialLoader, asset::Material>();
 	mat_field->name = "Material";
-	mat_field->choice = (asset::internal::BaseAsset_base**)&this->_mat;
+	mat_field->choice = (asset::internal::BaseAsset_base**)&this->input_mat;
 
 	auto refresh_field = new gbe::editor::InspectorButton();
 	refresh_field->name = "Refresh Drawcall";
@@ -46,9 +58,9 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 		if(old_drawcall != nullptr)
 			RenderPipeline::Get_Instance()->UnRegisterCall(this);
 
-		this->_mat->setOverride("colortex", this->_tex);
+		this->input_mat->setOverride("colortex", this->input_tex);
 
-		this->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(this->_mesh, this->_mat);
+		this->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(this->input_mesh, this->input_mat);
 		this->to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->World().GetMatrix(), order);
 		};
 
@@ -74,10 +86,10 @@ gbe::RenderObject::~RenderObject()
 
 void gbe::RenderObject::InvokeEarlyUpdate()
 {
-	if (to_update == nullptr)
-		return;
-
-	*to_update = this->World().GetMatrix();
+	if (to_update != nullptr)
+		*to_update = this->World().GetMatrix();
+	if (to_update_shadow != nullptr)
+		*to_update_shadow = this->World().GetMatrix();
 }
 
 void gbe::RenderObject::On_Change_enabled(bool _to) {
@@ -98,22 +110,22 @@ gbe::SerializedObject gbe::RenderObject::Serialize() {
 	data.serialized_variables.insert_or_assign("primitive", PrimitiveTypeStr(this->ptype));
 
 	std::string mesh_str;
-	if (this->_mesh != nullptr)
-		mesh_str = this->_mesh->Get_asset_filepath().string();
+	if (this->input_mesh != nullptr)
+		mesh_str = this->input_mesh->Get_asset_filepath().string();
 	else
 		mesh_str = "";
 	data.serialized_variables.insert_or_assign("mesh", mesh_str);
 
 	std::string tex_str;
-	if (this->_tex != nullptr)
-		tex_str = this->_tex->Get_asset_filepath().string();
+	if (this->input_tex != nullptr)
+		tex_str = this->input_tex->Get_asset_filepath().string();
 	else
 		tex_str = "";
 	data.serialized_variables.insert_or_assign("tex", tex_str);
 
 	std::string mat_str;
-	if (this->_tex != nullptr)
-		mat_str = this->_mat->Get_asset_filepath().string();
+	if (this->input_tex != nullptr)
+		mat_str = this->input_mat->Get_asset_filepath().string();
 	else
 		mat_str = "";
 	data.serialized_variables.insert_or_assign("mat", mat_str);
@@ -127,13 +139,13 @@ gbe::Object* gbe::RenderObject::Create(gbe::SerializedObject data) {
 	if (_ptype == PrimitiveTypeStr(PrimitiveType::NONE)) {
 		auto newobj = new RenderObject(nullptr);
 
-		newobj->_mesh = MeshLoader::GetAssetByPath(data.serialized_variables["mesh"]);
-		newobj->_mat = MaterialLoader::GetAssetByPath(data.serialized_variables["mat"]);
-		newobj->_tex = TextureLoader::GetAssetByPath(data.serialized_variables["tex"]);
+		newobj->input_mesh = MeshLoader::GetAssetByPath(data.serialized_variables["mesh"]);
+		newobj->input_mat = MaterialLoader::GetAssetByPath(data.serialized_variables["mat"]);
+		newobj->input_tex = TextureLoader::GetAssetByPath(data.serialized_variables["tex"]);
 
-		newobj->_mat->setOverride("colortex", newobj->_tex);
+		newobj->input_mat->setOverride("colortex", newobj->input_tex);
 
-		newobj->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(newobj->_mesh, newobj->_mat);
+		newobj->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(newobj->input_mesh, newobj->input_mat);
 		newobj->to_update = RenderPipeline::Get_Instance()->RegisterCall(newobj, newobj->mDrawCall, newobj->World().GetMatrix(), newobj->order);
 
 		return newobj;

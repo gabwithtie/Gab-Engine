@@ -198,6 +198,7 @@ namespace gbe {
 			meshcollider->Local().position.Set(Vector3(0, 0, 0));
 			RenderObject* platform_renderer = new RenderObject(ptype);
 			platform_renderer->SetParent(parent);
+			platform_renderer->SetShadowCaster(true);
 
 			return parent;
 			};
@@ -230,6 +231,8 @@ namespace gbe {
 #pragma endregion
 
 #pragma region scene objects
+		auto test_sphere = create_primitive(gbe::RenderObject::sphere, Vector3(0, 2, 0), Vector3(1));
+		
 		Vector3 cubecorners[4] = {
 			Vector3(-2, 0, -2),
 			Vector3(2, 0, -2),

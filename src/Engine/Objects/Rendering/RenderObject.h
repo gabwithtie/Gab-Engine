@@ -27,13 +27,17 @@ namespace gbe {
 		static std::unordered_map<PrimitiveType, gfx::DrawCall*> primitive_drawcalls;
 
 		//CONSTRUCTION INFO
-		asset::Mesh* _mesh = nullptr;
-		asset::Texture* _tex = nullptr;
-		asset::Material* _mat = nullptr;
+		asset::Mesh* input_mesh = nullptr;
+		asset::Texture* input_tex = nullptr;
+		asset::Material* input_mat = nullptr;
 
 		//RENDERING CACHE
 		gfx::DrawCall* mDrawCall = nullptr;
 		Matrix4* to_update = nullptr;
+
+		gfx::DrawCall* mDrawCall_shadow = nullptr;
+		Matrix4* to_update_shadow = nullptr;
+
 		PrimitiveType ptype = PrimitiveType::NONE;
 	protected:
 		void On_Change_enabled(bool _to) override;
@@ -41,6 +45,8 @@ namespace gbe {
 		static inline void RegisterPrimitiveDrawcall(PrimitiveType ptype, gfx::DrawCall* drawtype) {
 			primitive_drawcalls.insert_or_assign(ptype, drawtype);
 		}
+
+		void SetShadowCaster(bool v);
 
 		RenderObject(gfx::DrawCall* mDrawCall);
 		RenderObject(PrimitiveType ptype);

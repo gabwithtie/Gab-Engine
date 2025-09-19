@@ -24,12 +24,13 @@
 #include "VirtualDevice.h"
 #include "CommandBuffer.h"
 #include "Structures/FrameSyncronizationObject.h"
+#include "Structures/AttachmentDictionary.h"
 
 
 namespace gbe::vulkan {
     class Instance : public VulkanObject<VkInstance, Instance>, public VulkanObjectSingleton<Instance> {
     
-        //INSTANCE INFO
+        //INFOs
         VkDebugUtilsMessengerEXT debugMessenger = nullptr;
         bool enableValidationLayers = false;
 
@@ -37,19 +38,21 @@ namespace gbe::vulkan {
         int &y;
         int MAX_FRAMES_IN_FLIGHT = 2;
 
+        AttachmentDictionary attachmentDictionary;
+        
         //STATES
         uint32_t currentFrame = 0;
         uint32_t currentSwapchainImage = 0;
         
         //==============DYNAMICALLY ALLOCATED============
-        Surface* surface;
-        PhysicalDevice* physicalDevice;
-        VirtualDevice* virtualDevice;
-        vulkan::SwapChain* swapchain; //remember that images are arbitrary
-        RenderPass* renderPass;
-        Image* depthImage;
-        ImageView* depthImageView;
-        CommandPool* commandPool;
+        Surface* surface = nullptr;
+        PhysicalDevice* physicalDevice = nullptr;
+        VirtualDevice* virtualDevice = nullptr;
+        vulkan::SwapChain* swapchain = nullptr; //remember that images are arbitrary
+        RenderPass* renderPass = nullptr;
+        Image* depthImage = nullptr;
+        ImageView* depthImageView = nullptr;
+        CommandPool* commandPool = nullptr;
         std::vector<CommandBuffer*> commandBuffers; //buffers per frame
         std::vector<FrameSyncronizationObject*> frameSynchronizationObjects; //sync objects per frame
 
@@ -164,9 +167,9 @@ namespace gbe::vulkan {
             }
         }
 
-        inline void Init(Surface* _surface) {
+        inline void Init_Surface(Surface* _surface) {
             //===================SURFACE SET UP===================//
-            
+
             surface = _surface;
             Surface::SetActive(surface);
             //reconstruct because surface is expected to be constructed using dereferencing.
@@ -213,9 +216,6 @@ namespace gbe::vulkan {
             virtualDevice = new VirtualDevice(PhysicalDevice::GetActive(), deviceExtensionNames);
             VirtualDevice::SetActive(virtualDevice);
 
-            //======================OBJECT SETUP========================
-            this->InitializePipelineObjects();
-
             //======================CommandPool SETUP========================
             commandPool = new CommandPool();
             CommandPool::SetActive(commandPool);
@@ -226,14 +226,14 @@ namespace gbe::vulkan {
             {
                 commandBuffers[i] = new CommandBuffer(commandPool->GetData());
             }
+        }
+
+        inline void Init_Renderer(Renderer* _customrenderer) {
+            this->customRenderer = _customrenderer;
+            this->customRenderer->AppendRequiredAttachments(this->attachmentDictionary);
 
             //======================DISPLAY SETUP========================
-            this->InitializePipelineAttachments();
-            this->swapchain->InitializeFramebuffers({ depthImageView->GetData() }, renderPass);
-
-            if (customRenderer != nullptr) {
-                
-            }
+            this->RefreshPipelineObjects();
 
             //======================SYNCHRONIZATION SETUP========================
             this->frameSynchronizationObjects.resize(MAX_FRAMES_IN_FLIGHT);
@@ -243,28 +243,28 @@ namespace gbe::vulkan {
             }
         }
 
-        inline void InitializePipelineObjects() {
+        inline void RefreshPipelineObjects() {
+            vkDeviceWaitIdle(VirtualDevice::GetActive()->GetData());
+
+            //DELETE PipelineObjects
+            if (swapchain != nullptr)
+                delete swapchain;
+            if (renderPass != nullptr)
+                delete renderPass;
+
+            //DELETE PipelineAttachments
+            if (depthImage != nullptr)
+                delete depthImage;
+            if (depthImageView != nullptr)
+                delete depthImageView;
+
+            if (customRenderer != nullptr) {
+                this->customRenderer->Refresh();
+            }
+
             PhysicalDevice::GetActive()->Refresh();
 
             //==============SWAPCHAIN================
-            //format selection
-            VkSurfaceFormatKHR chosenFormat;
-
-            for (const auto& availableFormat : PhysicalDevice::GetActive()->Get_formats()) {
-                if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-                    chosenFormat = availableFormat;
-                    break;
-                }
-            }
-            //presentation mode selection
-            VkPresentModeKHR chosenPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-
-            for (const auto& availablePresentMode : PhysicalDevice::GetActive()->Get_presentModes()) {
-                if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-                    chosenPresentMode = availablePresentMode;
-                }
-            }
-
             //swapchain extent selection
             VkExtent2D swapchainExtent = {
                 static_cast<uint32_t>(this->x),
@@ -280,51 +280,26 @@ namespace gbe::vulkan {
                 imageCount = PhysicalDevice::GetActive()->Get_capabilities().maxImageCount;
             }
 
-            swapchain = new SwapChain(chosenFormat, chosenPresentMode, swapchainExtent, imageCount);
+            if (swapchain != nullptr)
+                delete swapchain;
+
+            swapchain = new SwapChain(swapchainExtent, imageCount);
             SwapChain::SetActive(swapchain);
 
-            //==============RENDERPASS================
-            if (this->customRenderer != nullptr)
-                renderPass = this->customRenderer->CreateRenderPass();
-            else
-                renderPass = new RenderPass(chosenFormat.format);
-
+            renderPass = this->customRenderer->CreateRenderPass(this->attachmentDictionary);
             RenderPass::SetActive(renderPass);
-        }
 
-        inline void RefreshPipelineObjects() {
-            vkDeviceWaitIdle(VirtualDevice::GetActive()->GetData());
+            AttachmentReferencePasser newpasser(this->attachmentDictionary);
 
-            //DELETE PipelineObjects
-			delete swapchain;
-            delete renderPass;
+            customRenderer->PassAttachmentReferences(newpasser);
 
-            //DELETE PipelineAttachments
-            delete depthImage;
-            delete depthImageView;
-
-            if (customRenderer != nullptr) {
-                this->customRenderer->Refresh();
-            }
-
-            this->InitializePipelineObjects();
-            this->InitializePipelineAttachments();
-            this->swapchain->InitializeFramebuffers({depthImageView->GetData()}, renderPass);
-        }
-
-        inline void InitializePipelineAttachments()
-        {
-            //==============DEPTH=================//
-            auto depthformat = PhysicalDevice::GetActive()->FindSupportedFormat(
-                { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-                VK_IMAGE_TILING_OPTIMAL,
-                VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-            );
-
+            auto depthformat = PhysicalDevice::GetActive()->GetDepthFormat();
             depthImage = new Image(this->x, this->y, depthformat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
             depthImageView = new ImageView(depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
-
             depthImage->transitionImageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            newpasser.PassView("depth", depthImageView->GetData());
+
+            this->swapchain->InitializeFramebuffers(newpasser, renderPass);
         }
 
         inline ~Instance()

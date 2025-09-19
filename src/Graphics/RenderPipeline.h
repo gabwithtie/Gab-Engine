@@ -59,7 +59,7 @@ namespace gbe {
 		DrawCall* default_drawcall;
 		std::vector<DrawCall*> drawcalls;
 
-		std::unordered_map<void*, CallInstance> calls;
+		std::unordered_map<void*, std::map<int, CallInstance>> calls;
 		std::map<int, std::vector<void*>> sortedcalls;
 		
 		//============DYNAMICALLY ALLOCATED=======================//
@@ -95,6 +95,6 @@ namespace gbe {
 		std::vector<unsigned char> ScreenShot(bool write_file = false);
 
 		Matrix4* RegisterCall(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order = 0);
-		void UnRegisterCall(void* instance_id);
+		static void UnRegisterCall(void* instance_id, int order = 0);
 	};
 }

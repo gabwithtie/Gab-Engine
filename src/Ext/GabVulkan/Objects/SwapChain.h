@@ -6,11 +6,13 @@
 #include "Surface.h"
 #include "FrameBuffer.h"
 #include "RenderPass.h"
+#include "PhysicalDevice.h"
+
+#include "Structures/AttachmentReferencePasser.h"
 
 namespace gbe::vulkan {
 	class SwapChain : public VulkanObject<VkSwapchainKHR, SwapChain>, public VulkanObjectSingleton<SwapChain> {
 
-		VkSurfaceFormatKHR chosenFormat;
 		VkExtent2D swapchainExtent;
 
         //================DYNAMICALLY ALLOCATED=====================// 
@@ -23,10 +25,6 @@ namespace gbe::vulkan {
 		inline void RegisterDependencies() override {
 
 		}
-
-        inline VkSurfaceFormatKHR& GetFormat() {
-            return chosenFormat;
-        }
 
         inline Image* GetImage(int index) {
             return swapChainImages[index];
@@ -55,18 +53,14 @@ namespace gbe::vulkan {
             vkDestroySwapchainKHR(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
         }
 
-		inline SwapChain(VkSurfaceFormatKHR _chosenFormat, VkPresentModeKHR chosenPresentMode, VkExtent2D _swapchainExtent, uint32_t imageCount) {
-            
-            chosenFormat = _chosenFormat;
-            swapchainExtent = _swapchainExtent;
-
+		inline SwapChain(VkExtent2D _swapchainExtent, uint32_t imageCount) {
             VkSwapchainCreateInfoKHR swapchainInfo{};
             swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
             swapchainInfo.surface = Surface::GetActive()->GetData();
 
             swapchainInfo.minImageCount = imageCount;
-            swapchainInfo.imageFormat = chosenFormat.format;
-            swapchainInfo.imageColorSpace = chosenFormat.colorSpace;
+            swapchainInfo.imageFormat = PhysicalDevice::GetActive()->Get_swapchainFormat().format;
+            swapchainInfo.imageColorSpace = PhysicalDevice::GetActive()->Get_swapchainFormat().colorSpace;
             swapchainInfo.imageExtent = swapchainExtent;
             swapchainInfo.imageArrayLayers = 1;
             swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
@@ -86,7 +80,7 @@ namespace gbe::vulkan {
 
             swapchainInfo.preTransform = PhysicalDevice::GetActive()->Get_capabilities().currentTransform;
             swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-            swapchainInfo.presentMode = chosenPresentMode;
+            swapchainInfo.presentMode = PhysicalDevice::GetActive()->Get_swapchainPresentMode();
             swapchainInfo.clipped = VK_TRUE;
             swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
 
@@ -101,7 +95,7 @@ namespace gbe::vulkan {
 
             for (auto& vkimg : swapchain_vkimages)
             {
-                swapChainImages.push_back(new Image(vkimg, VK_IMAGE_LAYOUT_UNDEFINED, chosenFormat.format, swapchainExtent.width, swapchainExtent.height));
+                swapChainImages.push_back(new Image(vkimg, VK_IMAGE_LAYOUT_UNDEFINED, PhysicalDevice::GetActive()->Get_swapchainFormat().format, swapchainExtent.width, swapchainExtent.height));
             }
 
             //Image views
@@ -112,12 +106,11 @@ namespace gbe::vulkan {
             }
 		}
 
-        inline void InitializeFramebuffers(std::vector<VkImageView> attachments, RenderPass* renderPass) {
-this->swapChainFramebuffers.resize(this->swapChainImageViews.size());
+        inline void InitializeFramebuffers(AttachmentReferencePasser& attachments, RenderPass* renderPass) {
+            this->swapChainFramebuffers.resize(this->swapChainImageViews.size());
             for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-                std::vector<VkImageView> attachmentsperfb(attachments);
-                attachmentsperfb.insert(attachmentsperfb.begin(), swapChainImageViews[i]->GetData());
-                swapChainFramebuffers[i] = new Framebuffer(swapchainExtent.width, swapchainExtent.height, renderPass, attachmentsperfb);
+                attachments.PassView("color", swapChainImageViews[i]->GetData());
+                swapChainFramebuffers[i] = new Framebuffer(swapchainExtent.width, swapchainExtent.height, renderPass, attachments);
             }
         }
     };
