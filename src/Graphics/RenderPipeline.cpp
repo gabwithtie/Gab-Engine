@@ -96,8 +96,10 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
     renderer->StartShadowPass();
 
     // Loop through each light that casts a shadow.
-    int lightIndex = 0;
-    for (const auto& light : frameinfo.lightdatas) {
+    for (size_t lightIndex = 0; lightIndex < frameinfo.lightdatas.size(); lightIndex++)
+    {
+        const auto& light = frameinfo.lightdatas[lightIndex];
+
         // Update the light's view and projection matrices.
         Matrix4 lightViewMat = light->GetViewMatrix();
         Matrix4 lightProjMat = light->GetProjectionMatrix();
@@ -139,7 +141,6 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
             vkCmdBindIndexBuffer(vulkanInstance->GetCurrentCommandBuffer()->GetData(), curmesh.indexBuffer->GetData(), 0, VK_INDEX_TYPE_UINT16);
             vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(curmesh.loaddata->indices.size()), 1, 0, 0, 0);
         }
-        lightIndex++;
     }
 
     //==================SECOND PASS [1]========================//
@@ -170,22 +171,33 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
         callinstance.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
 
-        size_t light_index = 0;
+        TextureData shadowmaptex = {};
+        renderer->Get_image_data(shadowmaptex.textureImage, shadowmaptex.textureImageView, shadowmaptex.textureSampler);
+        callinstance.ApplyOverride<TextureData>(shadowmaptex, "shadow_tex", vulkanInstance->GetCurrentFrameIndex());
 
+        size_t light_index = 0;
         for (const auto& light : frameinfo.lightdatas)
         {
             if (light_index == renderer->Get_max_lights())
                 break;
 
+            callinstance.ApplyOverride<Matrix4>(light->GetViewMatrix(), "light_view", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            callinstance.ApplyOverride<Matrix4>(light->GetProjectionMatrix(), "light_proj", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            callinstance.ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            
             switch (light->type)
             {
             case Light::DIRECTIONAL:
-                callinstance.ApplyOverride<Vector3>(light->direction, "light_view", vulkanInstance->GetCurrentFrameIndex());
-                callinstance.ApplyOverride<Vector3>(light->color, "light_proj", vulkanInstance->GetCurrentFrameIndex());
                 break;
             }
 
             light_index++;
+        }
+
+        //RESET DATA OF THE REST OF THE LIGHT SETS
+        for (size_t i = light_index; i < renderer->Get_max_lights(); i++)
+        {
+            callinstance.ApplyOverride<Vector3>(Vector3(0), "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
         }
 
         VkBuffer vertexBuffers[] = { curmesh.vertexBuffer->GetData() };

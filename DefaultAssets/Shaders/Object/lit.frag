@@ -107,7 +107,7 @@ void main() {
         float shadow = currentDepth - bias > closestDepth ? 0.0 : 1.0;
 
         // REVISED: Apply shadow factor to lighting
-        final_result += (diffuse + specular) * shadow;
+        final_result += shadow;
     }
 
     outColor = vec4(final_result, 1.0);

@@ -70,6 +70,7 @@ namespace gbe::gfx {
             return true;
         }
 
+        template <>
         inline bool ApplyOverride<TextureData>(const TextureData& valueref, std::string target, unsigned int frameindex, unsigned int arrayindex) const {
             ShaderData::ShaderField fieldinfo;
             ShaderData::ShaderBlock blockinfo;

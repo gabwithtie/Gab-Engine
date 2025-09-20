@@ -28,6 +28,16 @@ namespace gbe::vulkan {
         RenderPass* shadow_pass = nullptr;
 
     public:
+        inline void Get_image_data(
+            Image*& shadow_image_array_ptr,
+            ImageView*& shadow_imageview_ptr,
+            Sampler*& shadow_sampler_ptr
+        ) {
+            shadow_image_array_ptr = shadow_image_array;
+            shadow_imageview_ptr = shadow_imageview;
+            shadow_sampler_ptr = shadow_sampler;
+        }
+
         inline uint32_t Get_max_lights()
         {
             return max_lights;
