@@ -4,7 +4,7 @@ message("[GBE EXTERNAL] Building Library "${LIB_NAME})
 add_library(${LIB_NAME}
 	"GabVulkan.cpp" 
 	"Utility/DebugObjectName.cpp"
-	"Objects/Buffer.cpp"  "Objects/Structures/AttachmentDictionary.h" "Objects/Structures/AttachmentReferencePasser.h")
+	"Objects/Buffer.cpp"  "Objects/Structures/AttachmentDictionary.h" "Objects/Structures/AttachmentReferencePasser.h" "VulkanDictionarySingleton.h")
 
 find_package(Vulkan REQUIRED)
 if (Vulkan_FOUND)

@@ -455,7 +455,14 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = newpipelineLayout;
-	pipelineInfo.renderPass = vulkan::RenderPass::GetActive()->GetData();
+
+	std::string renderpass_id = "main";
+
+	if (importdata.renderpass.size() > 0) {
+		renderpass_id = importdata.renderpass;
+	}
+
+	pipelineInfo.renderPass = vulkan::RenderPass::GetActive(renderpass_id)->GetData();
 	pipelineInfo.subpass = 0;
 
 	VkPipeline newgraphicsPipeline;

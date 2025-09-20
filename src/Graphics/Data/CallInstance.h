@@ -69,5 +69,34 @@ namespace gbe::gfx {
 
             return true;
         }
+
+        inline bool ApplyOverride<TextureData>(const TextureData& valueref, std::string target, unsigned int frameindex, unsigned int arrayindex) const {
+            ShaderData::ShaderField fieldinfo;
+            ShaderData::ShaderBlock blockinfo;
+            bool found = shaderdata->FindUniformField(target, fieldinfo, blockinfo);
+            if (!found)
+                return false;
+            
+            //CREATE NEW DESCRIPTOR WRITE
+            VkDescriptorImageInfo imageInfo{};
+
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = valueref.textureImageView->GetData();
+            imageInfo.sampler = valueref.textureSampler->GetData();
+
+            VkWriteDescriptorSet descriptorWrite{};
+
+            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet = this->allocdescriptorSets_perframe[frameindex].at(fieldinfo.set);
+            descriptorWrite.dstBinding = fieldinfo.binding;
+            descriptorWrite.dstArrayElement = 0;
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptorWrite.descriptorCount = 1;
+            descriptorWrite.pImageInfo = &imageInfo;
+
+            vkUpdateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), static_cast<uint32_t>(1), &descriptorWrite, 0, nullptr);
+
+            return true;
+        }
     };
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../VulkanObject.h"
-#include "../VulkanObjectSingleton.h"
+#include "../VulkanDictionarySingleton.h"
 #include "Structures/AttachmentDictionary.h"
 
 #include "VirtualDevice.h"
@@ -9,7 +9,7 @@
 #include <array>
 
 namespace gbe::vulkan {
-    class RenderPass : public VulkanObject<VkRenderPass, RenderPass>, public VulkanObjectSingleton<RenderPass> {
+    class RenderPass : public VulkanObject<VkRenderPass, RenderPass>, public VulkanDictionarySingleton<RenderPass> {
 
     public:
         inline void RegisterDependencies() override {

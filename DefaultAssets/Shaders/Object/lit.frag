@@ -24,12 +24,13 @@ layout(set = 2, binding = 3) uniform sampler2D arm_tex;
 const int MAX_LIGHTS = 10;
 
 // Shadowmaps (should be an array)
-layout(set = 2, binding = 4) uniform sampler2DArray shadow_tex; // Example array
+layout(set = 2, binding = 4) uniform sampler2DArray shadow_tex;
 
 // Set 0: Global Data — lights (should be an array)
 layout(set = 0, binding = 1) uniform Light {
+    mat4 light_view;
+    mat4 light_proj;
     vec3 light_color;
-    vec3 light_direction;
     int light_type;
     float light_range;
 } lights[MAX_LIGHTS]; // Example array with a defined size
@@ -65,31 +66,48 @@ void main() {
     if(has_arm_tex > 0) { //ARM TEXTURE
         vec3 arm_data = texture(arm_tex, fragTexCoord).rgb;
         _roughness = arm_data.g;
-        _metallic = arm_data.b; 
+        _metallic = arm_data.b;
     }
     _normal = normalize(_normal);
 
     vec3 final_result = _tint;
 
-    // Loop through each light
+    // --- Lighting Loop ---
     for (int i = 0; i < MAX_LIGHTS; ++i) {
-        // Lighting
-        vec3 lightdelta = normalize(-lights[i].light_direction);
+        // REVISED: Derive light direction from the view matrix.
+        // The light is assumed to shine along its local -Z axis.
+        // In a column-major view matrix, the Z-axis in world space is the third column.
+        // The vector *towards* the light is the negative of the light's direction.
+        vec3 lightDir = -normalize(vec3(lights[i].light_view[0][2], lights[i].light_view[1][2], lights[i].light_view[2][2]));
 
         // Diffuse component
-        float diff = max(dot(_normal, lightdelta), 0.0);
-        vec3 diffuse = _color * diff * lights[i].light_color; // Use the light's color
+        float diff = max(dot(_normal, lightDir), 0.0);
+        vec3 diffuse = _color * diff * lights[i].light_color;
 
         // Specular component
         vec3 viewDir = normalize(camera_pos - fragPos);
-        vec3 reflectDir = reflect(-lightdelta, _normal);
+        vec3 reflectDir = reflect(-lightDir, _normal);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), (1.0 - _roughness) * 128.0 + 1.0);
-        vec3 specular = vec3(spec, spec, spec) * _metallic * lights[i].light_color;
+        vec3 specular = vec3(spec) * _metallic * lights[i].light_color;
 
-        final_result += diffuse + specular;
+        // *** SHADOW MAPPING LOGIC ***
+        // 1. Transform fragment position to light's clip space
+        vec4 fragPosLightSpace = lights[i].light_proj * lights[i].light_view * vec4(fragPos, 1.0);
+        // 2. Perform perspective divide
+        vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+        // 3. Transform to [0,1] range for texture coordinates
+        projCoords = projCoords * 0.5 + 0.5;
+        // 4. Get depth from shadow map (using current light index for the array layer)
+        float closestDepth = texture(shadow_tex, vec3(projCoords.xy, i)).r;
+        // 5. Get current fragment's depth from light's perspective
+        float currentDepth = projCoords.z;
+        // 6. Calculate bias to prevent shadow acne
+        float bias = max(0.05 * (1.0 - dot(_normal, lightDir)), 0.005);
+        // 7. Check if fragment is in shadow
+        float shadow = currentDepth - bias > closestDepth ? 0.0 : 1.0;
 
-        // NOTE: You would add shadow mapping calculations here
-        // e.g., sample from shadow_tex[i]
+        // REVISED: Apply shadow factor to lighting
+        final_result += (diffuse + specular) * shadow;
     }
 
     outColor = vec4(final_result, 1.0);

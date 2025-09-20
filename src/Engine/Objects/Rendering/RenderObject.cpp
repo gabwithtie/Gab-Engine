@@ -21,10 +21,13 @@ const std::unordered_map<gbe::RenderObject::PrimitiveType, std::string> gbe::Ren
 void gbe::RenderObject::SetShadowCaster(bool v)
 {
 	if (v) {
-		mDrawCall_shadow = RenderPipeline::RegisterDrawCall(this->mDrawCall->get_mesh(), asset::Material::GetAssetById("simple"));
+		if (to_update_shadow != nullptr)
+			return;
+
+		mDrawCall_shadow = RenderPipeline::RegisterDrawCall(this->mDrawCall->get_mesh(), asset::Material::GetAssetById("shadow"));
 		to_update_shadow = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall_shadow, this->World().GetMatrix(), -1);
 	}
-	else {
+	else if(to_update_shadow != nullptr) {
 		RenderPipeline::UnRegisterCall(mDrawCall_shadow, -1);
 		to_update_shadow = nullptr;
 	}

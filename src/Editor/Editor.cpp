@@ -75,7 +75,7 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	init_info.MinImageCount = 3;
 	init_info.ImageCount = 3;
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-	init_info.RenderPass = vulkan::RenderPass::GetActive()->GetData();
+	init_info.RenderPass = vulkan::RenderPass::GetActive("main")->GetData();
 	ImGui_ImplVulkan_Init(&init_info); //init for vulkan
 
 	/*

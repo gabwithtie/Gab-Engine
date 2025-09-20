@@ -170,21 +170,22 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
         callinstance.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
 
-        std::map<Light::LightType, int> tally;
+        size_t light_index = 0;
 
         for (const auto& light : frameinfo.lightdatas)
         {
+            if (light_index == renderer->Get_max_lights())
+                break;
+
             switch (light->type)
             {
             case Light::DIRECTIONAL:
-                if (tally[Light::DIRECTIONAL] == 0) { // limit to one directional light
-                    callinstance.ApplyOverride<Vector3>(light->direction, "light_direction", vulkanInstance->GetCurrentFrameIndex());
-                    callinstance.ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex());
-                }
+                callinstance.ApplyOverride<Vector3>(light->direction, "light_view", vulkanInstance->GetCurrentFrameIndex());
+                callinstance.ApplyOverride<Vector3>(light->color, "light_proj", vulkanInstance->GetCurrentFrameIndex());
                 break;
             }
 
-            tally[light->type]++;
+            light_index++;
         }
 
         VkBuffer vertexBuffers[] = { curmesh.vertexBuffer->GetData() };
@@ -435,7 +436,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
 
     for (const auto& set : drawcall->get_shaderdata()->binding_sets) {
         for (const auto& binding : set.second) {
-            descriptorTypeCounts[binding.descriptorType]++;
+            descriptorTypeCounts[binding.descriptorType] += binding.descriptorCount;
         }
     }
 
@@ -465,7 +466,8 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         allocInfo.pSetLayouts = layoutsperframe.data();
 
         std::vector<VkDescriptorSet> sets(vulkanInstance->Get_maxFrames());
-        if (vkAllocateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), &allocInfo, sets.data()) != VK_SUCCESS) {
+        auto alloc_result = vkAllocateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), &allocInfo, sets.data());
+        if (alloc_result != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate descriptor sets!");
         }
 
