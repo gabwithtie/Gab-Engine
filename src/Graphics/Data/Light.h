@@ -13,13 +13,29 @@ namespace gbe::gfx {
         alignas(16) Vector3 color;
         LightType type;
 
+        Matrix4 cam_view;
+        Matrix4 cam_proj;
+
+        std::vector<Vector4> frustrum_corners;
+        Vector3 frustrum_center;
+
+        inline void UpdateContext(Matrix4 _cam_view, Matrix4 _cam_proj) {
+            cam_view = _cam_view;
+            cam_proj = _cam_proj;
+
+            frustrum_corners = Matrix4::get_frustrum_corners(cam_proj, cam_view);
+            frustrum_center = Matrix4::get_frustrum_center(frustrum_corners);
+        }
+
         inline Matrix4 GetViewMatrix() {
             switch (type) {
             case DIRECTIONAL: {
                 // A directional light has no position, so we set a distant eye position
                 // and look back towards the origin along its direction.
-                Vector3 eye = Vector3(0.0f, 0.0f, 0.0f) - direction * 10.0f;
-                Vector3 target = Vector3(0.0f, 0.0f, 0.0f);
+                auto backtrack_dist = 20.0f;
+
+                Vector3 eye = frustrum_center - (direction * backtrack_dist);
+                Vector3 target = frustrum_center;
                 Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
                 return lookAt(eye, target, up);
             }
@@ -38,13 +54,24 @@ namespace gbe::gfx {
         inline Matrix4 GetProjectionMatrix() {
             switch (type) {
             case DIRECTIONAL: {
-                // Use an orthographic projection for a directional light.
-                // The bounds should cover the relevant part of the scene.
-                // These values need to be carefully tuned based on your scene.
-                float orthoSize = 100.0f;
-                float nearPlane = 0.1f;
-                float farPlane = 100.0f;
-                return glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, nearPlane, farPlane);
+                auto overshoot_dist = 100.0f;
+
+                float minX = std::numeric_limits<float>::max();
+                float maxX = std::numeric_limits<float>::lowest();
+                float minY = std::numeric_limits<float>::max();
+                float maxY = std::numeric_limits<float>::lowest();
+                float maxZ = std::numeric_limits<float>::lowest();
+                for (const auto& v : frustrum_corners)
+                {
+                    const auto trf = GetViewMatrix() * v;
+                    minX = std::min(minX, trf.x);
+                    maxX = std::max(maxX, trf.x);
+                    minY = std::min(minY, trf.y);
+                    maxY = std::max(maxY, trf.y);
+                    maxZ = std::max(maxZ, trf.z);
+                }
+
+                return glm::ortho(minX, maxX, minY, maxY, 0.0f, maxZ + overshoot_dist);
             }
             case SPOT: {
                 // Use a perspective projection for a spot light.

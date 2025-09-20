@@ -14,10 +14,12 @@ namespace gbe {
 			vulkan::Image* textureImage;
 			vulkan::Sampler* textureSampler;
 
-			VkDescriptorSet DS;
-
 			unsigned int width;
 			unsigned int height;
+
+			//UI
+			bool gui_initialized = false;
+			VkDescriptorSet DS;
 		};
 
 		typedef std::function<VkDescriptorSet(gbe::vulkan::Sampler*, gbe::vulkan::ImageView*)> GbeUiCallbackFunction;
@@ -32,6 +34,15 @@ namespace gbe {
 		public:
 			void AssignSelfAsLoader() override;
 			static TextureData& GetDefaultImage();
+			inline static VkDescriptorSet GetGuiHandle(TextureData* data) {
+				if (data->gui_initialized)
+					return data->DS;
+
+				data->DS = Ui_Callback(data->textureSampler, data->textureImageView);
+				data->gui_initialized = true;
+
+				return data->DS;
+			}
 			const static void Set_Ui_Callback(GbeUiCallbackFunction func);
 		};
 	}

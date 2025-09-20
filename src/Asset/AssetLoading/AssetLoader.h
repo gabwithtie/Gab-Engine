@@ -48,7 +48,7 @@ namespace gbe {
 		class AssetLoader : public AssetLoader_base<TAsset, TAssetImportData, TAssetLoadData> {
 		protected:
 			static AssetLoader* active_instance;
-			std::unordered_map<TAsset*, TAssetRuntimeData> loaded_assets;
+			std::unordered_map<std::string, TAssetRuntimeData> loaded_assets;
 			virtual TAssetRuntimeData LoadAsset_(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) = 0;
 			virtual void UnLoadAsset_(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) = 0;
 		public:
@@ -58,7 +58,7 @@ namespace gbe {
 
 				this->load_func = [](TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) {
 					auto newdata = active_instance->LoadAsset_(asset, import_data, load_data);
-					active_instance->loaded_assets.insert_or_assign(asset, newdata);
+					active_instance->loaded_assets.insert_or_assign(asset->Get_assetId(), newdata);
 
 					auto it = active_instance->lookup_map.find(asset->Get_assetId());
 					if (it != active_instance->lookup_map.end()) {
@@ -72,7 +72,7 @@ namespace gbe {
 					};
 
 				this->unload_func = [](TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) {
-					auto it = active_instance->loaded_assets.find(asset);
+					auto it = active_instance->loaded_assets.find(asset->Get_assetId());
 					if (it != active_instance->loaded_assets.end()) {
 						active_instance->UnLoadAsset_(asset, import_data, load_data);
 						active_instance->loaded_assets.erase(it);
@@ -81,8 +81,26 @@ namespace gbe {
 					};
 			}
 
-			static TAssetRuntimeData& GetAssetData(TAsset* assetinstance) {
-				auto it = active_instance->loaded_assets.find(assetinstance);
+			static std::unordered_map<std::string, TAssetRuntimeData>& GetDataMap() {
+				return active_instance->loaded_assets;
+			}
+
+			static void RegisterExternal(std::string id, TAssetRuntimeData assetdata) {
+				active_instance->loaded_assets.insert_or_assign(id, assetdata);
+			}
+
+			static TAssetRuntimeData& GetAssetData(TAsset* asset) {
+				auto it = active_instance->loaded_assets.find(asset->Get_assetId());
+				if (it != active_instance->loaded_assets.end()) {
+					return it->second;
+				}
+				else {
+					throw std::exception("Asset not found");
+				}
+			}
+
+			static TAssetRuntimeData& GetAssetData(std::string assetid) {
+				auto it = active_instance->loaded_assets.find(assetid);
 				if (it != active_instance->loaded_assets.end()) {
 					return it->second;
 				}
@@ -92,9 +110,9 @@ namespace gbe {
 			}
 
 			static TAsset* GetAssetByPath(std::string asset_path) {
-				for (const auto& pair : active_instance->loaded_assets) {
-					if (pair.first->Get_asset_filepath() == asset_path) {
-						return pair.first;
+				for (const auto& pair : active_instance->lookup_map) {
+					if (pair.second->Get_asset_filepath() == asset_path) {
+						return pair.second;
 					}
 				}
 				throw std::exception("Asset not found");
@@ -103,9 +121,9 @@ namespace gbe {
 			static std::vector<internal::BaseAsset_base*> GetAssetList() {
 				std::vector<internal::BaseAsset_base*> list;
 
-				for (const auto& pair : active_instance->loaded_assets)
+				for (const auto& pair : active_instance->lookup_map)
 				{
-					list.push_back(pair.first);
+					list.push_back(pair.second);
 				}
 
 				return list;

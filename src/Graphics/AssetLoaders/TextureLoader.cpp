@@ -45,10 +45,14 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
 
 	//DO UI LOADING HERE
 	VkDescriptorSet tex_DS = nullptr;
+	bool ui_initted = false;
 
 	if (importdata.type == "UI") {
 		if (TextureLoader::Ui_Callback)
+		{
 			tex_DS = TextureLoader::Ui_Callback(textureSampler, textureImageView);
+			ui_initted = true;
+		}
 		else {
 			std::cerr << "Texture loaded as a UI Texture but UI Texture Loader not initialized." << std::endl;
 		}
@@ -60,10 +64,11 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
 	textureImage->transitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	return TextureData{
-		textureImageView,
-		textureImage,
-		textureSampler,
-		tex_DS
+		.textureImageView = textureImageView,
+		.textureImage = textureImage,
+		.textureSampler = textureSampler,
+		.gui_initialized = ui_initted,
+		.DS = tex_DS
 	};
 }
 void gbe::gfx::TextureLoader::UnLoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) {

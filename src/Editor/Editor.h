@@ -10,6 +10,7 @@
 #include "Gui/SpawnWindow.h"
 #include "Gui/StateWindow.h"
 #include "Gui/HierarchyWindow.h"
+#include "Gui/ImageDebugger.h"
 #include "Gui/ConsoleWindow.h"
 #include "Gui/MenuBar.h"
 #include "Gui/GizmoLayer.h"
@@ -52,13 +53,15 @@ namespace gbe {
 		editor::SpawnWindow spawnWindow;
 		editor::StateWindow stateWindow;
 		editor::ConsoleWindow consoleWindow;
+		editor::ImageDebugger imageDebuggerWindow;
 
 		std::list<editor::GuiWindow*> windows = {
 			&hierarchyWindow,
 			&inspectorwindow,
 			&spawnWindow,
 			&stateWindow,
-			&consoleWindow
+			&consoleWindow,
+			&imageDebuggerWindow
 		};
 
 		//LAYERS

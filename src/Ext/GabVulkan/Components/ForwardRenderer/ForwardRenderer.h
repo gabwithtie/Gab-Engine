@@ -23,12 +23,15 @@ namespace gbe::vulkan {
         Sampler* shadow_sampler = nullptr;
         Framebuffer* shadow_buffer = nullptr;
 
+        std::vector<ImageView*> shadow_imageview_layers;
+        std::vector<Sampler*> shadow_sampler_layers;
+
         AttachmentDictionary attachments_shadow;
 
         RenderPass* shadow_pass = nullptr;
 
     public:
-        inline void Get_image_data(
+        inline void Get_shadowmap_image_data(
             Image*& shadow_image_array_ptr,
             ImageView*& shadow_imageview_ptr,
             Sampler*& shadow_sampler_ptr
@@ -36,6 +39,15 @@ namespace gbe::vulkan {
             shadow_image_array_ptr = shadow_image_array;
             shadow_imageview_ptr = shadow_imageview;
             shadow_sampler_ptr = shadow_sampler;
+        }
+
+        inline void Get_shadowmap_layer_data(
+            ImageView*& shadow_imageview_ptr,
+            Sampler*& shadow_sampler_ptr,
+            uint32_t index
+        ) {
+            shadow_imageview_ptr = shadow_imageview_layers[index];
+            shadow_sampler_ptr = shadow_sampler_layers[index];
         }
 
         inline uint32_t Get_max_lights()
@@ -55,6 +67,13 @@ namespace gbe::vulkan {
             );
             shadow_imageview = new ImageView(shadow_image_array, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D_ARRAY);
             shadow_sampler = new Sampler();
+            
+            for (size_t i = 0; i < max_lights; i++)
+            {
+                shadow_imageview_layers.push_back(new ImageView(shadow_image_array, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, i));
+                shadow_sampler_layers.push_back(new Sampler());
+            }
+
 
             VkAttachmentDescription shadowmap_attachment = {};
             shadowmap_attachment.format = PhysicalDevice::GetActive()->GetDepthFormat(); // Use a suitable depth format
@@ -88,6 +107,7 @@ namespace gbe::vulkan {
             color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
             attachments_main.AddAttachment("color", color_attachment);
+            attachments_shadow.AddAttachment("color", color_attachment);
         }
 
         inline ~ForwardRenderer() {
@@ -124,8 +144,10 @@ namespace gbe::vulkan {
             shadowPassBeginInfo.renderArea.offset = { 0, 0 };
             shadowPassBeginInfo.renderArea.extent = {shadow_map_resolution, shadow_map_resolution};
 
-            std::array<VkClearValue, 1> clearValues{};
+            std::array<VkClearValue, 2> clearValues{};
+            float clear_brightness = 0.3f;
             clearValues[0].depthStencil = { 1.0f, 0 };
+            clearValues[1].color = { {clear_brightness, clear_brightness, clear_brightness, 1.0f} };
 
             shadowPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
             shadowPassBeginInfo.pClearValues = clearValues.data();

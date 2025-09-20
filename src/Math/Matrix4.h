@@ -4,6 +4,9 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Vector3.h"
+#include "Vector4.h"
+
 namespace gbe {
 	struct Matrix4 : public glm::mat4x4 {
 		Matrix4();
@@ -25,10 +28,10 @@ namespace gbe {
 			return true;
 		}
 
-        inline static std::vector<glm::vec4> get_frustrum_corners(const glm::mat4& proj, const glm::mat4& view) {
+        inline static std::vector<Vector4> get_frustrum_corners(const glm::mat4& proj, const glm::mat4& view) {
             const auto inv = glm::inverse(proj * view);
 
-            std::vector<glm::vec4> frustumCorners;
+            std::vector<Vector4> frustumCorners;
             for (unsigned int x = 0; x < 2; ++x)
             {
                 for (unsigned int y = 0; y < 2; ++y)
@@ -48,7 +51,7 @@ namespace gbe {
             return frustumCorners;
         }
 
-        inline static glm::vec3 get_frustrum_center(std::vector<glm::vec4> corners) {
+        inline static Vector3 get_frustrum_center(std::vector<Vector4>& corners) {
             glm::vec3 center = glm::vec3(0, 0, 0);
             for (const auto& v : corners)
             {

@@ -46,7 +46,7 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
     //texture calcs
-    vec3 _color_fromtex = texture(color_tex, fragTexCoord).xyz * color;
+    vec3 _color_fromtex = texture(shadow_tex, vec3(fragTexCoord, 0)).xyz * color;
 
     //locals
     vec3 _color;
@@ -73,7 +73,7 @@ void main() {
     vec3 final_result = _tint;
 
     // --- Lighting Loop ---
-    for (int i = 0; i < MAX_LIGHTS; ++i) {
+    for (int i = 0; i < 1; ++i) {
         // REVISED: Derive light direction from the view matrix.
         // The light is assumed to shine along its local -Z axis.
         // In a column-major view matrix, the Z-axis in world space is the third column.
@@ -94,9 +94,12 @@ void main() {
         // 1. Transform fragment position to light's clip space
         vec4 fragPosLightSpace = lights[i].light_proj * lights[i].light_view * vec4(fragPos, 1.0);
         // 2. Perform perspective divide
-        vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+        vec3 normalizedDeviceCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
         // 3. Transform to [0,1] range for texture coordinates
-        projCoords = projCoords * 0.5 + 0.5;
+        vec3 projCoords = normalizedDeviceCoords * 0.5 + 0.5;
+        // 3. Transform to [0,1] range for texture coordinates
+        //projCoords.x = ;
+        //projCoords.y = (fragPosLightSpace.y * 0.5) + 0.5;
         // 4. Get depth from shadow map (using current light index for the array layer)
         float closestDepth = texture(shadow_tex, vec3(projCoords.xy, i)).r;
         // 5. Get current fragment's depth from light's perspective
@@ -107,7 +110,7 @@ void main() {
         float shadow = currentDepth - bias > closestDepth ? 0.0 : 1.0;
 
         // REVISED: Apply shadow factor to lighting
-        final_result += shadow;
+        final_result += currentDepth; //debug for now
     }
 
     outColor = vec4(final_result, 1.0);

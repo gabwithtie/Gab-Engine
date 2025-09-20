@@ -59,12 +59,27 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
     this->renderer = new vulkan::ForwardRenderer(); //freed by vulkan instance
     vulkanInstance->Init_Renderer(this->renderer);
 
-
 	//Asset Loaders
     this->shaderloader.AssignSelfAsLoader();
     this->meshloader.AssignSelfAsLoader();
     this->materialloader.AssignSelfAsLoader();
     this->textureloader.AssignSelfAsLoader();
+
+    for (size_t i = 0; i < renderer->Get_max_lights(); i++)
+    {
+        TextureData shadowmap_tex = {};
+        this->renderer->Get_shadowmap_image_data(
+            shadowmap_tex.textureImage,
+            shadowmap_tex.textureImageView,
+            shadowmap_tex.textureSampler
+        );
+        this->renderer->Get_shadowmap_layer_data(
+            shadowmap_tex.textureImageView,
+            shadowmap_tex.textureSampler,
+            i
+        );
+        textureloader.RegisterExternal("shadowmap_" + std::to_string(i), shadowmap_tex);
+    }
 }
 
 void gbe::RenderPipeline::AssignEditor(Editor* _editor)
@@ -95,46 +110,16 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
     //==================FIRST PASS [0]========================//
     renderer->StartShadowPass();
 
-    auto frustrum_corners = Matrix4::get_frustrum_corners(frameinfo.projmat, frameinfo.viewmat);
-    auto frustrum_center = Matrix4::get_frustrum_center(frustrum_corners);
-
     // Loop through each light that casts a shadow.
     for (size_t lightIndex = 0; lightIndex < frameinfo.lightdatas.size(); lightIndex++)
     {
         const auto& light = frameinfo.lightdatas[lightIndex];
 
         // Update the light's view and projection matrices.
+        light->UpdateContext(frameinfo.viewmat, frameinfo.projmat);
         Matrix4 lightViewMat = light->GetViewMatrix();
         Matrix4 lightProjMat = light->GetProjectionMatrix();
-
-        if (light->type == Light::DIRECTIONAL) {
-            auto backtrack_dist = 20.0f;
-            auto overshoot_dist = 100.0f;
-
-            const auto lightView = glm::lookAt(
-                frustrum_center - (light->direction * backtrack_dist),
-                frustrum_center,
-                glm::vec3(0.0f, 1.0f, 0.0f)
-            );
-
-            float minX = std::numeric_limits<float>::max();
-            float maxX = std::numeric_limits<float>::lowest();
-            float minY = std::numeric_limits<float>::max();
-            float maxY = std::numeric_limits<float>::lowest();
-            float maxZ = std::numeric_limits<float>::lowest();
-            for (const auto& v : frustrum_corners)
-            {
-                const auto trf = lightView * v;
-                minX = std::min(minX, trf.x);
-                maxX = std::max(maxX, trf.x);
-                minY = std::min(minY, trf.y);
-                maxY = std::max(maxY, trf.y);
-                maxZ = std::max(maxZ, trf.z);
-            }
-
-            lightViewMat = lightView;
-            lightProjMat = glm::ortho(minX, maxX, minY, maxY, 0.0f, maxZ + overshoot_dist);
-        }
+        lightProjMat[1][1] = -lightProjMat[1][1]; //Flip Y axis for Vulkan
 
         for (const auto& call_ptr : this->sortedcalls[-1]) {
             const auto& callinstance = this->calls[call_ptr][-1];
@@ -151,8 +136,8 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
             //UPDATE OVERRIDES (light)
             callinstance.ApplyOverride<Matrix4>(callinstance.model, "model", vulkanInstance->GetCurrentFrameIndex());
-            callinstance.ApplyOverride<Matrix4>(lightViewMat, "view", vulkanInstance->GetCurrentFrameIndex());
-            callinstance.ApplyOverride<Matrix4>(lightProjMat, "proj", vulkanInstance->GetCurrentFrameIndex());
+            callinstance.ApplyOverride<Matrix4>(projmat, "view", vulkanInstance->GetCurrentFrameIndex());
+            callinstance.ApplyOverride<Matrix4>(frameinfo.viewmat, "proj", vulkanInstance->GetCurrentFrameIndex());
 
             // Use push constants to specify the array layer to write to.
             uint32_t pushConstantData = lightIndex;
@@ -204,7 +189,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         callinstance.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
 
         TextureData shadowmaptex = {};
-        renderer->Get_image_data(shadowmaptex.textureImage, shadowmaptex.textureImageView, shadowmaptex.textureSampler);
+        renderer->Get_shadowmap_image_data(shadowmaptex.textureImage, shadowmaptex.textureImageView, shadowmaptex.textureSampler);
         callinstance.ApplyOverride<TextureData>(shadowmaptex, "shadow_tex", vulkanInstance->GetCurrentFrameIndex());
 
         size_t light_index = 0;
@@ -213,8 +198,11 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
             if (light_index == renderer->Get_max_lights())
                 break;
 
+            auto lightProjMat = light->GetProjectionMatrix();
+            lightProjMat[1][1] = -lightProjMat[1][1]; //Flip Y axis for Vulkan
+
             callinstance.ApplyOverride<Matrix4>(light->GetViewMatrix(), "light_view", vulkanInstance->GetCurrentFrameIndex(), light_index);
-            callinstance.ApplyOverride<Matrix4>(light->GetProjectionMatrix(), "light_proj", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            callinstance.ApplyOverride<Matrix4>(lightProjMat, "light_proj", vulkanInstance->GetCurrentFrameIndex(), light_index);
             callinstance.ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
             
             switch (light->type)
