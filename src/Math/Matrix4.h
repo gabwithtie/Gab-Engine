@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -23,6 +24,40 @@ namespace gbe {
 						return false;
 			return true;
 		}
+
+        inline static std::vector<glm::vec4> get_frustrum_corners(const glm::mat4& proj, const glm::mat4& view) {
+            const auto inv = glm::inverse(proj * view);
+
+            std::vector<glm::vec4> frustumCorners;
+            for (unsigned int x = 0; x < 2; ++x)
+            {
+                for (unsigned int y = 0; y < 2; ++y)
+                {
+                    for (unsigned int z = 0; z < 2; ++z)
+                    {
+                        const glm::vec4 pt =
+                            inv * glm::vec4(
+                                2.0f * x - 1.0f,
+                                2.0f * y - 1.0f,
+                                2.0f * z - 1.0f,
+                                1.0f);
+                        frustumCorners.push_back(pt / pt.w);
+                    }
+                }
+            }
+            return frustumCorners;
+        }
+
+        inline static glm::vec3 get_frustrum_center(std::vector<glm::vec4> corners) {
+            glm::vec3 center = glm::vec3(0, 0, 0);
+            for (const auto& v : corners)
+            {
+                center += glm::vec3(v);
+            }
+            center /= corners.size();
+
+            return center;
+        }
 
 		const float* Get_Ptr();
 	};

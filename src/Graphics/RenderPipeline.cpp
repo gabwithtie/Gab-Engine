@@ -95,6 +95,9 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
     //==================FIRST PASS [0]========================//
     renderer->StartShadowPass();
 
+    auto frustrum_corners = Matrix4::get_frustrum_corners(frameinfo.projmat, frameinfo.viewmat);
+    auto frustrum_center = Matrix4::get_frustrum_center(frustrum_corners);
+
     // Loop through each light that casts a shadow.
     for (size_t lightIndex = 0; lightIndex < frameinfo.lightdatas.size(); lightIndex++)
     {
@@ -103,6 +106,35 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         // Update the light's view and projection matrices.
         Matrix4 lightViewMat = light->GetViewMatrix();
         Matrix4 lightProjMat = light->GetProjectionMatrix();
+
+        if (light->type == Light::DIRECTIONAL) {
+            auto backtrack_dist = 20.0f;
+            auto overshoot_dist = 100.0f;
+
+            const auto lightView = glm::lookAt(
+                frustrum_center - (light->direction * backtrack_dist),
+                frustrum_center,
+                glm::vec3(0.0f, 1.0f, 0.0f)
+            );
+
+            float minX = std::numeric_limits<float>::max();
+            float maxX = std::numeric_limits<float>::lowest();
+            float minY = std::numeric_limits<float>::max();
+            float maxY = std::numeric_limits<float>::lowest();
+            float maxZ = std::numeric_limits<float>::lowest();
+            for (const auto& v : frustrum_corners)
+            {
+                const auto trf = lightView * v;
+                minX = std::min(minX, trf.x);
+                maxX = std::max(maxX, trf.x);
+                minY = std::min(minY, trf.y);
+                maxY = std::max(maxY, trf.y);
+                maxZ = std::max(maxZ, trf.z);
+            }
+
+            lightViewMat = lightView;
+            lightProjMat = glm::ortho(minX, maxX, minY, maxY, 0.0f, maxZ + overshoot_dist);
+        }
 
         for (const auto& call_ptr : this->sortedcalls[-1]) {
             const auto& callinstance = this->calls[call_ptr][-1];
