@@ -37,8 +37,6 @@ namespace gbe::vulkan {
         int &x;
         int &y;
         int MAX_FRAMES_IN_FLIGHT = 2;
-
-        AttachmentDictionary attachmentDictionary;
         
         //STATES
         uint32_t currentFrame = 0;
@@ -49,7 +47,6 @@ namespace gbe::vulkan {
         PhysicalDevice* physicalDevice = nullptr;
         VirtualDevice* virtualDevice = nullptr;
         vulkan::SwapChain* swapchain = nullptr; //remember that images are arbitrary
-        RenderPass* renderPass = nullptr;
         Image* depthImage = nullptr;
         ImageView* depthImageView = nullptr;
         CommandPool* commandPool = nullptr;
@@ -80,6 +77,10 @@ namespace gbe::vulkan {
 
         inline uint32_t GetCurrentSwapchainImage() {
             return currentSwapchainImage;
+        }
+
+        inline Framebuffer* GetCurrentSwapchainBuffer() {
+            return swapchain->GetFramebuffer(currentSwapchainImage);
         }
 
         inline Surface* GetSurface() {
@@ -230,8 +231,7 @@ namespace gbe::vulkan {
 
         inline void Init_Renderer(Renderer* _customrenderer) {
             this->customRenderer = _customrenderer;
-            this->customRenderer->AppendRequiredAttachments(this->attachmentDictionary);
-
+            
             //======================DISPLAY SETUP========================
             this->RefreshPipelineObjects();
 
@@ -249,8 +249,6 @@ namespace gbe::vulkan {
             //DELETE PipelineObjects
             if (swapchain != nullptr)
                 delete swapchain;
-            if (renderPass != nullptr)
-                delete renderPass;
 
             //DELETE PipelineAttachments
             if (depthImage != nullptr)
@@ -286,12 +284,7 @@ namespace gbe::vulkan {
             swapchain = new SwapChain(swapchainExtent, imageCount);
             SwapChain::SetActive(swapchain);
 
-            renderPass = this->customRenderer->CreateRenderPass(this->attachmentDictionary);
-            RenderPass::SetActive(renderPass);
-
-            AttachmentReferencePasser newpasser(this->attachmentDictionary);
-
-            customRenderer->PassAttachmentReferences(newpasser);
+            AttachmentReferencePasser newpasser(this->customRenderer->GetAttachmentDictionary());
 
             auto depthformat = PhysicalDevice::GetActive()->GetDepthFormat();
             depthImage = new Image(this->x, this->y, depthformat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -299,7 +292,7 @@ namespace gbe::vulkan {
             depthImage->transitionImageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
             newpasser.PassView("depth", depthImageView->GetData());
 
-            this->swapchain->InitializeFramebuffers(newpasser, renderPass);
+            this->swapchain->InitializeFramebuffers(newpasser, this->customRenderer->GetMainPass());
         }
 
         inline ~Instance()
@@ -317,7 +310,6 @@ namespace gbe::vulkan {
             delete physicalDevice;
             delete virtualDevice;
             delete swapchain;
-            delete renderPass;
             delete depthImage;
             delete depthImageView;
             delete commandPool;
@@ -354,44 +346,9 @@ namespace gbe::vulkan {
             //==============COMMAND BUFFER START================
             vkResetCommandBuffer(commandBuffers[currentFrame]->GetData(), 0);
             commandBuffers[currentFrame]->Begin();
-
-            //==============RENDER PASS START================
-            VkRenderPassBeginInfo renderPassBeginInfo{};
-            renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassBeginInfo.renderPass = renderPass->GetData();
-            renderPassBeginInfo.framebuffer = swapchain->GetFramebuffer(currentSwapchainImage)->GetData();
-
-            renderPassBeginInfo.renderArea.offset = { 0, 0 };
-            renderPassBeginInfo.renderArea.extent = swapchain->GetExtent();
-
-            std::array<VkClearValue, 2> clearValues{};
-            float clear_brightness = 0.3f;
-            clearValues[0].color = { {clear_brightness, clear_brightness, clear_brightness, 1.0f} };
-            clearValues[1].depthStencil = { 1.0f, 0 };
-
-            renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-            renderPassBeginInfo.pClearValues = clearValues.data();
-
-            vkCmdBeginRenderPass(commandBuffers[currentFrame]->GetData(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-            //BOUNDS
-            VkViewport viewport{};
-            viewport.width = static_cast<float>(vulkan::SwapChain::GetActive()->GetExtent().width);
-            viewport.height = static_cast<float>(vulkan::SwapChain::GetActive()->GetExtent().height);
-            viewport.x = 0.0f;
-            viewport.y = 0.0f;
-            viewport.minDepth = 0.0f;
-            viewport.maxDepth = 1.0f;
-            vkCmdSetViewport(this->GetCurrentCommandBuffer()->GetData(), 0, 1, &viewport);
-
-            VkRect2D scissor{};
-            scissor.offset = { 0, 0 };
-            scissor.extent = vulkan::SwapChain::GetActive()->GetExtent();
-            vkCmdSetScissor(this->GetCurrentCommandBuffer()->GetData(), 0, 1, &scissor);
         }
 
         inline void PushFrame() {
-            vkCmdEndRenderPass(commandBuffers[currentFrame]->GetData());
             commandBuffers[currentFrame]->End();
 
 			//DEALLOCATE RESOURCES HERE IF NEEDED

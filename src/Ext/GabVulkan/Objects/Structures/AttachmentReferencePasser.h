@@ -31,8 +31,11 @@ namespace gbe::vulkan {
 
 			if (!has)
 				throw new std::runtime_error("Trying to pass unrequired view.");
-
-			data.push_back(view);
+			
+			if (map[id] != nullptr)
+				*map[id] = view;
+			else
+				data.push_back(view);
 
 			map[id] = &data[data.size() - 1];
 		}

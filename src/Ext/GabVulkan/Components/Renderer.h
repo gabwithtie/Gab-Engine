@@ -6,11 +6,18 @@
 
 namespace gbe::vulkan {
 	class Renderer {
+	protected:
+		AttachmentDictionary attachments_main;
+		RenderPass* main_pass = nullptr;
 	public:
+		inline AttachmentDictionary& GetAttachmentDictionary() {
+			return attachments_main;
+		}
+
+		inline RenderPass* GetMainPass() {
+			return main_pass;
+		}
+
 		virtual void Refresh() = 0;
-		virtual RenderPass* CreateRenderPass(AttachmentDictionary& attachmentdict) = 0;
-		virtual void AppendRequiredAttachments(AttachmentDictionary& attachmentdict) = 0;
-		virtual void PassAttachmentReferences(AttachmentReferencePasser& attachments) = 0;
-		
 	};
 }

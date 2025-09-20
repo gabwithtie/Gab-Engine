@@ -93,6 +93,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
     projmat[1][1] = -projmat[1][1]; //Flip Y axis for Vulkan
 
     //==================FIRST PASS [0]========================//
+    renderer->StartShadowPass();
 
     // Loop through each light that casts a shadow.
     int lightIndex = 0;
@@ -141,9 +142,8 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         lightIndex++;
     }
 
-    //vkCmdNextSubpass(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_SUBPASS_CONTENTS_INLINE);
-
     //==================SECOND PASS [1]========================//
+    renderer->TransitionToMainPass();
 
     for (const auto& call_ptr : sortedcalls[0])
     {
@@ -207,6 +207,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         this->editor->RenderPass(vulkanInstance->GetCurrentCommandBuffer());
     }
 
+    renderer->EndMainPass();
     vulkanInstance->PushFrame();
 }
 

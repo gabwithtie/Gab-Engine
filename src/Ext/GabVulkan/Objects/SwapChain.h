@@ -54,6 +54,8 @@ namespace gbe::vulkan {
         }
 
 		inline SwapChain(VkExtent2D _swapchainExtent, uint32_t imageCount) {
+            swapchainExtent = _swapchainExtent;
+
             VkSwapchainCreateInfoKHR swapchainInfo{};
             swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
             swapchainInfo.surface = Surface::GetActive()->GetData();
