@@ -33,7 +33,6 @@ layout(location = 6) out vec3 camera_pos;
 
 void main() {
     gl_Position = global.proj * global.view * model * vec4(inPosition, 1.0);
-    gl_Layer = layerIndex;
     
     fragPos = (model * vec4(inPosition, 1.0)).xyz;
     fragTexCoord = inTexCoord;

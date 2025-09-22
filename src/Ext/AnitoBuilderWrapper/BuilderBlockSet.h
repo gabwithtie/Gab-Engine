@@ -10,19 +10,11 @@ namespace gbe::ext::AnitoBuilder {
 	class BuilderBlockSet : public Object {
 	private:
 		BuilderBlock* root_block = nullptr;
+		RigidObject* handle_ro = nullptr;
+
+		std::vector<RenderObject*> renderObjects;
 	public:
-		inline BuilderBlockSet(BuilderBlock* root_block) {
-			this->root_block = root_block;
-
-			this->SetName("Anito Builder Block Set");
-
-			auto add_block_button = new gbe::editor::InspectorButton();
-			add_block_button->name = "Append Block";
-			add_block_button->onpress = [=]() {
-				root_block->AddBlock(this);
-				};
-
-			this->inspectorData->fields.push_back(add_block_button);
-		}
+		BuilderBlockSet(BuilderBlock* root_block);
+		void OnLocalTransformationChange(TransformChangeType type) override;
 	};
 }

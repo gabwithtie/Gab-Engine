@@ -13,5 +13,5 @@ layout(location = 6) in vec3 camera_pos;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    outColor = vertColor;
+    outColor = vec4(1,1,1,1);
 }

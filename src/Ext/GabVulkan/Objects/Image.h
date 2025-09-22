@@ -16,7 +16,15 @@ namespace gbe::vulkan {
         uint32_t height;
         uint32_t layercount = 1;
 
+        VkImageAspectFlags aspectflag;
+
 	public:
+        inline void SetAspectFlag(VkImageAspectFlags aspectflag) {
+            this->aspectflag = aspectflag;
+        }
+        inline VkImageAspectFlags GetAspectFlag() {
+            return aspectflag;
+        }
 		inline VkDeviceMemory Get_imageMemory() {
 			return imageMemory;
 		}
@@ -111,7 +119,41 @@ namespace gbe::vulkan {
             CheckSuccess(vkBindImageMemory(VirtualDevice::GetActive()->GetData(), this->data, imageMemory, 0));
         }
 
-        inline void transitionImageLayout(VkImageLayout newLayout)
+        // A helper function to set access masks and pipeline stages based on the image layout
+        static void setBarrierInfo(
+            VkImageLayout oldLayout, VkImageLayout newLayout,
+            VkAccessFlags& srcAccessMask, VkAccessFlags& dstAccessMask,
+            VkPipelineStageFlags& srcStageMask, VkPipelineStageFlags& dstStageMask) {
+
+            // Default to a safe, but less optimal, full synchronization
+            srcAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+            dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+            srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+            dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
+            if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+                srcAccessMask = 0;
+                dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+                dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            }
+            else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+                srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+                dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+                dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            }
+            else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+                srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+                dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            }
+            // Add more specific layout transitions as needed for your application.
+            // The general fall-through case handles all other transitions but might be less performant.
+        }
+
+        inline void transitionImageLayout(VkImageLayout newLayout, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT)
         {
             CommandBufferSingle commandBuffer;
             commandBuffer.Begin();
@@ -124,7 +166,7 @@ namespace gbe::vulkan {
             barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
             barrier.image = this->data;
-            barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            barrier.subresourceRange.aspectMask = aspectMask;
             barrier.subresourceRange.baseMipLevel = 0;
             barrier.subresourceRange.levelCount = 1;
             barrier.subresourceRange.baseArrayLayer = 0;
@@ -133,23 +175,19 @@ namespace gbe::vulkan {
             VkPipelineStageFlags sourceStage;
             VkPipelineStageFlags destinationStage;
 
-            if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
-                barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-                if (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT) {
-                    barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-                }
-            }
-            else {
-                barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            }
-
             if (layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
                 barrier.srcAccessMask = 0;
                 barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
                 sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            }
+            else if (layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+                barrier.srcAccessMask = 0;
+                barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+                sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+                destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
             }
             else if (layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
                 barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -265,6 +303,121 @@ namespace gbe::vulkan {
             );
 
             
+            commandBuffer.End();
+        }
+
+        static void copyImageToImage(Image* srcImage, Image* dstImage, VkImageLayout dstFinalLayout = VK_IMAGE_LAYOUT_UNDEFINED) {
+            CommandBufferSingle commandBuffer;
+            commandBuffer.Begin();
+
+            // Transition source image to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+            VkAccessFlags srcAccessSrc, srcAccessDst;
+            VkPipelineStageFlags srcStageSrc, srcStageDst;
+            setBarrierInfo(srcImage->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, srcAccessSrc, srcAccessDst, srcStageSrc, srcStageDst);
+
+            VkImageMemoryBarrier srcBarrier = {};
+            srcBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            srcBarrier.oldLayout = srcImage->layout;
+            srcBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            srcBarrier.srcAccessMask = srcAccessSrc;
+            srcBarrier.dstAccessMask = srcAccessDst;
+            srcBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            srcBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            srcBarrier.image = srcImage->GetData();
+            srcBarrier.subresourceRange.aspectMask = srcImage->GetAspectFlag();
+            srcBarrier.subresourceRange.baseMipLevel = 0;
+            srcBarrier.subresourceRange.levelCount = 1;
+            srcBarrier.subresourceRange.baseArrayLayer = 0;
+            srcBarrier.subresourceRange.layerCount = 1;
+
+            // Transition destination image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+            VkAccessFlags dstAccessSrc, dstAccessDst;
+            VkPipelineStageFlags dstStageSrc, dstStageDst;
+            setBarrierInfo(dstImage->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, dstAccessSrc, dstAccessDst, dstStageSrc, dstStageDst);
+
+            VkImageMemoryBarrier dstBarrier = {};
+            dstBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            dstBarrier.oldLayout = dstImage->layout;
+            dstBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            dstBarrier.srcAccessMask = dstAccessSrc;
+            dstBarrier.dstAccessMask = dstAccessDst;
+            dstBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            dstBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            dstBarrier.image = dstImage->GetData();
+            dstBarrier.subresourceRange.aspectMask = dstImage->GetAspectFlag();
+            dstBarrier.subresourceRange.baseMipLevel = 0;
+            dstBarrier.subresourceRange.levelCount = 1;
+            dstBarrier.subresourceRange.baseArrayLayer = 0;
+            dstBarrier.subresourceRange.layerCount = 1;
+
+            // Place both barriers in a single vkCmdPipelineBarrier call
+            vkCmdPipelineBarrier(
+                commandBuffer.GetData(),
+                srcStageSrc | dstStageSrc, // Combined source stages
+                srcStageDst | dstStageDst, // Combined destination stages
+                0, // dependencyFlags
+                0, nullptr,
+                0, nullptr,
+                2, new VkImageMemoryBarrier[2]{ srcBarrier, dstBarrier }
+            );
+
+            // Define the copy region
+            VkImageCopy copyRegion = {};
+            copyRegion.srcSubresource.aspectMask = srcImage->GetAspectFlag();
+            copyRegion.srcSubresource.mipLevel = 0;
+            copyRegion.srcSubresource.baseArrayLayer = 0;
+            copyRegion.srcSubresource.layerCount = 1;
+            copyRegion.srcOffset = { 0, 0, 0 };
+            copyRegion.dstSubresource.aspectMask = dstImage->GetAspectFlag();
+            copyRegion.dstSubresource.mipLevel = 0;
+            copyRegion.dstSubresource.baseArrayLayer = 0;
+            copyRegion.dstSubresource.layerCount = 1;
+            copyRegion.dstOffset = { 0, 0, 0 };
+            copyRegion.extent = { srcImage->width, srcImage->height, 1 };
+
+            // Execute the copy command
+            vkCmdCopyImage(
+                commandBuffer.GetData(),
+                srcImage->GetData(),
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                dstImage->GetData(),
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                1, // regionCount
+                &copyRegion
+            );
+
+            // Transition both images to their final layouts
+            setBarrierInfo(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, srcImage->Get_layout(), srcAccessSrc, srcAccessDst, srcStageSrc, srcStageDst);
+            srcBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            srcBarrier.newLayout = srcImage->Get_layout();
+            srcBarrier.srcAccessMask = srcAccessSrc;
+            srcBarrier.dstAccessMask = srcAccessDst;
+            srcBarrier.subresourceRange.aspectMask = srcImage->GetAspectFlag();
+
+            if (dstFinalLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+                dstFinalLayout = dstImage->layout;
+
+            if (dstFinalLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+                throw new std::runtime_error("Layout still undefined.");
+
+            setBarrierInfo(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, dstFinalLayout, dstAccessSrc, dstAccessDst, dstStageSrc, dstStageDst);
+            dstBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            dstBarrier.newLayout = dstFinalLayout;
+            dstBarrier.srcAccessMask = dstAccessSrc;
+            dstBarrier.dstAccessMask = dstAccessDst;
+            dstBarrier.subresourceRange.aspectMask = dstImage->GetAspectFlag();
+
+            vkCmdPipelineBarrier(
+                commandBuffer.GetData(),
+                srcStageSrc | dstStageSrc, // Combined source stages
+                srcStageDst | dstStageDst, // Combined destination stages
+                0, // dependencyFlags
+                0, nullptr,
+                0, nullptr,
+                2, new VkImageMemoryBarrier[2]{ srcBarrier, dstBarrier }
+            );
+
+
             commandBuffer.End();
         }
     };

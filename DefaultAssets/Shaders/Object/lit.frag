@@ -21,10 +21,10 @@ layout(set = 2, binding = 2) uniform sampler2D normal_tex;
 layout(set = 2, binding = 3) uniform sampler2D arm_tex;
 
 //=================LIGHTING====================//
-const int MAX_LIGHTS = 10;
+const int MAX_LIGHTS = 1;
 
 // Shadowmaps (should be an array)
-layout(set = 2, binding = 4) uniform sampler2DArray shadow_tex;
+layout(set = 2, binding = 4) uniform sampler2D shadow_tex;
 
 // Set 0: Global Data — lights (should be an array)
 layout(set = 0, binding = 1) uniform Light {
@@ -46,7 +46,7 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
     //texture calcs
-    vec3 _color_fromtex = texture(shadow_tex, vec3(fragTexCoord, 0)).xyz * color;
+    vec3 _color_fromtex = texture(color_tex, fragTexCoord).xyz * color;
 
     //locals
     vec3 _color;
@@ -73,12 +73,12 @@ void main() {
     vec3 final_result = _tint;
 
     // --- Lighting Loop ---
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < MAX_LIGHTS; ++i) {
         // REVISED: Derive light direction from the view matrix.
         // The light is assumed to shine along its local -Z axis.
         // In a column-major view matrix, the Z-axis in world space is the third column.
         // The vector *towards* the light is the negative of the light's direction.
-        vec3 lightDir = -normalize(vec3(lights[i].light_view[0][2], lights[i].light_view[1][2], lights[i].light_view[2][2]));
+        vec3 lightDir = normalize(vec3(lights[i].light_view[0][2], lights[i].light_view[1][2], lights[i].light_view[2][2]));
 
         // Diffuse component
         float diff = max(dot(_normal, lightDir), 0.0);
@@ -101,7 +101,7 @@ void main() {
         //projCoords.x = ;
         //projCoords.y = (fragPosLightSpace.y * 0.5) + 0.5;
         // 4. Get depth from shadow map (using current light index for the array layer)
-        float closestDepth = texture(shadow_tex, vec3(projCoords.xy, i)).r;
+        float closestDepth = texture(shadow_tex, projCoords.xy).r;
         // 5. Get current fragment's depth from light's perspective
         float currentDepth = projCoords.z;
         // 6. Calculate bias to prevent shadow acne
@@ -110,7 +110,7 @@ void main() {
         float shadow = currentDepth - bias > closestDepth ? 0.0 : 1.0;
 
         // REVISED: Apply shadow factor to lighting
-        final_result += currentDepth; //debug for now
+        final_result += diffuse + specular;
     }
 
     outColor = vec4(final_result, 1.0);

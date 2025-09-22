@@ -285,6 +285,9 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 					CheckClosest(objinray);
 				}
 				
+				if (closest_obj == nullptr)
+					return;
+
 				SelectSingle(closest_obj);
 			}
 		}

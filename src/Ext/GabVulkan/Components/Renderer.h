@@ -18,6 +18,7 @@ namespace gbe::vulkan {
 			return main_pass;
 		}
 
-		virtual void Refresh() = 0;
+		virtual void Refresh(uint32_t x, uint32_t y) = 0;
+		virtual void PassAttachments(AttachmentReferencePasser& passer) = 0;
 	};
 }

@@ -9,6 +9,7 @@
 namespace gbe::vulkan {
 	class AttachmentDictionary {
 		std::vector<VkAttachmentDescription> descriptions;
+		std::unordered_map<std::string, VkAttachmentDescription> desc_map;
 		std::unordered_map<std::string, VkAttachmentReference> references;
 	public:
 		inline void AddAttachment(std::string id, VkAttachmentDescription desc) {
@@ -18,6 +19,7 @@ namespace gbe::vulkan {
 			newref.attachment = descriptions.size() - 1;
 			
 			references[id] = newref;
+			desc_map[id] = desc;
 		}
 
 		inline uint32_t GetSize() {
@@ -30,6 +32,10 @@ namespace gbe::vulkan {
 
 		inline std::unordered_map<std::string, VkAttachmentReference>& GetMap() {
 			return references;
+		}
+
+		inline VkAttachmentDescription GetAttachmentDesc(std::string id) {
+			return desc_map[id];
 		}
 
 		//Promote to local variable in wherever you call this

@@ -98,10 +98,10 @@ void gbe::RenderObject::InvokeEarlyUpdate()
 void gbe::RenderObject::On_Change_enabled(bool _to) {
 	Object::On_Change_enabled(_to);
 
-	if (_to) {
+	if (to_update == nullptr && _to) {
 		to_update = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall, this->World().GetMatrix(), this->order);
 	}
-	else {
+	else if(to_update != nullptr) {
 		RenderPipeline::Get_Instance()->UnRegisterCall(this);
 		to_update = nullptr;
 	}

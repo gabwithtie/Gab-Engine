@@ -67,19 +67,13 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
 
     for (size_t i = 0; i < renderer->Get_max_lights(); i++)
     {
-        TextureData shadowmap_tex = {};
-        this->renderer->Get_shadowmap_image_data(
-            shadowmap_tex.textureImage,
-            shadowmap_tex.textureImageView,
-            shadowmap_tex.textureSampler
-        );
-        this->renderer->Get_shadowmap_layer_data(
-            shadowmap_tex.textureImageView,
-            shadowmap_tex.textureSampler,
-            i
-        );
+        TextureData shadowmap_tex = {
+        .textureImageView = this->renderer->Get_shadowmap_layer(i),
+        .textureSampler = new vulkan::Sampler()
+        };
         textureloader.RegisterExternal("shadowmap_" + std::to_string(i), shadowmap_tex);
     }
+
 }
 
 void gbe::RenderPipeline::AssignEditor(Editor* _editor)
@@ -188,8 +182,10 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
         callinstance.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
 
-        TextureData shadowmaptex = {};
-        renderer->Get_shadowmap_image_data(shadowmaptex.textureImage, shadowmaptex.textureImageView, shadowmaptex.textureSampler);
+        TextureData shadowmaptex = {
+        .textureImageView = renderer->Get_shadowmap_layer(0),
+        .textureSampler = renderer->Get_shadowmap_sampler()
+        };
         callinstance.ApplyOverride<TextureData>(shadowmaptex, "shadow_tex", vulkanInstance->GetCurrentFrameIndex());
 
         size_t light_index = 0;
@@ -241,6 +237,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
     }
 
     renderer->EndMainPass();
+
     vulkanInstance->PushFrame();
 }
 

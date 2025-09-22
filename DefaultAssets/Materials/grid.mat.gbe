@@ -1,9 +1,25 @@
 {
-	"shader": "grid",
+	"shader": "lit",
 	"overrides": [
 		{
-			"id": "color_a",
-			"value_vec4": [1,1,1,1]
+			"id": "color",
+			"value_vec3": [ 1, 1, 1 ]
+		},
+		{
+			"id": "metallic",
+			"value_single": 1
+		},
+		{
+			"id": "tint",
+			"value_vec3": [ 0.2, 0.2, 0.2 ]
+		},
+		{
+			"id": "color_tex",
+			"value_tex": "grid"
+		},
+		{
+			"id": "has_color_tex",
+			"value_single": 1
 		}
 	]
 }

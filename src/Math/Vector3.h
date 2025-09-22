@@ -6,6 +6,7 @@
 
 #include <sstream>
 #include <glm/vec3.hpp>
+#include <glm/trigonometric.hpp>
 
 namespace gbe{
 	struct Vector3 : public glm::vec3 {
@@ -59,5 +60,26 @@ namespace gbe{
 			return sstream.str();
 		}
 		static Vector3 GetClosestPointOnLineGivenLine(const Vector3& a, const Vector3& adir, const Vector3& b, const Vector3& bdir);
+
+		inline static float AngleBetween(const Vector3& a, const Vector3& b) {
+			// Calculate the dot product of the two vectors
+			float dotProduct = a.Dot(b);
+
+			// Calculate the product of their magnitudes
+			float magnitudeProduct = a.Magnitude() * b.Magnitude();
+
+			// Check for a zero magnitude to avoid division by zero
+			if (magnitudeProduct == 0.0f) {
+				return 0.0f;
+			}
+
+			// Clamp the value to the range [-1, 1] to prevent `acos` from returning
+			// `NaN` due to floating point inaccuracies
+			float cosTheta = dotProduct / magnitudeProduct;
+			cosTheta = std::max(-1.0f, std::min(1.0f, cosTheta));
+
+			// Return the angle in radians
+			return glm::degrees(std::acos(cosTheta));
+		}
 	};
 }

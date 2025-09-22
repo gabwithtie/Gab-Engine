@@ -47,8 +47,6 @@ namespace gbe::vulkan {
         PhysicalDevice* physicalDevice = nullptr;
         VirtualDevice* virtualDevice = nullptr;
         vulkan::SwapChain* swapchain = nullptr; //remember that images are arbitrary
-        Image* depthImage = nullptr;
-        ImageView* depthImageView = nullptr;
         CommandPool* commandPool = nullptr;
         std::vector<CommandBuffer*> commandBuffers; //buffers per frame
         std::vector<FrameSyncronizationObject*> frameSynchronizationObjects; //sync objects per frame
@@ -86,10 +84,6 @@ namespace gbe::vulkan {
         inline Surface* GetSurface() {
             return surface;
         }
-
-        inline ImageView* GetDepthImageView() {
-            return depthImageView;
-		}
 
         inline void SetCustomRenderer(Renderer* renderer) {
 			this->customRenderer = renderer;
@@ -178,7 +172,7 @@ namespace gbe::vulkan {
             //===================DEVICE SET UP===================//
             const std::vector<const char*> deviceExtensionNames = {
                 VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-                VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME,
+                VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME
             };
 
             bool founddevice = false;
@@ -250,16 +244,6 @@ namespace gbe::vulkan {
             if (swapchain != nullptr)
                 delete swapchain;
 
-            //DELETE PipelineAttachments
-            if (depthImage != nullptr)
-                delete depthImage;
-            if (depthImageView != nullptr)
-                delete depthImageView;
-
-            if (customRenderer != nullptr) {
-                this->customRenderer->Refresh();
-            }
-
             PhysicalDevice::GetActive()->Refresh();
 
             //==============SWAPCHAIN================
@@ -271,6 +255,10 @@ namespace gbe::vulkan {
 
             swapchainExtent.width = std::clamp(swapchainExtent.width, PhysicalDevice::GetActive()->Get_capabilities().minImageExtent.width, PhysicalDevice::GetActive()->Get_capabilities().maxImageExtent.width);
             swapchainExtent.height = std::clamp(swapchainExtent.height, PhysicalDevice::GetActive()->Get_capabilities().minImageExtent.height, PhysicalDevice::GetActive()->Get_capabilities().maxImageExtent.height);
+
+            if (customRenderer != nullptr) {
+                this->customRenderer->Refresh(swapchainExtent.width, swapchainExtent.height);
+            }
 
             //Image count determination
             uint32_t imageCount = PhysicalDevice::GetActive()->Get_capabilities().minImageCount + 1;
@@ -284,13 +272,10 @@ namespace gbe::vulkan {
             swapchain = new SwapChain(swapchainExtent, imageCount);
             SwapChain::SetActive(swapchain);
 
-            AttachmentReferencePasser newpasser(this->customRenderer->GetAttachmentDictionary());
+            auto& attachmentdict = this->customRenderer->GetAttachmentDictionary();
+            AttachmentReferencePasser newpasser(attachmentdict);
 
-            auto depthformat = PhysicalDevice::GetActive()->GetDepthFormat();
-            depthImage = new Image(this->x, this->y, depthformat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-            depthImageView = new ImageView(depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
-            depthImage->transitionImageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-            newpasser.PassView("depth", depthImageView->GetData());
+            this->customRenderer->PassAttachments(newpasser);
 
             this->swapchain->InitializeFramebuffers(newpasser, this->customRenderer->GetMainPass());
         }
@@ -310,8 +295,6 @@ namespace gbe::vulkan {
             delete physicalDevice;
             delete virtualDevice;
             delete swapchain;
-            delete depthImage;
-            delete depthImageView;
             delete commandPool;
             delete customRenderer;
 
@@ -401,6 +384,8 @@ namespace gbe::vulkan {
             else if (presentResult != VK_SUCCESS) {
                 throw std::runtime_error("failed to present swap chain image!");
             }
+
+            //Image::copyImageToImage(depthImage, depthImage_reflect, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
             this->currentFrame = (this->currentFrame + 1) % this->MAX_FRAMES_IN_FLIGHT;
         }

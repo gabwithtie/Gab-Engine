@@ -9,6 +9,7 @@
 #include "../../Objects/SwapChain.h"
 #include "../../Objects/Instance.h"
 #include "../../Objects/Sampler.h"
+#include "../../Objects/Structures/ImagePair.h"
 
 #include "../../Utility/MemoryBarrier.h"
 
@@ -16,38 +17,27 @@ namespace gbe::vulkan {
 
     class ForwardRenderer : public Renderer {
         uint32_t shadow_map_resolution = 512;
-        uint32_t max_lights = 10;
+        uint32_t max_lights = 1;
 
-        Image* shadow_image_array = nullptr;
-        ImageView* shadow_imageview = nullptr;
-        Sampler* shadow_sampler = nullptr;
+        Sampler shadowmap_sampler;
+        AttachmentDictionary attachments_shadow;
+
+        ImagePair* sp_main = nullptr;
+        ImagePair* sp_depth = nullptr;
+        
         Framebuffer* shadow_buffer = nullptr;
 
-        std::vector<ImageView*> shadow_imageview_layers;
-        std::vector<Sampler*> shadow_sampler_layers;
+        ImagePair* main_depth = nullptr;
 
-        AttachmentDictionary attachments_shadow;
+        std::vector<ImageView*> sp_imageview_layers;
 
         RenderPass* shadow_pass = nullptr;
 
     public:
-        inline void Get_shadowmap_image_data(
-            Image*& shadow_image_array_ptr,
-            ImageView*& shadow_imageview_ptr,
-            Sampler*& shadow_sampler_ptr
-        ) {
-            shadow_image_array_ptr = shadow_image_array;
-            shadow_imageview_ptr = shadow_imageview;
-            shadow_sampler_ptr = shadow_sampler;
-        }
-
-        inline void Get_shadowmap_layer_data(
-            ImageView*& shadow_imageview_ptr,
-            Sampler*& shadow_sampler_ptr,
+        inline ImageView* Get_shadowmap_layer(
             uint32_t index
         ) {
-            shadow_imageview_ptr = shadow_imageview_layers[index];
-            shadow_sampler_ptr = shadow_sampler_layers[index];
+            return sp_imageview_layers[index];
         }
 
         inline uint32_t Get_max_lights()
@@ -55,25 +45,37 @@ namespace gbe::vulkan {
             return max_lights;
         }
 
+        inline Sampler* Get_shadowmap_sampler() {
+            return &shadowmap_sampler;
+        }
 
         inline ForwardRenderer() {
-            shadow_image_array = new Image(
+            sp_depth = new ImagePair(new Image(
                 shadow_map_resolution, shadow_map_resolution,
                 PhysicalDevice::GetActive()->GetDepthFormat(),
                 VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 max_lights
+            ),
+                VK_IMAGE_ASPECT_DEPTH_BIT
             );
-            shadow_imageview = new ImageView(shadow_image_array, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D_ARRAY);
-            shadow_sampler = new Sampler();
-            
+
+            sp_main = new ImagePair(new Image(
+                shadow_map_resolution, shadow_map_resolution,
+                PhysicalDevice::GetActive()->Get_swapchainFormat().format,
+                VK_IMAGE_TILING_OPTIMAL,
+                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                max_lights
+            ),
+                VK_IMAGE_ASPECT_COLOR_BIT
+            );
+
             for (size_t i = 0; i < max_lights; i++)
             {
-                shadow_imageview_layers.push_back(new ImageView(shadow_image_array, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, i));
-                shadow_sampler_layers.push_back(new Sampler());
+                sp_imageview_layers.push_back(new ImageView(sp_main->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, i));
             }
-
 
             VkAttachmentDescription shadowmap_attachment = {};
             shadowmap_attachment.format = PhysicalDevice::GetActive()->GetDepthFormat(); // Use a suitable depth format
@@ -111,7 +113,8 @@ namespace gbe::vulkan {
         }
 
         inline ~ForwardRenderer() {
-
+            delete sp_depth;
+            delete sp_main;
         }
 
         inline void SetBounds(uint32_t x, uint32_t y) {
@@ -132,6 +135,12 @@ namespace gbe::vulkan {
 
         }
 
+        inline void PassAttachments(AttachmentReferencePasser& newpasser) override
+        {
+            main_depth->GetImage()->transitionImageLayout(this->attachments_main.GetAttachmentDesc("depth").finalLayout, VK_IMAGE_ASPECT_DEPTH_BIT);
+            newpasser.PassView("depth", main_depth->GetView()->GetData());
+        }
+
         inline void StartShadowPass() {
             VkRenderPassBeginInfo shadowPassBeginInfo{};
             
@@ -148,7 +157,7 @@ namespace gbe::vulkan {
             float clear_brightness = 0.3f;
             clearValues[0].depthStencil = { 1.0f, 0 };
             clearValues[1].color = { {clear_brightness, clear_brightness, clear_brightness, 1.0f} };
-
+            
             shadowPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
             shadowPassBeginInfo.pClearValues = clearValues.data();
 
@@ -158,14 +167,9 @@ namespace gbe::vulkan {
         inline void TransitionToMainPass() {
             vkCmdEndRenderPass(Instance::GetActive()->GetCurrentCommandBuffer()->GetData());
 
-            SetBounds(
-                vulkan::SwapChain::GetActive()->GetExtent().width,
-                vulkan::SwapChain::GetActive()->GetExtent().height
-            );
-            
             MemoryBarrier::Insert(
                 Instance::GetActive()->GetCurrentCommandBuffer()->GetData(),
-                shadow_image_array,
+                sp_depth->GetImage(),
                 VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
                 VK_ACCESS_SHADER_READ_BIT,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -178,6 +182,28 @@ namespace gbe::vulkan {
                     .baseArrayLayer = 0,
                     .layerCount = max_lights
                 }
+            );
+
+            MemoryBarrier::Insert(
+                Instance::GetActive()->GetCurrentCommandBuffer()->GetData(),
+                sp_main->GetImage(),
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = max_lights
+                }
+            );
+
+            SetBounds(
+                vulkan::SwapChain::GetActive()->GetExtent().width,
+                vulkan::SwapChain::GetActive()->GetExtent().height
             );
 
             //RENDER PASS START
@@ -204,7 +230,7 @@ namespace gbe::vulkan {
             vkCmdEndRenderPass(Instance::GetActive()->GetCurrentCommandBuffer()->GetData());
         }
 
-        inline void Refresh() override {
+        inline void Refresh(uint32_t x, uint32_t y) override {
             if (shadow_buffer != nullptr)
                 delete shadow_buffer;
             if (shadow_pass != nullptr)
@@ -212,16 +238,36 @@ namespace gbe::vulkan {
             if (main_pass != nullptr)
                 delete main_pass;
 
+            auto depthformat = PhysicalDevice::GetActive()->GetDepthFormat();
+            main_depth = new ImagePair(
+                new Image(x, y, depthformat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+                VK_IMAGE_ASPECT_DEPTH_BIT
+                );
+
             //References
+            VkAttachmentReference shadowMapColorRef = attachments_shadow.GetRef("color", VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             VkAttachmentReference shadowMapDepthRef = attachments_shadow.GetRef("shadowmap", VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-            VkAttachmentReference colorRef = attachments_main.GetRef("color", VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            VkAttachmentReference finalDepthRef = attachments_main.GetRef("depth", VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            VkAttachmentReference mainColorRef = attachments_main.GetRef("color", VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+            VkAttachmentReference mainDepthRef = attachments_main.GetRef("depth", VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
             //=======================SHADOW PASS========================//
             VkSubpassDescription shadowSubpass = {};
             shadowSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-            shadowSubpass.colorAttachmentCount = 0;
+            shadowSubpass.colorAttachmentCount = 1;
+            shadowSubpass.pColorAttachments = &shadowMapColorRef;
             shadowSubpass.pDepthStencilAttachment = &shadowMapDepthRef;
+
+            std::vector<VkSubpassDependency> dependencies_shadow = {};
+            dependencies_shadow.resize(1);
+            //Depth test dependency
+            dependencies_shadow[0] = {};
+            dependencies_shadow[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+            dependencies_shadow[0].dstSubpass = 0;
+            dependencies_shadow[0].srcAccessMask = 0;
+            dependencies_shadow[0].srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            dependencies_shadow[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+            dependencies_shadow[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
 
             // Render Pass Info
             VkRenderPassCreateInfo passinfo_shadow = {};
@@ -230,7 +276,8 @@ namespace gbe::vulkan {
             passinfo_shadow.pAttachments = attachments_shadow.GetArrayPtr();
             passinfo_shadow.subpassCount = 1;
             passinfo_shadow.pSubpasses = &shadowSubpass;
-            passinfo_shadow.dependencyCount = 0;
+            passinfo_shadow.dependencyCount = dependencies_shadow.size();
+            passinfo_shadow.pDependencies = dependencies_shadow.data();
 
             VkRenderPass pass_shadow;
             if (vkCreateRenderPass(VirtualDevice::GetActive()->GetData(), &passinfo_shadow, nullptr, &pass_shadow) != VK_SUCCESS) {
@@ -239,12 +286,23 @@ namespace gbe::vulkan {
             shadow_pass = new RenderPass(pass_shadow);
             RenderPass::SetActive("shadow", shadow_pass);
 
+            AttachmentReferencePasser passer(attachments_shadow);
+            passer.PassView("shadowmap", sp_depth->GetView()->GetData());
+            passer.PassView("color", sp_main->GetView()->GetData());
+
+            shadow_buffer = new Framebuffer(
+                shadow_map_resolution,
+                shadow_map_resolution,
+                shadow_pass,
+                passer
+            );
+
             //====================MAIN PASS====================//
             VkSubpassDescription subpass_main{};
             subpass_main.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
             subpass_main.colorAttachmentCount = 1;
-            subpass_main.pColorAttachments = &colorRef;
-            subpass_main.pDepthStencilAttachment = &finalDepthRef;
+            subpass_main.pColorAttachments = &mainColorRef;
+            subpass_main.pDepthStencilAttachment = &mainDepthRef;
 
             std::vector<VkSubpassDependency> dependencies_main = {};
             dependencies_main.resize(1);
@@ -274,19 +332,6 @@ namespace gbe::vulkan {
 
             main_pass = new RenderPass(pass_main);
             RenderPass::SetActive("main", main_pass);
-
-            //============================SHADOW FRAME BUFFER===================//
-
-            AttachmentReferencePasser passer(attachments_shadow);
-            passer.PassView("shadowmap", shadow_imageview->GetData());
-
-
-            shadow_buffer = new Framebuffer(
-                shadow_map_resolution,
-                shadow_map_resolution,
-                shadow_pass,
-                passer
-                );
         }
     };
 }
