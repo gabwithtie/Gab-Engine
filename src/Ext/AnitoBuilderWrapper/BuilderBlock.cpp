@@ -3,6 +3,9 @@
 #include <vector>
 
 #include "BuilderBlockSet.h"
+#include "Graphics/gbe_graphics.h"
+#include "Asset/gbe_asset.h"
+#include "Math/gbe_math.h"
 
 namespace gbe::ext::AnitoBuilder {
 	BuilderBlock::BuilderBlock(gbe::Vector3 corners[4], float height)
@@ -24,7 +27,80 @@ namespace gbe::ext::AnitoBuilder {
 			3,
 		};
 
+		//OBJECTS
 		AddBlock(corner_ptrs);
+		renderer_parent = new Object();
+		renderer_parent->SetParent(this);
+
+		//RENDERING
+		Wall1_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wall"), asset::Material::GetAssetById("lit"));
+		Wall2_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof"), asset::Material::GetAssetById("lit"));
+
+		//INSPECTOR
+		auto add_block_button = new gbe::editor::InspectorButton();
+		add_block_button->name = "Toggle Model";
+		add_block_button->onpress = [=]() {
+			this->ToggleModel();
+			};
+		auto height_field = new gbe::editor::InspectorFloat();
+		height_field->name = "Height";
+		height_field->x = &this->height;
+
+		this->inspectorData->fields.push_back(add_block_button);
+		this->inspectorData->fields.push_back(height_field);
+	}
+
+	void BuilderBlock::ToggleModel()
+	{
+		model_shown = !model_shown;
+
+		if (!model_shown)
+			for (size_t i = 0; i < renderer_parent->GetChildCount(); i++)
+			{
+				renderer_parent->GetChildAt(i)->Destroy();
+			}
+
+		if (model_shown)
+			for (const auto& handle : this->handle_pool)
+			{
+				if (!handle->Get_is_edge())
+					continue;
+
+				for (const auto& obj : handle->Get_all_segs())
+				{
+					Vector3 pos = obj->World().position.Get();
+					pos -= Vector3(0, handle->Get_height_per_wall() / 2.0f, 0);
+
+					Quaternion rot = obj->World().rotation.Get();
+					Quaternion flip_rot = Quaternion::Euler(Vector3(0, 180, 0));
+					rot *= flip_rot;
+
+					int floor_index = handle->Get_floor(obj);
+					RenderObject* newrenderer = nullptr;
+
+					if(floor_index == 0)
+						newrenderer = new RenderObject(Wall1_DC);
+					if(floor_index > 0)
+						newrenderer = new RenderObject(Wall2_DC);
+
+					newrenderer->SetParent(renderer_parent);
+					newrenderer->World().position.Set(pos);
+					newrenderer->World().rotation.Set(rot);
+					newrenderer->SetShadowCaster();
+
+					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
+					Vector3 final_scale = Vector3(1);
+					final_scale.x = inv__import_scale.x * (handle->Get_width_per_wall() / 2.0f);
+					final_scale.y = inv__import_scale.y * (handle->Get_height_per_wall());
+
+					newrenderer->Local().scale.Set(final_scale);
+				}
+			}
+
+		for (const auto& handle : this->handle_pool)
+		{
+			handle->Set_visible(!model_shown);
+		}
 	}
 
 	void BuilderBlock::UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r)
@@ -140,7 +216,7 @@ namespace gbe::ext::AnitoBuilder {
 					moved_i = i;
 					break;
 				}
-				else {
+				else if (l.second->CheckState(Object::ObjectStateName::TRANSFORMED_LOCAL, this)) {
 					ResetHandle(s, i);
 				}
 			}
@@ -257,6 +333,7 @@ namespace gbe::ext::AnitoBuilder {
 
 			auto handle = new BuilderBlockSet(this);
 			
+			handle_pool.push_back(handle);
 			handle->SetParent(this);
 
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_POS_Y);

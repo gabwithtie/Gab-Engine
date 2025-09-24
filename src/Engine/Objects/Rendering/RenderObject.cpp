@@ -18,19 +18,13 @@ const std::unordered_map<gbe::RenderObject::PrimitiveType, std::string> gbe::Ren
 	{ PrimitiveType::plane, "Plane" }
 };
 
-void gbe::RenderObject::SetShadowCaster(bool v)
+void gbe::RenderObject::SetShadowCaster()
 {
-	if (v) {
-		if (to_update_shadow != nullptr)
-			return;
+	if (to_update_shadow != nullptr)
+		return;
 
-		mDrawCall_shadow = RenderPipeline::RegisterDrawCall(this->mDrawCall->get_mesh(), asset::Material::GetAssetById("shadow"));
-		to_update_shadow = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall_shadow, this->World().GetMatrix(), -1);
-	}
-	else if(to_update_shadow != nullptr) {
-		RenderPipeline::UnRegisterCall(mDrawCall_shadow, -1);
-		to_update_shadow = nullptr;
-	}
+	mDrawCall_shadow = RenderPipeline::RegisterDrawCall(this->mDrawCall->get_mesh(), asset::Material::GetAssetById("shadow"));
+	to_update_shadow = RenderPipeline::Get_Instance()->RegisterCall(this, mDrawCall_shadow, this->World().GetMatrix(), -1);
 }
 
 gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
@@ -84,7 +78,8 @@ gbe::RenderObject::RenderObject(PrimitiveType _ptype)
 
 gbe::RenderObject::~RenderObject()
 {
-	RenderPipeline::Get_Instance()->UnRegisterCall(this);
+	if (to_update != nullptr || to_update_shadow != nullptr)
+		RenderPipeline::Get_Instance()->UnRegisterCall(this);
 }
 
 void gbe::RenderObject::InvokeEarlyUpdate()

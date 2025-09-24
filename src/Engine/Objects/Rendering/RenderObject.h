@@ -46,7 +46,7 @@ namespace gbe {
 			primitive_drawcalls.insert_or_assign(ptype, drawtype);
 		}
 
-		void SetShadowCaster(bool v);
+		void SetShadowCaster();
 
 		RenderObject(gfx::DrawCall* mDrawCall);
 		RenderObject(PrimitiveType ptype);

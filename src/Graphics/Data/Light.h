@@ -16,8 +16,17 @@ namespace gbe::gfx {
         Matrix4 cam_view;
         Matrix4 cam_proj;
 
+        float dir_backtrack_dist = 240;
+        float dir_overshoot_dist = 600;
+        float bias_min = 0.005;
+        float bias_mult = 0.05;
+
         std::vector<Vector4> frustrum_corners;
         Vector3 frustrum_center;
+
+        //CACHE
+        Matrix4 cache_projmat;
+        Matrix4 cache_viewmat;
 
         inline void UpdateContext(Matrix4 _cam_view, Matrix4 _cam_proj) {
             cam_view = _cam_view;
@@ -30,14 +39,12 @@ namespace gbe::gfx {
         inline Matrix4 GetViewMatrix() {
             switch (type) {
             case DIRECTIONAL: {
-                // A directional light has no position, so we set a distant eye position
-                // and look back towards the origin along its direction.
-                auto backtrack_dist = 20.0f;
-
-                Vector3 eye = frustrum_center - (direction * backtrack_dist);
+                Vector3 eye = frustrum_center - (direction * dir_backtrack_dist);
                 Vector3 target = frustrum_center;
                 Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
-                return lookAt(eye, target, up);
+
+                cache_viewmat = lookAt(eye, target, up);
+                return cache_viewmat;
             }
             case SPOT: {
                 // A spot light has a position and a direction.
@@ -54,8 +61,7 @@ namespace gbe::gfx {
         inline Matrix4 GetProjectionMatrix() {
             switch (type) {
             case DIRECTIONAL: {
-                auto overshoot_dist = 100.0f;
-
+                
                 float minX = std::numeric_limits<float>::max();
                 float maxX = std::numeric_limits<float>::lowest();
                 float minY = std::numeric_limits<float>::max();
@@ -71,7 +77,8 @@ namespace gbe::gfx {
                     maxZ = std::max(maxZ, trf.z);
                 }
 
-                return glm::ortho(minX, maxX, minY, maxY, 0.0f, maxZ + overshoot_dist);
+                cache_projmat = glm::ortho(minX, maxX, minY, maxY, 0.0f, maxZ + dir_overshoot_dist);
+                return cache_projmat;
             }
             case SPOT: {
                 // Use a perspective projection for a spot light.

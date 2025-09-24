@@ -7,6 +7,8 @@
 
 #include "Engine/Engine.h"
 
+#include "Editor/gbe_editor.h"
+
 using namespace gbe;
 using namespace gbe::gfx;
 
@@ -39,4 +41,30 @@ gbe::DirectionalLight::DirectionalLight()
         dirlight_gizmo->Local().position.Set(Vector3(0, 0, 1.0f));
         dirlight_gizmo->Local().scale.Set(Vector3(0.2, 0.2, -1.0f));
     }
+
+    //INSPECTOR
+    auto overshoot_field = new gbe::editor::InspectorFloat();
+    overshoot_field->name = "Shadowmap overshoot";
+    overshoot_field->x = &this->mLight.dir_overshoot_dist;
+
+    this->inspectorData->fields.push_back(overshoot_field);
+
+    auto backtrack_field = new gbe::editor::InspectorFloat();
+    backtrack_field->name = "Shadowmap backtrack";
+    backtrack_field->x = &this->mLight.dir_backtrack_dist;
+
+    this->inspectorData->fields.push_back(backtrack_field);
+
+    auto bias_min = new gbe::editor::InspectorFloat();
+    bias_min->name = "Bias min";
+    bias_min->x = &this->mLight.bias_min;
+
+    this->inspectorData->fields.push_back(bias_min);
+
+    auto bias_mult = new gbe::editor::InspectorFloat();
+    bias_mult->name = "Bias mult";
+    bias_mult->x = &this->mLight.bias_mult;
+
+    this->inspectorData->fields.push_back(bias_mult);
+
 }

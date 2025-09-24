@@ -65,6 +65,12 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
     this->materialloader.AssignSelfAsLoader();
     this->textureloader.AssignSelfAsLoader();
 
+    TextureData shadowmap_tex = {
+    .textureImageView = this->renderer->Get_sp_view(),
+    .textureSampler = new vulkan::Sampler()
+    };
+    textureloader.RegisterExternal("Shadow Pass", shadowmap_tex);
+
     for (size_t i = 0; i < renderer->Get_max_lights(); i++)
     {
         TextureData shadowmap_tex = {
@@ -73,7 +79,6 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
         };
         textureloader.RegisterExternal("shadowmap_" + std::to_string(i), shadowmap_tex);
     }
-
 }
 
 void gbe::RenderPipeline::AssignEditor(Editor* _editor)
@@ -103,7 +108,6 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
     //==================FIRST PASS [0]========================//
     renderer->StartShadowPass();
-
     // Loop through each light that casts a shadow.
     for (size_t lightIndex = 0; lightIndex < frameinfo.lightdatas.size(); lightIndex++)
     {
@@ -113,9 +117,9 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         light->UpdateContext(frameinfo.viewmat, frameinfo.projmat);
         Matrix4 lightViewMat = light->GetViewMatrix();
         Matrix4 lightProjMat = light->GetProjectionMatrix();
-        lightProjMat[1][1] = -lightProjMat[1][1]; //Flip Y axis for Vulkan
 
-        for (const auto& call_ptr : this->sortedcalls[-1]) {
+        for (const auto& call_ptr : sortedcalls[-1])
+        {
             const auto& callinstance = this->calls[call_ptr][-1];
 
             //USE SHADER
@@ -125,23 +129,24 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
             callinstance.drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex(), callinstance);
 
+            // Use push constants to specify the array layer to write to.
+            uint32_t pushConstantData = 0;
+            vkCmdPushConstants(vulkanInstance->GetCurrentCommandBuffer()->GetData(), currentshaderdata.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &pushConstantData);
+
             //RENDER MESH
             const auto& curmesh = this->meshloader.GetAssetData(callinstance.drawcall->get_mesh());
 
-            //UPDATE OVERRIDES (light)
+            //UPDATE OVERRIDES
             callinstance.ApplyOverride<Matrix4>(callinstance.model, "model", vulkanInstance->GetCurrentFrameIndex());
-            callinstance.ApplyOverride<Matrix4>(projmat, "view", vulkanInstance->GetCurrentFrameIndex());
-            callinstance.ApplyOverride<Matrix4>(frameinfo.viewmat, "proj", vulkanInstance->GetCurrentFrameIndex());
+            callinstance.ApplyOverride<Matrix4>(lightProjMat, "proj", vulkanInstance->GetCurrentFrameIndex());
+            callinstance.ApplyOverride<Matrix4>(lightViewMat, "view", vulkanInstance->GetCurrentFrameIndex());
 
-            // Use push constants to specify the array layer to write to.
-            uint32_t pushConstantData = lightIndex;
-            vkCmdPushConstants(vulkanInstance->GetCurrentCommandBuffer()->GetData(), currentshaderdata.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &pushConstantData);
+            callinstance.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
 
-            // Bind vertex/index buffers and draw.
             VkBuffer vertexBuffers[] = { curmesh.vertexBuffer->GetData() };
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
-            
+
             std::vector<VkDescriptorSet> bindingsets;
             for (auto& set : callinstance.allocdescriptorSets_perframe[vulkanInstance->GetCurrentFrameIndex()])
             {
@@ -194,13 +199,14 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
             if (light_index == renderer->Get_max_lights())
                 break;
 
-            auto lightProjMat = light->GetProjectionMatrix();
-            lightProjMat[1][1] = -lightProjMat[1][1]; //Flip Y axis for Vulkan
+            auto lightProjMat = light->cache_projmat;
 
-            callinstance.ApplyOverride<Matrix4>(light->GetViewMatrix(), "light_view", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            callinstance.ApplyOverride<Matrix4>(light->cache_viewmat, "light_view", vulkanInstance->GetCurrentFrameIndex(), light_index);
             callinstance.ApplyOverride<Matrix4>(lightProjMat, "light_proj", vulkanInstance->GetCurrentFrameIndex(), light_index);
             callinstance.ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
-            
+            callinstance.ApplyOverride<float>(light->bias_min, "bias_min", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            callinstance.ApplyOverride<float>(light->bias_mult, "bias_mult", vulkanInstance->GetCurrentFrameIndex(), light_index);
+
             switch (light->type)
             {
             case Light::DIRECTIONAL:
@@ -230,6 +236,8 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         vkCmdBindIndexBuffer(vulkanInstance->GetCurrentCommandBuffer()->GetData(), curmesh.indexBuffer->GetData(), 0, VK_INDEX_TYPE_UINT16);
         vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(curmesh.loaddata->indices.size()), 1, 0, 0, 0);
     }
+
+    
 
     //EDITOR/GUI PASS
     if (editor != nullptr) {
@@ -591,31 +599,33 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
     return &this->calls[instance_id][order].model;
 }
 
-void gbe::RenderPipeline::UnRegisterCall(void* instance_id, int order)
+void gbe::RenderPipeline::UnRegisterCall(void* instance_id)
 {
     auto iter = Instance->calls.find(instance_id);
     bool exists = iter != Instance->calls.end();
     
-    auto callinst = iter->second[order];
-
     if (!exists)
 		throw new std::runtime_error("CallInstance does not exist!");
 
-    for (size_t i = 0; i < callinst.uniformBuffers.size(); i++)
-    {
-        for (size_t j = 0; j < callinst.uniformBuffers[i].uboPerFrame.size(); j++)
-        {
-            vulkan::VirtualDevice::GetActive()->UnMapMemory(callinst.uniformBuffers[i].uboPerFrame[j]->GetMemory());
-            delete callinst.uniformBuffers[i].uboPerFrame[j];
-        }
-    }
+    for (const auto& pair : iter->second) {
+        auto callinst = pair.second;
 
-    auto& sortvec = Instance->sortedcalls.find(callinst.order)->second;
-    for (size_t i = 0; i < sortvec.size(); i++)
-    {
-        if (sortvec[i] == instance_id) {
-            sortvec.erase(sortvec.begin() + i);
-            break;
+        for (size_t i = 0; i < callinst.uniformBuffers.size(); i++)
+        {
+            for (size_t j = 0; j < callinst.uniformBuffers[i].uboPerFrame.size(); j++)
+            {
+                vulkan::VirtualDevice::GetActive()->UnMapMemory(callinst.uniformBuffers[i].uboPerFrame[j]->GetMemory());
+                delete callinst.uniformBuffers[i].uboPerFrame[j];
+            }
+        }
+
+        auto& sortvec = Instance->sortedcalls.find(callinst.order)->second;
+        for (size_t i = 0; i < sortvec.size(); i++)
+        {
+            if (sortvec[i] == instance_id) {
+                sortvec.erase(sortvec.begin() + i);
+                break;
+            }
         }
     }
 

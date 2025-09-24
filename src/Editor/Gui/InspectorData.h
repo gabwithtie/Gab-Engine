@@ -60,6 +60,14 @@ namespace gbe {
 			}
 		};
 
+		struct InspectorFloat : public InspectorField {
+			float* x = nullptr;
+
+			InspectorFloat() {
+				this->fieldtype = FieldType::FLOAT;
+			}
+		};
+
 		struct InspectorString : public InspectorField {
 			std::string* str = nullptr;
 

@@ -11,19 +11,35 @@ namespace gbe::ext::AnitoBuilder {
 
 	class BuilderBlock : public Object, public Update {
 	public:
-		//PARAMS
+		//GEN PARAMS
 		float min_dist = 2;
 		float max_dist = 20;
-		float wall_max_width = 3;
-		float wall_max_height = 3;
+		float wall_max_width = 2.5f;
+		float wall_max_height = 4;
+
 		float height;
+
+		//IMPORT PARAMS
+		float wall_import_height_from_zero = 1.85f;
+		float wall_import_width = 1.2f;
+
+		//Drawcalls
+		gfx::DrawCall* Wall1_DC;
+		gfx::DrawCall* Wall2_DC;
+
+		//Objects
+		Object* renderer_parent;
+		std::vector<RenderObject*> renderers;
 
 	private:
 		//WORKING DATA
+		bool model_shown = false;
+
 		std::vector<std::vector<BlockSet>> sets;
+		std::vector<BuilderBlockSet*> handle_pool;
 		std::vector<Vector3> position_pool;
 
-		
+		void ToggleModel();
 		void UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r);
 
 		inline BlockSet& GetHandle(int s, int i) {

@@ -7,7 +7,7 @@ namespace gbe {
     Camera::Camera(Window* mWindow)
     {
         this->nearClip = 0.1f;
-        this->farClip = 100.0f;
+        this->farClip = 30.0f;
         this->mWindow = mWindow;
     }
 

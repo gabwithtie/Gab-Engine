@@ -33,6 +33,8 @@ layout(set = 0, binding = 1) uniform Light {
     vec3 light_color;
     int light_type;
     float light_range;
+    float bias_min;
+    float bias_mult;
 } lights[MAX_LIGHTS]; // Example array with a defined size
 
 //Set 1: Object Data
@@ -40,6 +42,7 @@ layout(set = 1, binding = 1) uniform Shading {
     vec3 color;
     vec3 tint;
     float metallic;
+    float shadow_strength;
 };
 
 layout(location = 0) out vec4 outColor;
@@ -91,26 +94,17 @@ void main() {
         vec3 specular = vec3(spec) * _metallic * lights[i].light_color;
 
         // *** SHADOW MAPPING LOGIC ***
-        // 1. Transform fragment position to light's clip space
         vec4 fragPosLightSpace = lights[i].light_proj * lights[i].light_view * vec4(fragPos, 1.0);
-        // 2. Perform perspective divide
-        vec3 normalizedDeviceCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-        // 3. Transform to [0,1] range for texture coordinates
-        vec3 projCoords = normalizedDeviceCoords * 0.5 + 0.5;
-        // 3. Transform to [0,1] range for texture coordinates
-        //projCoords.x = ;
-        //projCoords.y = (fragPosLightSpace.y * 0.5) + 0.5;
-        // 4. Get depth from shadow map (using current light index for the array layer)
-        float closestDepth = texture(shadow_tex, projCoords.xy).r;
-        // 5. Get current fragment's depth from light's perspective
-        float currentDepth = projCoords.z;
-        // 6. Calculate bias to prevent shadow acne
-        float bias = max(0.05 * (1.0 - dot(_normal, lightDir)), 0.005);
-        // 7. Check if fragment is in shadow
-        float shadow = currentDepth - bias > closestDepth ? 0.0 : 1.0;
+		vec3 shadowcoord = fragPosLightSpace.xyz / fragPosLightSpace.w;
+        shadowcoord = shadowcoord * 0.5 + 0.5;
+        float dist = texture( shadow_tex, shadowcoord.xy).r;
+        float delta = shadowcoord.z - dist;
+
+        float shadow = delta > 0 ? 1 : 0;
 
         // REVISED: Apply shadow factor to lighting
-        final_result += diffuse + specular;
+        vec3 sub_final = diffuse + specular;
+        final_result += mix(sub_final, sub_final * shadow, shadow_strength);
     }
 
     outColor = vec4(final_result, 1.0);

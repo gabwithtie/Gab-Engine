@@ -28,6 +28,6 @@ void gbe::editor::ImageDebugger::DrawSelf()
 	}
 
 	if (selected_data != nullptr) {
-		ImGui::Image(gfx::TextureLoader::GetGuiHandle(this->selected_data), {128, 128}, {0, 1}, {1, 0});
+		ImGui::Image(gfx::TextureLoader::GetGuiHandle(this->selected_data), {512, 512}, {0, 1}, {1, 0});
 	}
 }

@@ -266,9 +266,6 @@ namespace gbe::vulkan {
                 imageCount = PhysicalDevice::GetActive()->Get_capabilities().maxImageCount;
             }
 
-            if (swapchain != nullptr)
-                delete swapchain;
-
             swapchain = new SwapChain(swapchainExtent, imageCount);
             SwapChain::SetActive(swapchain);
 

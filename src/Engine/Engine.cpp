@@ -198,7 +198,7 @@ namespace gbe {
 			meshcollider->Local().position.Set(Vector3(0, 0, 0));
 			RenderObject* platform_renderer = new RenderObject(ptype);
 			platform_renderer->SetParent(parent);
-			platform_renderer->SetShadowCaster(true);
+			platform_renderer->SetShadowCaster();
 
 			return parent;
 			};
@@ -216,6 +216,7 @@ namespace gbe {
 		editor_camera_controller->SetParent(editor_input);
 		PerspectiveCamera* editor_cam = new PerspectiveCamera(&this->window);
 		editor_cam->SetParent(editor_camera_controller);
+		editor_cam->farClip = 20;
 		Engine::MakePersistent(editor_input);
 		editor_cam->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 		editor_input->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
@@ -231,8 +232,17 @@ namespace gbe {
 #pragma endregion
 
 #pragma region scene objects
-		auto test_sphere = create_primitive(gbe::RenderObject::sphere, Vector3(0, 2, 0), Vector3(1));
-		
+		//GRID
+		const Vector2Int GridSize(10, 10);
+
+		for (size_t i = 0; i < GridSize.x * GridSize.y; i++)
+		{
+			
+		}
+
+		//ANITO BUILDER
+		auto test_sphere = create_primitive(gbe::RenderObject::sphere, Vector3(0, 2, -5), Vector3(1));
+
 		Vector3 cubecorners[4] = {
 			Vector3(-2, 0, -2),
 			Vector3(2, 0, -2),
@@ -243,6 +253,7 @@ namespace gbe {
 		builder_cube->SetParent(this->current_root);
 
 		auto dirlight = new DirectionalLight();
+		dirlight->World().position.Set(Vector3(0, 0, -10));
 		dirlight->SetName("Directional Light");
 		dirlight->SetParent(this->current_root);
 

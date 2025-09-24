@@ -166,6 +166,28 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 			//DRAW THE CUSTOM INSPECTORS
 			for (auto& field : inspectordata->fields)
 			{
+				if (field->fieldtype == editor::InspectorField::FLOAT) {
+					auto floatfield = static_cast<editor::InspectorFloat*>(field);
+					float proxy_float = *floatfield->x;
+
+					(floatfield->name.c_str(), &proxy_float);
+
+					ImGui::PushID(floatfield->name.c_str());
+
+					std::string floatlabel = "##" + floatfield->name;
+					ImGui::Text(floatfield->name.c_str());
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(-1);
+					bool changed = ImGui::InputFloat(floatlabel.c_str(), &proxy_float);
+
+					if (changed)
+					{
+						*floatfield->x = proxy_float;
+					}
+
+					ImGui::PopID();
+				}
+
 				if (field->fieldtype == editor::InspectorField::VECTOR3) {
 					auto vec3field = static_cast<editor::InspectorVec3*>(field);
 					Vector3 proxy_vec = { *vec3field->x, *vec3field->y, *vec3field->z };

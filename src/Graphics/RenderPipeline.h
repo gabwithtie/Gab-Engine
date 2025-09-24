@@ -95,6 +95,6 @@ namespace gbe {
 		std::vector<unsigned char> ScreenShot(bool write_file = false);
 
 		Matrix4* RegisterCall(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order = 0);
-		static void UnRegisterCall(void* instance_id, int order = 0);
+		static void UnRegisterCall(void* instance_id);
 	};
 }

@@ -45,6 +45,10 @@ namespace gbe {
 
 		operator glm::quat() const;
 
+		inline const Quaternion& operator *=(const Quaternion& other) {
+			return glm::quat::operator*=((glm::quat)other);
+		}
+
 		Vector3 ToEuler();
 	};
 }

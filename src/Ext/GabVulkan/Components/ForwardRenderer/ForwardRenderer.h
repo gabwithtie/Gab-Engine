@@ -13,10 +13,12 @@
 
 #include "../../Utility/MemoryBarrier.h"
 
+#include "../../Utility/DebugObjectName.h"
+
 namespace gbe::vulkan {
 
     class ForwardRenderer : public Renderer {
-        uint32_t shadow_map_resolution = 512;
+        uint32_t shadow_map_resolution = 1028;
         uint32_t max_lights = 1;
 
         Sampler shadowmap_sampler;
@@ -40,6 +42,10 @@ namespace gbe::vulkan {
             return sp_imageview_layers[index];
         }
 
+        inline ImageView* Get_sp_view() {
+            return sp_main->GetView();
+        }
+
         inline uint32_t Get_max_lights()
         {
             return max_lights;
@@ -61,6 +67,9 @@ namespace gbe::vulkan {
                 VK_IMAGE_ASPECT_DEPTH_BIT
             );
 
+            DebugObjectName::NameVkObject(VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)sp_depth->GetView()->GetData(), "Shadow Pass Depth View");
+            DebugObjectName::NameVkObject(VK_OBJECT_TYPE_IMAGE, (uint64_t)sp_depth->GetImage()->GetData(), "Shadow Pass Depth Image");
+
             sp_main = new ImagePair(new Image(
                 shadow_map_resolution, shadow_map_resolution,
                 PhysicalDevice::GetActive()->Get_swapchainFormat().format,
@@ -72,21 +81,14 @@ namespace gbe::vulkan {
                 VK_IMAGE_ASPECT_COLOR_BIT
             );
 
+            DebugObjectName::NameVkObject(VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)sp_main->GetView()->GetData(), "Shadow Pass Main View");
+            DebugObjectName::NameVkObject(VK_OBJECT_TYPE_IMAGE, (uint64_t)sp_main->GetImage()->GetData(), "Shadow Pass Main Image");
+
+
             for (size_t i = 0; i < max_lights; i++)
             {
-                sp_imageview_layers.push_back(new ImageView(sp_main->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, i));
+                sp_imageview_layers.push_back(new ImageView(sp_depth->GetImage(), VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, i));
             }
-
-            VkAttachmentDescription shadowmap_attachment = {};
-            shadowmap_attachment.format = PhysicalDevice::GetActive()->GetDepthFormat(); // Use a suitable depth format
-            shadowmap_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-            shadowmap_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            shadowmap_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-            shadowmap_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            shadowmap_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            shadowmap_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            shadowmap_attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            attachments_shadow.AddAttachment("shadowmap", shadowmap_attachment);
             
             VkAttachmentDescription depth_attachment = {};
             depth_attachment.format = PhysicalDevice::GetActive()->GetDepthFormat();
@@ -98,6 +100,7 @@ namespace gbe::vulkan {
             depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             attachments_main.AddAttachment("depth", depth_attachment);
+            attachments_shadow.AddAttachment("depth", depth_attachment);
 
             VkAttachmentDescription color_attachment = {};
             color_attachment.format = PhysicalDevice::GetActive()->Get_swapchainFormat().format;
@@ -109,6 +112,7 @@ namespace gbe::vulkan {
             color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
             attachments_main.AddAttachment("color", color_attachment);
+            color_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             attachments_shadow.AddAttachment("color", color_attachment);
         }
 
@@ -142,6 +146,40 @@ namespace gbe::vulkan {
         }
 
         inline void StartShadowPass() {
+            MemoryBarrier::Insert(
+                Instance::GetActive()->GetCurrentCommandBuffer()->GetData(),
+                sp_depth->GetImage(),
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+                VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = max_lights
+                }
+            );
+
+            MemoryBarrier::Insert(
+                Instance::GetActive()->GetCurrentCommandBuffer()->GetData(),
+                sp_main->GetImage(),
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = max_lights
+                }
+            );
+
             VkRenderPassBeginInfo shadowPassBeginInfo{};
             
             SetBounds(shadow_map_resolution, shadow_map_resolution);
@@ -246,7 +284,7 @@ namespace gbe::vulkan {
 
             //References
             VkAttachmentReference shadowMapColorRef = attachments_shadow.GetRef("color", VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            VkAttachmentReference shadowMapDepthRef = attachments_shadow.GetRef("shadowmap", VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            VkAttachmentReference shadowMapDepthRef = attachments_shadow.GetRef("depth", VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
             VkAttachmentReference mainColorRef = attachments_main.GetRef("color", VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             VkAttachmentReference mainDepthRef = attachments_main.GetRef("depth", VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
@@ -287,7 +325,7 @@ namespace gbe::vulkan {
             RenderPass::SetActive("shadow", shadow_pass);
 
             AttachmentReferencePasser passer(attachments_shadow);
-            passer.PassView("shadowmap", sp_depth->GetView()->GetData());
+            passer.PassView("depth", sp_depth->GetView()->GetData());
             passer.PassView("color", sp_main->GetView()->GetData());
 
             shadow_buffer = new Framebuffer(
