@@ -4,11 +4,10 @@
 namespace gbe {
     using namespace gfx;
 
-    Camera::Camera(Window* mWindow)
+    Camera::Camera()
     {
         this->nearClip = 0.1f;
         this->farClip = 200.0f;
-        this->mWindow = mWindow;
     }
 
     Matrix4 Camera::GetViewMat()
@@ -42,22 +41,22 @@ namespace gbe {
         return finaldir.Normalize();
     }
 
-    PerspectiveCamera::PerspectiveCamera(Window* mWindow) : Camera(mWindow)
-    {
-    }
-
     Matrix4 PerspectiveCamera::GetProjectionMat()
     {
-        return glm::perspective(glm::radians(this->angles), (float)mWindow->Get_dimentions().x / mWindow->Get_dimentions().y, this->nearClip, this->farClip);
+        auto res = RenderPipeline::GetViewportResolution();
+        if (res.x == 0 || res.y == 0)
+            res = RenderPipeline::GetScreenResolution();
+
+        return glm::perspective(glm::radians(this->angles), (float)res.x / res.y, this->nearClip, this->farClip);
     }
 
     Matrix4 PerspectiveCamera::GetProjectionMat(float dist)
     {
-        return glm::perspective(glm::radians(this->angles), (float)mWindow->Get_dimentions().x / mWindow->Get_dimentions().y, this->nearClip, dist);
-    }
+        auto res = RenderPipeline::GetViewportResolution();
+        if (res.x == 0 || res.y == 0)
+            res = RenderPipeline::GetScreenResolution();
 
-    OrthographicCamera::OrthographicCamera(Window* mWindow) : Camera(mWindow)
-    {
+        return glm::perspective(glm::radians(this->angles), (float)res.x / res.y, this->nearClip, dist);
     }
 
     Matrix4 OrthographicCamera::GetProjectionMat()

@@ -283,7 +283,7 @@ void gbe::Editor::PrepareUpdate()
 
 	//==============================IMGUI==============================//
 	ImGuiID dockspace_id = ImGui::GetID("maindockspace");
-	ImGui::DockSpaceOverViewport(dockspace_id); // You can use different flags to customize behavior
+	ImGui::DockSpaceOverViewport(dockspace_id);
 
 	this->menubar.Draw();
 	this->gizmoLayer.Draw();

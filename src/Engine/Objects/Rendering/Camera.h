@@ -16,9 +16,7 @@ namespace gbe {
         float nearClip;
         float farClip;
 
-        Window* mWindow;
-
-        Camera(Window* mWindow);
+        Camera();
 
         Vector3 WorldUp = Vector3(0, 1, 0);
 
@@ -30,9 +28,7 @@ namespace gbe {
     };
 
     struct OrthographicCamera : public Camera {
-        float orthoRange;
-
-        OrthographicCamera(Window* mWindow);
+        float orthoRange = 50;
 
         // Inherited via GDCamera
         virtual Matrix4 GetProjectionMat() override;
@@ -40,9 +36,8 @@ namespace gbe {
     };
 
     struct PerspectiveCamera : public Camera {
-        float angles;
+        float angles = 90;
 
-        PerspectiveCamera(Window* mWindow);
 
         // Inherited via GDCamera
         virtual Matrix4 GetProjectionMat() override;

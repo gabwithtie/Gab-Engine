@@ -169,10 +169,11 @@ namespace gbe::vulkan {
                 delete screen_pass;
 
             mainpass = new DepthColorTarget(attachments_colordepth, x, y, "main");
+            auto screen_extents = SwapChain::GetActive()->GetExtent();
 
             auto depthformat = PhysicalDevice::GetActive()->GetDepthFormat();
             screen_depth = new ImagePair(
-                new Image(main_x, main_y, depthformat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+                new Image(screen_extents.width, screen_extents.height, depthformat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
                 VK_IMAGE_ASPECT_DEPTH_BIT
                 );
 

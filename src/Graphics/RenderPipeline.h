@@ -45,7 +45,8 @@ namespace gbe {
 
 		Window& window;
 		Editor* editor;
-		Vector2Int resolution;
+		Vector2Int screen_resolution;
+		Vector2Int viewport_resolution;
 
 		//Loaders
 		ShaderLoader shaderloader;
@@ -66,6 +67,9 @@ namespace gbe {
 		vulkan::Instance* vulkanInstance;
 		vulkan::ForwardRenderer* renderer; //owned by vulkanInstance
 		
+		bool handled_resolution_change = true;
+
+		void UpdateReferences();
 	public:
 		struct FrameRenderInfo {
 			//Camera info
@@ -80,18 +84,35 @@ namespace gbe {
 			std::vector<gfx::Light*> lightdatas;
 		};
 
-		static RenderPipeline* Get_Instance();
 		
 		RenderPipeline(gbe::Window&, Vector2Int);
 		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* GetDefaultDrawCall();
 
-		void AssignEditor(Editor* editor);
-		void SetCameraShader(asset::Shader* postprocess);
+		inline static RenderPipeline* Get_Instance() {
+			return Instance;
+		}
+		inline void AssignEditor(Editor* editor) {
+			this->editor = editor;
+		}
 
-		void SetResolution(Vector2Int newresolution);
+		inline static void SetScreenResolution(Vector2Int newresolution) {
+			Instance->screen_resolution = newresolution;
+			Instance->handled_resolution_change = false;
+		}
+		inline static void SetViewportResolution(Vector2Int newresolution) {
+			Instance->viewport_resolution = newresolution;
+			Instance->handled_resolution_change = false;
+		}
+		inline static Vector2Int GetViewportResolution() {
+			return Instance->viewport_resolution;
+		}
+		inline static Vector2Int GetScreenResolution() {
+			return Instance->screen_resolution;
+		}
 		
+
 		void RenderFrame(const FrameRenderInfo& frameinfo);
 		std::vector<unsigned char> ScreenShot(bool write_file = false);
 

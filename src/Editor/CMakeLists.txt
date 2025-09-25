@@ -16,7 +16,7 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	 "Gui/GizmoLayer.cpp"
 
 	 "Utility/ModelExport.cpp"
- "Gui/ImageDebugger.h" "Gui/ImageDebugger.cpp")
+ "Gui/ImageDebugger.h" "Gui/ImageDebugger.cpp" "Gui/ViewportWindow.h" "Gui/ViewportWindow.cpp")
 
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_graphics)

@@ -214,7 +214,7 @@ namespace gbe {
 		editor_input->SetParent(this->current_root);
 		auto editor_camera_controller = new FlyingCameraControl();
 		editor_camera_controller->SetParent(editor_input);
-		PerspectiveCamera* editor_cam = new PerspectiveCamera(&this->window);
+		PerspectiveCamera* editor_cam = new PerspectiveCamera();
 		editor_cam->SetParent(editor_camera_controller);
 		editor_cam->farClip = 200;
 		Engine::MakePersistent(editor_input);
@@ -226,7 +226,7 @@ namespace gbe {
 		player_input->SetParent(this->current_root);
 		auto camera_controller = new FlyingCameraControl();
 		camera_controller->SetParent(player_input);
-		PerspectiveCamera* player_cam = new PerspectiveCamera(&this->window);
+		PerspectiveCamera* player_cam = new PerspectiveCamera();
 		player_cam->SetParent(camera_controller);
 		Engine::MakePersistent(player_input);
 #pragma endregion
@@ -282,7 +282,7 @@ namespace gbe {
 			{
 				if (windoweventtype == gbe::window::WindowEventType::RESIZE) {
 					auto newdimensions = this->window.Get_dimentions();
-					renderpipeline.SetResolution(newdimensions);
+					renderpipeline.SetScreenResolution(newdimensions);
 				}
 			}
 
@@ -336,8 +336,9 @@ namespace gbe {
 				frameinfo.projmat_lightusage = current_camera->GetProjectionMat(20.0f);
 			}
 			else {
-				throw std::runtime_error("No cameras rendering scene.");
+
 			}
+
 			renderpipeline.RenderFrame(frameinfo);
 
 			this->window.SwapBuffers();

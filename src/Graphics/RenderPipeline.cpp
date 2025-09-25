@@ -17,10 +17,6 @@ using namespace gbe;
 
 gbe::RenderPipeline* gbe::RenderPipeline::Instance;
 
-gbe::RenderPipeline* gbe::RenderPipeline::Get_Instance() {
-	return gbe::RenderPipeline::Instance;
-}
-
 gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
     window(window)
 {
@@ -31,7 +27,7 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
 
     //===================WINDOW INIT==================
 	this->window = window;
-	this->resolution = dimensions;
+	this->screen_resolution = dimensions;
 
     auto implemented_window = static_cast<SDL_Window*>(window.Get_implemented_window());
     
@@ -45,7 +41,7 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
         vulkan::ValidationLayers::Check(allextensions);
 
 	//1: INSTANCE INFO
-    this->vulkanInstance = new vulkan::Instance(resolution.x, resolution.y, allextensions, enableValidationLayers);
+    this->vulkanInstance = new vulkan::Instance(screen_resolution.x, screen_resolution.y, allextensions, enableValidationLayers);
     vulkan::Instance::SetActive(this->vulkanInstance);
 	
     //2: SDL SURFACE
@@ -65,17 +61,22 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
     this->materialloader.AssignSelfAsLoader();
     this->textureloader.AssignSelfAsLoader();
 
+    UpdateReferences();
+}
+
+void gbe::RenderPipeline::UpdateReferences()
+{
     TextureData mainpass_tex = {
     .textureImageView = this->renderer->Get_mainpass()->Get_color()->GetView(),
     .textureSampler = new vulkan::Sampler()
     };
-    textureloader.RegisterExternal("MainPass", mainpass_tex);
+    textureloader.RegisterExternal("mainpass", mainpass_tex);
 
     TextureData shadowpass_tex = {
     .textureImageView = this->renderer->Get_shadowpass()->Get_color()->GetView(),
     .textureSampler = new vulkan::Sampler()
     };
-    textureloader.RegisterExternal("ShadowPass", shadowpass_tex);
+    textureloader.RegisterExternal("shadowpass", shadowpass_tex);
 
     for (size_t i = 0; i < renderer->Get_max_lights(); i++)
     {
@@ -85,19 +86,6 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
         };
         textureloader.RegisterExternal("shadowmap_" + std::to_string(i), shadowmap_tex);
     }
-}
-
-void gbe::RenderPipeline::AssignEditor(Editor* _editor)
-{
-    this->editor = _editor;
-}
-
-void RenderPipeline::SetCameraShader(asset::Shader* camshader) {
-	
-}
-
-void gbe::RenderPipeline::SetResolution(Vector2Int newresolution) {
-	this->resolution = newresolution;
 }
 
 void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
@@ -253,12 +241,18 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
     renderer->EndScreenPass();
 
     vulkanInstance->PushFrame();
+
+    if (!handled_resolution_change) {
+        vulkanInstance->RefreshPipelineObjects(this->viewport_resolution.x, this->viewport_resolution.y);
+        UpdateReferences();
+        handled_resolution_change = true;
+    }
 }
 
 std::vector<unsigned char> gbe::RenderPipeline::ScreenShot(bool write_file) {
     // Source for the copy is the last rendered swapchain image
     vulkan::Image* srcImage = vulkan::SwapChain::GetActive()->GetImage(vulkanInstance->GetCurrentSwapchainImage());
-    vulkan::Image dstImage(this->resolution.x, this->resolution.y, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    vulkan::Image dstImage(this->screen_resolution.x, this->screen_resolution.y, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
    
     // Do the actual blit from the swapchain image to our host visible destination image
     vulkan::CommandBufferSingle copyCmd;
@@ -292,8 +286,8 @@ std::vector<unsigned char> gbe::RenderPipeline::ScreenShot(bool write_file) {
     imageCopyRegion.srcSubresource.layerCount = 1;
     imageCopyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageCopyRegion.dstSubresource.layerCount = 1;
-    imageCopyRegion.extent.width = this->resolution.x;
-    imageCopyRegion.extent.height = this->resolution.y;
+    imageCopyRegion.extent.width = this->screen_resolution.x;
+    imageCopyRegion.extent.height = this->screen_resolution.y;
     imageCopyRegion.extent.depth = 1;
 
     // Issue the copy command
@@ -341,7 +335,7 @@ std::vector<unsigned char> gbe::RenderPipeline::ScreenShot(bool write_file) {
     std::stringstream s_out = std::stringstream();
 
     // ppm header
-    s_out << "P6\n" << this->resolution.x << "\n" << this->resolution.y << "\n" << 255 << "\n";
+    s_out << "P6\n" << this->screen_resolution.x << "\n" << this->screen_resolution.y << "\n" << 255 << "\n";
 
     // If source is BGR (destination is always RGB) and we can't use blit (which does automatic conversion), we'll have to manually swizzle color components
     bool colorSwizzle = false;
@@ -351,10 +345,10 @@ std::vector<unsigned char> gbe::RenderPipeline::ScreenShot(bool write_file) {
     colorSwizzle = (std::find(formatsBGR.begin(), formatsBGR.end(), vulkan::PhysicalDevice::GetActive()->Get_swapchainFormat().format) != formatsBGR.end());
     
     // ppm binary pixel data
-    for (uint32_t y = 0; y < this->resolution.y; y++)
+    for (uint32_t y = 0; y < this->screen_resolution.y; y++)
     {
         unsigned int* row = (unsigned int*)data;
-        for (uint32_t x = 0; x < this->resolution.x; x++)
+        for (uint32_t x = 0; x < this->screen_resolution.x; x++)
         {
             if (colorSwizzle)
             {

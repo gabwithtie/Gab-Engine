@@ -237,7 +237,7 @@ namespace gbe::vulkan {
             }
         }
 
-        inline void RefreshPipelineObjects() {
+        inline void RefreshPipelineObjects(uint32_t x = 0, uint32_t y = 0) {
             vkDeviceWaitIdle(VirtualDevice::GetActive()->GetData());
 
             //DELETE PipelineObjects
@@ -256,9 +256,10 @@ namespace gbe::vulkan {
             swapchainExtent.width = std::clamp(swapchainExtent.width, PhysicalDevice::GetActive()->Get_capabilities().minImageExtent.width, PhysicalDevice::GetActive()->Get_capabilities().maxImageExtent.width);
             swapchainExtent.height = std::clamp(swapchainExtent.height, PhysicalDevice::GetActive()->Get_capabilities().minImageExtent.height, PhysicalDevice::GetActive()->Get_capabilities().maxImageExtent.height);
 
-            if (customRenderer != nullptr) {
-                this->customRenderer->Refresh(swapchainExtent.width, swapchainExtent.height);
-            }
+            if (x == 0)
+                x = swapchainExtent.width;
+            if (y == 0)
+                y = swapchainExtent.height;
 
             //Image count determination
             uint32_t imageCount = PhysicalDevice::GetActive()->Get_capabilities().minImageCount + 1;
@@ -268,6 +269,10 @@ namespace gbe::vulkan {
 
             swapchain = new SwapChain(swapchainExtent, imageCount);
             SwapChain::SetActive(swapchain);
+
+            if (customRenderer != nullptr) {
+                this->customRenderer->Refresh(x, y);
+            }
 
             auto& attachmentdict = this->customRenderer->GetAttachmentDictionary();
             AttachmentReferencePasser newpasser(attachmentdict);
@@ -381,8 +386,6 @@ namespace gbe::vulkan {
             else if (presentResult != VK_SUCCESS) {
                 throw std::runtime_error("failed to present swap chain image!");
             }
-
-            //Image::copyImageToImage(depthImage, depthImage_reflect, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
             this->currentFrame = (this->currentFrame + 1) % this->MAX_FRAMES_IN_FLIGHT;
         }

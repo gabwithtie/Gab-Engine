@@ -14,6 +14,7 @@
 #include "Gui/ConsoleWindow.h"
 #include "Gui/MenuBar.h"
 #include "Gui/GizmoLayer.h"
+#include "Gui/ViewportWindow.h"
 
 namespace gbe {
 	class RenderPipeline;
@@ -54,6 +55,7 @@ namespace gbe {
 		editor::StateWindow stateWindow;
 		editor::ConsoleWindow consoleWindow;
 		editor::ImageDebugger imageDebuggerWindow;
+		editor::ViewportWindow viewportWindow;
 
 		std::list<editor::GuiWindow*> windows = {
 			&hierarchyWindow,
@@ -61,7 +63,8 @@ namespace gbe {
 			&spawnWindow,
 			&stateWindow,
 			&consoleWindow,
-			&imageDebuggerWindow
+			&imageDebuggerWindow,
+			&viewportWindow
 		};
 
 		//LAYERS
