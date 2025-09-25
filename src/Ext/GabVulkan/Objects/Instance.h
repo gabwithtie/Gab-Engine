@@ -274,7 +274,7 @@ namespace gbe::vulkan {
 
             this->customRenderer->PassAttachments(newpasser);
 
-            this->swapchain->InitializeFramebuffers(newpasser, this->customRenderer->GetMainPass());
+            this->swapchain->InitializeFramebuffers(newpasser, this->customRenderer->GetScreenPass());
         }
 
         inline ~Instance()

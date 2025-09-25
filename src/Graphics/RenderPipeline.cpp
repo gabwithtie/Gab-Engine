@@ -65,11 +65,17 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
     this->materialloader.AssignSelfAsLoader();
     this->textureloader.AssignSelfAsLoader();
 
-    TextureData shadowmap_tex = {
-    .textureImageView = this->renderer->Get_sp_view(),
+    TextureData mainpass_tex = {
+    .textureImageView = this->renderer->Get_mainpass()->Get_color()->GetView(),
     .textureSampler = new vulkan::Sampler()
     };
-    textureloader.RegisterExternal("Shadow Pass", shadowmap_tex);
+    textureloader.RegisterExternal("MainPass", mainpass_tex);
+
+    TextureData shadowpass_tex = {
+    .textureImageView = this->renderer->Get_shadowpass()->Get_color()->GetView(),
+    .textureSampler = new vulkan::Sampler()
+    };
+    textureloader.RegisterExternal("ShadowPass", shadowpass_tex);
 
     for (size_t i = 0; i < renderer->Get_max_lights(); i++)
     {
@@ -189,7 +195,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
         TextureData shadowmaptex = {
         .textureImageView = renderer->Get_shadowmap_layer(0),
-        .textureSampler = renderer->Get_shadowmap_sampler()
+        .textureSampler = renderer->Get_sampler()
         };
         callinstance.ApplyOverride<TextureData>(shadowmaptex, "shadow_tex", vulkanInstance->GetCurrentFrameIndex());
 
@@ -237,14 +243,14 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(curmesh.loaddata->indices.size()), 1, 0, 0, 0);
     }
 
-    
+    renderer->TransitionToScreenPass();
 
     //EDITOR/GUI PASS
     if (editor != nullptr) {
         this->editor->RenderPass(vulkanInstance->GetCurrentCommandBuffer());
     }
 
-    renderer->EndMainPass();
+    renderer->EndScreenPass();
 
     vulkanInstance->PushFrame();
 }

@@ -7,15 +7,15 @@
 namespace gbe::vulkan {
 	class Renderer {
 	protected:
-		AttachmentDictionary attachments_main;
-		RenderPass* main_pass = nullptr;
+		AttachmentDictionary attachments_screen;
+		RenderPass* screen_pass = nullptr;
 	public:
 		inline AttachmentDictionary& GetAttachmentDictionary() {
-			return attachments_main;
+			return attachments_screen;
 		}
 
-		inline RenderPass* GetMainPass() {
-			return main_pass;
+		inline RenderPass* GetScreenPass() {
+			return screen_pass;
 		}
 
 		virtual void Refresh(uint32_t x, uint32_t y) = 0;

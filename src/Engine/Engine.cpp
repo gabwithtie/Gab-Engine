@@ -289,7 +289,8 @@ namespace gbe {
 			//Update input system
 			auto inputhandler = this->current_root->GetHandler<InputPlayer>();
 
-			mInputSystem->UpdateStates([=](std::string name, gbe::input::InputAction* action, bool changed) {
+			if (editor != nullptr && !editor->FocusedOnEditorUI())
+				mInputSystem->UpdateStates([=](std::string name, gbe::input::InputAction* action, bool changed) {
 				for (auto input_player : inputhandler->t_object_list) {
 					if (!input_player->Get_enabled())
 						continue;
@@ -305,7 +306,7 @@ namespace gbe {
 						input_customer->TryReceive(action, changed);
 							});
 				}
-				}, &this->window);
+					}, &this->window);
 
 			//Update GUI system
 

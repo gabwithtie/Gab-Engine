@@ -11,9 +11,10 @@ namespace gbe::vulkan {
 
         }
 
-        inline DescriptorPool(std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t maxSets) {
+        inline DescriptorPool(std::vector<VkDescriptorPoolSize>& poolSizes, uint32_t maxSets, VkDescriptorPoolCreateFlags flags = 0) {
             VkDescriptorPoolCreateInfo poolInfo{};
             poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            poolInfo.flags = flags;
             poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
             poolInfo.pPoolSizes = poolSizes.data();
             poolInfo.maxSets = maxSets;

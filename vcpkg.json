@@ -29,7 +29,7 @@
     "vulkan-validationlayers",
     {
       "name": "imgui",
-      "features": [ "vulkan-binding", "sdl2-binding" ]
+      "features": [ "vulkan-binding", "sdl2-binding", "docking-experimental" ]
     },
     "imguizmo"
 

@@ -66,12 +66,14 @@ namespace gbe {
 
 		//LAYERS
 		editor::GizmoLayer gizmoLayer;
-		//BOX GIZMOS
-		asset::Material* gizmo_box_mat = nullptr;
-		std::unordered_map<gbe::Object*, RenderObject*> gizmo_boxes;
+
+
+		//DYNAMICALLY ALLOCATED
+		vulkan::DescriptorPool* gui_ds;
 
 	public:
 		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime);
+		~Editor();
 		static void SelectSingle(Object* other);
 		static void DeselectAll();
 		static void CommitAction(std::function<void()> redo, std::function<void()> undo);
@@ -82,6 +84,8 @@ namespace gbe {
 		void PrepareUpdate();
 		void ProcessRawWindowEvent(void* rawwindowevent);
 		void RenderPass(vulkan::CommandBuffer* cmd);
-		void CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed);
+		inline bool FocusedOnEditorUI() {
+			return pointer_inUi || keyboard_inUi;
+		}
 	};
 }

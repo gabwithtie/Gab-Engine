@@ -33,7 +33,7 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	this->mtime = _mtime;
 
 	//===========================IMGUI=============================//
-	VkDescriptorPoolSize pool_sizes[] =
+	std::vector<VkDescriptorPoolSize> pool_sizes =
 	{
 		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
@@ -48,17 +48,7 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
 	};
 
-	VkDescriptorPoolCreateInfo pool_info = {};
-	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-	pool_info.maxSets = 1000;
-	pool_info.poolSizeCount = std::size(pool_sizes);
-	pool_info.pPoolSizes = pool_sizes;
-
-	VkDescriptorPool imguiPool;
-	if (vkCreateDescriptorPool(vulkan::VirtualDevice::GetActive()->GetData(), &pool_info, nullptr, &imguiPool) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to init imgui");
-	}
+	gui_ds = new vulkan::DescriptorPool(pool_sizes, 1000, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
 
 	TextureLoader::Set_Ui_Callback([](vulkan::Sampler* sampler, vulkan::ImageView* imgview) {
 		return ImGui_ImplVulkan_AddTexture(sampler->GetData(), imgview->GetData(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -71,20 +61,21 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	init_info.PhysicalDevice = vulkan::PhysicalDevice::GetActive()->GetData();
 	init_info.Device = vulkan::VirtualDevice::GetActive()->GetData();
 	init_info.Queue = vulkan::VirtualDevice::GetActive()->Get_graphicsQueue();
-	init_info.DescriptorPool = imguiPool;
+	init_info.DescriptorPool = gui_ds->GetData();
 	init_info.MinImageCount = 3;
 	init_info.ImageCount = 3;
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	init_info.RenderPass = vulkan::RenderPass::GetActive("main")->GetData();
 	ImGui_ImplVulkan_Init(&init_info); //init for vulkan
 
-	/*
-	//add the destroy the imgui created structures
-	_mainDeletionQueue.push_function([=]() {
-		vkDestroyDescriptorPool(_device, imguiPool, nullptr);
-		ImGui_ImplVulkan_Shutdown();
-		});
-		*/
+
+	//IO FLAGS
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+}
+
+gbe::Editor::~Editor()
+{
+	delete gui_ds;
 }
 
 void gbe::Editor::SelectSingle(Object* other) {
@@ -116,9 +107,6 @@ void gbe::Editor::SelectSingle(Object* other) {
 		if (it != instance->selected.end()) {
 			instance->selected.erase(it);
 
-			instance->gizmo_boxes[other]->Destroy();
-			instance->gizmo_boxes.erase(other);
-
 			deselection = true;
 		}
 	}
@@ -129,21 +117,11 @@ void gbe::Editor::SelectSingle(Object* other) {
 	if (!deselection) {
 		//SELECT AND BOX
 		instance->selected.push_back(other);
-
-		if (renderer_has != nullptr)
-			instance->CreateGizmoBox(renderer_has, other);
 	}
 }
 
 void gbe::Editor::DeselectAll() {
 	instance->selected.clear();
-
-	//CLEAR BOXES
-	for (auto& gizmoptr : instance->gizmo_boxes)
-	{
-		gizmoptr.second->Destroy();
-	}
-	instance->gizmo_boxes.clear();
 }
 
 void gbe::Editor::CommitAction(std::function<void()> action_done, std::function<void()> undo)
@@ -182,24 +160,6 @@ void gbe::Editor::Redo()
 	instance->cur_action_index++;
 }
 
-void gbe::Editor::CreateGizmoBox(gbe::RenderObject* boxed, gbe::Object* rootboxed)
-{
-	if(this->gizmo_box_mat == nullptr) {
-		this->gizmo_box_mat = asset::Material::GetAssetById("wireframe");
-		this->gizmo_box_mat->setOverride("color", Vector4(1, 1, 0, 1.0f));
-	}
-
-	if (boxed->Get_DrawCall() == nullptr)
-		return;
-
-	auto newDrawcall = this->mrenderpipeline->RegisterDrawCall(boxed->Get_DrawCall()->get_mesh(), this->gizmo_box_mat);
-	RenderObject* box_renderer = new RenderObject(newDrawcall);
-	box_renderer->SetParent(boxed);
-	box_renderer->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
-
-	gizmo_boxes.insert_or_assign(rootboxed, box_renderer);
-}
-
 void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 	auto sdlevent = static_cast<SDL_Event*>(rawwindowevent);
 
@@ -232,13 +192,6 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 				if (!this->keyboard_shifting) { //NOT MULTISELECTING
 					//CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED NOTHING
 					this->selected.clear();
-
-					//CLEAR BOXES
-					for (auto& gizmoptr : this->gizmo_boxes)
-					{
-						gizmoptr.second->Destroy();
-					}
-					this->gizmo_boxes.clear();
 				}
 			}
 			else {
@@ -316,7 +269,6 @@ void gbe::Editor::PrepareUpdate()
 	ImGui::NewFrame();
 	ImGuizmo::BeginFrame();
 
-
 	auto& ui_io = ImGui::GetIO();
 
 	this->pointer_inUi = ui_io.WantCaptureMouse;
@@ -330,6 +282,9 @@ void gbe::Editor::PrepareUpdate()
 	}
 
 	//==============================IMGUI==============================//
+	ImGuiID dockspace_id = ImGui::GetID("maindockspace");
+	ImGui::DockSpaceOverViewport(dockspace_id); // You can use different flags to customize behavior
+
 	this->menubar.Draw();
 	this->gizmoLayer.Draw();
 

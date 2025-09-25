@@ -27,6 +27,8 @@ namespace gbe {
         Vector2Int mousePos;
         Vector2Int dimentions;
 
+        Matrix4 subwindow_transform;
+
         std::unordered_map<std::string, std::function<void(void*)>> window_callbacks;
         std::unordered_map<unsigned int, bool> keystates;
         
@@ -63,5 +65,8 @@ namespace gbe {
 
         void AddAdditionalEventProcessor(std::function<void(void*)> processor);
 
+        inline void Set_subwindow_transform(Matrix4 mat) {
+            subwindow_transform = mat;
+        }
     };
 }
