@@ -24,6 +24,7 @@ namespace gbe {
 
         Matrix4 GetViewMat();
         virtual Matrix4 GetProjectionMat() = 0;
+        virtual Matrix4 GetProjectionMat(float override_range) = 0;
         Vector3 ScreenToRay(Vector2 normalizedscreenpos);
         Vector2 WorldToScreen(Vector3 worldpos);
     };
@@ -35,6 +36,7 @@ namespace gbe {
 
         // Inherited via GDCamera
         virtual Matrix4 GetProjectionMat() override;
+        virtual Matrix4 GetProjectionMat(float override_range) override;
     };
 
     struct PerspectiveCamera : public Camera {
@@ -44,5 +46,6 @@ namespace gbe {
 
         // Inherited via GDCamera
         virtual Matrix4 GetProjectionMat() override;
+        virtual Matrix4 GetProjectionMat(float override_range) override;
     };
 }

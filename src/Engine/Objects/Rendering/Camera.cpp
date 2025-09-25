@@ -7,7 +7,7 @@ namespace gbe {
     Camera::Camera(Window* mWindow)
     {
         this->nearClip = 0.1f;
-        this->farClip = 30.0f;
+        this->farClip = 200.0f;
         this->mWindow = mWindow;
     }
 
@@ -51,6 +51,11 @@ namespace gbe {
         return glm::perspective(glm::radians(this->angles), (float)mWindow->Get_dimentions().x / mWindow->Get_dimentions().y, this->nearClip, this->farClip);
     }
 
+    Matrix4 PerspectiveCamera::GetProjectionMat(float dist)
+    {
+        return glm::perspective(glm::radians(this->angles), (float)mWindow->Get_dimentions().x / mWindow->Get_dimentions().y, this->nearClip, dist);
+    }
+
     OrthographicCamera::OrthographicCamera(Window* mWindow) : Camera(mWindow)
     {
     }
@@ -58,6 +63,11 @@ namespace gbe {
     Matrix4 OrthographicCamera::GetProjectionMat()
     {
         return glm::ortho(-orthoRange, orthoRange, -orthoRange, orthoRange, this->nearClip, this->farClip);
+    }
+
+    Matrix4 OrthographicCamera::GetProjectionMat(float dist)
+    {
+        return glm::ortho(-orthoRange, orthoRange, -orthoRange, orthoRange, this->nearClip, dist);
     }
 
 }

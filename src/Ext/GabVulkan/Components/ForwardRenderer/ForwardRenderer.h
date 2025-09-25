@@ -136,7 +136,6 @@ namespace gbe::vulkan {
             scissor.offset = { 0, 0 };
             scissor.extent = {x, y};
             vkCmdSetScissor(Instance::GetActive()->GetCurrentCommandBuffer()->GetData(), 0, 1, &scissor);
-
         }
 
         inline void PassAttachments(AttachmentReferencePasser& newpasser) override

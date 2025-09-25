@@ -114,7 +114,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         const auto& light = frameinfo.lightdatas[lightIndex];
 
         // Update the light's view and projection matrices.
-        light->UpdateContext(frameinfo.viewmat, frameinfo.projmat);
+        light->UpdateContext(frameinfo.viewmat, frameinfo.projmat_lightusage);
         Matrix4 lightViewMat = light->GetViewMatrix();
         Matrix4 lightProjMat = light->GetProjectionMatrix();
 

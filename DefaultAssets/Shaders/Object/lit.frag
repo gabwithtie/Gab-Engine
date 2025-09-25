@@ -47,6 +47,13 @@ layout(set = 1, binding = 1) uniform Shading {
 
 layout(location = 0) out vec4 outColor;
 
+const mat4 biasMat = mat4( 
+	0.5, 0.0, 0.0, 0.0,
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.5, 0.5, 0.0, 1.0 );
+
+
 void main() {
     //texture calcs
     vec3 _color_fromtex = texture(color_tex, fragTexCoord).xyz * color;
@@ -97,10 +104,32 @@ void main() {
         vec4 fragPosLightSpace = lights[i].light_proj * lights[i].light_view * vec4(fragPos, 1.0);
 		vec3 shadowcoord = fragPosLightSpace.xyz / fragPosLightSpace.w;
         shadowcoord = shadowcoord * 0.5 + 0.5;
-        float dist = texture( shadow_tex, shadowcoord.xy).r;
-        float delta = shadowcoord.z - dist;
+        float curdepth = (fragPosLightSpace.z + 1) / 2.0;
 
-        float shadow = delta > 0 ? 1 : 0;
+        ivec2 texDim = textureSize(shadow_tex, 0);
+	    float scale = 1.5;
+	    float dx = scale * 1.0 / float(texDim.x);
+	    float dy = scale * 1.0 / float(texDim.y);
+
+	    float shadow = 0.0;
+	    float count = 0;
+	    int range = 1;
+	
+	    for (int x = -range; x <= range; x++)
+	    {
+		    for (int y = -range; y <= range; y++)
+		    {
+                float dist = texture(shadow_tex, shadowcoord.xy + vec2(dx*x, dy*y)).r;
+                float bias = max(lights[i].bias_mult * (1.0 - dot(_normal, lightDir)), lights[i].bias_min);
+                float delta = fragPosLightSpace.z - bias - dist;
+
+                shadow += delta > 0 ? 0.0 : 1.0;
+
+			    count++;
+		    }
+	
+	    }
+	    shadow = shadow / count;
 
         // REVISED: Apply shadow factor to lighting
         vec3 sub_final = diffuse + specular;

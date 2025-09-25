@@ -178,7 +178,7 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 					ImGui::Text(floatfield->name.c_str());
 					ImGui::SameLine();
 					ImGui::SetNextItemWidth(-1);
-					bool changed = ImGui::InputFloat(floatlabel.c_str(), &proxy_float);
+					bool changed = ImGui::InputFloat(floatlabel.c_str(), &proxy_float, 0, 0, "%.6f");
 
 					if (changed)
 					{

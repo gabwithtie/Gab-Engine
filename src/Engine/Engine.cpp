@@ -216,7 +216,7 @@ namespace gbe {
 		editor_camera_controller->SetParent(editor_input);
 		PerspectiveCamera* editor_cam = new PerspectiveCamera(&this->window);
 		editor_cam->SetParent(editor_camera_controller);
-		editor_cam->farClip = 20;
+		editor_cam->farClip = 200;
 		Engine::MakePersistent(editor_input);
 		editor_cam->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 		editor_input->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
@@ -240,8 +240,11 @@ namespace gbe {
 			
 		}
 
-		//ANITO BUILDER
+		//Frustrum debugging
 		auto test_sphere = create_primitive(gbe::RenderObject::sphere, Vector3(0, 2, -5), Vector3(1));
+
+
+		//ANITO BUILDER
 
 		Vector3 cubecorners[4] = {
 			Vector3(-2, 0, -2),
@@ -329,6 +332,7 @@ namespace gbe {
 				frameinfo.nearclip = current_camera->nearClip;
 				frameinfo.viewmat = current_camera->GetViewMat();
 				frameinfo.projmat = current_camera->GetProjectionMat();
+				frameinfo.projmat_lightusage = current_camera->GetProjectionMat(20.0f);
 			}
 			else {
 				throw std::runtime_error("No cameras rendering scene.");

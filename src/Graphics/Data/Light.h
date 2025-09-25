@@ -16,6 +16,7 @@ namespace gbe::gfx {
         Matrix4 cam_view;
         Matrix4 cam_proj;
 
+        float override_dist = 50;
         float dir_backtrack_dist = 240;
         float dir_overshoot_dist = 600;
         float bias_min = 0.005;
@@ -62,6 +63,7 @@ namespace gbe::gfx {
             switch (type) {
             case DIRECTIONAL: {
                 
+                const auto viewmat = GetViewMatrix();
                 float minX = std::numeric_limits<float>::max();
                 float maxX = std::numeric_limits<float>::lowest();
                 float minY = std::numeric_limits<float>::max();
@@ -69,7 +71,7 @@ namespace gbe::gfx {
                 float maxZ = std::numeric_limits<float>::lowest();
                 for (const auto& v : frustrum_corners)
                 {
-                    const auto trf = GetViewMatrix() * v;
+                    const auto trf = viewmat * v;
                     minX = std::min(minX, trf.x);
                     maxX = std::max(maxX, trf.x);
                     minY = std::min(minY, trf.y);

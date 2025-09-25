@@ -72,6 +72,7 @@ namespace gbe {
 			Vector3 camera_pos;
 			Matrix4 viewmat;
 			Matrix4 projmat;
+			Matrix4 projmat_lightusage;
 			float nearclip;
 			float farclip;
 			

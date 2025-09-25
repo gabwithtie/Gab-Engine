@@ -1,7 +1,7 @@
 {
   "vert": "3d.vert.spv",
   "vert_meta": "3d.vert.json",
-  "frag": "vertcolor.frag.spv",
-  "frag_meta": "vertcolor.frag.json",
-"renderpass": "shadow"
+  "frag": "depth.frag.spv",
+  "frag_meta": "depth.frag.json",
+  "renderpass": "shadow"
 }
