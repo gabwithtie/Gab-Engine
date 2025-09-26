@@ -14,6 +14,7 @@ namespace gbe {
 				std::string vert_meta;
 				std::string frag_meta;
 				std::string wireframe;
+				std::string line;
 				std::string renderpass;
 			};
 			struct ShaderLoadData {

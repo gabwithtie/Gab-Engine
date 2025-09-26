@@ -88,6 +88,16 @@ void gbe::RenderPipeline::UpdateReferences()
     }
 }
 
+void gbe::RenderPipeline::DrawLine(Vector3 a, Vector3 b)
+{
+    Instance->lines_this_frame.push_back({
+            .pos = a
+        });
+    Instance->lines_this_frame.push_back({
+            .pos = b
+        });
+}
+
 void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 {
     if (window.isMinimized())
@@ -155,6 +165,43 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
     //==================SECOND PASS [1]========================//
     renderer->TransitionToMainPass();
+
+    //===============LINE PASS
+    if (lines_this_frame.size() > 0) {
+        VkDeviceSize vbufferSize = sizeof(asset::data::Vertex) * lines_this_frame.size();
+        vulkan::Buffer stagingBuffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        void* vdata;
+        vulkan::VirtualDevice::GetActive()->MapMemory(stagingBuffer.GetMemory(), 0, vbufferSize, 0, &vdata);
+        memcpy(vdata, this->lines_this_frame.data(), (size_t)vbufferSize);
+        vulkan::VirtualDevice::GetActive()->UnMapMemory(stagingBuffer.GetMemory());
+
+        vulkan::Buffer* line_vertexBuffer = new vulkan::Buffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        vulkan::Buffer::CopyBuffer(&stagingBuffer, line_vertexBuffer, vbufferSize);
+
+        auto lineshaderasset = this->line_call.drawcall->get_material()->Get_load_data().shader;
+        const auto& lineshader = shaderloader.GetAssetData(lineshaderasset);
+        vkCmdBindPipeline(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, lineshader.pipeline);
+
+        this->line_call.ApplyOverride<Matrix4>(Matrix4(1), "model", vulkanInstance->GetCurrentFrameIndex());
+        this->line_call.ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex());
+        this->line_call.ApplyOverride<Matrix4>(frameinfo.viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
+
+        this->line_call.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
+
+        VkBuffer vertexBuffers[] = { line_vertexBuffer->GetData() };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
+
+        std::vector<VkDescriptorSet> bindingsets;
+        for (auto& set : this->line_call.allocdescriptorSets_perframe[vulkanInstance->GetCurrentFrameIndex()])
+        {
+            bindingsets.push_back(set.second);
+        }
+
+        vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, lineshader.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
+        vkCmdDraw(vulkanInstance->GetCurrentCommandBuffer()->GetData(), lines_this_frame.size(), 1, 0, 0);
+    }
+    //=================END OF LINE PASS
 
     for (const auto& call_ptr : sortedcalls[0])
     {
@@ -247,6 +294,8 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         UpdateReferences();
         handled_resolution_change = true;
     }
+
+    lines_this_frame.clear();
 }
 
 std::vector<unsigned char> gbe::RenderPipeline::ScreenShot(bool write_file) {
@@ -417,6 +466,22 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         overridedata.registered_change = false; // Reset handled change for new call
     }
 
+    CallInstance newinst = this->PrepareCall(drawcall, order);
+
+    //COMMITTING
+    if(!exists)
+        this->calls[instance_id] = {};
+
+    this->calls[instance_id][order] = newinst;
+    if (sortedcalls.find(order) == sortedcalls.end())
+        sortedcalls[order] = std::vector<void*>();
+    sortedcalls.find(order)->second.push_back(instance_id);
+
+    return &this->calls[instance_id][order].model;
+}
+
+CallInstance gbe::RenderPipeline::PrepareCall(DrawCall* drawcall, int order)
+{
     CallInstance newinst{};
     newinst.drawcall = drawcall;
     newinst.order = order;
@@ -553,7 +618,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
 
         std::vector< std::vector<VkDescriptorImageInfo>> imageInfos(newinst.uniformTextures.size());
         unsigned int info_index = 0;
-        for (const auto& pair: newinst.uniformTextures)
+        for (const auto& pair : newinst.uniformTextures)
         {
             const auto& arr_size = pair.second.size();
             imageInfos[info_index].resize(arr_size);
@@ -587,16 +652,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterCall(void* instance_id, DrawCall* dra
         vkUpdateDescriptorSets(vulkan::VirtualDevice::GetActive()->GetData(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 
-    //COMMITTING
-    if(!exists)
-        this->calls[instance_id] = {};
-
-    this->calls[instance_id][order] = newinst;
-    if (sortedcalls.find(order) == sortedcalls.end())
-        sortedcalls[order] = std::vector<void*>();
-    sortedcalls.find(order)->second.push_back(instance_id);
-
-    return &this->calls[instance_id][order].model;
+    return newinst;
 }
 
 void gbe::RenderPipeline::UnRegisterCall(void* instance_id)

@@ -132,6 +132,9 @@ namespace gbe {
 #pragma region Asset Loading
 		asset::BatchLoader::LoadAssetsFromDirectory("DefaultAssets");
 
+		//Init all that needs assets here
+		renderpipeline.InitializeAssetRequisites();
+
 		//MESH FINDING
 		auto cube_mesh = asset::Mesh::GetAssetById("cube");
 		auto sphere_mesh = asset::Mesh::GetAssetById("sphere");
@@ -222,25 +225,6 @@ namespace gbe {
 #pragma endregion
 
 #pragma region scene objects
-		//GRID
-		const Vector2Int GridSize(5, 5);
-
-		for (size_t i = 0; i < GridSize.x * GridSize.y; i++)
-		{
-			float x = i % GridSize.x;
-			float y = i / GridSize.x;
-			auto pos = Vector3(0, x, y);
-			auto scale_f = 1;
-			auto scale = Vector3(1, scale_f, scale_f);
-
-			RenderObject* grid_seg = new RenderObject(wire_plane);
-			grid_seg->SetParent(this->current_root);
-			grid_seg->Local().position.Set(pos);
-			grid_seg->Local().rotation.Set(Quaternion::Euler(Vector3(0, 0, 0)));
-			grid_seg->Local().scale.Set(scale);
-			grid_seg->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
-		}
-
 		//Frustrum debugging
 		auto test_sphere = create_primitive(gbe::RenderObject::sphere, Vector3(0, 2, -5), Vector3(1));
 		test_sphere->SetName("Sphere");
@@ -334,6 +318,39 @@ namespace gbe {
 				frameinfo.viewmat = current_camera->GetViewMat();
 				frameinfo.projmat = current_camera->GetProjectionMat();
 				frameinfo.projmat_lightusage = current_camera->GetProjectionMat(20.0f);
+
+				//GRID
+				const int gridlines = 60;
+				const float stride = 2;
+				const int gridlines_half = gridlines / 2;
+				float max_z = frameinfo.camera_pos.z + gridlines_half;
+				float max_x = frameinfo.camera_pos.x + gridlines_half;
+				float min_z = frameinfo.camera_pos.z - gridlines_half;
+				float min_x = frameinfo.camera_pos.x - gridlines_half;
+
+				const auto align = [stride](float coord) {
+					coord /= stride;
+					coord = round(coord);
+					coord *= stride;
+					return coord;
+					};
+
+				for (size_t l_i = 0; l_i < gridlines; l_i++)
+				{
+					Vector3 a = Vector3::Lerp(Vector3(min_x, 0, min_z), Vector3(max_x, 0, min_z), (float)l_i / gridlines);
+					a.x = align(a.x);
+					Vector3 b = a + Vector3(0, 0, gridlines);
+
+					RenderPipeline::DrawLine(a, b);
+				}
+				for (size_t l_i = 0; l_i < gridlines; l_i++)
+				{
+					Vector3 a = Vector3::Lerp(Vector3(min_x, 0, min_z), Vector3(min_x, 0, max_z), (float)l_i / gridlines);
+					a.z = align(a.z);
+					Vector3 b = a + Vector3(gridlines, 0, 0);
+
+					RenderPipeline::DrawLine(a, b);
+				}
 			}
 			else {
 

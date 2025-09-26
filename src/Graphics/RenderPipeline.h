@@ -63,6 +63,10 @@ namespace gbe {
 		std::unordered_map<void*, std::map<int, CallInstance>> calls;
 		std::map<int, std::vector<void*>> sortedcalls;
 		
+		//LINES
+		std::vector<asset::data::Vertex> lines_this_frame;
+		CallInstance line_call;
+		
 		//============DYNAMICALLY ALLOCATED=======================//
 		vulkan::Instance* vulkanInstance;
 		vulkan::ForwardRenderer* renderer; //owned by vulkanInstance
@@ -70,6 +74,7 @@ namespace gbe {
 		bool handled_resolution_change = true;
 
 		void UpdateReferences();
+		CallInstance PrepareCall(DrawCall* drawcall, int order = 0);
 	public:
 		struct FrameRenderInfo {
 			//Camera info
@@ -89,6 +94,13 @@ namespace gbe {
 		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* GetDefaultDrawCall();
+		static void DrawLine(Vector3 a, Vector3 b);
+
+		inline void InitializeAssetRequisites() {
+			//Register Line Drawcall
+			auto linedrawcall = this->RegisterDrawCall(nullptr, asset::Material::GetAssetById("line"));
+			this->line_call = this->PrepareCall(linedrawcall);
+		}
 
 		inline static RenderPipeline* Get_Instance() {
 			return Instance;

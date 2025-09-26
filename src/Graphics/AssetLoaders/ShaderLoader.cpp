@@ -341,7 +341,12 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
 	//Input assembly
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+	if (importdata.line == "true")
+		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+	else
+		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 	//Viewports and scissors
