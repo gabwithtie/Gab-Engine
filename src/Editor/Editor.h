@@ -13,7 +13,6 @@
 #include "Gui/ImageDebugger.h"
 #include "Gui/ConsoleWindow.h"
 #include "Gui/MenuBar.h"
-#include "Gui/GizmoLayer.h"
 #include "Gui/ViewportWindow.h"
 
 namespace gbe {
@@ -67,10 +66,6 @@ namespace gbe {
 			&viewportWindow
 		};
 
-		//LAYERS
-		editor::GizmoLayer gizmoLayer;
-
-
 		//DYNAMICALLY ALLOCATED
 		vulkan::DescriptorPool* gui_ds;
 
@@ -88,7 +83,8 @@ namespace gbe {
 		void ProcessRawWindowEvent(void* rawwindowevent);
 		void RenderPass(vulkan::CommandBuffer* cmd);
 		inline bool FocusedOnEditorUI() {
-			return pointer_inUi || keyboard_inUi;
+			bool pointer_really_inUi = pointer_inUi && !viewportWindow.Get_pointer_here();
+			return pointer_really_inUi || keyboard_inUi;
 		}
 	};
 }

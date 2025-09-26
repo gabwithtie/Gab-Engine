@@ -25,9 +25,10 @@ namespace gbe {
     private:
         SDL_Window* implemented_window = nullptr;
         Vector2Int mousePos;
-        Vector2Int dimentions;
 
-        Matrix4 subwindow_transform;
+        Vector2Int dimentions;
+        Vector2 viewport_subscale;
+        Vector2Int viewport_offset;
 
         std::unordered_map<std::string, std::function<void(void*)>> window_callbacks;
         std::unordered_map<unsigned int, bool> keystates;
@@ -65,8 +66,9 @@ namespace gbe {
 
         void AddAdditionalEventProcessor(std::function<void(void*)> processor);
 
-        inline void Set_subwindow_transform(Matrix4 mat) {
-            subwindow_transform = mat;
+        inline void Set_viewport(Vector2 viewport_subscale, Vector2Int viewport_offset) {
+            this->viewport_subscale = viewport_subscale;
+            this->viewport_offset = viewport_offset;
         }
     };
 }

@@ -28,9 +28,9 @@ void gbe::editor::GizmoLayer::DrawSelf()
 
     // IMGUI SETUP
 	ImGuizmo::AllowAxisFlip(false);
-    ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList());
-    ImVec2 windowsize = ImGui::GetMainViewport()->Size;
-    ImVec2 windowpos = ImGui::GetMainViewport()->Pos;
+    ImGuizmo::SetDrawlist();
+    ImVec2 windowsize = ImGui::GetWindowSize();
+    ImVec2 windowpos = ImGui::GetWindowPos();
     ImGuizmo::SetRect(windowpos.x, windowpos.y, windowsize.x, windowsize.y);
 
     ImGuizmo::OPERATION operation = ImGuizmo::OPERATION();

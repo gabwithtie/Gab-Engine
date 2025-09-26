@@ -101,9 +101,16 @@ namespace gbe {
 			Instance->screen_resolution = newresolution;
 			Instance->handled_resolution_change = false;
 		}
-		inline static void SetViewportResolution(Vector2Int newresolution) {
+		inline static void SetViewportResolution(Vector2Int newresolution, Vector2Int offset) {
 			Instance->viewport_resolution = newresolution;
 			Instance->handled_resolution_change = false;
+
+			Instance->window.Set_viewport(
+				{
+					(float)newresolution.x / Instance->screen_resolution.x,
+					(float)newresolution.y / Instance->screen_resolution.y
+				},
+				offset);
 		}
 		inline static Vector2Int GetViewportResolution() {
 			return Instance->viewport_resolution;

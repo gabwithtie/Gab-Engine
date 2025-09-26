@@ -11,12 +11,12 @@ namespace gbe {
     }
 
     Window::Window() {
-
     }
 
     gbe::Window::Window(Vector2Int dimentions)
     {
         this->dimentions = dimentions; 
+        this->viewport_subscale = Vector2(1.0f, 1.0f);
 
         // Initialize SDL 
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
@@ -151,12 +151,19 @@ namespace gbe {
     Vector2Int Window::GetMousePixelPos()
     {
         SDL_GetMouseState(&this->mousePos.x, &this->mousePos.y);
+        this->mousePos -= viewport_offset;
+
         return this->mousePos;
     }
     Vector2 Window::GetMouseDecimalPos()
     {
         SDL_GetMouseState(&this->mousePos.x, &this->mousePos.y);
-        auto SDL_decimalpos = Vector2((float)this->mousePos.x / this->dimentions.x, (float)this->mousePos.y / this->dimentions.y);
+        this->mousePos -= viewport_offset;
+
+        auto SDL_decimalpos = Vector2(
+            (float)this->mousePos.x / (this->dimentions.x * this->viewport_subscale.x),
+            (float)this->mousePos.y / (this->dimentions.y * this->viewport_subscale.y)
+        );
         auto normalized_decimalpos = Vector2(SDL_decimalpos.x * 2.0f - 1.0f, (1.0f - SDL_decimalpos.y) * 2.0f - 1.0f);
 
         return normalized_decimalpos;

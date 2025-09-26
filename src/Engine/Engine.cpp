@@ -139,6 +139,7 @@ namespace gbe {
 		auto plane_mesh = asset::Mesh::GetAssetById("plane");
 		//MATERIAL FINDING
 		auto grid_mat = asset::Material::GetAssetById("grid");
+		auto wire_mat = asset::Material::GetAssetById("wireframe");
 		auto lit_mat = asset::Material::GetAssetById("lit");
 
 		//DRAW CALL CACHING X PRIMITIVES CACHING
@@ -146,6 +147,8 @@ namespace gbe {
 		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, renderpipeline.RegisterDrawCall(sphere_mesh, grid_mat));
 		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, renderpipeline.RegisterDrawCall(plane_mesh, grid_mat));
 		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, renderpipeline.RegisterDrawCall(capsule_mesh, grid_mat));
+		
+		auto wire_plane = renderpipeline.RegisterDrawCall(plane_mesh, wire_mat);
 
 		//TYPE SERIALIZER REGISTERING
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), RenderObject::Create);
@@ -204,10 +207,6 @@ namespace gbe {
 			};
 
 		//PERSISTENT OBJECTS
-		//GRAVITY
-		auto gravity_volume = new ForceVolume();
-		gravity_volume->SetParent(this->current_root);
-		Engine::MakePersistent(gravity_volume);
 
 		//EDITOR CAMERA
 		auto editor_input = new InputPlayer(player_name);
@@ -220,32 +219,33 @@ namespace gbe {
 		Engine::MakePersistent(editor_input);
 		editor_cam->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 		editor_input->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
-
-		//PLAYER CAMERA
-		auto player_input = new InputPlayer(player_name);
-		player_input->SetParent(this->current_root);
-		auto camera_controller = new FlyingCameraControl();
-		camera_controller->SetParent(player_input);
-		PerspectiveCamera* player_cam = new PerspectiveCamera();
-		player_cam->SetParent(camera_controller);
-		Engine::MakePersistent(player_input);
 #pragma endregion
 
 #pragma region scene objects
 		//GRID
-		const Vector2Int GridSize(10, 10);
+		const Vector2Int GridSize(5, 5);
 
 		for (size_t i = 0; i < GridSize.x * GridSize.y; i++)
 		{
-			
+			float x = i % GridSize.x;
+			float y = i / GridSize.x;
+			auto pos = Vector3(0, x, y);
+			auto scale_f = 1;
+			auto scale = Vector3(1, scale_f, scale_f);
+
+			RenderObject* grid_seg = new RenderObject(wire_plane);
+			grid_seg->SetParent(this->current_root);
+			grid_seg->Local().position.Set(pos);
+			grid_seg->Local().rotation.Set(Quaternion::Euler(Vector3(0, 0, 0)));
+			grid_seg->Local().scale.Set(scale);
+			grid_seg->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 		}
 
 		//Frustrum debugging
 		auto test_sphere = create_primitive(gbe::RenderObject::sphere, Vector3(0, 2, -5), Vector3(1));
-
+		test_sphere->SetName("Sphere");
 
 		//ANITO BUILDER
-
 		Vector3 cubecorners[4] = {
 			Vector3(-2, 0, -2),
 			Vector3(2, 0, -2),

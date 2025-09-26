@@ -23,8 +23,7 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 
 	spawnWindow(this->selected),
 	inspectorwindow(this->selected),
-	
-	gizmoLayer(this->selected)
+	viewportWindow(this->selected)
 {
 	instance = this;
 
@@ -177,7 +176,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 
 	//CLICKED
 	if (sdlevent->type == SDL_MOUSEBUTTONDOWN) {
-		if (sdlevent->button.button == SDL_BUTTON_LEFT && !this->pointer_inUi) {
+		if (sdlevent->button.button == SDL_BUTTON_LEFT && !this->FocusedOnEditorUI()) {
 
 			//RAYCAST MECHANICS
 			auto current_camera = Engine::GetActiveCamera();
@@ -209,7 +208,6 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 						closest_obj = obj;
 					}
 					};
-
 
 				//Look for gizmo, otherwise, just select closest valid object
 				for (size_t i = 0; i < result.others.size(); i++)
@@ -286,7 +284,6 @@ void gbe::Editor::PrepareUpdate()
 	ImGui::DockSpaceOverViewport(dockspace_id);
 
 	this->menubar.Draw();
-	this->gizmoLayer.Draw();
 
 	for (const auto& window : this->windows)
 	{
