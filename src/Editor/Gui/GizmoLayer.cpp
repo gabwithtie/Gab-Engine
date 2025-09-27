@@ -59,6 +59,7 @@ void gbe::editor::GizmoLayer::DrawSelf()
         model_mat
     );
 
+    pointer_here = ImGuizmo::IsOver();
 
     // Check if the gizmo was actively used
     if (ImGuizmo::IsUsing()) {

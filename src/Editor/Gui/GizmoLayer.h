@@ -13,7 +13,14 @@ namespace gbe {
 			bool ext_Begin() override;
 			void ext_End() override;
 			std::vector<gbe::Object*>& selected;
+
+			bool pointer_here = false;
 		public:
+			inline bool Get_pointer_here()
+			{
+				return pointer_here;
+			}
+
 			inline GizmoLayer(std::vector<gbe::Object*>& _selected) :
 				selected(_selected) {
 

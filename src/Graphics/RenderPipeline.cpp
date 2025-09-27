@@ -62,6 +62,9 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions):
     this->textureloader.AssignSelfAsLoader();
 
     UpdateReferences();
+
+    VkDeviceSize vbufferSize = sizeof(asset::data::Vertex) * maxlines;
+    this->line_vertexBuffer = new vulkan::Buffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 }
 
 void gbe::RenderPipeline::UpdateReferences()
@@ -174,8 +177,6 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         vulkan::VirtualDevice::GetActive()->MapMemory(stagingBuffer.GetMemory(), 0, vbufferSize, 0, &vdata);
         memcpy(vdata, this->lines_this_frame.data(), (size_t)vbufferSize);
         vulkan::VirtualDevice::GetActive()->UnMapMemory(stagingBuffer.GetMemory());
-
-        vulkan::Buffer* line_vertexBuffer = new vulkan::Buffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         vulkan::Buffer::CopyBuffer(&stagingBuffer, line_vertexBuffer, vbufferSize);
 
         auto lineshaderasset = this->line_call.drawcall->get_material()->Get_load_data().shader;
@@ -185,23 +186,48 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         this->line_call.ApplyOverride<Matrix4>(Matrix4(1), "model", vulkanInstance->GetCurrentFrameIndex());
         this->line_call.ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex());
         this->line_call.ApplyOverride<Matrix4>(frameinfo.viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
-
         this->line_call.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
-
-        VkBuffer vertexBuffers[] = { line_vertexBuffer->GetData() };
-        VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
-
         std::vector<VkDescriptorSet> bindingsets;
         for (auto& set : this->line_call.allocdescriptorSets_perframe[vulkanInstance->GetCurrentFrameIndex()])
         {
             bindingsets.push_back(set.second);
         }
-
         vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, lineshader.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
+        
+        VkBuffer vertexBuffers[] = { line_vertexBuffer->GetData() };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
         vkCmdDraw(vulkanInstance->GetCurrentCommandBuffer()->GetData(), lines_this_frame.size(), 1, 0, 0);
     }
     //=================END OF LINE PASS
+    
+    //=================SKYBOX PASS
+    {
+        const auto& skyboxmesh = this->meshloader.GetAssetData(this->skybox_call.drawcall->get_mesh());
+        auto skyboxshaderasset = this->skybox_call.drawcall->get_material()->Get_load_data().shader;
+        const auto& skyboxshader = shaderloader.GetAssetData(skyboxshaderasset);
+        vkCmdBindPipeline(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxshader.pipeline);
+
+        this->skybox_call.ApplyOverride<Matrix4>(Matrix4(1), "model", vulkanInstance->GetCurrentFrameIndex());
+        this->skybox_call.ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex());
+        this->skybox_call.ApplyOverride<Matrix4>(frameinfo.viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
+        this->skybox_call.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
+        std::vector<VkDescriptorSet> bindingsets;
+        for (auto& set : this->skybox_call.allocdescriptorSets_perframe[vulkanInstance->GetCurrentFrameIndex()])
+        {
+            bindingsets.push_back(set.second);
+        }
+        vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxshader.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
+
+        VkBuffer vertexBuffers[] = { skyboxmesh.vertexBuffer->GetData() };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(vulkanInstance->GetCurrentCommandBuffer()->GetData(), skyboxmesh.indexBuffer->GetData(), 0, VK_INDEX_TYPE_UINT16);
+        vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(skyboxmesh.loaddata->indices.size()), 1, 0, 0, 0);
+    }
+    //=================END OF SKYBOX PASS
+
+
 
     for (const auto& call_ptr : sortedcalls[0])
     {

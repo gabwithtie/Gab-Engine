@@ -12,6 +12,7 @@ namespace gbe {
 		class GuiWindow : public GuiElement{
 		protected:
 			bool is_open = false;
+			bool pointer_here = false;
 
 			inline virtual void push_styles() {
 
@@ -23,7 +24,6 @@ namespace gbe {
 			bool ext_Begin() override;
 			void ext_End() override;
 
-			bool pointer_here = false;
 		public:
 			inline bool Get_pointer_here() {
 				return pointer_here;

@@ -317,17 +317,13 @@ namespace gbe {
 				frameinfo.nearclip = current_camera->nearClip;
 				frameinfo.viewmat = current_camera->GetViewMat();
 				frameinfo.projmat = current_camera->GetProjectionMat();
-				frameinfo.projmat_lightusage = current_camera->GetProjectionMat(20.0f);
+				frameinfo.projmat_lightusage = current_camera->GetProjectionMat(10.0f);
 
 				//GRID
-				const int gridlines = 60;
-				const float stride = 2;
-				const int gridlines_half = gridlines / 2;
-				float max_z = frameinfo.camera_pos.z + gridlines_half;
-				float max_x = frameinfo.camera_pos.x + gridlines_half;
-				float min_z = frameinfo.camera_pos.z - gridlines_half;
-				float min_x = frameinfo.camera_pos.x - gridlines_half;
-
+				const int gridlines = 100;
+				const float stride = 2 * ceil(abs(frameinfo.camera_pos.y) / 10.0f);
+				const int line_length = gridlines * stride;
+				const int half_bounds = line_length / 2;
 				const auto align = [stride](float coord) {
 					coord /= stride;
 					coord = round(coord);
@@ -335,22 +331,38 @@ namespace gbe {
 					return coord;
 					};
 
-				for (size_t l_i = 0; l_i < gridlines; l_i++)
-				{
-					Vector3 a = Vector3::Lerp(Vector3(min_x, 0, min_z), Vector3(max_x, 0, min_z), (float)l_i / gridlines);
-					a.x = align(a.x);
-					Vector3 b = a + Vector3(0, 0, gridlines);
+				float max_z = align(frameinfo.camera_pos.z + half_bounds);
+				float max_x = align(frameinfo.camera_pos.x + half_bounds);
+				float min_z = align(frameinfo.camera_pos.z - half_bounds);
+				float min_x = align(frameinfo.camera_pos.x - half_bounds);
 
-					RenderPipeline::DrawLine(a, b);
-				}
-				for (size_t l_i = 0; l_i < gridlines; l_i++)
-				{
-					Vector3 a = Vector3::Lerp(Vector3(min_x, 0, min_z), Vector3(min_x, 0, max_z), (float)l_i / gridlines);
-					a.z = align(a.z);
-					Vector3 b = a + Vector3(gridlines, 0, 0);
+				const auto propagatelines = [=](float coef) {
+					Vector3 start_cor = Vector3(align(frameinfo.camera_pos.x), 0, align(frameinfo.camera_pos.z));
+					Vector3 cur_x = start_cor;
+					Vector3 cur_z = start_cor;
 
-					RenderPipeline::DrawLine(a, b);
-				}
+					for (size_t l_i = 0; l_i < gridlines / 2; l_i++)
+					{
+						Vector3 x_a = cur_x - Vector3(0, 0, half_bounds);
+						Vector3 x_b = cur_x + Vector3(0, 0, half_bounds);
+						RenderPipeline::DrawLine(x_a, x_b);
+
+						Vector3 z_a = cur_z - Vector3(half_bounds, 0, 0);
+						Vector3 z_b = cur_z + Vector3(half_bounds, 0, 0);
+						RenderPipeline::DrawLine(z_a, z_b);
+
+						auto dist = abs(frameinfo.camera_pos.z - cur_z.z);
+						auto skip_coef = abs(1.0f / (frameinfo.camera_pos.y / 16.0f)) * (dist / 90.0f);
+						auto stride_scale = 1 + floor(skip_coef);
+						auto final_step = stride_scale * stride;
+
+						cur_x += Vector3(final_step, 0, 0) * coef;
+						cur_z += Vector3(0, 0, final_step) * coef;
+					}
+				};
+
+				propagatelines(1);
+				propagatelines(-1);
 			}
 			else {
 

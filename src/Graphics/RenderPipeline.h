@@ -64,13 +64,16 @@ namespace gbe {
 		std::map<int, std::vector<void*>> sortedcalls;
 		
 		//LINES
+		const size_t maxlines = 1000;
 		std::vector<asset::data::Vertex> lines_this_frame;
 		CallInstance line_call;
+		CallInstance skybox_call;
 		
 		//============DYNAMICALLY ALLOCATED=======================//
 		vulkan::Instance* vulkanInstance;
 		vulkan::ForwardRenderer* renderer; //owned by vulkanInstance
-		
+		vulkan::Buffer* line_vertexBuffer = nullptr;
+
 		bool handled_resolution_change = true;
 
 		void UpdateReferences();
@@ -100,6 +103,9 @@ namespace gbe {
 			//Register Line Drawcall
 			auto linedrawcall = this->RegisterDrawCall(nullptr, asset::Material::GetAssetById("line"));
 			this->line_call = this->PrepareCall(linedrawcall);
+
+			auto skyboxdrawcall = this->RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("skybox_gradient"));
+			this->skybox_call = this->PrepareCall(skyboxdrawcall);
 		}
 
 		inline static RenderPipeline* Get_Instance() {

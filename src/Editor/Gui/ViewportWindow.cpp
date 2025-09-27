@@ -16,4 +16,7 @@ void gbe::editor::ViewportWindow::DrawSelf()
 
 	ImGui::Image(gfx::TextureLoader::GetGuiHandle(this->selected_data), availableSize, { 0, 0 }, { 1, 1 });
 	this->gizmoLayer.Draw();
+
+	if (this->gizmoLayer.Get_pointer_here())
+		this->pointer_here = false;
 }
