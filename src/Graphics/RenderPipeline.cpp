@@ -114,10 +114,14 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
     projmat[1][1] = -projmat[1][1]; //Flip Y axis for Vulkan
 
     //==================FIRST PASS [0]========================//
-    renderer->StartShadowPass();
     // Loop through each light that casts a shadow.
-    for (size_t lightIndex = 0; lightIndex < frameinfo.lightdatas.size(); lightIndex++)
+    for (size_t lightIndex = 0; lightIndex < renderer->Get_max_lights(); lightIndex++)
     {
+        if (lightIndex == frameinfo.lightdatas.size())
+            break;
+
+        renderer->StartShadowPass(lightIndex);
+
         const auto& light = frameinfo.lightdatas[lightIndex];
 
         // Update the light's view and projection matrices.
@@ -136,38 +140,39 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
             callinstance.drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex(), callinstance);
 
-            // Use push constants to specify the array layer to write to.
-            uint32_t pushConstantData = 0;
-            vkCmdPushConstants(vulkanInstance->GetCurrentCommandBuffer()->GetData(), currentshaderdata.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &pushConstantData);
+            struct shadowshader_pushconstant {
+                Matrix4 view;
+                Matrix4 proj;
+            };
+            shadowshader_pushconstant newpush = {
+                .view = lightViewMat,
+                .proj = lightProjMat
+            };
+            vkCmdPushConstants(vulkanInstance->GetCurrentCommandBuffer()->GetData(), currentshaderdata.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(shadowshader_pushconstant), &newpush);
 
             //RENDER MESH
             const auto& curmesh = this->meshloader.GetAssetData(callinstance.drawcall->get_mesh());
 
-            //UPDATE OVERRIDES
             callinstance.ApplyOverride<Matrix4>(callinstance.model, "model", vulkanInstance->GetCurrentFrameIndex());
-            callinstance.ApplyOverride<Matrix4>(lightProjMat, "proj", vulkanInstance->GetCurrentFrameIndex());
-            callinstance.ApplyOverride<Matrix4>(lightViewMat, "view", vulkanInstance->GetCurrentFrameIndex());
-
-            callinstance.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
 
             VkBuffer vertexBuffers[] = { curmesh.vertexBuffer->GetData() };
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
 
-            std::vector<VkDescriptorSet> bindingsets;
             for (auto& set : callinstance.allocdescriptorSets_perframe[vulkanInstance->GetCurrentFrameIndex()])
             {
-                bindingsets.push_back(set.second);
+                vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipelineLayout, set.first, 1, &set.second, 0, nullptr);
             }
 
-            vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
             vkCmdBindIndexBuffer(vulkanInstance->GetCurrentCommandBuffer()->GetData(), curmesh.indexBuffer->GetData(), 0, VK_INDEX_TYPE_UINT16);
             vkCmdDrawIndexed(vulkanInstance->GetCurrentCommandBuffer()->GetData(), static_cast<uint32_t>(curmesh.loaddata->indices.size()), 1, 0, 0, 0);
         }
+
+        renderer->EndShadowPass();
     }
 
     //==================SECOND PASS [1]========================//
-    renderer->TransitionToMainPass();
+    renderer->StartMainPass();
 
     //===============LINE PASS
     if (lines_this_frame.size() > 0) {
@@ -187,13 +192,12 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         this->line_call.ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex());
         this->line_call.ApplyOverride<Matrix4>(frameinfo.viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
         this->line_call.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
-        std::vector<VkDescriptorSet> bindingsets;
+        
         for (auto& set : this->line_call.allocdescriptorSets_perframe[vulkanInstance->GetCurrentFrameIndex()])
         {
-            bindingsets.push_back(set.second);
+            vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, lineshader.pipelineLayout, set.first, 1, &set.second, 0, nullptr);
         }
-        vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, lineshader.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
-        
+
         VkBuffer vertexBuffers[] = { line_vertexBuffer->GetData() };
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
@@ -212,13 +216,10 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         this->skybox_call.ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex());
         this->skybox_call.ApplyOverride<Matrix4>(frameinfo.viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
         this->skybox_call.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
-        std::vector<VkDescriptorSet> bindingsets;
         for (auto& set : this->skybox_call.allocdescriptorSets_perframe[vulkanInstance->GetCurrentFrameIndex()])
         {
-            bindingsets.push_back(set.second);
+            vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxshader.pipelineLayout, set.first, 1, &set.second, 0, nullptr);
         }
-        vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxshader.pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
-
         VkBuffer vertexBuffers[] = { skyboxmesh.vertexBuffer->GetData() };
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(vulkanInstance->GetCurrentCommandBuffer()->GetData(), 0, 1, vertexBuffers, offsets);
@@ -240,10 +241,6 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
         callinstance.drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex(), callinstance);
 
-        // Use push constants to specify the array layer to write to.
-        uint32_t pushConstantData = 0;
-        vkCmdPushConstants(vulkanInstance->GetCurrentCommandBuffer()->GetData(), currentshaderdata.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &pushConstantData);
-
         //RENDER MESH
         const auto& curmesh = this->meshloader.GetAssetData(callinstance.drawcall->get_mesh());
 
@@ -255,17 +252,21 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         callinstance.ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
 
         TextureData shadowmaptex = {
-        .textureImageView = renderer->Get_shadowmap_layer(0),
+        .textureImageView = renderer->Get_shadowpass()->Get_depth()->GetView(),
         .textureSampler = renderer->Get_sampler()
         };
         callinstance.ApplyOverride<TextureData>(shadowmaptex, "shadow_tex", vulkanInstance->GetCurrentFrameIndex());
 
         size_t light_index = 0;
-        for (const auto& light : frameinfo.lightdatas)
+        for (size_t lightIndex = 0; lightIndex < renderer->Get_max_lights(); lightIndex++)
         {
-            if (light_index == renderer->Get_max_lights())
-                break;
+            if (lightIndex >= frameinfo.lightdatas.size())
+            {
+                callinstance.ApplyOverride<Vector3>(Vector3(0), "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
+                continue;
+            }
 
+            const auto& light = frameinfo.lightdatas[lightIndex];
             auto lightProjMat = light->cache_projmat;
 
             callinstance.ApplyOverride<Matrix4>(light->cache_viewmat, "light_view", vulkanInstance->GetCurrentFrameIndex(), light_index);
@@ -273,6 +274,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
             callinstance.ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
             callinstance.ApplyOverride<float>(light->bias_min, "bias_min", vulkanInstance->GetCurrentFrameIndex(), light_index);
             callinstance.ApplyOverride<float>(light->bias_mult, "bias_mult", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            callinstance.ApplyOverride<float>(1, "shadow_strength", vulkanInstance->GetCurrentFrameIndex(), light_index);
 
             switch (light->type)
             {

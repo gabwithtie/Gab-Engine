@@ -16,7 +16,7 @@ namespace gbe::vulkan {
 
         }
 
-        inline Framebuffer(uint32_t x, uint32_t y, RenderPass* renderpass, AttachmentReferencePasser attachmentpasser) {
+        inline Framebuffer(uint32_t x, uint32_t y, uint32_t layers, RenderPass* renderpass, AttachmentReferencePasser attachmentpasser) {
             VkFramebufferCreateInfo framebufferInfo{};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = renderpass->GetData();
@@ -24,7 +24,7 @@ namespace gbe::vulkan {
             framebufferInfo.pAttachments = attachmentpasser.TryGetPasserPtr();
             framebufferInfo.width = x;
             framebufferInfo.height = y;
-            framebufferInfo.layers = 1;
+            framebufferInfo.layers = layers;
 
             CheckSuccess(vkCreateFramebuffer(VirtualDevice::GetActive()->GetData(), &framebufferInfo, nullptr, &this->data));
         }

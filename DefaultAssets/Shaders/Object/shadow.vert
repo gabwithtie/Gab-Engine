@@ -3,11 +3,10 @@
 #extension GL_ARB_shader_viewport_layer_array : require
 #extension GL_EXT_multiview : enable
 
-layout(set = 0, binding = 0) uniform Global {
+layout(push_constant) uniform PushConstants {
     mat4 view;
     mat4 proj;
-    vec3 camera_pos;
-} global;
+};
 
 layout(set = 1, binding = 0) uniform Object {
     mat4 model;
@@ -29,14 +28,12 @@ layout(location = 5) out vec3 fragN;
 layout(location = 6) out vec3 camera_pos;
 
 void main() {
-    gl_Position = global.proj * global.view * model * vec4(inPosition, 1.0);
+    gl_Position = proj * view * model * vec4(inPosition, 1.0);
 
     fragPos = (model * vec4(inPosition, 1.0)).xyz;
     fragTexCoord = inTexCoord;
     mat3 normalMatrix = mat3(transpose(inverse(model)));
     vertColor = vec4(inColor, 1.0f);
-
-    camera_pos = global.camera_pos;
 
     // TBN matrix calculation
     vec3 N = normalize(normalMatrix * inNormal);

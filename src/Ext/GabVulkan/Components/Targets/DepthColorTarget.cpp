@@ -4,10 +4,11 @@
 #include "../../Utility/DebugObjectName.h"
 #include "../../Objects/Instance.h"
 
-gbe::vulkan::DepthColorTarget::DepthColorTarget(AttachmentDictionary& dict, uint32_t x, uint32_t y, std::string id)
+gbe::vulkan::DepthColorTarget::DepthColorTarget(AttachmentDictionary& dict, uint32_t x, uint32_t y, std::string id, uint32_t layercount)
 {
     this->x = x;
     this->y = y;
+    this->layercount = layercount;
 
     this->depth_img = new ImagePair(new Image(
         x, y,
@@ -15,7 +16,7 @@ gbe::vulkan::DepthColorTarget::DepthColorTarget(AttachmentDictionary& dict, uint
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        1
+        layercount
     ),
         VK_IMAGE_ASPECT_DEPTH_BIT
     );
@@ -29,7 +30,7 @@ gbe::vulkan::DepthColorTarget::DepthColorTarget(AttachmentDictionary& dict, uint
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        1
+        layercount
     ),
         VK_IMAGE_ASPECT_COLOR_BIT
     );
@@ -77,19 +78,26 @@ gbe::vulkan::DepthColorTarget::DepthColorTarget(AttachmentDictionary& dict, uint
     this->renderpass = new RenderPass(newpass);
     RenderPass::SetActive(id, this->renderpass);
 
-    AttachmentReferencePasser passer(dict);
-    passer.PassView("depth", depth_img->GetView()->GetData());
-    passer.PassView("color", color_img->GetView()->GetData());
+    for (size_t i = 0; i < layercount; i++)
+    {
+        depth_views.push_back(new ImageView(depth_img->GetImage(), VK_IMAGE_ASPECT_DEPTH_BIT, i));
+        color_views.push_back(new ImageView(color_img->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, i));
 
-    this->framebuffer = new Framebuffer(
-        x,
-        y,
-        this->renderpass,
-        passer
-    );
+        AttachmentReferencePasser passer(dict);
+        passer.PassView("depth", depth_views[i]->GetData());
+        passer.PassView("color", color_views[i]->GetData());
+
+        this->framebuffers.push_back(new Framebuffer(
+            x,
+            y,
+            1,
+            this->renderpass,
+            passer
+        ));
+    }
 }
 
-void gbe::vulkan::DepthColorTarget::StartPass()
+void gbe::vulkan::DepthColorTarget::StartPass(uint32_t drawlayer)
 {
     MemoryBarrier::Insert(
         Instance::GetActive()->GetCurrentCommandBuffer()->GetData(),
@@ -104,7 +112,7 @@ void gbe::vulkan::DepthColorTarget::StartPass()
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,
-            .layerCount = 1
+            .layerCount = this->layercount
         }
     );
 
@@ -121,7 +129,7 @@ void gbe::vulkan::DepthColorTarget::StartPass()
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,
-            .layerCount = 1
+            .layerCount = this->layercount
         }
     );
 
@@ -144,7 +152,7 @@ void gbe::vulkan::DepthColorTarget::StartPass()
 
     passBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     passBeginInfo.renderPass = this->renderpass->GetData();
-    passBeginInfo.framebuffer = this->framebuffer->GetData();
+    passBeginInfo.framebuffer = this->framebuffers[drawlayer]->GetData();
 
     passBeginInfo.renderArea.offset = { 0, 0 };
     passBeginInfo.renderArea.extent = { x, y };
@@ -177,7 +185,7 @@ void gbe::vulkan::DepthColorTarget::EndPass()
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,
-            .layerCount = 1
+            .layerCount = this->layercount
         }
     );
 
@@ -194,7 +202,7 @@ void gbe::vulkan::DepthColorTarget::EndPass()
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,
-            .layerCount = 1
+            .layerCount = this->layercount
         }
     );
 }

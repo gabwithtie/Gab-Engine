@@ -12,14 +12,19 @@ namespace gbe::vulkan {
 		uint32_t y;
 
 		RenderPass* renderpass;
-		Framebuffer* framebuffer;
+		std::vector<Framebuffer*> framebuffers;
 	public:
 		inline ~Target() {
 			delete renderpass;
-			delete framebuffer;
+
+			auto framecount = framebuffers.size();
+			for (size_t i = 0; i < framecount; i++)
+			{
+				delete framebuffers[i];
+			}
 		}
 
-		virtual void StartPass() = 0;
+		virtual void StartPass(uint32_t drawlayer = 0) = 0;
 		virtual void EndPass() = 0;
 	};
 }

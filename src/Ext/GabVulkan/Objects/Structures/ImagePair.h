@@ -9,9 +9,9 @@ namespace gbe::vulkan {
 		Image* img;
 		ImageView* view;
 	public:
-		inline ImagePair(Image* img, VkImageAspectFlags aspectflags, VkImageViewType viewtype = VK_IMAGE_VIEW_TYPE_2D) {
+		inline ImagePair(Image* img, VkImageAspectFlags aspectflags) {
 			this->img = img;
-			this->view = new ImageView(img, aspectflags, viewtype);
+			this->view = new ImageView(img, aspectflags);
 		}
 
 		inline Image* GetImage() {

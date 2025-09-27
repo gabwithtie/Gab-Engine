@@ -239,10 +239,21 @@ namespace gbe {
 		auto builder_cube = new ext::AnitoBuilder::BuilderBlock(cubecorners, 4);
 		builder_cube->SetParent(this->current_root);
 
-		auto dirlight = new DirectionalLight();
-		dirlight->World().position.Set(Vector3(0, 0, -10));
-		dirlight->SetName("Directional Light");
-		dirlight->SetParent(this->current_root);
+		{
+			auto dirlight = new DirectionalLight();
+			dirlight->World().position.Set(Vector3(0, 0, -10));
+			dirlight->SetName("Directional Light 1");
+			dirlight->Set_Color(Vector3(1, 0.3, 0.3));
+			dirlight->SetParent(this->current_root);
+		}
+		{
+			auto dirlight = new DirectionalLight();
+			dirlight->World().position.Set(Vector3(3, 0, -10));
+			dirlight->Local().rotation.Set(Quaternion::Euler(Vector3(0, 90, 0)));
+			dirlight->Set_Color(Vector3(0.3, 0.3, 1));
+			dirlight->SetName("Directional Light 2");
+			dirlight->SetParent(this->current_root);
+		}
 
 #pragma endregion
 

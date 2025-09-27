@@ -23,7 +23,7 @@ namespace gbe::vulkan {
         uint32_t shadow_map_resolution = 1028;
         uint32_t main_x = 1028;
         uint32_t main_y = 1028;
-        uint32_t max_lights = 1;
+        const uint32_t max_lights = 10;
 
         Sampler render_sampler;
         AttachmentDictionary attachments_colordepth;
@@ -88,11 +88,11 @@ namespace gbe::vulkan {
             attachments_colordepth.AddAttachment("color", color_attachment);
 
             //=========================SHADOW MAP CACHING=======================
-            shadowpass = new DepthColorTarget(attachments_colordepth, shadow_map_resolution, shadow_map_resolution, "shadow");
+            shadowpass = new DepthColorTarget(attachments_colordepth, shadow_map_resolution, shadow_map_resolution, "shadow", this->max_lights);
 
             for (size_t i = 0; i < max_lights; i++)
             {
-                sp_imageview_layers.push_back(new ImageView(shadowpass->Get_depth()->GetImage(), VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, i));
+                sp_imageview_layers.push_back(new ImageView(shadowpass->Get_depth()->GetImage(), VK_IMAGE_ASPECT_DEPTH_BIT, i));
             }
         }
 
@@ -106,12 +106,14 @@ namespace gbe::vulkan {
             newpasser.PassView("depth", screen_depth->GetView()->GetData());
         }
 
-        inline void StartShadowPass() {
-            shadowpass->StartPass();
+        inline void StartShadowPass(unsigned int layerindex) {
+            shadowpass->StartPass(layerindex);
+        }
+        inline void EndShadowPass() {
+            shadowpass->EndPass();
         }
 
-        inline void TransitionToMainPass() {
-            shadowpass->EndPass();
+        inline void StartMainPass() {
             mainpass->StartPass();
         }
 

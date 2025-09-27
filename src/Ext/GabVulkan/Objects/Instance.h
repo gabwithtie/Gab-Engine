@@ -172,7 +172,8 @@ namespace gbe::vulkan {
             //===================DEVICE SET UP===================//
             const std::vector<const char*> deviceExtensionNames = {
                 VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-                VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME
+                VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME,
+                VK_KHR_MULTIVIEW_EXTENSION_NAME
             };
 
             bool founddevice = false;

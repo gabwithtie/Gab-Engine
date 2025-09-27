@@ -1,6 +1,6 @@
 {
-  "vert": "3d.vert.spv",
-  "vert_meta": "3d.vert.json",
+  "vert": "shadow.vert.spv",
+  "vert_meta": "shadow.vert.json",
   "frag": "depth.frag.spv",
   "frag_meta": "depth.frag.json",
   "renderpass": "shadow"

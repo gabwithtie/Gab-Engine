@@ -21,10 +21,10 @@ layout(set = 2, binding = 2) uniform sampler2D normal_tex;
 layout(set = 2, binding = 3) uniform sampler2D arm_tex;
 
 //=================LIGHTING====================//
-const int MAX_LIGHTS = 1;
+const int MAX_LIGHTS = 10;
 
 // Shadowmaps (should be an array)
-layout(set = 2, binding = 4) uniform sampler2D shadow_tex;
+layout(set = 2, binding = 4) uniform sampler2DArray shadow_tex;
 
 // Set 0: Global Data — lights (should be an array)
 layout(set = 0, binding = 1) uniform Light {
@@ -106,7 +106,7 @@ void main() {
         shadowcoord = shadowcoord * 0.5 + 0.5;
         float curdepth = (fragPosLightSpace.z + 1) / 2.0;
 
-        ivec2 texDim = textureSize(shadow_tex, 0);
+        ivec3 texDim = textureSize(shadow_tex, 0);
 	    float scale = 1.5;
 	    float dx = scale * 1.0 / float(texDim.x);
 	    float dy = scale * 1.0 / float(texDim.y);
@@ -119,7 +119,7 @@ void main() {
 	    {
 		    for (int y = -range; y <= range; y++)
 		    {
-                float dist = texture(shadow_tex, shadowcoord.xy + vec2(dx*x, dy*y)).r;
+                float dist = texture(shadow_tex, vec3(shadowcoord.xy + vec2(dx*x, dy*y), i)).r;
                 float bias = max(lights[i].bias_mult * (1.0 - dot(_normal, lightDir)), lights[i].bias_min);
                 float delta = fragPosLightSpace.z - bias - dist;
 

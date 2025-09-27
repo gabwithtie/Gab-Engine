@@ -43,14 +43,14 @@ namespace gbe::vulkan {
             deviceFeatures.samplerAnisotropy = VK_TRUE;
             deviceFeatures.fillModeNonSolid = VK_TRUE;
 
-            VkPhysicalDeviceShaderDrawParametersFeatures shader_draw_parameters_features = {};
-            shader_draw_parameters_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
-            shader_draw_parameters_features.pNext = nullptr;
-            shader_draw_parameters_features.shaderDrawParameters = VK_TRUE;
+            VkPhysicalDeviceVulkan11Features _VkPhysicalDeviceVulkan11Features = {};
+            _VkPhysicalDeviceVulkan11Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+            _VkPhysicalDeviceVulkan11Features.shaderDrawParameters = VK_TRUE;
+            _VkPhysicalDeviceVulkan11Features.pNext = nullptr;
 
             VkDeviceCreateInfo deviceInfo = {
                 VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,               // sType
-                &shader_draw_parameters_features,                   // pNext
+                & _VkPhysicalDeviceVulkan11Features,                   // pNext
                 0,                                                  // flags
                 1,                                                  // queueCreateInfoCount
                 &queueInfo,                                         // pQueueCreateInfos

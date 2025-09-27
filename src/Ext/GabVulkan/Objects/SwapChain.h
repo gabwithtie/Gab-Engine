@@ -112,7 +112,7 @@ namespace gbe::vulkan {
             this->swapChainFramebuffers.resize(this->swapChainImageViews.size());
             for (size_t i = 0; i < swapChainImageViews.size(); i++) {
                 attachments.PassView("color", swapChainImageViews[i]->GetData());
-                swapChainFramebuffers[i] = new Framebuffer(swapchainExtent.width, swapchainExtent.height, renderPass, attachments);
+                swapChainFramebuffers[i] = new Framebuffer(swapchainExtent.width, swapchainExtent.height, 1, renderPass, attachments);
             }
         }
     };
