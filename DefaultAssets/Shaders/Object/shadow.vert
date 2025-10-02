@@ -4,11 +4,7 @@
 #extension GL_EXT_multiview : enable
 
 layout(push_constant) uniform PushConstants {
-    mat4 view;
-    mat4 proj;
-};
-
-layout(set = 1, binding = 0) uniform Object {
+    mat4 projview;
     mat4 model;
 };
 
@@ -28,7 +24,7 @@ layout(location = 5) out vec3 fragN;
 layout(location = 6) out vec3 camera_pos;
 
 void main() {
-    gl_Position = proj * view * model * vec4(inPosition, 1.0);
+    gl_Position = projview * model * vec4(inPosition, 1.0);
 
     fragPos = (model * vec4(inPosition, 1.0)).xyz;
     fragTexCoord = inTexCoord;

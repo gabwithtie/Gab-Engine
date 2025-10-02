@@ -36,7 +36,7 @@ namespace gbe::vulkan {
 
         int &x;
         int &y;
-        int MAX_FRAMES_IN_FLIGHT = 1;
+        int MAX_FRAMES_IN_FLIGHT = 2;
         
         //STATES
         uint32_t currentFrame = 0;

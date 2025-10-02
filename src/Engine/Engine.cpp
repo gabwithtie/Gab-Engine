@@ -146,12 +146,12 @@ namespace gbe {
 		auto lit_mat = asset::Material::GetAssetById("lit");
 
 		//DRAW CALL CACHING X PRIMITIVES CACHING
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, renderpipeline.RegisterDrawCall(cube_mesh, grid_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, renderpipeline.RegisterDrawCall(sphere_mesh, grid_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, renderpipeline.RegisterDrawCall(plane_mesh, grid_mat));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, renderpipeline.RegisterDrawCall(capsule_mesh, grid_mat));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, renderpipeline.RegisterDrawCall(cube_mesh, grid_mat, 0));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, renderpipeline.RegisterDrawCall(sphere_mesh, grid_mat, 0));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, renderpipeline.RegisterDrawCall(plane_mesh, grid_mat, 0));
+		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, renderpipeline.RegisterDrawCall(capsule_mesh, grid_mat, 0));
 		
-		auto wire_plane = renderpipeline.RegisterDrawCall(plane_mesh, wire_mat);
+		auto wire_plane = renderpipeline.RegisterDrawCall(plane_mesh, wire_mat, 0);
 
 		//TYPE SERIALIZER REGISTERING
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), RenderObject::Create);

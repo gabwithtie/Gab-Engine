@@ -6,15 +6,23 @@
 namespace gbe {
     using namespace gfx;
 
-    DrawCall::DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* _shaderdata, unsigned int MAX_FRAMES_IN_FLIGHT)
+    DrawCall::DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* _shaderdata, int order)
     {
+        this->order = order;
         this->shaderdata = _shaderdata;
         this->m_mesh = mesh;
         this->m_material = material;
-        this->MAX_FRAMES_IN_FLIGHT = MAX_FRAMES_IN_FLIGHT;
     }
     gfx::DrawCall::~DrawCall()
     {
+        for (size_t i = 0; i < uniformBuffers.size(); i++)
+        {
+            for (size_t j = 0; j < uniformBuffers[i].uboPerFrame.size(); j++)
+            {
+                vulkan::VirtualDevice::GetActive()->UnMapMemory(uniformBuffers[i].uboPerFrame[j]->GetMemory());
+                delete uniformBuffers[i].uboPerFrame[j];
+            }
+        }
     }
 
     asset::Mesh* gfx::DrawCall::get_mesh()
@@ -27,11 +35,8 @@ namespace gbe {
         return this->m_material;
     }
 
-    bool gfx::DrawCall::SyncMaterialData(unsigned int frameindex, const CallInstance& callinst)
+    bool gfx::DrawCall::SyncMaterialData(unsigned int frameindex)
     {
-        if(callinst.drawcall != this)
-			throw new std::runtime_error("CallInstance does not belong to this DrawCall!");
-
         for (size_t m_i = 0; m_i < this->get_material()->getOverrideCount(); m_i++)
         {
             std::string id;
@@ -57,28 +62,28 @@ namespace gbe {
                 continue;
 
             if (overridedata.type == asset::Shader::UniformFieldType::BOOL) {
-                callinst.ApplyOverride<bool>(overridedata.value_bool, id, frameindex);
+                this->ApplyOverride<bool>(overridedata.value_bool, id, frameindex);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::FLOAT) {
-                callinst.ApplyOverride<float>(overridedata.value_float, id, frameindex);
+                this->ApplyOverride<float>(overridedata.value_float, id, frameindex);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::INT) {
-                callinst.ApplyOverride<int>(overridedata.value_float, id, frameindex);
+                this->ApplyOverride<int>(overridedata.value_float, id, frameindex);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::VEC2) {
-                callinst.ApplyOverride<Vector2>(overridedata.value_vec2, id, frameindex);
+                this->ApplyOverride<Vector2>(overridedata.value_vec2, id, frameindex);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::VEC3) {
-                callinst.ApplyOverride<Vector3>(overridedata.value_vec3, id, frameindex);
+                this->ApplyOverride<Vector3>(overridedata.value_vec3, id, frameindex);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::VEC4) {
-                callinst.ApplyOverride<Vector4>(overridedata.value_vec4, id, frameindex);
+                this->ApplyOverride<Vector4>(overridedata.value_vec4, id, frameindex);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::TEXTURE)
             {
                 auto findtexturedata = TextureLoader::GetAssetData(overridedata.value_tex);
 
-                callinst.ApplyOverride(findtexturedata, id, frameindex);
+                this->ApplyOverride(findtexturedata, id, frameindex);
             }
 
 			overrideHandledList[id].push_back(frameindex);

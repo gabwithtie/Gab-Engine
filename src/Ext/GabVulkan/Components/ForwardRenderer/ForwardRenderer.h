@@ -23,7 +23,7 @@ namespace gbe::vulkan {
         uint32_t shadow_map_resolution = 1028;
         uint32_t main_x = 1028;
         uint32_t main_y = 1028;
-        const uint32_t max_lights = 10;
+        const uint32_t max_lights = 5;
 
         Sampler render_sampler;
         AttachmentDictionary attachments_colordepth;

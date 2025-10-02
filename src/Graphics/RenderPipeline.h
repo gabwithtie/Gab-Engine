@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 
 #include <sstream>
 #include <functional>
@@ -58,16 +59,15 @@ namespace gbe {
 
 		//============RUNTIME=======================//
 		DrawCall* default_drawcall;
-		std::vector<DrawCall*> drawcalls;
 
-		std::unordered_map<void*, std::map<int, CallInstance>> calls;
-		std::map<int, std::vector<void*>> sortedcalls;
+		std::unordered_map<void*, Matrix4> matrix_map;
+		std::unordered_map<int, std::unordered_map<DrawCall*, std::vector<void*>>> sortedcalls;
 		
 		//LINES
 		const size_t maxlines = 1000;
 		std::vector<asset::data::Vertex> lines_this_frame;
-		CallInstance line_call;
-		CallInstance skybox_call;
+		DrawCall* line_call;
+		DrawCall* skybox_call;
 		
 		//============DYNAMICALLY ALLOCATED=======================//
 		vulkan::Instance* vulkanInstance;
@@ -77,7 +77,7 @@ namespace gbe {
 		bool handled_resolution_change = true;
 
 		void UpdateReferences();
-		CallInstance PrepareCall(DrawCall* drawcall, int order = 0);
+		void PrepareCall(DrawCall* drawcall, int order = 0);
 	public:
 		struct FrameRenderInfo {
 			//Camera info
@@ -94,18 +94,18 @@ namespace gbe {
 
 		
 		RenderPipeline(gbe::Window&, Vector2Int);
-		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material);
+		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material, int order = 0);
 		static DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* GetDefaultDrawCall();
 		static void DrawLine(Vector3 a, Vector3 b);
 
 		inline void InitializeAssetRequisites() {
 			//Register Line Drawcall
-			auto linedrawcall = this->RegisterDrawCall(nullptr, asset::Material::GetAssetById("line"));
-			this->line_call = this->PrepareCall(linedrawcall);
+			this->line_call = this->RegisterDrawCall(nullptr, asset::Material::GetAssetById("line"), 0);
+			this->PrepareCall(this->line_call);
 
-			auto skyboxdrawcall = this->RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("skybox_gradient"));
-			this->skybox_call = this->PrepareCall(skyboxdrawcall);
+			this->skybox_call = this->RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("skybox_gradient"), 0);
+			this->PrepareCall(this->skybox_call);
 		}
 
 		inline static RenderPipeline* Get_Instance() {
@@ -141,7 +141,7 @@ namespace gbe {
 		void RenderFrame(const FrameRenderInfo& frameinfo);
 		std::vector<unsigned char> ScreenShot(bool write_file = false);
 
-		Matrix4* RegisterCall(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order = 0);
+		Matrix4* RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order = 0);
 		static void UnRegisterCall(void* instance_id);
 	};
 }

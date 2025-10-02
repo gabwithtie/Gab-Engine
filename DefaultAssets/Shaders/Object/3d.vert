@@ -9,7 +9,7 @@ layout(set = 0, binding = 0) uniform Global {
     vec3 camera_pos;
 } global;
 
-layout(set = 1, binding = 0) uniform Object {
+layout(push_constant) uniform PushConstants {
     mat4 model;
 };
 

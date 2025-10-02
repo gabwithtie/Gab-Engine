@@ -21,7 +21,7 @@ layout(set = 2, binding = 2) uniform sampler2D normal_tex;
 layout(set = 2, binding = 3) uniform sampler2D arm_tex;
 
 //=================LIGHTING====================//
-const int MAX_LIGHTS = 10;
+const int MAX_LIGHTS = 5;
 
 // Shadowmaps (should be an array)
 layout(set = 2, binding = 4) uniform sampler2DArray shadow_tex;
@@ -113,11 +113,10 @@ void main() {
 
 	    float shadow = 0.0;
 	    float count = 0;
-	    int range = 1;
 	
-	    for (int x = -range; x <= range; x++)
+	    for (int x = -1; x <= 1; x++)
 	    {
-		    for (int y = -range; y <= range; y++)
+		    for (int y = -1; y <= 1; y++)
 		    {
                 float dist = texture(shadow_tex, vec3(shadowcoord.xy + vec2(dx*x, dy*y), i)).r;
                 float bias = max(lights[i].bias_mult * (1.0 - dot(_normal, lightDir)), lights[i].bias_min);
@@ -129,6 +128,7 @@ void main() {
 		    }
 	
 	    }
+
 	    shadow = shadow / count;
 
         // REVISED: Apply shadow factor to lighting
