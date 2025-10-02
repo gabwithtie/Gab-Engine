@@ -8,6 +8,7 @@
 #include "Rendering/RenderObject.h"
 #include "Rendering/Lights/LightObject.h"
 #include "Rendering/Lights/DirectionalLight.h"
+#include "Rendering/Lights/ConeLight.h"
 #include "Rendering/Lights/PointLight.h"
 
 #include "Physics/ForceVolume.h"

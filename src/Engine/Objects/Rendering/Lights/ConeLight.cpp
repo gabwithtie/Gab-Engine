@@ -1,4 +1,4 @@
-#include "DirectionalLight.h"
+#include "ConeLight.h"
 
 #include "Engine/Objects/Physics/RigidObject.h"
 #include "Engine/Objects/Physics/Collider/BoxCollider.h"
@@ -12,16 +12,16 @@
 using namespace gbe;
 using namespace gbe::gfx;
 
-gfx::Light* gbe::DirectionalLight::GetData()
+gfx::Light* gbe::ConeLight::GetData()
 {
     this->mLight.direction = this->World().GetForward();
-    this->mLight.type = Light::DIRECTIONAL;
+    this->mLight.type = Light::CONE;
     this->mLight.position = this->World().position.Get();
 
     return &this->mLight;
 }
 
-gbe::DirectionalLight::DirectionalLight()
+gbe::ConeLight::ConeLight()
 {
     if (Engine::Get_state() == Engine::EngineState::Edit) {
         auto dirlight_ro = new RigidObject(true);
@@ -42,29 +42,17 @@ gbe::DirectionalLight::DirectionalLight()
     }
 
     //INSPECTOR
-    auto overshoot_field = new gbe::editor::InspectorFloat();
-    overshoot_field->name = "Shadowmap overshoot";
-    overshoot_field->x = &this->mLight.dir_overshoot_dist;
+    auto angle_field = new gbe::editor::InspectorFloat();
+    angle_field->name = "Angle";
+    angle_field->x = &this->mLight.angle;
 
-    this->inspectorData->fields.push_back(overshoot_field);
+    this->inspectorData->fields.push_back(angle_field);
 
-    auto backtrack_field = new gbe::editor::InspectorFloat();
-    backtrack_field->name = "Shadowmap backtrack";
-    backtrack_field->x = &this->mLight.dir_backtrack_dist;
+    auto range_field = new gbe::editor::InspectorFloat();
+    range_field->name = "Range";
+    range_field->x = &this->mLight.range;
 
-    this->inspectorData->fields.push_back(backtrack_field);
-
-    auto bias_min = new gbe::editor::InspectorFloat();
-    bias_min->name = "Bias min";
-    bias_min->x = &this->mLight.bias_min;
-
-    this->inspectorData->fields.push_back(bias_min);
-
-    auto bias_mult = new gbe::editor::InspectorFloat();
-    bias_mult->name = "Bias mult";
-    bias_mult->x = &this->mLight.bias_mult;
-
-    this->inspectorData->fields.push_back(bias_mult);
+    this->inspectorData->fields.push_back(range_field);
 
     auto lightcolor = new gbe::editor::InspectorColor();
     lightcolor->name = "Color";

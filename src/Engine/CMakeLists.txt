@@ -51,7 +51,8 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Objects/Physics/Collider/CapsuleCollider.cpp"
 	"Global/Console.h"
 	"Global/Console.cpp"
-	"Objects/ObjectNamer.cpp")
+	"Objects/ObjectNamer.cpp"
+	"Objects/Rendering/Lights/ConeLight.cpp")
 
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_graphics)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)

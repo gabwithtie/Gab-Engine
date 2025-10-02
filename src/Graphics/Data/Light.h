@@ -4,26 +4,30 @@ namespace gbe::gfx {
     struct Light {
         enum LightType {
             DIRECTIONAL = 0,
-            SPOT = 1,
+            CONE = 1,
             POINT = 2
         };
 
-        alignas(16) Vector3 position;       // For point/spot lights
-        alignas(16) Vector3 direction;      // For directional/spot lights
-        alignas(16) Vector3 color;
+        Vector3 position;       // For point/spot lights
+        Vector3 direction;      // For directional/spot lights
+        Vector3 color;
         LightType type;
 
         Matrix4 cam_view;
         Matrix4 cam_proj;
 
+        //Directional
         float override_dist = 50;
         float dir_backtrack_dist = 240;
         float dir_overshoot_dist = 600;
         float bias_min = 0.0001;
         float bias_mult = 0.001;
-
         std::vector<Vector4> frustrum_corners;
         Vector3 frustrum_center;
+
+        //Cone
+        float angle = 50;
+        float range = 50;
 
         //CACHE
         Matrix4 cache_projmat;
@@ -47,7 +51,7 @@ namespace gbe::gfx {
                 cache_viewmat = lookAt(eye, target, up);
                 return cache_viewmat;
             }
-            case SPOT: {
+            case CONE: {
                 // A spot light has a position and a direction.
                 Vector3 target = position + direction;
                 Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
@@ -82,12 +86,12 @@ namespace gbe::gfx {
                 cache_projmat = glm::ortho(minX, maxX, minY, maxY, 0.0f, maxZ + dir_overshoot_dist);
                 return cache_projmat;
             }
-            case SPOT: {
+            case CONE: {
                 // Use a perspective projection for a spot light.
-                float fov = glm::radians(45.0f); // Or based on your light's properties
+                float fov = glm::radians(angle); // Or based on your light's properties
                 float aspect = 1.0f; // Shadow map is typically square
                 float nearPlane = 0.1f;
-                float farPlane = 100.0f; // Based on light's range
+                float farPlane = range; // Based on light's range
                 return glm::perspective(fov, aspect, nearPlane, farPlane);
             }
             case POINT: {

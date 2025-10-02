@@ -242,7 +242,6 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
         drawcall->ApplyOverride<Matrix4>(projmat, "proj", vulkanInstance->GetCurrentFrameIndex());
         drawcall->ApplyOverride<Matrix4>(frameinfo.viewmat, "view", vulkanInstance->GetCurrentFrameIndex());
-
         drawcall->ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
 
         TextureData shadowmaptex = {

@@ -28,6 +28,7 @@ void gbe::editor::ImageDebugger::DrawSelf()
 	}
 
 	if (selected_data != nullptr) {
-		ImGui::Image(gfx::TextureLoader::GetGuiHandle(this->selected_data), {512, 512}, {0, 1}, {1, 0});
+		ImVec2 availableSize = ImGui::GetContentRegionAvail();
+		ImGui::Image(gfx::TextureLoader::GetGuiHandle(this->selected_data), availableSize, {0, 1}, {1, 0});
 	}
 }

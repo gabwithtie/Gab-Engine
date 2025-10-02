@@ -60,6 +60,16 @@ namespace gbe {
 			}
 		};
 
+		struct InspectorColor : public InspectorField {
+			float* r = nullptr;
+			float* g = nullptr;
+			float* b = nullptr;
+
+			InspectorColor() {
+				this->fieldtype = FieldType::COLOR;
+			}
+		};
+
 		struct InspectorFloat : public InspectorField {
 			float* x = nullptr;
 

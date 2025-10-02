@@ -6,6 +6,8 @@ void gbe::editor::HierarchyWindow::DrawSelf()
 {
 	if (Engine::GetCurrentRoot() != nullptr)
 		this->DrawChildList(Engine::GetCurrentRoot(), "");
+
+	ImGui::
 }
 
 std::string gbe::editor::HierarchyWindow::GetWindowId()

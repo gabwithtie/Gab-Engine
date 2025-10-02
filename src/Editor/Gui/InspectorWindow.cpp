@@ -170,8 +170,6 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 					auto floatfield = static_cast<editor::InspectorFloat*>(field);
 					float proxy_float = *floatfield->x;
 
-					(floatfield->name.c_str(), &proxy_float);
-
 					ImGui::PushID(floatfield->name.c_str());
 
 					std::string floatlabel = "##" + floatfield->name;
@@ -189,6 +187,17 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 				}
 
 				if (field->fieldtype == editor::InspectorField::VECTOR3) {
+					auto vec3field = static_cast<editor::InspectorColor*>(field);
+					Vector3 proxy_vec = { *vec3field->r, *vec3field->g, *vec3field->b };
+
+					ImGui::ColorEdit3(vec3field->name.c_str(), &proxy_vec.x);
+
+					*vec3field->r = proxy_vec.x;
+					*vec3field->g = proxy_vec.y;
+					*vec3field->b = proxy_vec.z;
+				}
+
+				if (field->fieldtype == editor::InspectorField::COLOR) {
 					auto vec3field = static_cast<editor::InspectorVec3*>(field);
 					Vector3 proxy_vec = { *vec3field->x, *vec3field->y, *vec3field->z };
 
