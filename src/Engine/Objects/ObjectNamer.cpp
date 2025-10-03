@@ -7,7 +7,12 @@
 
 void gbe::ObjectNamer::ResetName(Object* obj)
 {
-	std::string typeName = typeid(*obj).name();
+	obj->SetName(GetName(typeid(*obj)));
+}
+
+std::string gbe::ObjectNamer::GetName(const type_info& info)
+{
+	std::string typeName = info.name();
 
 	size_t lastColon = typeName.find_last_of("::");
 	// Find the position of the last '::'
@@ -19,5 +24,5 @@ void gbe::ObjectNamer::ResetName(Object* obj)
 		}
 	}
 
-	obj->SetName(typeName);
+	return typeName;
 }

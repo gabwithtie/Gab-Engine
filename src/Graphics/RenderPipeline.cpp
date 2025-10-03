@@ -294,7 +294,8 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         {
             bindingsets.push_back(set.second);
         }
-        vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata->pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
+        if (bindingsets.size() > 0)
+            vkCmdBindDescriptorSets(vulkanInstance->GetCurrentCommandBuffer()->GetData(), VK_PIPELINE_BIND_POINT_GRAPHICS, currentshaderdata->pipelineLayout, 0, bindingsets.size(), bindingsets.data(), 0, nullptr);
 
         for (const auto& call_ptr : shaderset.second)
         {
@@ -480,18 +481,20 @@ DrawCall* gbe::RenderPipeline::GetDefaultDrawCall()
     return Instance->default_drawcall;
 }
 
-gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order)
+gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix)
 {
     bool exists_matrix = this->matrix_map.find(instance_id) != this->matrix_map.end();
     bool exists_instance = false;
     
-    bool ordermap_exists = this->sortedcalls.find(order) != this->sortedcalls.end();
+    bool ordermap_exists = this->sortedcalls.find(drawcall->order) != this->sortedcalls.end();
 
     if (ordermap_exists) {
-        bool drawcall_exists = this->sortedcalls[order].find(drawcall) != this->sortedcalls[order].end();
+        bool drawcall_exists = this->sortedcalls[drawcall->order].find(drawcall) != this->sortedcalls[drawcall->order].end();
 
         if (drawcall_exists) {
-            for (const auto& instance_ptr : this->sortedcalls[order][drawcall])
+            auto& instance_list = this->sortedcalls[drawcall->order][drawcall];
+            
+            for (const auto& instance_ptr : instance_list)
             {
                 if (instance_ptr == instance_id) {
                     exists_instance = true;
@@ -500,7 +503,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall*
             }
 
             if (!exists_instance) {
-                this->sortedcalls[order][drawcall].push_back(instance_id);
+                instance_list.push_back(instance_id);
             }
 
             return &this->matrix_map[instance_id];
@@ -515,23 +518,23 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall*
         overridedata.registered_change = false; // Reset handled change for new call
     }
 
-    this->PrepareCall(drawcall, order);
+    this->PrepareCall(drawcall);
 
     //COMMITTING
     if(!exists_matrix)
         this->matrix_map[instance_id] = Matrix4();
 
-    if (sortedcalls.find(order) == sortedcalls.end())
-        sortedcalls[order] = std::unordered_map<DrawCall*, std::vector<void*>>();
-    if (sortedcalls[order].find(drawcall) == sortedcalls[order].end())
-        sortedcalls[order][drawcall] = std::vector<void*>();
+    if (sortedcalls.find(drawcall->order) == sortedcalls.end())
+        sortedcalls[drawcall->order] = std::unordered_map<DrawCall*, std::vector<void*>>();
+    if (sortedcalls[drawcall->order].find(drawcall) == sortedcalls[drawcall->order].end())
+        sortedcalls[drawcall->order][drawcall] = std::vector<void*>();
     
-    sortedcalls[order][drawcall].push_back(instance_id);
+    sortedcalls[drawcall->order][drawcall].push_back(instance_id);
 
     return &this->matrix_map[instance_id];
 }
 
-void gbe::RenderPipeline::PrepareCall(DrawCall* drawcall, int order)
+void gbe::RenderPipeline::PrepareCall(DrawCall* drawcall)
 {
     //BUFFERS
     for (const auto& block : drawcall->get_shaderdata()->uniformblocks)
@@ -714,10 +717,10 @@ void gbe::RenderPipeline::UnRegisterCall(void* instance_id)
     if (!exists)
 		throw new std::runtime_error("CallInstance does not exist!");
 
-    for (const auto& drawcallmap : Instance->sortedcalls)
-    for (const auto& pair : drawcallmap.second) {
+    for (auto& drawcallmap : Instance->sortedcalls)
+    for (auto& pair : drawcallmap.second) {
         auto drawcall = pair.first;
-        auto instance_list = pair.second;
+        auto& instance_list = pair.second;
 
         for (size_t i = 0; i < instance_list.size(); i++)
         {

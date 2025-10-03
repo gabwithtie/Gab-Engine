@@ -1,13 +1,35 @@
 #include "HierarchyWindow.h"
 
 #include "../Editor.h"
+#include "../Utility/CreateFunctions.h"
 
 void gbe::editor::HierarchyWindow::DrawSelf()
 {
 	if (Engine::GetCurrentRoot() != nullptr)
 		this->DrawChildList(Engine::GetCurrentRoot(), "");
 
-	ImGui::
+	Object* created_object = nullptr;
+
+	if (ImGui::BeginPopupContextWindow("HierarchyContextMenu"))
+	{
+		if (ImGui::BeginMenu("Create"))
+		{
+			for (const auto& item: CreateFunctions::GetCreators())
+			{
+				if (ImGui::MenuItem(item.first.c_str())) {
+					created_object = item.second();
+				}
+			}
+
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (created_object != nullptr) {
+		created_object->SetParent(Engine::GetCurrentRoot());
+	}
 }
 
 std::string gbe::editor::HierarchyWindow::GetWindowId()
@@ -19,12 +41,26 @@ void gbe::editor::HierarchyWindow::DrawChildList(Object* parent, std::string lab
 {
 	bool expanded = false;
 
+	bool is_leaf = true;
+
+	for (size_t i = 0; i < parent->GetChildCount(); i++)
+	{
+		auto child = parent->GetChildAt(i);
+		if (!child->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE))
+			is_leaf = false;
+	}
+
 	if (label.size() > 0) {
 		ImGui::PushID(id);
 
-		expanded = ImGui::TreeNode("|");
-		ImGui::SameLine();
-		if (ImGui::Button(label.c_str())) {
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow; // Or other desired flags
+
+		if (is_leaf)
+			flags |= ImGuiTreeNodeFlags_Leaf;
+
+		expanded = ImGui::TreeNodeEx(label.c_str(), flags);
+
+		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
 			gbe::Editor::SelectSingle(parent);
 		}
 	}
@@ -38,9 +74,6 @@ void gbe::editor::HierarchyWindow::DrawChildList(Object* parent, std::string lab
 			auto child = parent->GetChildAt(i);
 
 			std::string button_label = "";
-			button_label += "[";
-			button_label += std::to_string(i);
-			button_label += "] : ";
 			button_label += child->GetName();
 
 			if (!child->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE))

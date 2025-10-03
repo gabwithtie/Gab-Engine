@@ -77,7 +77,7 @@ namespace gbe {
 		bool handled_resolution_change = true;
 
 		void UpdateReferences();
-		void PrepareCall(DrawCall* drawcall, int order = 0);
+		void PrepareCall(DrawCall* drawcall);
 	public:
 		struct FrameRenderInfo {
 			//Camera info
@@ -141,7 +141,7 @@ namespace gbe {
 		void RenderFrame(const FrameRenderInfo& frameinfo);
 		std::vector<unsigned char> ScreenShot(bool write_file = false);
 
-		Matrix4* RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int order = 0);
+		Matrix4* RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix);
 		static void UnRegisterCall(void* instance_id);
 	};
 }

@@ -21,8 +21,6 @@ namespace gbe {
 			return PrimitiveTypeStrs.at(_ptype);
 		}
 	private:
-		int order;
-
 		//PRIMITIVES CACHE
 		static std::unordered_map<PrimitiveType, gfx::DrawCall*> primitive_drawcalls;
 
@@ -35,8 +33,7 @@ namespace gbe {
 		gfx::DrawCall* mDrawCall = nullptr;
 		Matrix4* to_update = nullptr;
 
-		gfx::DrawCall* mDrawCall_shadow = nullptr;
-		Matrix4* to_update_shadow = nullptr;
+		RenderObject* shadow_renderer = nullptr;
 
 		PrimitiveType ptype = PrimitiveType::NONE;
 	protected:

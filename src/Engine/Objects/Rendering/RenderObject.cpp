@@ -20,17 +20,15 @@ const std::unordered_map<gbe::RenderObject::PrimitiveType, std::string> gbe::Ren
 
 void gbe::RenderObject::SetShadowCaster()
 {
-	if (to_update_shadow != nullptr)
-		return;
-
-	mDrawCall_shadow = RenderPipeline::RegisterDrawCall(this->mDrawCall->get_mesh(), asset::Material::GetAssetById("shadow"), -1);
-	to_update_shadow = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall_shadow, this->World().GetMatrix(), -1);
+	auto shadow_drawcall = RenderPipeline::RegisterDrawCall(this->mDrawCall->get_mesh(), asset::Material::GetAssetById("shadow"), -1);
+	this->shadow_renderer = new RenderObject(shadow_drawcall);
+	this->shadow_renderer->SetParent(this);
 }
 
 gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 {
 	this->mDrawCall = mDrawCall;
-	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix(), 0);
+	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
 
 	auto texture_field = new gbe::editor::InspectorAsset<TextureLoader, asset::Texture>();
 	texture_field->name = "Texture";
@@ -54,7 +52,7 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 		this->input_mat->setOverride("colortex", this->input_tex);
 
 		this->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(this->input_mesh, this->input_mat);
-		this->to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix(), order);
+		this->to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
 		};
 
 	this->inspectorData->fields.push_back(texture_field);
@@ -65,16 +63,14 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 
 gbe::RenderObject::RenderObject(PrimitiveType _ptype)
 {
-	this->order = order;
-
 	this->mDrawCall = primitive_drawcalls[_ptype];
-	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix(), 0);
+	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
 	this->ptype = _ptype;
 }
 
 gbe::RenderObject::~RenderObject()
 {
-	if (to_update != nullptr || to_update_shadow != nullptr)
+	if (to_update != nullptr)
 		RenderPipeline::Get_Instance()->UnRegisterCall(this);
 }
 
@@ -82,15 +78,13 @@ void gbe::RenderObject::InvokeEarlyUpdate()
 {
 	if (to_update != nullptr)
 		*to_update = this->World().GetMatrix();
-	if (to_update_shadow != nullptr)
-		*to_update_shadow = this->World().GetMatrix();
 }
 
 void gbe::RenderObject::On_Change_enabled(bool _to) {
 	Object::On_Change_enabled(_to);
 
 	if (to_update == nullptr && _to) {
-		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix(), this->order);
+		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
 	}
 	else if(to_update != nullptr) {
 		RenderPipeline::Get_Instance()->UnRegisterCall(this);
@@ -140,7 +134,7 @@ gbe::Object* gbe::RenderObject::Create(gbe::SerializedObject data) {
 		newobj->input_mat->setOverride("colortex", newobj->input_tex);
 
 		newobj->mDrawCall = RenderPipeline::Get_Instance()->RegisterDrawCall(newobj->input_mesh, newobj->input_mat);
-		newobj->to_update = RenderPipeline::Get_Instance()->RegisterInstance(newobj, newobj->mDrawCall, newobj->World().GetMatrix(), newobj->order);
+		newobj->to_update = RenderPipeline::Get_Instance()->RegisterInstance(newobj, newobj->mDrawCall, newobj->World().GetMatrix());
 
 		return newobj;
 	}

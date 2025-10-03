@@ -11,6 +11,8 @@ namespace gbe::editor {
 	class CreateFunctions {
 		const static std::unordered_map<std::string, std::function<Object* ()>> createfunctions;
 	public:
-
+		inline static const std::unordered_map<std::string, std::function<Object* ()>>& GetCreators() {
+			return createfunctions;
+		}
 	};
 }

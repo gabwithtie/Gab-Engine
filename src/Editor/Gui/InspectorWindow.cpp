@@ -172,11 +172,8 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 
 					ImGui::PushID(floatfield->name.c_str());
 
-					std::string floatlabel = "##" + floatfield->name;
-					ImGui::Text(floatfield->name.c_str());
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(-1);
-					bool changed = ImGui::InputFloat(floatlabel.c_str(), &proxy_float, 0, 0, "%.6f");
+					DrawFieldLabel(floatfield->name);
+					bool changed = ImGui::InputFloat(floatfield->name.c_str(), &proxy_float, 0, 0, "%.6f");
 
 					if (changed)
 					{
@@ -190,7 +187,7 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 					auto vec3field = static_cast<editor::InspectorColor*>(field);
 					Vector3 proxy_vec = { *vec3field->r, *vec3field->g, *vec3field->b };
 
-					ImGui::ColorEdit3(vec3field->name.c_str(), &proxy_vec.x);
+					this->DrawVector3Field(vec3field->name.c_str(), &proxy_vec);
 
 					*vec3field->r = proxy_vec.x;
 					*vec3field->g = proxy_vec.y;
@@ -201,7 +198,8 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 					auto vec3field = static_cast<editor::InspectorVec3*>(field);
 					Vector3 proxy_vec = { *vec3field->x, *vec3field->y, *vec3field->z };
 
-					this->DrawVector3Field(vec3field->name.c_str(), &proxy_vec);
+					DrawFieldLabel(vec3field->name);
+					ImGui::ColorEdit3(vec3field->name.c_str(), &proxy_vec.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 
 					*vec3field->x = proxy_vec.x;
 					*vec3field->y = proxy_vec.y;
@@ -267,11 +265,8 @@ bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* 
 
 	float vec_arr[3] = { field->x, field->y, field->z };
 
-	std::string floatlabel = "##" + label;
-	ImGui::Text(label.c_str());
-	ImGui::SameLine();
-	ImGui::SetNextItemWidth(-1);
-	bool changed = ImGui::DragFloat3(floatlabel.c_str(), vec_arr);
+	DrawFieldLabel(label);
+	bool changed = ImGui::DragFloat3(label.c_str(), vec_arr);
 
 	if (changed)
 	{
@@ -286,6 +281,15 @@ bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* 
 	ImGui::PopID();
 	
 	return changed;
+}
+
+void gbe::editor::InspectorWindow::DrawFieldLabel(std::string label) {
+	std::string floatlabel = "##" + label;
+	ImGui::Text(label.c_str());
+	float windowWidth = ImGui::GetContentRegionAvail().x;
+	float xOffset = (windowWidth) * 0.4f;
+	ImGui::SameLine(xOffset);
+	ImGui::SetNextItemWidth(-1);
 }
 
 std::string gbe::editor::InspectorWindow::GetWindowId()
