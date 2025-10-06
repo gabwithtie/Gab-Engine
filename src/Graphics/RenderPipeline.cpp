@@ -128,6 +128,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         light->UpdateContext(frameinfo.viewmat, frameinfo.projmat_lightusage);
         Matrix4 lightViewMat = light->GetViewMatrix();
         Matrix4 lightProjMat = light->GetProjectionMatrix();
+        lightProjMat[1][1] = -lightProjMat[1][1];
 
         for (const auto& shaderset : sortedcalls[-1])
         {
@@ -260,13 +261,18 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
             }
 
             const auto& light = frameinfo.lightdatas[lightIndex];
-            auto lightProjMat = light->cache_projmat;
+            auto lightProjMat = light->GetProjectionMatrix();
+            lightProjMat[1][1] = -lightProjMat[1][1];
 
-            drawcall->ApplyOverride<Matrix4>(light->cache_viewmat, "light_view", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            drawcall->ApplyOverride<Matrix4>(light->GetViewMatrix(), "light_view", vulkanInstance->GetCurrentFrameIndex(), light_index);
             drawcall->ApplyOverride<Matrix4>(lightProjMat, "light_proj", vulkanInstance->GetCurrentFrameIndex(), light_index);
             drawcall->ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            drawcall->ApplyOverride<int>(light->type, "light_type", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            drawcall->ApplyOverride<float>(light->range, "light_range", vulkanInstance->GetCurrentFrameIndex(), light_index);
             drawcall->ApplyOverride<float>(light->bias_min, "bias_min", vulkanInstance->GetCurrentFrameIndex(), light_index);
             drawcall->ApplyOverride<float>(light->bias_mult, "bias_mult", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            drawcall->ApplyOverride<float>(light->angle_inner, "light_cone_inner", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            drawcall->ApplyOverride<float>(light->angle_outer, "light_cone_outer", vulkanInstance->GetCurrentFrameIndex(), light_index);
             drawcall->ApplyOverride<float>(1, "shadow_strength", vulkanInstance->GetCurrentFrameIndex(), light_index);
 
             switch (light->type)
@@ -728,10 +734,6 @@ void gbe::RenderPipeline::UnRegisterCall(void* instance_id)
                 instance_list.erase(instance_list.begin() + i);
                 break;
             }
-        }
-
-        if (instance_list.size() == 0) {
-            delete drawcall;
         }
     }
 

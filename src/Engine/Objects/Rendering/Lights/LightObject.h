@@ -12,6 +12,7 @@ namespace gbe {
 		bool changed = true;
 
 	public:
+		LightObject();
 
 		void Set_Color(Vector3 color);
 

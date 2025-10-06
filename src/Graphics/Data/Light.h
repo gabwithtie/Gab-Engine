@@ -18,20 +18,24 @@ namespace gbe::gfx {
 
         //Directional
         float override_dist = 50;
-        float dir_backtrack_dist = 240;
-        float dir_overshoot_dist = 600;
+        float dir_backtrack_dist = 180;
+        float dir_overshoot_dist = 450;
         float bias_min = 0.0001;
         float bias_mult = 0.001;
         std::vector<Vector4> frustrum_corners;
         Vector3 frustrum_center;
 
         //Cone
-        float angle = 50;
+        float angle_inner = 50;
+        float angle_outer = 80;
         float range = 50;
 
         //CACHE
-        Matrix4 cache_projmat;
-        Matrix4 cache_viewmat;
+        bool created_context_view = false;
+        bool created_context_proj = false;
+
+        Matrix4 proj_cache;
+        Matrix4 view_cache;
 
         inline void UpdateContext(Matrix4 _cam_view, Matrix4 _cam_proj) {
             cam_view = _cam_view;
@@ -39,31 +43,44 @@ namespace gbe::gfx {
 
             frustrum_corners = Matrix4::get_frustrum_corners(cam_proj, cam_view);
             frustrum_center = Matrix4::get_frustrum_center(frustrum_corners);
+
+            created_context_view = false;
+            created_context_proj = false;
         }
 
         inline Matrix4 GetViewMatrix() {
+            if (created_context_view)
+                return view_cache;
+
             switch (type) {
             case DIRECTIONAL: {
                 Vector3 eye = frustrum_center - (direction * dir_backtrack_dist);
                 Vector3 target = frustrum_center;
                 Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
 
-                cache_viewmat = lookAt(eye, target, up);
-                return cache_viewmat;
+                view_cache = lookAt(eye, target, up);
+                break;
             }
             case CONE: {
                 // A spot light has a position and a direction.
-                Vector3 target = position + direction;
+                Vector3 target = position + (direction * range);
                 Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
-                return lookAt(position, target, up);
+
+                view_cache = lookAt(position, target, up);
+                break;
             }
             case POINT:
                 throw new std::runtime_error("Incompatible.");
             }
-            return Matrix4();
+            
+            created_context_view = true;
+            return view_cache;
         }
 
         inline Matrix4 GetProjectionMatrix() {
+            if (created_context_proj)
+                return proj_cache;
+
             switch (type) {
             case DIRECTIONAL: {
                 
@@ -83,22 +100,25 @@ namespace gbe::gfx {
                     maxZ = std::max(maxZ, trf.z);
                 }
 
-                cache_projmat = glm::ortho(minX, maxX, minY, maxY, 0.0f, maxZ + dir_overshoot_dist);
-                return cache_projmat;
+                proj_cache = glm::ortho(minX, maxX, minY, maxY, 0.0f, maxZ + dir_overshoot_dist);
+                break;
             }
             case CONE: {
                 // Use a perspective projection for a spot light.
-                float fov = glm::radians(angle); // Or based on your light's properties
+                float fov = glm::radians(angle_outer); // Or based on your light's properties
                 float aspect = 1.0f; // Shadow map is typically square
-                float nearPlane = 0.1f;
+                float nearPlane = 0.5f;
                 float farPlane = range; // Based on light's range
-                return glm::perspective(fov, aspect, nearPlane, farPlane);
+                proj_cache = glm::perspective(fov, aspect, nearPlane, farPlane);
+                break;
             }
             case POINT: {
                 throw new std::runtime_error("Incompatible.");
             }
             }
-            return Matrix4();
+
+            created_context_proj = true;
+            return proj_cache;
         }
     };
 }

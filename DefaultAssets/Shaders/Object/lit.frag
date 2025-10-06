@@ -22,6 +22,9 @@ layout(set = 2, binding = 3) uniform sampler2D arm_tex;
 
 //=================LIGHTING====================//
 const int MAX_LIGHTS = 5;
+// Light Types
+const int LIGHT_TYPE_DIRECTIONAL = 0;
+const int LIGHT_TYPE_SPOT = 1;
 
 // Shadowmaps (should be an array)
 layout(set = 2, binding = 4) uniform sampler2DArray shadow_tex;
@@ -33,6 +36,8 @@ layout(set = 0, binding = 1) uniform Light {
     vec3 light_color;
     int light_type;
     float light_range;
+    float light_cone_inner;
+    float light_cone_outer;
     float bias_min;
     float bias_mult;
 } lights[MAX_LIGHTS]; // Example array with a defined size
@@ -84,11 +89,44 @@ void main() {
 
     // --- Lighting Loop ---
     for (int i = 0; i < MAX_LIGHTS; ++i) {
-        // REVISED: Derive light direction from the view matrix.
-        // The light is assumed to shine along its local -Z axis.
-        // In a column-major view matrix, the Z-axis in world space is the third column.
-        // The vector *towards* the light is the negative of the light's direction.
-        vec3 lightDir = normalize(vec3(lights[i].light_view[0][2], lights[i].light_view[1][2], lights[i].light_view[2][2]));
+        vec3 lightDir;
+        float attenuation = 1.0;
+
+        if (lights[i].light_type == LIGHT_TYPE_DIRECTIONAL) {
+            lightDir = normalize(vec3(lights[i].light_view[0][2], lights[i].light_view[1][2], lights[i].light_view[2][2]));
+        } else if (lights[i].light_type == LIGHT_TYPE_SPOT) {
+            mat4 inverse_light_view = inverse(lights[i].light_view);
+            vec3 light_pos = inverse_light_view[3].xyz;
+            vec3 L_to_P = light_pos - fragPos;
+            float dist = length(L_to_P);
+            
+            // Range attenuation (simple inverse square falloff adjusted by light_range)
+            attenuation = 1.0 / (1.0 + ((dist * dist) / (lights[i].light_range * lights[i].light_range)));
+
+            lightDir = normalize(L_to_P);
+            
+            // Light's forward direction (negative Z-axis of the light's view matrix)
+            vec3 spotDir = normalize(vec3(lights[i].light_view[0][2], lights[i].light_view[1][2], lights[i].light_view[2][2]));
+            
+            // Dot product of the direction *to* the light, and the spot's *direction*
+            float theta = acos(dot(lightDir, spotDir));
+            
+            // Calculate cone intensity (smoothstep interpolation)
+            float c_outer = radians(lights[i].light_cone_outer * 0.5);
+            float c_inner = radians(lights[i].light_cone_inner * 0.5);
+            float intensity = 0.0;
+            if (theta < c_outer) // For smooth falloff
+            {
+                intensity = smoothstep(c_outer, c_inner, theta);
+            }
+            if (theta < c_inner)
+            {
+                intensity = 1.0; // Inside the main cone
+            }
+
+            // Combine range attenuation with cone intensity
+            attenuation *= intensity;
+        }
 
         // Diffuse component
         float diff = max(dot(_normal, lightDir), 0.0);
@@ -104,7 +142,6 @@ void main() {
         vec4 fragPosLightSpace = lights[i].light_proj * lights[i].light_view * vec4(fragPos, 1.0);
 		vec3 shadowcoord = fragPosLightSpace.xyz / fragPosLightSpace.w;
         shadowcoord = shadowcoord * 0.5 + 0.5;
-        float curdepth = (fragPosLightSpace.z + 1) / 2.0;
 
         ivec3 texDim = textureSize(shadow_tex, 0);
 	    float scale = 1.5;
@@ -118,9 +155,9 @@ void main() {
 	    {
 		    for (int y = -1; y <= 1; y++)
 		    {
-                float dist = texture(shadow_tex, vec3(shadowcoord.xy + vec2(dx*x, dy*y), i)).r;
+                float closest = texture(shadow_tex, vec3(shadowcoord.xy + vec2(dx*x, dy*y), i)).r;
                 float bias = max(lights[i].bias_mult * (1.0 - dot(_normal, lightDir)), lights[i].bias_min);
-                float delta = fragPosLightSpace.z - bias - dist;
+                float delta = shadowcoord.z - bias - closest;
 
                 shadow += delta > 0 ? 0.0 : 1.0;
 
@@ -132,7 +169,7 @@ void main() {
 	    shadow = shadow / count;
 
         // REVISED: Apply shadow factor to lighting
-        vec3 sub_final = diffuse + specular;
+        vec3 sub_final = (diffuse + specular) * attenuation;
         final_result += mix(sub_final, sub_final * shadow, shadow_strength);
     }
 

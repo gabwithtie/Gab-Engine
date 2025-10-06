@@ -23,6 +23,9 @@ gfx::Light* gbe::ConeLight::GetData()
 
 gbe::ConeLight::ConeLight()
 {
+    this->mLight.bias_min = 0.001;
+    this->mLight.bias_mult = 0.01;
+
     if (Engine::Get_state() == Engine::EngineState::Edit) {
         auto dirlight_ro = new RigidObject(true);
         dirlight_ro->SetParent(this);
@@ -42,24 +45,22 @@ gbe::ConeLight::ConeLight()
     }
 
     //INSPECTOR
-    auto angle_field = new gbe::editor::InspectorFloat();
-    angle_field->name = "Angle";
-    angle_field->x = &this->mLight.angle;
+    auto angleinner_field = new gbe::editor::InspectorFloat();
+    angleinner_field->name = "Inner Angle";
+    angleinner_field->x = &this->mLight.angle_inner;
 
-    this->inspectorData->fields.push_back(angle_field);
+    this->inspectorData->fields.push_back(angleinner_field);
+
+    auto angleouter_field = new gbe::editor::InspectorFloat();
+    angleouter_field->name = "Outer Angle";
+    angleouter_field->x = &this->mLight.angle_outer;
+
+    this->inspectorData->fields.push_back(angleouter_field);
 
     auto range_field = new gbe::editor::InspectorFloat();
     range_field->name = "Range";
     range_field->x = &this->mLight.range;
 
     this->inspectorData->fields.push_back(range_field);
-
-    auto lightcolor = new gbe::editor::InspectorColor();
-    lightcolor->name = "Color";
-    lightcolor->r = &this->mLight.color.x;
-    lightcolor->g = &this->mLight.color.y;
-    lightcolor->b = &this->mLight.color.z;
-
-    this->inspectorData->fields.push_back(lightcolor);
 
 }
