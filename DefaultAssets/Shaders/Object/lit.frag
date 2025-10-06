@@ -156,14 +156,12 @@ void main() {
 		    for (int y = -1; y <= 1; y++)
 		    {
                 float closest = texture(shadow_tex, vec3(shadowcoord.xy + vec2(dx*x, dy*y), i)).r;
-                float bias = max(lights[i].bias_mult * (1.0 - dot(_normal, lightDir)), lights[i].bias_min);
-                float delta = shadowcoord.z - bias - closest;
-
-                shadow += delta > 0 ? 0.0 : 1.0;
+                float bias = max(lights[i].bias_mult * (dot(_normal, lightDir)), lights[i].bias_min);
+                
+                shadow += (shadowcoord.z - bias) < closest ? 1.0 : 0.0;
 
 			    count++;
 		    }
-	
 	    }
 
 	    shadow = shadow / count;

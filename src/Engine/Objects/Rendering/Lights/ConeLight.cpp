@@ -63,4 +63,10 @@ gbe::ConeLight::ConeLight()
 
     this->inspectorData->fields.push_back(range_field);
 
+    auto near_field = new gbe::editor::InspectorFloat();
+    near_field->name = "Near Clip";
+    near_field->x = &this->mLight.near_clip;
+
+    this->inspectorData->fields.push_back(near_field);
+
 }

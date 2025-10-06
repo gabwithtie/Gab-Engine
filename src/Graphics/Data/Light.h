@@ -19,7 +19,7 @@ namespace gbe::gfx {
         //Directional
         float override_dist = 50;
         float dir_backtrack_dist = 180;
-        float dir_overshoot_dist = 450;
+        float dir_overshoot_dist = 600;
         float bias_min = 0.0001;
         float bias_mult = 0.001;
         std::vector<Vector4> frustrum_corners;
@@ -28,6 +28,7 @@ namespace gbe::gfx {
         //Cone
         float angle_inner = 50;
         float angle_outer = 80;
+        float near_clip = 1;
         float range = 50;
 
         //CACHE
@@ -107,7 +108,7 @@ namespace gbe::gfx {
                 // Use a perspective projection for a spot light.
                 float fov = glm::radians(angle_outer); // Or based on your light's properties
                 float aspect = 1.0f; // Shadow map is typically square
-                float nearPlane = 0.5f;
+                float nearPlane = near_clip;
                 float farPlane = range; // Based on light's range
                 proj_cache = glm::perspective(fov, aspect, nearPlane, farPlane);
                 break;
