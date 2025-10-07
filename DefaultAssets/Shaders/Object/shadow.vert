@@ -3,9 +3,18 @@
 #extension GL_ARB_shader_viewport_layer_array : require
 #extension GL_EXT_multiview : enable
 
+const int MAX_LIGHTS = 5;
+
+// Set 0: Global Data — lights (should be an array)
+layout(set = 0, binding = 1) uniform Light {
+    mat4 light_projview;
+    float light_nearclip;
+    float light_range;
+} lights[MAX_LIGHTS]; // Example array with a defined size
+
 layout(push_constant) uniform PushConstants {
-    mat4 projview;
     mat4 model;
+    int lightindex;
 };
 
 layout(location = 0) in vec3 inPosition;
@@ -21,10 +30,15 @@ layout(location = 3) out vec3 fragT;
 layout(location = 4) out vec3 fragB;
 layout(location = 5) out vec3 fragN;
 
-layout(location = 6) out vec3 camera_pos;
+layout(location = 6) out float fraglight_nearclip;
+layout(location = 7) out float fraglight_range;
+layout(location = 8) out mat4 fraglight_projview;
 
 void main() {
-    gl_Position = projview * model * vec4(inPosition, 1.0);
+    gl_Position = lights[lightindex].light_projview * model * vec4(inPosition, 1.0);
+    fraglight_projview = lights[lightindex].light_projview;
+    fraglight_nearclip = lights[lightindex].light_nearclip;
+    fraglight_range = lights[lightindex].light_range;
 
     fragPos = (model * vec4(inPosition, 1.0)).xyz;
     fragTexCoord = inTexCoord;

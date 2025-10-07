@@ -35,6 +35,7 @@ layout(set = 0, binding = 1) uniform Light {
     mat4 light_proj;
     vec3 light_color;
     int light_type;
+    float light_nearclip;
     float light_range;
     float light_cone_inner;
     float light_cone_outer;
@@ -142,6 +143,18 @@ void main() {
         vec4 fragPosLightSpace = lights[i].light_proj * lights[i].light_view * vec4(fragPos, 1.0);
 		vec3 shadowcoord = fragPosLightSpace.xyz / fragPosLightSpace.w;
         shadowcoord = shadowcoord * 0.5 + 0.5;
+        float near = lights[i].light_nearclip;
+        float far = lights[i].light_range;
+
+        float linear_d = 0;
+        
+        if(near > 0){
+            linear_d = (2.0 * near * far) / (far + near - shadowcoord.z * (far - near));
+            linear_d = linear_d / far; // normalize
+        }
+        else{
+            linear_d = shadowcoord.z;
+        }
 
         ivec3 texDim = textureSize(shadow_tex, 0);
 	    float scale = 1.5;
@@ -156,9 +169,9 @@ void main() {
 		    for (int y = -1; y <= 1; y++)
 		    {
                 float closest = texture(shadow_tex, vec3(shadowcoord.xy + vec2(dx*x, dy*y), i)).r;
-                float bias = max(lights[i].bias_mult * (dot(_normal, lightDir)), lights[i].bias_min);
+                float bias = max(lights[i].bias_mult * (1 - dot(_normal, lightDir)), lights[i].bias_min);
                 
-                shadow += (shadowcoord.z - bias) < closest ? 1.0 : 0.0;
+                shadow += (linear_d - bias) < closest ? 1.0 : 0.0;
 
 			    count++;
 		    }
@@ -168,7 +181,15 @@ void main() {
 
         // REVISED: Apply shadow factor to lighting
         vec3 sub_final = (diffuse + specular) * attenuation;
+        
         final_result += mix(sub_final, sub_final * shadow, shadow_strength);
+
+        /*
+        if(shadowcoord.x > 0.50)
+            final_result += linear_d - 0.02; // Outside light frustum, no shadow
+        else
+            final_result += texture(shadow_tex, vec3(shadowcoord.xy, i)).r;
+        */
     }
 
     outColor = vec4(final_result, 1.0);

@@ -158,7 +158,7 @@ void gbe::vulkan::DepthColorTarget::StartPass(uint32_t drawlayer)
     passBeginInfo.renderArea.extent = { x, y };
 
     std::array<VkClearValue, 2> clearValues{};
-    float clear_brightness = 0.3f;
+    float clear_brightness = 1.0f;
     clearValues[0].depthStencil = { 1.0f, 0 };
     clearValues[1].color = { {clear_brightness, clear_brightness, clear_brightness, 1.0f} };
 

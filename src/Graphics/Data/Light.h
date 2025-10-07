@@ -18,10 +18,9 @@ namespace gbe::gfx {
 
         //Directional
         float override_dist = 50;
-        float dir_backtrack_dist = 180;
-        float dir_overshoot_dist = 600;
-        float bias_min = 0.0001;
-        float bias_mult = 0.001;
+        float dir_backtrack_dist = 60;
+        float bias_min = 0.005;
+        float bias_mult = 0.05;
         std::vector<Vector4> frustrum_corners;
         Vector3 frustrum_center;
 
@@ -42,11 +41,33 @@ namespace gbe::gfx {
             cam_view = _cam_view;
             cam_proj = _cam_proj;
 
+            created_context_view = false;
+            created_context_proj = false;
+
+            if(type != DIRECTIONAL)
+				return;
+
             frustrum_corners = Matrix4::get_frustrum_corners(cam_proj, cam_view);
             frustrum_center = Matrix4::get_frustrum_center(frustrum_corners);
 
-            created_context_view = false;
-            created_context_proj = false;
+            float radius = 0.0f;
+            for (uint32_t j = 0; j < 8; j++) {
+                Vector3 delta = (Vector3)frustrum_corners[j] - frustrum_center;
+                float distance = delta.Magnitude();
+                radius = glm::max(radius, distance);
+            }
+            radius = std::ceil(radius * 16.0f) / 16.0f;
+
+            glm::vec3 maxExtents = glm::vec3(radius);
+            glm::vec3 minExtents = -maxExtents;
+
+            created_context_view = true;
+            created_context_proj = true;
+
+            range = radius * 2;
+            view_cache = glm::lookAt(frustrum_center - (direction * dir_backtrack_dist), frustrum_center, glm::vec3(0.0f, 1.0f, 0.0f));
+            proj_cache = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, range + dir_backtrack_dist);
+            near_clip = 0;
         }
 
         inline Matrix4 GetViewMatrix() {
@@ -54,14 +75,6 @@ namespace gbe::gfx {
                 return view_cache;
 
             switch (type) {
-            case DIRECTIONAL: {
-                Vector3 eye = frustrum_center - (direction * dir_backtrack_dist);
-                Vector3 target = frustrum_center;
-                Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
-
-                view_cache = lookAt(eye, target, up);
-                break;
-            }
             case CONE: {
                 // A spot light has a position and a direction.
                 Vector3 target = position + (direction * range);
@@ -83,27 +96,6 @@ namespace gbe::gfx {
                 return proj_cache;
 
             switch (type) {
-            case DIRECTIONAL: {
-                
-                const auto viewmat = GetViewMatrix();
-                float minX = std::numeric_limits<float>::max();
-                float maxX = std::numeric_limits<float>::lowest();
-                float minY = std::numeric_limits<float>::max();
-                float maxY = std::numeric_limits<float>::lowest();
-                float maxZ = std::numeric_limits<float>::lowest();
-                for (const auto& v : frustrum_corners)
-                {
-                    const auto trf = viewmat * v;
-                    minX = std::min(minX, trf.x);
-                    maxX = std::max(maxX, trf.x);
-                    minY = std::min(minY, trf.y);
-                    maxY = std::max(maxY, trf.y);
-                    maxZ = std::max(maxZ, trf.z);
-                }
-
-                proj_cache = glm::ortho(minX, maxX, minY, maxY, 0.0f, maxZ + dir_overshoot_dist);
-                break;
-            }
             case CONE: {
                 // Use a perspective projection for a spot light.
                 float fov = glm::radians(angle_outer); // Or based on your light's properties

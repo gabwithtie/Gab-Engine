@@ -42,11 +42,6 @@ gbe::DirectionalLight::DirectionalLight()
     }
 
     //INSPECTOR
-    auto overshoot_field = new gbe::editor::InspectorFloat();
-    overshoot_field->name = "Shadowmap overshoot";
-    overshoot_field->x = &this->mLight.dir_overshoot_dist;
-
-    this->inspectorData->fields.push_back(overshoot_field);
 
     auto backtrack_field = new gbe::editor::InspectorFloat();
     backtrack_field->name = "Shadowmap backtrack";

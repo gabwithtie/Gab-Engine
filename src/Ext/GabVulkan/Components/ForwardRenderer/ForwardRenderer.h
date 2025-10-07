@@ -92,7 +92,7 @@ namespace gbe::vulkan {
 
             for (size_t i = 0; i < max_lights; i++)
             {
-                sp_imageview_layers.push_back(new ImageView(shadowpass->Get_depth()->GetImage(), VK_IMAGE_ASPECT_DEPTH_BIT, i));
+                sp_imageview_layers.push_back(new ImageView(shadowpass->Get_color()->GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, i));
             }
         }
 

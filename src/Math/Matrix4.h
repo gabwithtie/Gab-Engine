@@ -42,7 +42,7 @@ namespace gbe {
                             inv * glm::vec4(
                                 2.0f * x - 1.0f,
                                 2.0f * y - 1.0f,
-                                2.0f * z - 1.0f,
+                                z,
                                 1.0f);
                         frustumCorners.push_back(pt / pt.w);
                     }

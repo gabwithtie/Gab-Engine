@@ -129,6 +129,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         Matrix4 lightViewMat = light->GetViewMatrix();
         Matrix4 lightProjMat = light->GetProjectionMatrix();
         lightProjMat[1][1] = -lightProjMat[1][1];
+        Matrix4 lightProjView = lightProjMat * lightViewMat;
 
         for (const auto& shaderset : sortedcalls[-1])
         {
@@ -139,6 +140,10 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
             drawcall->SyncMaterialData(vulkanInstance->GetCurrentFrameIndex());
 
+            drawcall->ApplyOverride<Matrix4>(lightProjView, "light_projview", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+            drawcall->ApplyOverride<float>(light->near_clip, "light_nearclip", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+            drawcall->ApplyOverride<float>(light->range, "light_range", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+            
             //RENDER MESH
             const auto& curmesh = this->meshloader.GetAssetData(drawcall->get_mesh());
 
@@ -155,13 +160,13 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
             for (const auto& call_ptr : shaderset.second)
             {
                 struct shadow_pushconstants {
-                    Matrix4 projview;
                     Matrix4 model;
+                    int index;
                 };
 
                 shadow_pushconstants pushconstants = {
-                    .projview = lightProjMat * lightViewMat,
-                    .model = this->matrix_map[call_ptr]
+                    .model = this->matrix_map[call_ptr],
+                    .index = (int)lightIndex,
                 };
 
                 vkCmdPushConstants(vulkanInstance->GetCurrentCommandBuffer()->GetData(), currentshaderdata->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(shadow_pushconstants), &pushconstants);
@@ -246,7 +251,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
         drawcall->ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", vulkanInstance->GetCurrentFrameIndex());
 
         TextureData shadowmaptex = {
-        .textureImageView = renderer->Get_shadowpass()->Get_depth()->GetView(),
+        .textureImageView = renderer->Get_shadowpass()->Get_color()->GetView(),
         .textureSampler = renderer->Get_sampler()
         };
         drawcall->ApplyOverride<TextureData>(shadowmaptex, "shadow_tex", vulkanInstance->GetCurrentFrameIndex());
@@ -268,6 +273,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
             drawcall->ApplyOverride<Matrix4>(lightProjMat, "light_proj", vulkanInstance->GetCurrentFrameIndex(), light_index);
             drawcall->ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
             drawcall->ApplyOverride<int>(light->type, "light_type", vulkanInstance->GetCurrentFrameIndex(), light_index);
+            drawcall->ApplyOverride<float>(light->near_clip, "light_nearclip", vulkanInstance->GetCurrentFrameIndex(), light_index);
             drawcall->ApplyOverride<float>(light->range, "light_range", vulkanInstance->GetCurrentFrameIndex(), light_index);
             drawcall->ApplyOverride<float>(light->bias_min, "bias_min", vulkanInstance->GetCurrentFrameIndex(), light_index);
             drawcall->ApplyOverride<float>(light->bias_mult, "bias_mult", vulkanInstance->GetCurrentFrameIndex(), light_index);
