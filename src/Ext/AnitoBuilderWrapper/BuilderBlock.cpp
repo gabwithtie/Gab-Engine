@@ -256,7 +256,7 @@ namespace gbe::ext::AnitoBuilder {
 		bool valid_move = true;
 
 		for (size_t s = 0; s < sets.size(); s++) {
-			for (size_t i = 0; i < sets[s].segs.size(); i++)
+			for (size_t i = 0; i < sets[moved_s].segs.size(); i++)
 			{
 				auto& l = GetHandle(s, i);
 
@@ -264,12 +264,23 @@ namespace gbe::ext::AnitoBuilder {
 					continue;
 
 				if (l.setseg.second == moved_pos_l) {
-					valid_move = valid_move && CheckSetSegment(updated_l, updated_r, position_pool[l.setseg.first]);
-					valid_move = valid_move && CheckSetSegment(position_pool[l.setseg.first], updated_l, position_pool[GetHandle(s, i - 1).setseg.first]);
+					Vector3 other_vec = updated_r;
 
+					if (moved_s != s) {
+						other_vec = position_pool[GetHandle(s, i + 1).setseg.second];
+					}
+
+					valid_move = valid_move && CheckSetSegment(updated_l, other_vec, position_pool[l.setseg.first]);
+					valid_move = valid_move && CheckSetSegment(position_pool[l.setseg.first], updated_l, position_pool[GetHandle(s, i - 1).setseg.first]);
 				}
 				if (l.setseg.first == moved_pos_r) {
-					valid_move = valid_move && CheckSetSegment(updated_r, updated_l, position_pool[l.setseg.second]);
+					Vector3 other_vec = updated_l;
+
+					if (moved_s != s) {
+						other_vec = position_pool[GetHandle(s, i - 1).setseg.first];
+					}
+
+					valid_move = valid_move && CheckSetSegment(updated_r, other_vec, position_pool[l.setseg.second]);
 					valid_move = valid_move && CheckSetSegment(position_pool[l.setseg.second], updated_r, position_pool[GetHandle(s, i + 1).setseg.second]);
 				}
 			}
