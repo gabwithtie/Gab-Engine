@@ -14,7 +14,13 @@ namespace gbe::ext::AnitoBuilder {
 		: Object(), Update()
 	{
 		this->SetName("Anito Builder Block");
+		
+		//RENDERING
+		Wall1_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wall"), asset::Material::GetAssetById("lit"));
+		Wall2_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof"), asset::Material::GetAssetById("lit"));
+		roof_editor_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), asset::Material::GetAssetById("grid"));
 
+		//OBJECTS
 		this->height = height;
 
 		for (size_t i = 0; i < 4; i++)
@@ -29,14 +35,10 @@ namespace gbe::ext::AnitoBuilder {
 			3,
 		};
 
-		//OBJECTS
 		AddBlock(corner_ptrs);
 		renderer_parent = new Object();
 		renderer_parent->SetParent(this);
 
-		//RENDERING
-		Wall1_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wall"), asset::Material::GetAssetById("lit"));
-		Wall2_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof"), asset::Material::GetAssetById("lit"));
 
 		//INSPECTOR
 		auto height_field = new gbe::editor::InspectorFloat();
@@ -114,10 +116,10 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r)
 	{
-		i %= this->sets[s].size();
+		i %= this->sets[s].segs.size();
 
-		auto& seg = this->sets[s][i].setseg;
-		auto handle = this->sets[s][i].block;
+		auto& seg = this->sets[s].segs[i].setseg;
+		auto handle = this->sets[s].segs[i].block;
 
 		auto delta_right = handle->Local().GetRight() * (handle->Local().scale.Get().x);
 		auto delta_up = -Vector3(0, height * 0.5f, 0);
@@ -127,8 +129,36 @@ namespace gbe::ext::AnitoBuilder {
 	}
 
 	void BuilderBlock::ResetHandle(int s, int i) {
-		auto& seg = this->sets[s][i].setseg;
-		auto handle = this->sets[s][i].block;
+		auto& set = this->sets[s];
+		auto& seg = this->sets[s].segs[i].setseg;
+
+		const auto ResetRoof = [=](Object* roof_obj, int basis_index) {
+			const auto right = position_pool[this->GetHandle(s, basis_index).setseg.second] + Vector3(0, height, 0);
+			const auto left = position_pool[this->GetHandle(s, basis_index -1).setseg.first] + Vector3(0, height, 0);
+
+			// Assuming you have your axis vectors and position vector
+			Vector3 position = position_pool[this->GetHandle(s, basis_index).setseg.first] + Vector3(0, height, 0);
+			Vector3 xAxis = right - position; // Example: local X-axis
+			Vector3 yAxis = Vector3(0.0f, 0.02f, 0.0f); // Example: local Y-axis
+			Vector3 zAxis = left - position; // Example: local Z-axis
+
+			// Create the glm::mat4
+			Matrix4 modelMatrix = Matrix4(1.0f); // Initialize with identity matrix
+
+			// Assign the axis vectors to the first three columns
+			modelMatrix[0] = Vector4(xAxis, 0.0f); // X-axis
+			modelMatrix[1] = Vector4(yAxis, 0.0f); // Y-axis
+			modelMatrix[2] = Vector4(zAxis, 0.0f); // Z-axis
+
+			// Assign the position vector to the fourth column (translation)
+			modelMatrix[3] = Vector4(position, 1.0f); // Translation
+
+			roof_obj->Local().SetMatrix(modelMatrix);
+			};
+		ResetRoof(set.roof.first, 0);
+		ResetRoof(set.roof.second, 2);
+
+		auto handle = this->sets[s].segs[i].block;
 
 		Vector3 delta = position_pool[seg.first] - position_pool[seg.second];
 		float half_mag = delta.Magnitude() * 0.5f;
@@ -138,27 +168,10 @@ namespace gbe::ext::AnitoBuilder {
 		handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
 	}
 
-	inline bool BuilderBlock::CheckSetSegment(int s, int i, int point_index, Vector3 newpoint_a, Vector3 newpoint_b)
+	inline bool BuilderBlock::CheckSetSegment(Vector3 p, Vector3 l, Vector3 r)
 	{
-		i %= this->sets[s].size();
-
-		auto& seg = this->sets[s][i].setseg;
-		auto handle = this->sets[s][i].block;
-
-		Vector3 checker_l;
-		Vector3 checker_r;
-
-		if (point_index == 0) {
-			checker_l = newpoint_b;
-			checker_r = this->position_pool[seg.second];
-		}
-		else {
-			checker_l = this->position_pool[seg.first];
-			checker_r = newpoint_b;
-		}
-
-		Vector3 delta_a = checker_l - newpoint_a;
-		Vector3 delta_b = checker_r - newpoint_a;
+		Vector3 delta_a = l - p;
+		Vector3 delta_b = r - p;
 
 		auto anglebetween = Vector3::AngleBetween(delta_a, delta_b);
 
@@ -181,10 +194,10 @@ namespace gbe::ext::AnitoBuilder {
 
 	inline void BuilderBlock::SetSegment(int s, int i, int point_index, Vector3 newpoint)
 	{
-		i %= this->sets[s].size();
+		i %= this->sets[s].segs.size();
 
-		auto& seg = this->sets[s][i].setseg;
-		auto handle = this->sets[s][i].block;
+		auto& seg = this->sets[s].segs[i].setseg;
+		auto handle = this->sets[s].segs[i].block;
 
 		Vector3* to_assign;
 
@@ -214,7 +227,7 @@ namespace gbe::ext::AnitoBuilder {
 		int moved_i = -1;
 
 		for (size_t s = 0; s < sets.size(); s++) {
-			for (size_t i = 0; i < sets[s].size(); i++)
+			for (size_t i = 0; i < sets[s].segs.size(); i++)
 			{
 				auto& l = GetHandle(s, i);
 				bool moved = l.block->CheckState(Object::ObjectStateName::TRANSFORMED_USER, this);
@@ -243,21 +256,22 @@ namespace gbe::ext::AnitoBuilder {
 		bool valid_move = true;
 
 		for (size_t s = 0; s < sets.size(); s++) {
-			for (size_t i = 0; i < sets[s].size(); i++)
+			for (size_t i = 0; i < sets[s].segs.size(); i++)
 			{
 				auto& l = GetHandle(s, i);
 
 				if (l.block == moved_obj)
 					continue;
 
-				if (l.setseg.first == moved_pos_l)
-					valid_move = valid_move && CheckSetSegment(s, i, 0, updated_l, updated_r);
-				if (l.setseg.first == moved_pos_r)
-					valid_move = valid_move && CheckSetSegment(s, i, 0, updated_r, updated_l);
-				if (l.setseg.second == moved_pos_l)
-					valid_move = valid_move && CheckSetSegment(s, i, 1, updated_l, updated_r);
-				if (l.setseg.second == moved_pos_r)
-					valid_move = valid_move && CheckSetSegment(s, i, 1, updated_r, updated_l);
+				if (l.setseg.second == moved_pos_l) {
+					valid_move = valid_move && CheckSetSegment(updated_l, updated_r, position_pool[l.setseg.first]);
+					valid_move = valid_move && CheckSetSegment(position_pool[l.setseg.first], updated_l, position_pool[GetHandle(s, i - 1).setseg.first]);
+
+				}
+				if (l.setseg.first == moved_pos_r) {
+					valid_move = valid_move && CheckSetSegment(updated_r, updated_l, position_pool[l.setseg.second]);
+					valid_move = valid_move && CheckSetSegment(position_pool[l.setseg.second], updated_r, position_pool[GetHandle(s, i + 1).setseg.second]);
+				}
 			}
 		}
 
@@ -277,7 +291,7 @@ namespace gbe::ext::AnitoBuilder {
 		}
 
 		for (size_t s = 0; s < sets.size(); s++) {
-			for (size_t i = 0; i < sets[s].size(); i++)
+			for (size_t i = 0; i < sets[s].segs.size(); i++)
 			{
 				auto& l = GetHandle(s, i);
 
@@ -296,12 +310,12 @@ namespace gbe::ext::AnitoBuilder {
 		SetSeg src_seg;
 
 		for (size_t s = 0; s < sets.size(); s++)
-			for (size_t i = 0; i < sets[s].size(); i++)
+			for (size_t i = 0; i < sets[s].segs.size(); i++)
 			{
-				const auto& handle = sets[s][i].block;
+				const auto& handle = sets[s].segs[i].block;
 
 				if (handle == root_handle) {
-					src_seg = sets[s][i].setseg;
+					src_seg = sets[s].segs[i].setseg;
 				}
 			}
 
@@ -333,13 +347,13 @@ namespace gbe::ext::AnitoBuilder {
 
 		auto base_center = Vector3::Mid(Vector3::Mid(position_pool[corners[0]], position_pool[corners[1]]), Vector3::Mid(position_pool[corners[2]], position_pool[corners[3]]));
 		
-		std::vector<BlockSet> newset;
+		BlockSet newset;
 
 		int starting_index = 0;
 
 		if (root_handle != nullptr) {
 			root_handle->Set_is_edge(false);
-			newset.push_back({ {corners[0], corners[1]}, root_handle });
+			newset.segs.push_back({ {corners[0], corners[1]}, root_handle });
 			starting_index = 1;
 		}
 
@@ -360,7 +374,7 @@ namespace gbe::ext::AnitoBuilder {
 			handle->PushEditorFlag(Object::EditorFlags::IS_STATE_MANAGED);
 			
 			
-			newset.push_back({ src_seg, handle });
+			newset.segs.push_back({ src_seg, handle });
 
 			Vector3 delta = position_pool[src_seg.first] - position_pool[src_seg.second];
 			float half_mag = delta.Magnitude() * 0.5f;
@@ -369,6 +383,44 @@ namespace gbe::ext::AnitoBuilder {
 			handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
 			handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
 		}
+
+		//ROOF
+		const auto CreateRoof = [=](int basis_index) {
+			auto roof_renderer = new RenderObject(roof_editor_DC);
+			roof_renderer->SetParent(this);
+
+			int left_index = basis_index - 1;
+			if (left_index < 0)
+				left_index += 4;
+			int right_index = (basis_index + 1) % 4;
+
+			const auto right = position_pool[corners[right_index]] + Vector3(0, height, 0);
+			const auto left = position_pool[corners[left_index]] + Vector3(0, height, 0);
+
+			// Assuming you have your axis vectors and position vector
+			Vector3 position = position_pool[corners[basis_index]] + Vector3(0, height, 0);
+			Vector3 xAxis = right - position; // Example: local X-axis
+			Vector3 yAxis = Vector3(0.0f, 0.02f, 0.0f); // Example: local Y-axis
+			Vector3 zAxis = left - position; // Example: local Z-axis
+
+			// Create the glm::mat4
+			Matrix4 modelMatrix = Matrix4(1.0f); // Initialize with identity matrix
+
+			// Assign the axis vectors to the first three columns
+			modelMatrix[0] = Vector4(xAxis, 0.0f); // X-axis
+			modelMatrix[1] = Vector4(yAxis, 0.0f); // Y-axis
+			modelMatrix[2] = Vector4(zAxis, 0.0f); // Z-axis
+
+			// Assign the position vector to the fourth column (translation)
+			modelMatrix[3] = Vector4(position, 1.0f); // Translation
+
+			roof_renderer->Local().SetMatrix(modelMatrix);
+
+			return roof_renderer;
+			};
+
+		newset.roof.first = CreateRoof(0);
+		newset.roof.second = CreateRoof(2);
 
 		this->sets.push_back(newset);
 	}

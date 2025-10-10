@@ -7,10 +7,14 @@ namespace gbe::ext::AnitoBuilder {
 	class BuilderBlockSet;
 
 	typedef std::pair<int, int> SetSeg;
-	typedef std::pair<Object*, Object*> SetRoof;
-	struct BlockSet {
+	struct BlockSeg {
 		SetSeg setseg;
 		BuilderBlockSet* block;
+	};
+
+	typedef std::pair<Object*, Object*> SetRoof;
+	struct BlockSet {
+		std::vector<BlockSeg> segs;
 		SetRoof roof;
 	};
 
@@ -31,6 +35,8 @@ namespace gbe::ext::AnitoBuilder {
 		//Drawcalls
 		gfx::DrawCall* Wall1_DC;
 		gfx::DrawCall* Wall2_DC;
+		gfx::DrawCall* roof_editor_DC;
+		gfx::DrawCall* roof_DC;
 
 		//Objects
 		Object* renderer_parent;
@@ -44,19 +50,19 @@ namespace gbe::ext::AnitoBuilder {
 		//WORKING DATA
 		static bool model_shown;
 
-		std::vector<std::vector<BlockSet>> sets;
+		std::vector<BlockSet> sets;
 		std::vector<BuilderBlockSet*> handle_pool;
 		std::vector<Vector3> position_pool;
 
 		void UpdateModelShown();
 		void UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r);
 
-		inline BlockSet& GetHandle(int s, int i) {
-			i %= this->sets[s].size();
+		inline BlockSeg& GetHandle(int s, int i) {
+			i %= this->sets[s].segs.size();
 
-			return this->sets[s][i];
+			return this->sets[s].segs[i];
 		}
-		bool CheckSetSegment(int set, int index, int point_index, Vector3 newpoint_a, Vector3 newpoint_b);
+		bool CheckSetSegment(Vector3 p, Vector3 l, Vector3 r);
 		void SetSegment(int set, int index, int point_index, Vector3 newpoint);
 		void ResetHandle(int set, int index);
 		inline void SetPosition(int index, Vector3& newpos) {

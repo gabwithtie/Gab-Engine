@@ -19,6 +19,7 @@ namespace gbe {
 		Vector3 Right;
 		Vector3 Up;
 		Vector3 Forward;
+		Vector3 Skew;
 
 		inline Transform& operator =(const Transform& other) {
 			return *this;
