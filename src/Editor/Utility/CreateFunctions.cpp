@@ -3,7 +3,7 @@
 #include "Ext/AnitoBuilderWrapper/BuilderBlock.h"
 
 namespace gbe::editor {
-	const std::unordered_map<std::string, std::function<Object* ()>> CreateFunctions::createfunctions = {
+	const std::unordered_map<std::string, std::function<Object* ()>> CreateFunctions::createfunctions_light = {
 		{
 			ObjectNamer::GetName(typeid(DirectionalLight))
 			,
@@ -26,7 +26,10 @@ namespace gbe::editor {
 
 			return dirlight;
 			}
-		},{
+		}
+	};
+	const std::unordered_map<std::string, std::function<Object* ()>> CreateFunctions::createfunctions_ext_anitobuilder = {
+		{
 			ObjectNamer::GetName(typeid(ext::AnitoBuilder::BuilderBlock))
 			,
 			[]() {

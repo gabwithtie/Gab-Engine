@@ -8,6 +8,8 @@
 #include "Math/gbe_math.h"
 
 namespace gbe::ext::AnitoBuilder {
+	bool BuilderBlock::model_shown = false;
+
 	BuilderBlock::BuilderBlock(gbe::Vector3 corners[4], float height)
 		: Object(), Update()
 	{
@@ -37,23 +39,15 @@ namespace gbe::ext::AnitoBuilder {
 		Wall2_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof"), asset::Material::GetAssetById("lit"));
 
 		//INSPECTOR
-		auto add_block_button = new gbe::editor::InspectorButton();
-		add_block_button->name = "Toggle Model";
-		add_block_button->onpress = [=]() {
-			this->ToggleModel();
-			};
 		auto height_field = new gbe::editor::InspectorFloat();
 		height_field->name = "Height";
 		height_field->x = &this->height;
 
-		this->inspectorData->fields.push_back(add_block_button);
 		this->inspectorData->fields.push_back(height_field);
 	}
 
-	void BuilderBlock::ToggleModel()
+	void BuilderBlock::UpdateModelShown()
 	{
-		model_shown = !model_shown;
-
 		if (!model_shown)
 			for (size_t i = 0; i < renderer_parent->GetChildCount(); i++)
 			{
@@ -103,12 +97,27 @@ namespace gbe::ext::AnitoBuilder {
 		}
 	}
 
+	void BuilderBlock::SetModelShown(bool value)
+	{
+		model_shown = value;
+
+		Engine::GetCurrentRoot()->CallRecursively([](Object* obj) {
+			BuilderBlock* builderobj = nullptr;
+			builderobj = dynamic_cast<BuilderBlock*>(obj);
+
+			if (builderobj != nullptr) {
+				builderobj->UpdateModelShown();
+			}
+
+			});
+	}
+
 	void BuilderBlock::UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r)
 	{
 		i %= this->sets[s].size();
 
-		auto& seg = this->sets[s][i].first;
-		auto handle = this->sets[s][i].second;
+		auto& seg = this->sets[s][i].setseg;
+		auto handle = this->sets[s][i].block;
 
 		auto delta_right = handle->Local().GetRight() * (handle->Local().scale.Get().x);
 		auto delta_up = -Vector3(0, height * 0.5f, 0);
@@ -118,8 +127,8 @@ namespace gbe::ext::AnitoBuilder {
 	}
 
 	void BuilderBlock::ResetHandle(int s, int i) {
-		auto& seg = this->sets[s][i].first;
-		auto handle = this->sets[s][i].second;
+		auto& seg = this->sets[s][i].setseg;
+		auto handle = this->sets[s][i].block;
 
 		Vector3 delta = position_pool[seg.first] - position_pool[seg.second];
 		float half_mag = delta.Magnitude() * 0.5f;
@@ -133,8 +142,8 @@ namespace gbe::ext::AnitoBuilder {
 	{
 		i %= this->sets[s].size();
 
-		auto& seg = this->sets[s][i].first;
-		auto handle = this->sets[s][i].second;
+		auto& seg = this->sets[s][i].setseg;
+		auto handle = this->sets[s][i].block;
 
 		Vector3 checker_l;
 		Vector3 checker_r;
@@ -174,8 +183,8 @@ namespace gbe::ext::AnitoBuilder {
 	{
 		i %= this->sets[s].size();
 
-		auto& seg = this->sets[s][i].first;
-		auto handle = this->sets[s][i].second;
+		auto& seg = this->sets[s][i].setseg;
+		auto handle = this->sets[s][i].block;
 
 		Vector3* to_assign;
 
@@ -191,6 +200,9 @@ namespace gbe::ext::AnitoBuilder {
 	}
 
 	void BuilderBlock::InvokeUpdate(float deltatime) {
+		if (model_shown)
+			return; //no editing if models are shown
+
 		BuilderBlockSet* moved_obj = nullptr;
 		int moved_pos_l = -1;
 		int moved_pos_r = -1;
@@ -205,18 +217,18 @@ namespace gbe::ext::AnitoBuilder {
 			for (size_t i = 0; i < sets[s].size(); i++)
 			{
 				auto& l = GetHandle(s, i);
-				bool moved = l.second->CheckState(Object::ObjectStateName::TRANSFORMED_USER, this);
+				bool moved = l.block->CheckState(Object::ObjectStateName::TRANSFORMED_USER, this);
 
 				if (moved) {
-					moved_obj = l.second;
+					moved_obj = l.block;
 					UpdateHandleSegment(s, i, updated_l, updated_r);
-					moved_pos_l = l.first.first;
-					moved_pos_r = l.first.second;
+					moved_pos_l = l.setseg.first;
+					moved_pos_r = l.setseg.second;
 					moved_s = s;
 					moved_i = i;
 					break;
 				}
-				else if (l.second->CheckState(Object::ObjectStateName::TRANSFORMED_LOCAL, this)) {
+				else if (l.block->CheckState(Object::ObjectStateName::TRANSFORMED_LOCAL, this)) {
 					ResetHandle(s, i);
 				}
 			}
@@ -235,21 +247,21 @@ namespace gbe::ext::AnitoBuilder {
 			{
 				auto& l = GetHandle(s, i);
 
-				if (l.second == moved_obj)
+				if (l.block == moved_obj)
 					continue;
 
-				if (l.first.first == moved_pos_l)
+				if (l.setseg.first == moved_pos_l)
 					valid_move = valid_move && CheckSetSegment(s, i, 0, updated_l, updated_r);
-				if (l.first.first == moved_pos_r)
+				if (l.setseg.first == moved_pos_r)
 					valid_move = valid_move && CheckSetSegment(s, i, 0, updated_r, updated_l);
-				if (l.first.second == moved_pos_l)
+				if (l.setseg.second == moved_pos_l)
 					valid_move = valid_move && CheckSetSegment(s, i, 1, updated_l, updated_r);
-				if (l.first.second == moved_pos_r)
+				if (l.setseg.second == moved_pos_r)
 					valid_move = valid_move && CheckSetSegment(s, i, 1, updated_r, updated_l);
 			}
 		}
 
-		auto opp_pos = this->GetHandle(moved_s, moved_i + 2).second->Local().position.Get(); //The handle opposite of the moved handle
+		auto opp_pos = this->GetHandle(moved_s, moved_i + 2).block->Local().position.Get(); //The handle opposite of the moved handle
 		Vector3 opp_dir = opp_pos - moved_obj->Local().position.Get();
 		auto opp_dot = opp_dir.Dot(moved_obj->Local().GetForward());
 
@@ -269,7 +281,7 @@ namespace gbe::ext::AnitoBuilder {
 			{
 				auto& l = GetHandle(s, i);
 
-				if (l.second == moved_obj)
+				if (l.block == moved_obj)
 					continue;
 
 				ResetHandle(s, i);
@@ -278,15 +290,18 @@ namespace gbe::ext::AnitoBuilder {
 	}
 
 	void BuilderBlock::AddBlock(BuilderBlockSet* root_handle) {
+		if (!root_handle->Get_is_edge())
+			return;
+
 		SetSeg src_seg;
 
 		for (size_t s = 0; s < sets.size(); s++)
 			for (size_t i = 0; i < sets[s].size(); i++)
 			{
-				const auto& handle = sets[s][i].second;
+				const auto& handle = sets[s][i].block;
 
 				if (handle == root_handle) {
-					src_seg = sets[s][i].first;
+					src_seg = sets[s][i].setseg;
 				}
 			}
 
@@ -323,6 +338,7 @@ namespace gbe::ext::AnitoBuilder {
 		int starting_index = 0;
 
 		if (root_handle != nullptr) {
+			root_handle->Set_is_edge(false);
 			newset.push_back({ {corners[0], corners[1]}, root_handle });
 			starting_index = 1;
 		}

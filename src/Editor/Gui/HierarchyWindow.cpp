@@ -2,6 +2,7 @@
 
 #include "../Editor.h"
 #include "../Utility/CreateFunctions.h"
+#include "LightExplorer.h"
 
 void gbe::editor::HierarchyWindow::DrawSelf()
 {
@@ -9,23 +10,6 @@ void gbe::editor::HierarchyWindow::DrawSelf()
 		this->DrawChildList(Engine::GetCurrentRoot(), "");
 
 	Object* created_object = nullptr;
-
-	if (ImGui::BeginPopupContextWindow("HierarchyContextMenu"))
-	{
-		if (ImGui::BeginMenu("Create"))
-		{
-			for (const auto& item: CreateFunctions::GetCreators())
-			{
-				if (ImGui::MenuItem(item.first.c_str())) {
-					created_object = item.second();
-				}
-			}
-
-			ImGui::EndMenu();
-		}
-
-		ImGui::EndPopup();
-	}
 
 	if (created_object != nullptr) {
 		created_object->SetParent(Engine::GetCurrentRoot());

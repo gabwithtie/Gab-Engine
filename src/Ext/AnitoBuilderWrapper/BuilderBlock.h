@@ -6,8 +6,13 @@
 namespace gbe::ext::AnitoBuilder {
 	class BuilderBlockSet;
 
-	typedef std::pair<std::pair<int, int>, BuilderBlockSet*> BlockSet;
 	typedef std::pair<int, int> SetSeg;
+	typedef std::pair<Object*, Object*> SetRoof;
+	struct BlockSet {
+		SetSeg setseg;
+		BuilderBlockSet* block;
+		SetRoof roof;
+	};
 
 	class BuilderBlock : public Object, public Update {
 	public:
@@ -31,15 +36,19 @@ namespace gbe::ext::AnitoBuilder {
 		Object* renderer_parent;
 		std::vector<RenderObject*> renderers;
 
+		static void SetModelShown(bool value);
+		inline static void ToggleModel() {
+			SetModelShown(!model_shown);
+		}
 	private:
 		//WORKING DATA
-		bool model_shown = false;
+		static bool model_shown;
 
 		std::vector<std::vector<BlockSet>> sets;
 		std::vector<BuilderBlockSet*> handle_pool;
 		std::vector<Vector3> position_pool;
 
-		void ToggleModel();
+		void UpdateModelShown();
 		void UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r);
 
 		inline BlockSet& GetHandle(int s, int i) {

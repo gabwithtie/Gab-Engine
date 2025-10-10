@@ -9,10 +9,14 @@
 
 namespace gbe::editor {
 	class CreateFunctions {
-		const static std::unordered_map<std::string, std::function<Object* ()>> createfunctions;
+		const static std::unordered_map<std::string, std::function<Object* ()>> createfunctions_light;
+		const static std::unordered_map<std::string, std::function<Object* ()>> createfunctions_ext_anitobuilder;
 	public:
-		inline static const std::unordered_map<std::string, std::function<Object* ()>>& GetCreators() {
-			return createfunctions;
+		inline static const std::unordered_map<std::string, std::function<Object* ()>>& GetCreators_light() {
+			return createfunctions_light;
+		}
+		inline static const std::unordered_map<std::string, std::function<Object* ()>>& GetCreators_anitobuilder() {
+			return createfunctions_ext_anitobuilder;
 		}
 	};
 }

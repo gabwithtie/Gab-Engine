@@ -14,6 +14,8 @@
 #include "Gui/ConsoleWindow.h"
 #include "Gui/MenuBar.h"
 #include "Gui/ViewportWindow.h"
+#include "Gui/LightExplorer.h"
+#include "Ext_Gui/AnitoBuilderWindow.h"
 
 namespace gbe {
 	class RenderPipeline;
@@ -55,6 +57,9 @@ namespace gbe {
 		editor::ConsoleWindow consoleWindow;
 		editor::ImageDebugger imageDebuggerWindow;
 		editor::ViewportWindow viewportWindow;
+		editor::LightExplorer lightWindow;
+
+		editor::AnitoBuilderWindow anitobuilderWindow;
 
 		std::list<editor::GuiWindow*> windows = {
 			&hierarchyWindow,
@@ -63,7 +68,10 @@ namespace gbe {
 			&stateWindow,
 			&consoleWindow,
 			&imageDebuggerWindow,
-			&viewportWindow
+			&viewportWindow,
+			&lightWindow,
+
+			&anitobuilderWindow
 		};
 
 		//DYNAMICALLY ALLOCATED
