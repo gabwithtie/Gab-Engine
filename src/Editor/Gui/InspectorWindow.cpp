@@ -81,8 +81,9 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 						Engine::GetCurrentRoot()->GetObjectWithId(destroy_id)->Destroy();
 					},
 					[=]() {
-						auto undoed = gbe::TypeSerializer::Instantiate(respawn_info.type, respawn_info);
-						undoed->Deserialize(respawn_info);
+						auto info = respawn_info;
+
+						auto undoed = gbe::TypeSerializer::Instantiate(respawn_info.type, &info);
 						undoed->Set_id(destroy_id);
 						undoed->SetParent(Engine::GetCurrentRoot()->GetObjectWithId(parent_id));
 					}

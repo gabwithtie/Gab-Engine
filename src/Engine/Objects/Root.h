@@ -8,6 +8,12 @@ namespace gbe{
 	private:
 		std::list<Handler*> handlers;
 	public:
+		inline Root(){
+		}
+
+		inline Root(SerializedObject* data) : Object(data, false) {
+
+		}
 		~Root();
 		void RegisterHandler(Handler* handler);
 

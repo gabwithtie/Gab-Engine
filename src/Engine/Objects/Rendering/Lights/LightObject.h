@@ -12,6 +12,11 @@ namespace gbe {
 		bool changed = true;
 
 	public:
+		LightObject(SerializedObject* data);
+
+		void InitializeInspectorData() override;
+		SerializedObject Serialize() override;
+
 		LightObject();
 
 		void Set_Color(Vector3 color);

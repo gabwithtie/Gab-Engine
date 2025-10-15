@@ -8,13 +8,15 @@ namespace gbe::gfx {
             POINT = 2
         };
 
+        //==============RUNTIME DATA
         Vector3 position;       // For point/spot lights
         Vector3 direction;      // For directional/spot lights
-        Vector3 color;
-        LightType type;
-
         Matrix4 cam_view;
         Matrix4 cam_proj;
+
+        //==============ATTRIBUTES
+        Vector3 color;
+        LightType type;
 
         //Directional
         float override_dist = 50;
@@ -32,7 +34,7 @@ namespace gbe::gfx {
         float bias_min = 0.005;
         float bias_mult = 0.05;
         
-        //CACHE
+        //===============CACHE
         bool created_context_view = false;
         bool created_context_proj = false;
 

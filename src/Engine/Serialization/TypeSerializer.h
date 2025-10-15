@@ -12,10 +12,12 @@
 
 namespace gbe {
 	class TypeSerializer {
+		typedef std::function<Object* (SerializedObject*)> TypeCreatorFunction;
+
 	private:
-		static std::unordered_map<std::string, std::function<Object*(SerializedObject)>> instantiation_dictionary;
+		static std::unordered_map<std::string, TypeCreatorFunction> instantiation_dictionary;
 	public:
-		static void RegisterTypeCreator(std::string type_id, std::function<Object* (gbe::SerializedObject)> instantiation_function);
-		static Object* Instantiate(std::string type_id, SerializedObject data);
+		static void RegisterTypeCreator(std::string type_id, TypeCreatorFunction instantiation_function);
+		static Object* Instantiate(std::string type_id, SerializedObject* data);
 	};
 }

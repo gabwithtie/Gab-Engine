@@ -43,13 +43,9 @@ namespace gbe {
 
 			IS_STATE_MANAGED = 1 << 9,
 			SELECT_PARENT_INSTEAD = 1 << 10,
-			EXCLUDE_FROM_OBJECT_TREE = 1 << 11
+			EXCLUDE_FROM_OBJECT_TREE = 1 << 11,
+			SERIALIZABLE = 1 << 12
 		};
-
-		template<typename T>
-		inline static T* Create(SerializedObject data) {
-			return create_func<T>(data);
-		}
 
 	private:
 		static std::unordered_map<unsigned int, Object*> valid_objects;
@@ -72,20 +68,21 @@ namespace gbe {
 		Transform local;
 		Transform world;
 		
-		Matrix4 parent_matrix;
-	protected:
-		template<typename T>
-		static std::function<T* (SerializedObject)> create_func;
+		Matrix4 parent_matrix = Matrix4(1.0f);
 
-		Root* root;
-		Object* parent;
+		void General_init();
+	protected:
+		Root* root = nullptr;
+		Object* parent = nullptr;
 		virtual void OnLocalTransformationChange(TransformChangeType changetype);
 		virtual void OnExternalTransformationChange(TransformChangeType changetype, Matrix4 newparentmatrix);
 		inline virtual void On_Change_enabled(bool _to) {
 			this->enabled_hierarchy = _to;
 		}
 
-		editor::InspectorData* inspectorData;
+		editor::InspectorData* inspectorData = nullptr;
+
+		virtual void InitializeInspectorData();
 	public:
 
 		Object();
@@ -152,7 +149,7 @@ namespace gbe {
 			}
 			if (_to) {
 				this->CallRecursively([](Object* child) {
-					bool parent_active = child->parent == nullptr || child->parent->enabled_hierarchy;
+					bool parent_active = child->parent != nullptr ? child->parent->enabled_hierarchy : true;
 
 					if (child->enabled_self) {
 						if (!child->enabled_hierarchy && parent_active)
@@ -209,6 +206,8 @@ namespace gbe {
 
 		//SERIALIZATION
 		virtual SerializedObject Serialize();
-		virtual void Deserialize(SerializedObject data, bool root = true);
+		//DESERIALIZATION
+		Object(SerializedObject* data, bool load_children = true);
+		void LoadChildren(SerializedObject* data);
 	};
 }

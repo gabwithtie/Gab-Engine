@@ -40,6 +40,7 @@ namespace gbe {
 
 		void SetShadowCaster();
 
+		RenderObject(SerializedObject* data);
 		RenderObject(gfx::DrawCall* mDrawCall);
 		RenderObject(PrimitiveType ptype);
 		virtual ~RenderObject();

@@ -34,9 +34,15 @@ namespace gbe {
 		return true;
 	}
 
-	Root* Engine::CreateBlankRoot()
+	Root* Engine::CreateBlankRoot(SerializedObject* data)
 	{
-		auto root_object = new Root();
+		Root* root_object = nullptr;
+
+		if (data == nullptr)
+			root_object = new Root();
+		else
+			root_object = new Root(data);
+
 		root_object->RegisterHandler(new PhysicsHandler());
 		root_object->RegisterHandler(new ObjectHandler<gbe::LightObject>());
 		root_object->RegisterHandler(new ObjectHandler<gbe::Camera>());
@@ -45,6 +51,9 @@ namespace gbe {
 		root_object->RegisterHandler(new ObjectHandler<EarlyUpdate>());
 		root_object->RegisterHandler(new ObjectHandler<Update>());
 		root_object->RegisterHandler(new ObjectHandler<LateUpdate>());
+
+		if (data != nullptr)
+			root_object->LoadChildren(data);
 
 		return root_object;
 	}
@@ -85,12 +94,11 @@ namespace gbe {
 		if (_state == EngineState::Edit) {
 			if (change_scene) {
 				if (instance->current_root == nullptr)
-					instance->current_root = instance->CreateBlankRoot();
+					instance->current_root = instance->CreateBlankRoot(nullptr);
 				if (instance->pre_play_scenedata == nullptr)
 					instance->pre_play_scenedata = new SerializedObject(instance->current_root->Serialize());
 
-				auto newroot = gbe::Engine::CreateBlankRoot();
-				newroot->Deserialize(*instance->pre_play_scenedata);
+				auto newroot = gbe::Engine::CreateBlankRoot(instance->pre_play_scenedata);
 
 				gbe::Engine::ChangeRoot(newroot);
 			}
@@ -154,7 +162,12 @@ namespace gbe {
 		auto wire_plane = renderpipeline.RegisterDrawCall(plane_mesh, wire_mat, 0);
 
 		//TYPE SERIALIZER REGISTERING
-		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), Object::Create<RenderObject>);
+		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), [](SerializedObject* data) {return new RenderObject(data); });
+
+		gbe::TypeSerializer::RegisterTypeCreator(typeid(DirectionalLight).name(), [](SerializedObject* data) {return new DirectionalLight(data); });
+		gbe::TypeSerializer::RegisterTypeCreator(typeid(ConeLight).name(), [](SerializedObject* data) {return new ConeLight(data); });
+		
+		gbe::TypeSerializer::RegisterTypeCreator(typeid(ext::AnitoBuilder::BuilderBlock).name(), [](SerializedObject* data) {return new ext::AnitoBuilder::BuilderBlock(data); });
 
 #pragma endregion
 #pragma region Input

@@ -72,29 +72,31 @@ gbe::SerializedObject gbe::RenderObject::Serialize() {
 
 	return data;
 }
-namespace gbe
-{
-	template<>
-	std::function<gbe::RenderObject* (gbe::SerializedObject)> gbe::RenderObject::create_func<gbe::RenderObject> = [](gbe::SerializedObject data) {
-		auto _ptype = data.serialized_variables["primitive"];
 
-		if (_ptype == gbe::RenderObject::PrimitiveTypeStr(gbe::RenderObject::PrimitiveType::NONE)) {
-			auto input_mesh = MeshLoader::GetAssetByPath(data.serialized_variables["mesh"]);
-			auto input_mat = MaterialLoader::GetAssetByPath(data.serialized_variables["mat"]);
-			auto input_order = std::stoi(data.serialized_variables["order"]);
-			auto drawcall = RenderPipeline::RegisterDrawCall(input_mesh, input_mat, input_order);
-			auto newobj = new RenderObject(nullptr);
-			return newobj;
-		}
-		else {
-			auto curptype = gbe::RenderObject::PrimitiveType::NONE;
-			for (const auto& pair : gbe::RenderObject::PrimitiveTypeStrs) {
-				if (pair.second == _ptype) {
-					curptype = pair.first;
-					break;
-				}
+gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
+{
+	auto _ptype = data->serialized_variables["primitive"];
+
+	if (_ptype == gbe::RenderObject::PrimitiveTypeStr(gbe::RenderObject::PrimitiveType::NONE)) {
+		auto input_mesh = MeshLoader::GetAssetByPath(data->serialized_variables["mesh"]);
+		auto input_mat = MaterialLoader::GetAssetByPath(data->serialized_variables["mat"]);
+		auto input_order = std::stoi(data->serialized_variables["order"]);
+		auto drawcall = RenderPipeline::RegisterDrawCall(input_mesh, input_mat, input_order);
+		
+		this->mDrawCall = drawcall;
+		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
+	}
+	else {
+		auto curptype = gbe::RenderObject::PrimitiveType::NONE;
+		for (const auto& pair : gbe::RenderObject::PrimitiveTypeStrs) {
+			if (pair.second == _ptype) {
+				curptype = pair.first;
+				break;
 			}
-			return new RenderObject(curptype);
 		}
-		};
+
+		this->mDrawCall = primitive_drawcalls[curptype];
+		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
+		this->ptype = curptype;
+	}
 }

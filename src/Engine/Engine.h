@@ -46,7 +46,7 @@ namespace gbe {
 		static void Set_state(EngineState _state, bool change_scene = true);
 		static void Step(double dur);
 		static bool ChangeRoot(Root* newroot);
-		static Root* CreateBlankRoot();
+		static Root* CreateBlankRoot(SerializedObject* data = nullptr);
 		static Camera* GetActiveCamera();
 		inline static Root* GetCurrentRoot() {
 			return instance->current_root;

@@ -21,8 +21,12 @@ gfx::Light* gbe::ConeLight::GetData()
     return &this->mLight;
 }
 
-gbe::ConeLight::ConeLight()
+void gbe::ConeLight::InitializeInspectorData()
 {
+	LightObject::InitializeInspectorData();
+
+    this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
+
     this->mLight.bias_min = 0.001;
     this->mLight.bias_mult = 0.01;
 
@@ -68,5 +72,4 @@ gbe::ConeLight::ConeLight()
     near_field->x = &this->mLight.near_clip;
 
     this->inspectorData->fields.push_back(near_field);
-
 }

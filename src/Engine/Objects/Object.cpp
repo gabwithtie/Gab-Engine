@@ -53,9 +53,7 @@ void gbe::Object::OnExternalTransformationChange(TransformChangeType changetype,
 	}
 }
 
-gbe::Object::Object():
-	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
-	world([](TransformChangeType type) {})
+void gbe::Object::General_init()
 {
 	ObjectNamer::ResetName(this);
 
@@ -72,7 +70,7 @@ gbe::Object::Object():
 	this->world.scale.AddCallback([this](Vector3 oldval, Vector3 newval) {
 		Vector3 finalLocalScale;
 
-		if(parent != nullptr) {
+		if (parent != nullptr) {
 			auto parent_scale = this->parent->World().scale.Get();
 			finalLocalScale = Vector3(
 				newval.x / parent_scale.x,
@@ -92,12 +90,22 @@ gbe::Object::Object():
 		this->Local().rotation.Set(new_local_rot);
 		});
 
-	//INSPECTOR DATA
-	inspectorData = new editor::InspectorData();
+	this->InitializeInspectorData();
 
 	this->id = next_avail_id;
 	next_avail_id++;
 	valid_objects.insert_or_assign(this->id, this);
+}
+
+gbe::Object::Object():
+	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
+	world([](TransformChangeType type) {})
+{
+	General_init();
+}
+
+void gbe::Object::InitializeInspectorData() {
+	this->inspectorData = new editor::InspectorData();
 }
 
 gbe::Object::~Object(){
@@ -232,7 +240,7 @@ gbe::SerializedObject gbe::Object::Serialize() {
 	std::vector<SerializedObject> serialized_children;
 	for (const auto child : this->children)
 	{
-		if (!child->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE))
+		if (child->GetEditorFlag(Object::SERIALIZABLE))
 			serialized_children.push_back(child->Serialize());
 	}
 
@@ -248,39 +256,46 @@ gbe::SerializedObject gbe::Object::Serialize() {
 	};
 }
 
-void gbe::Object::Deserialize(gbe::SerializedObject data, bool root) {
-	this->local.position.Set(Vector3(data.local_position[0], data.local_position[1], data.local_position[2]));
-	this->local.scale.Set(Vector3(data.local_scale[0], data.local_scale[1], data.local_scale[2]));
-	this->local.rotation.Set(Quaternion::Euler(Vector3(data.local_euler_rotation[0], data.local_euler_rotation[1], data.local_euler_rotation[2])));
+gbe::Object::Object(gbe::SerializedObject* data, bool load_children):
+	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
+	world([](TransformChangeType type) {}) 
+{
+	General_init();
+
+	this->local.position.Set(Vector3(data->local_position[0], data->local_position[1], data->local_position[2]));
+	this->local.scale.Set(Vector3(data->local_scale[0], data->local_scale[1], data->local_scale[2]));
+	this->local.rotation.Set(Quaternion::Euler(Vector3(data->local_euler_rotation[0], data->local_euler_rotation[1], data->local_euler_rotation[2])));
 	
-	for (size_t i= 0; i < data.children.size(); i++)
+	if(load_children)
+		this->LoadChildren(data);
+}
+
+void gbe::Object::LoadChildren(SerializedObject* data)
+{
+	for (size_t i = 0; i < data->children.size(); i++)
 	{
-		const auto& child = data.children[i];
-		auto new_child = gbe::TypeSerializer::Instantiate(child.type, child);
+		const auto& child = &data->children[i];
+		auto new_child = gbe::TypeSerializer::Instantiate(child->type, child);
 
 		if (new_child != nullptr) {
 			new_child->SetParent(this);
-			new_child->Deserialize(child, false);
 		}
 		else {
-			data.children.erase(data.children.begin() + i);
+			data->children.erase(data->children.begin() + i);
 			i--;
 		}
 	}
+	std::function<void(gbe::SerializedObject* data, Object* obj)>* _commit_enabled;
+	std::function<void(gbe::SerializedObject* data, Object* obj)> commit_enabled = [&](gbe::SerializedObject* data, Object* obj) {
+		for (size_t i = 0; i < data->children.size(); i++)
+		{
+			(*_commit_enabled)(&data->children[i], obj->GetChildAt(i));
+		}
 
-	if (root) {
-		std::function<void(gbe::SerializedObject data, Object* obj)>* _commit_enabled;
-		std::function<void(gbe::SerializedObject data, Object* obj)> commit_enabled = [&](gbe::SerializedObject data, Object* obj) {
-			for (size_t i = 0; i < data.children.size(); i++)
-			{
-				(*_commit_enabled)(data.children[i], obj->GetChildAt(i));
-			}
-			
-			obj->Set_enabled(data.enabled);
-			};
+		obj->Set_enabled(data->enabled);
+		};
 
-		_commit_enabled = &commit_enabled;
+	_commit_enabled = &commit_enabled;
 
-		(*_commit_enabled)(data, this);
-	}
+	(*_commit_enabled)(data, this);
 }

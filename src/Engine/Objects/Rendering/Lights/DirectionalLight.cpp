@@ -21,32 +21,34 @@ gfx::Light* gbe::DirectionalLight::GetData()
     return &this->mLight;
 }
 
-gbe::DirectionalLight::DirectionalLight()
+void gbe::DirectionalLight::InitializeInspectorData()
 {
-    if (Engine::Get_state() == Engine::EngineState::Edit) {
-        auto dirlight_ro = new RigidObject(true);
-        dirlight_ro->SetParent(this);
-        dirlight_ro->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
-        dirlight_ro->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
+	this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
 
-        auto dirlight_col = new BoxCollider();
-        dirlight_col->Local().scale.Set(Vector3(0.5, 0.5, 1.0f));
-        dirlight_col->Local().position.Set(Vector3(0, 0, 0.5f));
-        dirlight_col->SetParent(dirlight_ro);
+	if (Engine::Get_state() == Engine::EngineState::Edit) {
+		auto dirlight_ro = new RigidObject(true);
+		dirlight_ro->SetParent(this);
+		dirlight_ro->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
+		//dirlight_ro->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 
-        auto arrow_drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("arrow"), asset::Material::GetAssetById("wireframe"));
-        auto dirlight_gizmo = new RenderObject(arrow_drawcall);
-        dirlight_gizmo->SetParent(dirlight_ro);
-        dirlight_gizmo->Local().position.Set(Vector3(0, 0, 1.0f));
-        dirlight_gizmo->Local().scale.Set(Vector3(0.2, 0.2, -1.0f));
-    }
+		auto dirlight_col = new BoxCollider();
+		dirlight_col->Local().scale.Set(Vector3(0.5, 0.5, 1.0f));
+		dirlight_col->Local().position.Set(Vector3(0, 0, 0.5f));
+		dirlight_col->SetParent(dirlight_ro);
 
-    //INSPECTOR
+		auto arrow_drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("arrow"), asset::Material::GetAssetById("wireframe"));
+		auto dirlight_gizmo = new RenderObject(arrow_drawcall);
+		dirlight_gizmo->SetParent(dirlight_ro);
+		dirlight_gizmo->Local().position.Set(Vector3(0, 0, 1.0f));
+		dirlight_gizmo->Local().scale.Set(Vector3(0.2, 0.2, -1.0f));
+	}
 
-    auto backtrack_field = new gbe::editor::InspectorFloat();
-    backtrack_field->name = "Shadowmap backtrack";
-    backtrack_field->x = &this->mLight.dir_backtrack_dist;
+	LightObject::InitializeInspectorData();
 
-    this->inspectorData->fields.push_back(backtrack_field);
+	//INSPECTOR
+	auto backtrack_field = new gbe::editor::InspectorFloat();
+	backtrack_field->name = "Shadowmap backtrack";
+	backtrack_field->x = &this->mLight.dir_backtrack_dist;
 
+	this->inspectorData->fields.push_back(backtrack_field);
 }

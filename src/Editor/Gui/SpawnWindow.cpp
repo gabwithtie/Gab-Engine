@@ -56,10 +56,6 @@ void gbe::editor::SpawnWindow::DrawSelf()
 	if (ImGui::Button("Capsule")) {
 		newobj = new RenderObject(RenderObject::capsule);
 	}
-	ImGui::SameLine();
-	if (ImGui::Button("Generic")) {
-		newobj = new RenderObject(nullptr);
-	}
 	ImGui::PopID();
 
 	if (newobj != nullptr) {

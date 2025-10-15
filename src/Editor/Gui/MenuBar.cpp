@@ -20,8 +20,7 @@ void gbe::editor::MenuBar::DrawSelf()
 		if (ImGui::MenuItem("Load Serialized File")) {
 			SerializedObject data;
 			gbe::asset::serialization::gbeParser::PopulateClass(data, "out/default.level");
-			auto newroot = gbe::Engine::CreateBlankRoot();
-			newroot->Deserialize(data);
+			auto newroot = gbe::Engine::CreateBlankRoot(&data);
 
 			gbe::Engine::ChangeRoot(newroot);
 		}
