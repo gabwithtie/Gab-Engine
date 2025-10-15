@@ -50,6 +50,15 @@ namespace gbe::ext::AnitoBuilder {
 		this->inspectorData->fields.push_back(height_field);
 	}
 
+	SerializedObject BuilderBlock::Serialize()
+	{
+		auto obj = Object::Serialize();
+
+
+
+		return obj;
+	}
+
 	void BuilderBlock::ToggleModel()
 	{
 		model_shown = !model_shown;
@@ -107,8 +116,8 @@ namespace gbe::ext::AnitoBuilder {
 	{
 		i %= this->sets[s].size();
 
-		auto& seg = this->sets[s][i].first;
-		auto handle = this->sets[s][i].second;
+		auto& seg = this->sets[s][i].seg;
+		auto handle = this->handle_pool[this->sets[s][i].handleindex];
 
 		auto delta_right = handle->Local().GetRight() * (handle->Local().scale.Get().x);
 		auto delta_up = -Vector3(0, height * 0.5f, 0);
@@ -118,8 +127,8 @@ namespace gbe::ext::AnitoBuilder {
 	}
 
 	void BuilderBlock::ResetHandle(int s, int i) {
-		auto& seg = this->sets[s][i].first;
-		auto handle = this->sets[s][i].second;
+		auto& seg = this->sets[s][i].seg;
+		auto handle = this->handle_pool[this->sets[s][i].handleindex];
 
 		Vector3 delta = position_pool[seg.first] - position_pool[seg.second];
 		float half_mag = delta.Magnitude() * 0.5f;
@@ -133,8 +142,8 @@ namespace gbe::ext::AnitoBuilder {
 	{
 		i %= this->sets[s].size();
 
-		auto& seg = this->sets[s][i].first;
-		auto handle = this->sets[s][i].second;
+		auto& seg = this->sets[s][i].seg;
+		auto handle = this->handle_pool[this->sets[s][i].handleindex];
 
 		Vector3 checker_l;
 		Vector3 checker_r;
@@ -174,8 +183,8 @@ namespace gbe::ext::AnitoBuilder {
 	{
 		i %= this->sets[s].size();
 
-		auto& seg = this->sets[s][i].first;
-		auto handle = this->sets[s][i].second;
+		auto& seg = this->sets[s][i].seg;
+		auto handle = this->handle_pool[this->sets[s][i].handleindex];
 
 		Vector3* to_assign;
 
@@ -205,18 +214,18 @@ namespace gbe::ext::AnitoBuilder {
 			for (size_t i = 0; i < sets[s].size(); i++)
 			{
 				auto& l = GetHandle(s, i);
-				bool moved = l.second->CheckState(Object::ObjectStateName::TRANSFORMED_USER, this);
+				bool moved = this->handle_pool[l.handleindex]->CheckState(Object::ObjectStateName::TRANSFORMED_USER, this);
 
 				if (moved) {
-					moved_obj = l.second;
+					moved_obj = this->handle_pool[l.handleindex];
 					UpdateHandleSegment(s, i, updated_l, updated_r);
-					moved_pos_l = l.first.first;
-					moved_pos_r = l.first.second;
+					moved_pos_l = l.seg.first;
+					moved_pos_r = l.seg.second;
 					moved_s = s;
 					moved_i = i;
 					break;
 				}
-				else if (l.second->CheckState(Object::ObjectStateName::TRANSFORMED_LOCAL, this)) {
+				else if (this->handle_pool[l.handleindex]->CheckState(Object::ObjectStateName::TRANSFORMED_LOCAL, this)) {
 					ResetHandle(s, i);
 				}
 			}
@@ -235,21 +244,21 @@ namespace gbe::ext::AnitoBuilder {
 			{
 				auto& l = GetHandle(s, i);
 
-				if (l.second == moved_obj)
+				if (handle_pool[l.handleindex] == moved_obj)
 					continue;
 
-				if (l.first.first == moved_pos_l)
+				if (l.seg.first == moved_pos_l)
 					valid_move = valid_move && CheckSetSegment(s, i, 0, updated_l, updated_r);
-				if (l.first.first == moved_pos_r)
+				if (l.seg.first == moved_pos_r)
 					valid_move = valid_move && CheckSetSegment(s, i, 0, updated_r, updated_l);
-				if (l.first.second == moved_pos_l)
+				if (l.seg.second == moved_pos_l)
 					valid_move = valid_move && CheckSetSegment(s, i, 1, updated_l, updated_r);
-				if (l.first.second == moved_pos_r)
+				if (l.seg.second == moved_pos_r)
 					valid_move = valid_move && CheckSetSegment(s, i, 1, updated_r, updated_l);
 			}
 		}
 
-		auto opp_pos = this->GetHandle(moved_s, moved_i + 2).second->Local().position.Get(); //The handle opposite of the moved handle
+		auto opp_pos = handle_pool[GetHandle(moved_s, moved_i + 2).handleindex]->Local().position.Get(); //The handle opposite of the moved handle
 		Vector3 opp_dir = opp_pos - moved_obj->Local().position.Get();
 		auto opp_dot = opp_dir.Dot(moved_obj->Local().GetForward());
 
@@ -269,7 +278,7 @@ namespace gbe::ext::AnitoBuilder {
 			{
 				auto& l = GetHandle(s, i);
 
-				if (l.second == moved_obj)
+				if (handle_pool[l.handleindex] == moved_obj)
 					continue;
 
 				ResetHandle(s, i);
@@ -277,16 +286,16 @@ namespace gbe::ext::AnitoBuilder {
 		}
 	}
 
-	void BuilderBlock::AddBlock(BuilderBlockSet* root_handle) {
+	void BuilderBlock::AddBlock(int root_handle) {
 		SetSeg src_seg;
 
 		for (size_t s = 0; s < sets.size(); s++)
 			for (size_t i = 0; i < sets[s].size(); i++)
 			{
-				const auto& handle = sets[s][i].second;
+				const auto& handle = this->handle_pool[sets[s][i].handleindex];
 
-				if (handle == root_handle) {
-					src_seg = sets[s][i].first;
+				if (sets[s][i].handleindex == root_handle) {
+					src_seg = sets[s][i].seg;
 				}
 			}
 
@@ -304,10 +313,10 @@ namespace gbe::ext::AnitoBuilder {
 			poolindex,
 		};
 
-		AddBlock(corners.data(), root_handle);
+		AddBlock(corners.data());
 	}
 
-	void BuilderBlock::AddBlock(int corners[4], BuilderBlockSet* root_handle) {
+	void BuilderBlock::AddBlock(int corners[4]) {
 
 		std::vector<SetSeg> src_segments = {
 			{corners[0], corners[1]},
@@ -322,10 +331,19 @@ namespace gbe::ext::AnitoBuilder {
 
 		int starting_index = 0;
 
-		if (root_handle != nullptr) {
-			newset.push_back({ {corners[0], corners[1]}, root_handle });
-			starting_index = 1;
-		}
+		//look for existing root handle
+		for (const auto& set : this->sets)
+			for (const auto& seg : set)
+			{
+				if(seg.seg.second == corners[0] && seg.seg.first == corners[1]) {
+					newset.push_back({
+						.seg = {corners[0], corners[1]},
+						.handleindex = seg.handleindex
+						});
+					starting_index = 1;
+					break;
+				}
+			}
 
 		for (size_t i = starting_index; i < src_segments.size(); i++)
 		{
@@ -344,7 +362,11 @@ namespace gbe::ext::AnitoBuilder {
 			handle->PushEditorFlag(Object::EditorFlags::IS_STATE_MANAGED);
 			
 			
-			newset.push_back({ src_seg, handle });
+			newset.push_back(
+				{
+					.seg = src_seg,
+					.handleindex = (int)(handle_pool.size() - 1)
+				});
 
 			Vector3 delta = position_pool[src_seg.first] - position_pool[src_seg.second];
 			float half_mag = delta.Magnitude() * 0.5f;

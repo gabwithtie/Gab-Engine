@@ -19,8 +19,6 @@ namespace gbe::gfx {
         //Directional
         float override_dist = 50;
         float dir_backtrack_dist = 60;
-        float bias_min = 0.005;
-        float bias_mult = 0.05;
         std::vector<Vector4> frustrum_corners;
         Vector3 frustrum_center;
 
@@ -30,6 +28,10 @@ namespace gbe::gfx {
         float near_clip = 1;
         float range = 50;
 
+        //BIAS
+        float bias_min = 0.005;
+        float bias_mult = 0.05;
+        
         //CACHE
         bool created_context_view = false;
         bool created_context_proj = false;

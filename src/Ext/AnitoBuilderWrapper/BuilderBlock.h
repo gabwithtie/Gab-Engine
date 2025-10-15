@@ -6,8 +6,12 @@
 namespace gbe::ext::AnitoBuilder {
 	class BuilderBlockSet;
 
-	typedef std::pair<std::pair<int, int>, BuilderBlockSet*> BlockSet;
 	typedef std::pair<int, int> SetSeg;
+	struct BlockSet {
+		SetSeg seg;
+		int handleindex;
+	};
+
 
 	class BuilderBlock : public Object, public Update {
 	public:
@@ -66,7 +70,18 @@ namespace gbe::ext::AnitoBuilder {
 	public:
 		BuilderBlock(gbe::Vector3 corners[4], float height);
 		void InvokeUpdate(float deltatime) override;
-		void AddBlock(BuilderBlockSet* root_handle);
-		void AddBlock(int corners[4], BuilderBlockSet* root_handle = nullptr);
+		inline void AddBlock(BuilderBlockSet* root_handle) {
+			for (size_t i = 0; i < handle_pool.size(); i++)
+			{
+				if(handle_pool[i] == root_handle) {
+					AddBlock(i);
+					return;
+				}
+			}
+		}
+		void AddBlock(int root_handle);
+		void AddBlock(int corners[4]);
+
+		SerializedObject Serialize() override;
 	};
 }

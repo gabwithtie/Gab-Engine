@@ -154,11 +154,8 @@ namespace gbe {
 		auto wire_plane = renderpipeline.RegisterDrawCall(plane_mesh, wire_mat, 0);
 
 		//TYPE SERIALIZER REGISTERING
-		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), RenderObject::Create);
-		gbe::TypeSerializer::RegisterTypeCreator(typeid(RigidObject).name(), RigidObject::Create);
-		gbe::TypeSerializer::RegisterTypeCreator(typeid(BoxCollider).name(), BoxCollider::Create);
-		gbe::TypeSerializer::RegisterTypeCreator(typeid(SphereCollider).name(), SphereCollider::Create);
-		gbe::TypeSerializer::RegisterTypeCreator(typeid(CapsuleCollider).name(), CapsuleCollider::Create);
+		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), Object::Create<RenderObject>);
+
 #pragma endregion
 #pragma region Input
 		auto mInputSystem = new InputSystem();

@@ -45,6 +45,12 @@ namespace gbe {
 			SELECT_PARENT_INSTEAD = 1 << 10,
 			EXCLUDE_FROM_OBJECT_TREE = 1 << 11
 		};
+
+		template<typename T>
+		inline static T* Create(SerializedObject data) {
+			return create_func<T>(data);
+		}
+
 	private:
 		static std::unordered_map<unsigned int, Object*> valid_objects;
 		static unsigned int next_avail_id;
@@ -68,6 +74,9 @@ namespace gbe {
 		
 		Matrix4 parent_matrix;
 	protected:
+		template<typename T>
+		static std::function<T* (SerializedObject)> create_func;
+
 		Root* root;
 		Object* parent;
 		virtual void OnLocalTransformationChange(TransformChangeType changetype);

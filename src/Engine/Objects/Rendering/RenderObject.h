@@ -24,11 +24,6 @@ namespace gbe {
 		//PRIMITIVES CACHE
 		static std::unordered_map<PrimitiveType, gfx::DrawCall*> primitive_drawcalls;
 
-		//CONSTRUCTION INFO
-		asset::Mesh* input_mesh = nullptr;
-		asset::Texture* input_tex = nullptr;
-		asset::Material* input_mat = nullptr;
-
 		//RENDERING CACHE
 		gfx::DrawCall* mDrawCall = nullptr;
 		Matrix4* to_update = nullptr;
@@ -50,7 +45,6 @@ namespace gbe {
 		virtual ~RenderObject();
 
 		SerializedObject Serialize() override;
-		static Object* Create(SerializedObject data);
 
 		// Inherited via EarlyUpdate
 		virtual void InvokeEarlyUpdate() override;
