@@ -40,6 +40,16 @@ void gbe::Transform::OnComponentChange(TransformChangeType value, bool silent)
 
 	this->updated_matrix_without_scale = newmat;
 
+
+	glm::mat4 shearMatrix(1.0f);
+	// shear of the X-axis along the Y-axis
+	shearMatrix[1][0] = this->Skew.z;
+	// shear of the X-axis along the Z-axis
+	shearMatrix[2][0] = this->Skew.y;
+	// shear of the Y-axis along the Z-axis
+	shearMatrix[2][1] = this->Skew.x;
+
+	newmat *= shearMatrix;
 	newmat = glm::scale(newmat, this->scale.Get());
 
 	this->updated_matrix_with_scale = newmat;
@@ -87,16 +97,17 @@ void gbe::Transform::SetMatrix(Matrix4 mat, bool silent) {
 	Vector3 _scale;
 	Vector3 _position;
 	Quaternion _rotation;
+	Vector3 _skew;
 
-	Vector3 skew;
 	Vector4 perspective;
 
-	glm::decompose(mat, _scale, _rotation, _position, skew, perspective);
+	glm::decompose(mat, _scale, _rotation, _position, _skew, perspective);
 
 	if (silent) {
 		this->scale.Get() = _scale;
 		this->position.Get() = _position;
 		this->rotation.Get() = _rotation;
+		this->Skew = _skew;
 
 		UpdateAxisVectors();
 		OnComponentChange(TransformChangeType::ALL, silent);
@@ -105,6 +116,9 @@ void gbe::Transform::SetMatrix(Matrix4 mat, bool silent) {
 		this->scale.Set(_scale);
 		this->position.Set(_position);
 		this->rotation.Set(_rotation);
+		this->Skew = _skew;
+
+		OnComponentChange(TransformChangeType::ALL);
 	}
 }
 

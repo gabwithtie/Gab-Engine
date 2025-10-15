@@ -173,7 +173,8 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 					ImGui::PushID(floatfield->name.c_str());
 
 					DrawFieldLabel(floatfield->name);
-					bool changed = ImGui::InputFloat(floatfield->name.c_str(), &proxy_float, 0, 0, "%.6f");
+					std::string field_id = "##" + floatfield->name;
+					bool changed = ImGui::InputFloat(field_id.c_str(), &proxy_float, 0, 0, "%.6f");
 
 					if (changed)
 					{
@@ -199,7 +200,8 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 					Vector3 proxy_vec = { *vec3field->x, *vec3field->y, *vec3field->z };
 
 					DrawFieldLabel(vec3field->name);
-					ImGui::ColorEdit3(vec3field->name.c_str(), &proxy_vec.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+					std::string field_id = "##" + vec3field->name;
+					ImGui::ColorEdit3(field_id.c_str(), &proxy_vec.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 
 					*vec3field->x = proxy_vec.x;
 					*vec3field->y = proxy_vec.y;
@@ -266,7 +268,9 @@ bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* 
 	float vec_arr[3] = { field->x, field->y, field->z };
 
 	DrawFieldLabel(label);
-	bool changed = ImGui::DragFloat3(label.c_str(), vec_arr);
+
+	std::string field_id = "##" + label;
+	bool changed = ImGui::DragFloat3(field_id.c_str(), vec_arr);
 
 	if (changed)
 	{
@@ -284,7 +288,6 @@ bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* 
 }
 
 void gbe::editor::InspectorWindow::DrawFieldLabel(std::string label) {
-	std::string floatlabel = "##" + label;
 	ImGui::Text(label.c_str());
 	float windowWidth = ImGui::GetContentRegionAvail().x;
 	float xOffset = (windowWidth) * 0.4f;

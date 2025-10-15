@@ -19,7 +19,8 @@ namespace gbe::ext::AnitoBuilder {
 		auto add_block_button = new gbe::editor::InspectorButton();
 		add_block_button->name = "Append Block";
 		add_block_button->onpress = [=]() {
-			root_block->AddBlock(this);
+			if(this->is_edge)
+				root_block->AddBlock(this);
 			};
 
 		this->inspectorData->fields.push_back(add_block_button);
