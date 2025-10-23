@@ -46,6 +46,9 @@ namespace gbe {
 		//RECORDING
 		bool is_recording = false;
 
+		//============GUI===========//
+		bool gui_initialized = false;
+
 		//DOCKS
 		editor::MenuBar menubar;
 

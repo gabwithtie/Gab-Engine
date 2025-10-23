@@ -14,14 +14,14 @@ namespace gbe::vulkan {
 			vkDestroySampler(VirtualDevice::GetActive()->GetData(), this->data, nullptr);
 		}
 
-        inline Sampler() {
+        inline Sampler(VkSamplerAddressMode addressmode = VK_SAMPLER_ADDRESS_MODE_REPEAT) {
 			VkSamplerCreateInfo samplerInfo{};
 			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 			samplerInfo.magFilter = VK_FILTER_LINEAR;
 			samplerInfo.minFilter = VK_FILTER_LINEAR;
-			samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-			samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			samplerInfo.addressModeU = addressmode;
+			samplerInfo.addressModeV = addressmode;
+			samplerInfo.addressModeW = addressmode;
 			samplerInfo.anisotropyEnable = VK_TRUE;
 
 			//ANISOTROPY CALCULATION

@@ -10,15 +10,48 @@
 namespace gbe::ext::AnitoBuilder {
 	bool BuilderBlock::model_shown = false;
 
+	void BuilderBlock::LoadAssets()
+	{
+		auto material = asset::Material::GetAssetById("lit");
+
+		//Editor
+		ceiling_editor_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), asset::Material::GetAssetById("grid"));
+		
+		//Main - normal
+		ceiling_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), material);
+		
+		roof_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof_1"), material);
+		
+		wallnorm_DC[0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wallnorm1"), material);
+		wallnorm_DC[1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wallnorm2"), material);
+
+		wall3x4_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-1"), material);
+		wall3x4_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-2"), material);
+		wall3x4_DC[0][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-3"), material);
+		wall3x4_DC[1][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-1"), material);
+		wall3x4_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-2"), material);
+		wall3x4_DC[1][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-3"), material);
+		wall3x4_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-1"), material);
+		wall3x4_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-2"), material);
+		wall3x4_DC[2][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-3"), material);
+		wall3x4_DC[3][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-1"), material);
+		wall3x4_DC[3][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-2"), material);
+		wall3x4_DC[3][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-3"), material);
+
+		wall2x3_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_1-1"), material);
+		wall2x3_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_1-2"), material);
+		wall2x3_DC[1][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-1"), material);
+		wall2x3_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-2"), material);
+		wall2x3_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-1"), material);
+		wall2x3_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-2"), material);
+	}
+
 	BuilderBlock::BuilderBlock(gbe::Vector3 corners[4], float height)
 		: Object(), Update()
 	{
 		this->SetName("Anito Builder Block");
 		
-		//RENDERING
-		Wall1_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wall"), asset::Material::GetAssetById("lit"));
-		Wall2_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof"), asset::Material::GetAssetById("lit"));
-		roof_editor_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), asset::Material::GetAssetById("grid"));
+		LoadAssets();
 
 		//OBJECTS
 		this->height = height;
@@ -71,10 +104,8 @@ namespace gbe::ext::AnitoBuilder {
 	BuilderBlock::BuilderBlock(SerializedObject* data) : Object(data)
 	{
 		this->SetName("Anito Builder Block");
-		//RENDERING
-		Wall1_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wall"), asset::Material::GetAssetById("lit"));
-		Wall2_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof"), asset::Material::GetAssetById("lit"));
-		roof_editor_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), asset::Material::GetAssetById("grid"));
+		
+		LoadAssets();
 
 		BuilderBlockData newdata;
 		gbe::asset::serialization::gbeParser::PopulateClassStr(newdata, data->serialized_variables["data"]);
@@ -110,12 +141,13 @@ namespace gbe::ext::AnitoBuilder {
 				renderer_parent->GetChildAt(i)->Destroy();
 			}
 
-		if (model_shown)
+		if (model_shown) {
 			for (const auto& handle : this->handle_pool)
 			{
 				if (!handle->Get_is_edge())
 					continue;
 
+				//MAIN SEGMENTS
 				for (const auto& obj : handle->Get_all_segs())
 				{
 					Vector3 pos = obj->World().position.Get();
@@ -126,12 +158,99 @@ namespace gbe::ext::AnitoBuilder {
 					rot *= flip_rot;
 
 					int floor_index = handle->Get_floor(obj);
-					RenderObject* newrenderer = nullptr;
+					int row_index = handle->Get_row(obj);
+					RenderObject* newrenderer = [=]()
+					{
+						bool center3x_able = handle->Get_cur_width() >= 5 && handle->Get_cur_width() % 2 == 1;
+						int center_based_x = 0;
 
-					if(floor_index == 0)
-						newrenderer = new RenderObject(Wall1_DC);
-					if(floor_index > 0)
-						newrenderer = new RenderObject(Wall2_DC);
+						if (handle->Get_cur_width() % 2 == 1)
+							center_based_x = row_index - (handle->Get_cur_width() / 2);
+						else {
+							center_based_x = row_index - (handle->Get_cur_width() / 2);
+
+							if(center_based_x >= 0)
+								center_based_x -= 1;
+						}
+
+						if (center3x_able && handle->Get_cur_height() >= 4) //3x4 walls
+						{
+							int choice_x = center_based_x + 1;
+							choice_x = 2 - choice_x; //Flip for correct side
+
+							if(choice_x >= 0 && choice_x < 3 && floor_index < 4)
+								return new RenderObject(wall3x4_DC[floor_index][choice_x]);
+						}
+
+						if (!center3x_able || abs(center_based_x) >= 3) {
+							int choice_x = -1;
+							int interval_x = center_based_x % 5;
+
+
+							if (center_based_x > 0)
+							{
+								if (interval_x == 3)
+									if (row_index + 1 < handle->Get_cur_width())
+										choice_x = 1;
+								if (interval_x == 4)
+									choice_x = 0;
+							}
+							else {
+								if (interval_x == -3)
+									if (row_index - 1 >= 0)
+										choice_x = 0;
+								if (interval_x == -4)
+									choice_x = 1;
+							}
+
+
+							if (choice_x >= 0 && floor_index < 3)
+								return new RenderObject(wall2x3_DC[floor_index][choice_x]);
+						}
+
+						if (floor_index == 0)
+							return new RenderObject(wallnorm_DC[0]);
+						if (floor_index > 0)
+							return new RenderObject(wallnorm_DC[1]);
+						
+					}();
+
+					newrenderer->SetParent(renderer_parent);
+					newrenderer->World().position.Set(pos);
+					newrenderer->World().rotation.Set(rot);
+					newrenderer->SetShadowCaster();
+
+					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
+					Vector3 final_scale = Vector3(1);
+					final_scale.x = inv__import_scale.x * (handle->Get_width_per_wall() / 2.0f);
+					final_scale.y = inv__import_scale.y * (handle->Get_height_per_wall());
+
+					newrenderer->Local().scale.Set(final_scale);
+				}
+
+				//PAHABOL SEGMENTS
+				for (const auto& obj : handle->Get_all_segs())
+				{
+					int floor_index = handle->Get_floor(obj);
+					int row_index = handle->Get_row(obj);
+
+					//iterate only the last floor
+					if (handle->Get_cur_height() - 1 != floor_index) {
+						continue;
+					}
+
+					Vector3 pos = obj->World().position.Get();
+					pos -= Vector3(0, handle->Get_height_per_wall() / 2.0f, 0);
+					pos += Vector3(0, handle->Get_height_per_wall(), 0); // add 1 more floor worth of height
+
+					Quaternion rot = obj->World().rotation.Get();
+					Quaternion flip_rot = Quaternion::Euler(Vector3(0, 180, 0));
+					rot *= flip_rot;
+
+					RenderObject* newrenderer = [=]()
+						{
+							return new RenderObject(roof_DC);
+						}();
 
 					newrenderer->SetParent(renderer_parent);
 					newrenderer->World().position.Set(pos);
@@ -147,9 +266,26 @@ namespace gbe::ext::AnitoBuilder {
 				}
 			}
 
+			for (const auto& roof : this->roof_pool)
+			{
+				for (const auto& roof_obj : roof.objs)
+				{
+					RenderObject* newrenderer = new RenderObject(ceiling_DC);
+					newrenderer->SetParent(renderer_parent);
+					newrenderer->Local().SetMatrix(roof_obj->Local().GetMatrix());
+					newrenderer->SetShadowCaster();
+				}
+			}
+		}
+
 		for (const auto& handle : this->handle_pool)
 		{
 			handle->Set_visible(!model_shown);
+		}
+		for (const auto& roof : this->roof_pool)
+		{
+			roof.objs[0]->Set_enabled(!model_shown);
+			roof.objs[1]->Set_enabled(!model_shown);
 		}
 	}
 
@@ -361,6 +497,8 @@ namespace gbe::ext::AnitoBuilder {
 		if (!handle_pool[root_handle]->Get_is_edge())
 			return;
 
+		handle_pool[root_handle]->Set_is_edge(false);
+
 		SetSeg src_seg;
 
 		for (size_t s = 0; s < data.sets.size(); s++)
@@ -412,6 +550,7 @@ namespace gbe::ext::AnitoBuilder {
 						.seg = {corners[0], corners[1]},
 						.handleindex = seg.handleindex
 						});
+					this->handle_pool[seg.handleindex]->Set_is_edge(false);
 					starting_index = 1;
 					break;
 				}
@@ -450,7 +589,7 @@ namespace gbe::ext::AnitoBuilder {
 
 		//ROOF
 		const auto CreateRoof = [=](int basis_index) {
-			auto roof_renderer = new RenderObject(roof_editor_DC);
+			auto roof_renderer = new RenderObject(ceiling_editor_DC);
 			roof_renderer->SetParent(this);
 
 			int left_index = basis_index - 1;

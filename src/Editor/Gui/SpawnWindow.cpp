@@ -13,30 +13,6 @@ void gbe::editor::SpawnWindow::DrawSelf()
 
 	Object* newobj = nullptr;
 
-	ImGui::SeparatorText("RigidObject Types");
-
-	if (ImGui::Button("Dynamic RigidObject")) {
-		newobj = new RigidObject(false);
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("Static RigidObject")) {
-		newobj = new RigidObject(true);
-	}
-
-	ImGui::SeparatorText("Colliders");
-
-	if (ImGui::Button("Cube")) {
-		newobj = new BoxCollider();
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("Sphere")) {
-		newobj = new SphereCollider();
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("Capsule")) {
-		newobj = new CapsuleCollider();
-	}
-
 	ImGui::PushID("Renderers");
 	
 	ImGui::SeparatorText("Renderer");
@@ -59,6 +35,7 @@ void gbe::editor::SpawnWindow::DrawSelf()
 	ImGui::PopID();
 
 	if (newobj != nullptr) {
+		newobj->PushEditorFlag(Object::SERIALIZABLE);
 		newobj->SetParent(parent);
 		Console::Log("New [" + std::string(typeid(*newobj).name()) + "] parented to a [" + std::string(typeid(*parent).name()) + "]");
 	}

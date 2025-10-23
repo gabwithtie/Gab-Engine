@@ -19,6 +19,10 @@ namespace gbe::ext::AnitoBuilder {
 
 		std::vector<RenderObject*> renderObjects;
 		std::unordered_map<RenderObject*, int> object_floors;
+		std::unordered_map<RenderObject*, int> object_rows;
+
+		int cur_width = 0;
+		int cur_height = 0;
 	public:
 		inline float Get_width_per_wall() {
 			return width_per_wall;
@@ -31,6 +35,21 @@ namespace gbe::ext::AnitoBuilder {
 		inline int Get_floor(RenderObject* obj)
 		{
 			return object_floors[obj];
+		}
+
+		inline int Get_row(RenderObject* obj)
+		{
+			return object_rows[obj];
+		}
+
+		inline int Get_cur_width()
+		{
+			return cur_width;
+		}
+
+		inline int Get_cur_height()
+		{
+			return cur_height;
 		}
 
 		inline std::vector<RenderObject*>& Get_all_segs() {

@@ -276,6 +276,7 @@ void gbe::Object::LoadChildren(SerializedObject* data)
 	{
 		const auto& child = &data->children[i];
 		auto new_child = gbe::TypeSerializer::Instantiate(child->type, child);
+		new_child->PushEditorFlag(Object::SERIALIZABLE);
 
 		if (new_child != nullptr) {
 			new_child->SetParent(this);

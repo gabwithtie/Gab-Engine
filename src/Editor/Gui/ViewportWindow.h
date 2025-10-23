@@ -12,9 +12,6 @@ namespace gbe {
 
 		class ViewportWindow : public GuiWindow {
 			void DrawSelf() override;
-			inline std::string GetWindowId() override {
-				return "ViewportWindow";
-			}
 
 			TextureData* selected_data = nullptr;
 			Vector2Int old_resolution;
@@ -28,6 +25,9 @@ namespace gbe {
 				ImGui::PopStyleVar();
 			}
 		public:
+			inline std::string GetWindowId() override {
+				return "ViewportWindow";
+			}
 			inline ViewportWindow(std::vector<gbe::Object*>& _selected) :
 				gizmoLayer(_selected)
 			{

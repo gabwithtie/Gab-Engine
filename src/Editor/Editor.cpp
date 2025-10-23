@@ -1,6 +1,7 @@
 #include "Editor.h"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <imgui_impl_vulkan.h>
 #include <imgui_impl_sdl2.h>
 
@@ -11,8 +12,6 @@
 #include "Graphics/gbe_graphics.h"
 #include "Engine/gbe_engine.h"
 #include "Physics/gbe_physics.h"
-
-#include "Ext/GabVulkan/Objects.h"
 
 #include "Ext/GabVulkan/Objects.h"
 
@@ -67,6 +66,7 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	init_info.RenderPass = vulkan::RenderPass::GetActive("main")->GetData();
 	ImGui_ImplVulkan_Init(&init_info); //init for vulkan
 
+	
 
 	//IO FLAGS
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -282,6 +282,32 @@ void gbe::Editor::PrepareUpdate()
 	//==============================IMGUI==============================//
 	ImGuiID dockspace_id = ImGui::GetID("maindockspace");
 	ImGui::DockSpaceOverViewport(dockspace_id);
+
+	if (!gui_initialized) {
+		gui_initialized = true;
+
+		ImGui::DockBuilderRemoveNode(dockspace_id); // Clear out existing layout
+		ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace); // Add empty node
+		ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->Size); // Set size
+
+		ImGuiID r = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.25f, nullptr, &dockspace_id);
+		ImGuiID l = dockspace_id;
+		ImGuiID r_d = ImGui::DockBuilderSplitNode(r, ImGuiDir_Down, 0.5f, nullptr, &r);
+		ImGuiID r_u = r;
+
+		// Dock windows into the new nodes
+		this->viewportWindow.Set_is_open(true);
+		this->inspectorwindow.Set_is_open(true);
+		this->anitobuilderWindow.Set_is_open(true);
+		this->lightWindow.Set_is_open(true);
+
+		ImGui::DockBuilderDockWindow(this->viewportWindow.GetWindowId().c_str(), l);
+		ImGui::DockBuilderDockWindow(this->inspectorwindow.GetWindowId().c_str(), r_u);
+		ImGui::DockBuilderDockWindow(this->anitobuilderWindow.GetWindowId().c_str(), r_d);
+		ImGui::DockBuilderDockWindow(this->lightWindow.GetWindowId().c_str(), r_d);
+
+		ImGui::DockBuilderFinish(dockspace_id);
+	}
 
 	this->menubar.Draw();
 

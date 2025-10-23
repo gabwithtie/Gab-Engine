@@ -20,7 +20,7 @@
 namespace gbe::vulkan {
 
     class ForwardRenderer : public Renderer {
-        uint32_t shadow_map_resolution = 1028;
+        uint32_t shadow_map_resolution = 2056;
         uint32_t main_x = 1028;
         uint32_t main_y = 1028;
         const uint32_t max_lights = 5;
@@ -60,7 +60,9 @@ namespace gbe::vulkan {
             return &render_sampler;
         }
 
-        inline ForwardRenderer() {
+        inline ForwardRenderer() :
+            render_sampler(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER)
+        {
             //==================DICTIONARY POPULATING====================//
             VkAttachmentDescription depth_attachment = {};
             depth_attachment.format = PhysicalDevice::GetActive()->GetDepthFormat();

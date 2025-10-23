@@ -183,7 +183,9 @@ namespace gbe {
 		mInputSystem->RegisterActionListener(player_name, new MouseDragImplementation<Keys::MOUSE_MIDDLE>());
 #pragma endregion
 #pragma region Root Loaders
-		this->current_root = this->CreateBlankRoot();
+		SerializedObject savedscene;
+		gbe::asset::serialization::gbeParser::PopulateClass(savedscene, "out/default.level");
+		this->current_root = this->CreateBlankRoot(&savedscene);
 		this->InitializeRoot();
 		this->Set_state(EngineState::Edit, false);
 #pragma region scene singletons
@@ -232,40 +234,11 @@ namespace gbe {
 		Engine::MakePersistent(editor_input);
 		editor_cam->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 		editor_input->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
+		editor_camera_controller->World().position.Set(Vector3(0, 5, -15));
 #pragma endregion
 
 #pragma region scene objects
-		//Frustrum debugging
-		auto test_sphere = create_primitive(gbe::RenderObject::sphere, Vector3(0, 2, -5), Vector3(1));
-		test_sphere->SetName("Sphere");
-
-		//ANITO BUILDER
-		Vector3 cubecorners[4] = {
-			Vector3(-2, 0, -2),
-			Vector3(2, 0, -2),
-			Vector3(2, 0, 2),
-			Vector3(-2, 0, 2),
-		};
-		auto builder_cube = new ext::AnitoBuilder::BuilderBlock(cubecorners, 4);
-		builder_cube->SetParent(this->current_root);
-
-		{
-			auto light = new DirectionalLight();
-			light->World().position.Set(Vector3(0, 0, -10));
-			light->Local().rotation.Set(Quaternion::Euler(Vector3(0, 90, 0)));
-			light->SetName("Directional Light 1");
-			light->Set_Color(Vector3(1, 0.3, 0.3));
-			light->SetParent(this->current_root);
-		}
-		{
-			auto light = new ConeLight();
-			light->World().position.Set(Vector3(3, 0, -10));
-			light->Local().rotation.Set(Quaternion::Euler(Vector3(0, 0, 0)));
-			light->Set_Color(Vector3(0.3, 0.3, 1));
-			light->SetName("Cone Light 1");
-			light->SetParent(this->current_root);
-		}
-
+		ext::AnitoBuilder::BuilderBlock::SetModelShown(true);
 #pragma endregion
 
 #pragma endregion
@@ -339,7 +312,7 @@ namespace gbe {
 				frameinfo.nearclip = current_camera->nearClip;
 				frameinfo.viewmat = current_camera->GetViewMat();
 				frameinfo.projmat = current_camera->GetProjectionMat();
-				frameinfo.projmat_lightusage = current_camera->GetProjectionMat(10.0f);
+				frameinfo.projmat_lightusage = current_camera->GetProjectionMat(20);
 
 				//GRID
 				const int gridlines = 100;
@@ -360,6 +333,7 @@ namespace gbe {
 
 				const auto propagatelines = [=](float coef) {
 					Vector3 start_cor = Vector3(align(frameinfo.camera_pos.x), 0, align(frameinfo.camera_pos.z));
+					start_cor.y = 0;
 					Vector3 cur_x = start_cor;
 					Vector3 cur_z = start_cor;
 
@@ -367,11 +341,11 @@ namespace gbe {
 					{
 						Vector3 x_a = cur_x - Vector3(0, 0, half_bounds);
 						Vector3 x_b = cur_x + Vector3(0, 0, half_bounds);
-						RenderPipeline::DrawLine(x_a, x_b);
+						//RenderPipeline::DrawLine(x_a, x_b);
 
 						Vector3 z_a = cur_z - Vector3(half_bounds, 0, 0);
 						Vector3 z_b = cur_z + Vector3(half_bounds, 0, 0);
-						RenderPipeline::DrawLine(z_a, z_b);
+						//RenderPipeline::DrawLine(z_a, z_b);
 
 						auto dist = abs(frameinfo.camera_pos.z - cur_z.z);
 						auto skip_coef = abs(1.0f / (frameinfo.camera_pos.y / 16.0f)) * (dist / 90.0f);

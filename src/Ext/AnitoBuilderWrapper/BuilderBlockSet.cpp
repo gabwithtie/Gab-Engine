@@ -102,6 +102,10 @@ namespace gbe::ext::AnitoBuilder {
 			this->renderObjects[i]->Local().scale.Set(Vector3(local_wall_scale_x, local_wall_scale_y, 1));
 
 			object_floors[this->renderObjects[i]] = y;
+			object_rows[this->renderObjects[i]] = x;
 		}
+
+		this->cur_width = walls_needed;
+		this->cur_height = layers_needed;
 	}
 }

@@ -49,7 +49,7 @@ namespace gbe::ext::AnitoBuilder {
 	public:
 		//GEN PARAMS
 		float min_dist = 2;
-		float max_dist = 20;
+		float max_dist = 40;
 		float wall_max_width = 2.5f;
 		float wall_max_height = 4;
 
@@ -60,10 +60,12 @@ namespace gbe::ext::AnitoBuilder {
 		float wall_import_width = 1.2f;
 
 		//Drawcalls
-		gfx::DrawCall* Wall1_DC;
-		gfx::DrawCall* Wall2_DC;
-		gfx::DrawCall* roof_editor_DC;
+		gfx::DrawCall* ceiling_editor_DC;
+		std::array<gfx::DrawCall*, 2> wallnorm_DC;
+		std::array<std::array<gfx::DrawCall*, 3>, 4> wall3x4_DC;
+		std::array<std::array<gfx::DrawCall*, 2>, 3> wall2x3_DC;
 		gfx::DrawCall* roof_DC;
+		gfx::DrawCall* ceiling_DC;
 
 		//Objects
 		Object* renderer_parent;
@@ -107,6 +109,7 @@ namespace gbe::ext::AnitoBuilder {
 
 			return;
 		}
+		void LoadAssets();
 	public:
 		BuilderBlock(gbe::Vector3 corners[4], float height);
 		BuilderBlock(SerializedObject* data);
