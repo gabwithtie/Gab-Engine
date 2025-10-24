@@ -27,11 +27,16 @@ void gbe::editor::LightExplorer::DrawSelf()
 	{
 		if (ImGui::BeginMenu("Create"))
 		{
-			for (const auto& item : CreateFunctions::GetCreators_light())
+			if (ImGui::BeginMenu("Light"))
 			{
-				if (ImGui::MenuItem(item.first.c_str())) {
-					created_object = item.second();
+				for (const auto& item : CreateFunctions::GetCreators_light())
+				{
+					if (ImGui::MenuItem(item.first.c_str())) {
+						created_object = item.second();
+					}
 				}
+
+				ImGui::EndMenu();
 			}
 
 			ImGui::EndMenu();

@@ -11,7 +11,7 @@
 		},
 		{
 			"id": "tint",
-			"value_vec3": [ 0.2, 0.2, 0.2 ]
+			"value_vec3": [ 0.0, 0.0, 0.0 ]
 		},
 		{
 			"id": "color_tex",
@@ -23,7 +23,7 @@
 		},
 		{
 			"id": "shadow_strength",
-			"value_single": 0
+			"value_single": 0.3
 		}
 	]
 }

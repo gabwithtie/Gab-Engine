@@ -12,9 +12,17 @@ namespace gbe {
     /// <summary>
     /// Generic camera class with assignable project matrix and utility functions for rendering.
     /// </summary>
-    struct Camera : Object {
+    struct Camera : public Object {
         float nearClip;
         float farClip;
+
+        bool moved = true;
+        inline bool GetMoved() {
+            return moved;
+        }
+        inline void OnRender() {
+            moved = false;
+        }
 
         Camera();
 
@@ -25,6 +33,11 @@ namespace gbe {
         virtual Matrix4 GetProjectionMat(float override_range) = 0;
         Vector3 ScreenToRay(Vector2 normalizedscreenpos);
         Vector2 WorldToScreen(Vector3 worldpos);
+
+        inline virtual void OnExternalTransformationChange(TransformChangeType changetype, Matrix4 newparentmatrix) override {
+            Camera::moved = true;
+            Object::OnExternalTransformationChange(changetype, newparentmatrix);
+		}
     };
 
     struct OrthographicCamera : public Camera {

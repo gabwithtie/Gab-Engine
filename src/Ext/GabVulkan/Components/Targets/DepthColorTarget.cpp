@@ -99,6 +99,8 @@ gbe::vulkan::DepthColorTarget::DepthColorTarget(AttachmentDictionary& dict, uint
 
 void gbe::vulkan::DepthColorTarget::StartPass(uint32_t drawlayer)
 {
+	Target::StartPass(drawlayer);
+
     MemoryBarrier::Insert(
         Instance::GetActive()->GetCurrentCommandBuffer()->GetData(),
         depth_img->GetImage(),
@@ -170,6 +172,8 @@ void gbe::vulkan::DepthColorTarget::StartPass(uint32_t drawlayer)
 
 void gbe::vulkan::DepthColorTarget::EndPass()
 {
+    Target::EndPass();
+
     vkCmdEndRenderPass(Instance::GetActive()->GetCurrentCommandBuffer()->GetData());
 
     MemoryBarrier::Insert(

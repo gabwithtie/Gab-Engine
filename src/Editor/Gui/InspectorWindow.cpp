@@ -248,18 +248,6 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 	else {
 		ImGui::Text("Multi-inspect not supported yet.");
 	}
-
-	//EXPORTING
-	if (this->selected.size() > 0) {
-		ImGui::SeparatorText("Exporting");
-		if (ImGui::Button("Merge and export selected.")) {
-			ModelExport modelexporter(selected);
-
-			modelexporter.Export("merged.obj");
-
-			std::cout << "Wrote merged mesh file.";
-		}
-	}
 }
 
 bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* field, bool x_interactable, bool y_interactable, bool z_interactable)

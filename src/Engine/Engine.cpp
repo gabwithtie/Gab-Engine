@@ -313,6 +313,13 @@ namespace gbe {
 				frameinfo.viewmat = current_camera->GetViewMat();
 				frameinfo.projmat = current_camera->GetProjectionMat();
 				frameinfo.projmat_lightusage = current_camera->GetProjectionMat(20);
+				
+				if (current_camera->GetMoved()) {
+					frameinfo.skip_main_pass = false;
+					current_camera->OnRender();
+				}
+				else
+					frameinfo.skip_main_pass = true;
 
 				//GRID
 				const int gridlines = 100;

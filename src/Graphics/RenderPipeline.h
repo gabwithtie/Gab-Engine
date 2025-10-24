@@ -87,6 +87,7 @@ namespace gbe {
 			Matrix4 projmat_lightusage;
 			float nearclip;
 			float farclip;
+			bool skip_main_pass;
 			
 			//Environment info
 			std::vector<gfx::Light*> lightdatas;

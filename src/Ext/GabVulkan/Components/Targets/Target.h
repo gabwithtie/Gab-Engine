@@ -13,7 +13,13 @@ namespace gbe::vulkan {
 
 		RenderPass* renderpass;
 		std::vector<Framebuffer*> framebuffers;
+
+		bool started = false;
 	public:
+		inline bool Get_ifstarted() {
+			return started;
+		}
+
 		inline ~Target() {
 			delete renderpass;
 
@@ -24,7 +30,11 @@ namespace gbe::vulkan {
 			}
 		}
 
-		virtual void StartPass(uint32_t drawlayer = 0) = 0;
-		virtual void EndPass() = 0;
+		inline virtual void StartPass(uint32_t drawlayer = 0) {
+			started = true;
+		};
+		inline virtual void EndPass() {
+			started = false;
+		};
 	};
 }

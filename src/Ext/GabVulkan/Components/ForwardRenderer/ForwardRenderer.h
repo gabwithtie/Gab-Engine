@@ -120,7 +120,8 @@ namespace gbe::vulkan {
         }
 
         inline void TransitionToScreenPass() {
-            mainpass->EndPass();
+            if(mainpass->Get_ifstarted())
+                mainpass->EndPass();
 
             VkExtent2D extents = vulkan::SwapChain::GetActive()->GetExtent();
 
