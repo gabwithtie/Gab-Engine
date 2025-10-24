@@ -31,6 +31,22 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
 }
 
+void gbe::RenderObject::SetUserCreated()
+{
+	this->user_created = true;
+
+	if (Engine::Get_state() == Engine::EngineState::Edit) {
+		auto ro = new RigidObject(true);
+		ro->SetParent(this);
+		ro->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
+
+		auto col = new MeshCollider(this->mDrawCall->get_mesh());
+		col->Local().scale.Set(Vector3(1));
+		col->Local().position.Set(Vector3(0));
+		col->SetParent(ro);
+	}
+}
+
 gbe::RenderObject::RenderObject(PrimitiveType _ptype)
 {
 	this->mDrawCall = primitive_drawcalls[_ptype];

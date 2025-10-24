@@ -31,12 +31,17 @@ namespace gbe {
 		RenderObject* shadow_renderer = nullptr;
 
 		PrimitiveType ptype = PrimitiveType::NONE;
+
+		bool user_created = false;
+
 	protected:
 		void On_Change_enabled(bool _to) override;
 	public:
 		static inline void RegisterPrimitiveDrawcall(PrimitiveType ptype, gfx::DrawCall* drawtype) {
 			primitive_drawcalls.insert_or_assign(ptype, drawtype);
 		}
+
+		void SetUserCreated();
 
 		void SetShadowCaster();
 
