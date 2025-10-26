@@ -20,10 +20,14 @@
 namespace gbe::vulkan {
 
     class ForwardRenderer : public Renderer {
-        uint32_t shadow_map_resolution = 2056;
+        uint32_t shadow_map_resolution = 1028;
         uint32_t main_x = 1028;
         uint32_t main_y = 1028;
-        const uint32_t max_lights = 5;
+        const uint32_t max_lights = 8;
+        /*REMEMBER TO CHANGE IN THE FOLLOWING SHADERS :
+            - Lit frag
+            - Shadow vert
+        */
 
         Sampler render_sampler;
         AttachmentDictionary attachments_colordepth;
@@ -120,8 +124,7 @@ namespace gbe::vulkan {
         }
 
         inline void TransitionToScreenPass() {
-            if(mainpass->Get_ifstarted())
-                mainpass->EndPass();
+            mainpass->EndPass();
 
             VkExtent2D extents = vulkan::SwapChain::GetActive()->GetExtent();
 

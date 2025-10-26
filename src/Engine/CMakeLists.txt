@@ -52,7 +52,8 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Global/Console.h"
 	"Global/Console.cpp"
 	"Objects/ObjectNamer.cpp"
-	"Objects/Rendering/Lights/ConeLight.cpp")
+	"Objects/Rendering/Lights/ConeLight.cpp"
+	"Objects/Rendering/Lights/PointLight.cpp")
 
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_graphics)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)

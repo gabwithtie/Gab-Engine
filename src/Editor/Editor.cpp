@@ -79,8 +79,10 @@ gbe::Editor::~Editor()
 
 void gbe::Editor::SelectSingle(Object* other) {
 	if(other->GetEditorFlag(Object::SELECT_PARENT_INSTEAD)) {
-		if(other->GetParent() != nullptr)
-			other = other->GetParent();
+		if (other->GetParent() != nullptr) {
+			SelectSingle(other->GetParent());
+			return;
+		}
 		else
 			throw std::runtime_error("Object has SELECT_PARENT_INSTEAD flag but no parent.");
 	}
@@ -215,22 +217,6 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 					auto objinray = result.others[i];
 
 					if (!Object::ValidateObject(objinray))
-						continue;
-
-					//CHECK IF OTHER HAS A RENDERER, IF NONE, DONT CLICK
-					bool has_renderer = false;
-					RenderObject* renderer_has = nullptr;
-
-					objinray->CallRecursively([&](Object* child) {
-						auto renderer_check = dynamic_cast<RenderObject*>(child);
-
-						if (renderer_check != nullptr) {
-							has_renderer = true;
-							renderer_has = renderer_check;
-						}
-						});
-
-					if (!has_renderer)
 						continue;
 
 					CheckClosest(objinray);

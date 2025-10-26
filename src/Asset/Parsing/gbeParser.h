@@ -39,12 +39,18 @@ namespace gbe {
 				}
 
 				template<class TImportData>
-				static void PopulateClass(TImportData& target, std::filesystem::path asset_path) {
+				static bool PopulateClass(TImportData& target, std::filesystem::path asset_path) {
 					std::string buffer;
 					TImportData datareceiver;
 					auto ec = glz::read_file_json<glz::opts{.error_on_unknown_keys = false}>(datareceiver, asset_path.string(), buffer);
 					target = datareceiver;
-					std::cout << ec << std::endl;
+
+					if (ec) {
+						std::cout << ec << std::endl;
+						return false;
+					}
+
+					return true;
 				}
 
 				template<class TExportData>

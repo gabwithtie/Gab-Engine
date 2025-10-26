@@ -29,7 +29,7 @@ void gbe::DirectionalLight::InitializeInspectorData()
 		auto dirlight_ro = new RigidObject(true);
 		dirlight_ro->SetParent(this);
 		dirlight_ro->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
-		//dirlight_ro->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
+		dirlight_ro->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 
 		auto dirlight_col = new BoxCollider();
 		dirlight_col->Local().scale.Set(Vector3(0.5, 0.5, 1.0f));

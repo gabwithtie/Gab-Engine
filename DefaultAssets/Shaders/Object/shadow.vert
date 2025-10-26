@@ -3,7 +3,7 @@
 #extension GL_ARB_shader_viewport_layer_array : require
 #extension GL_EXT_multiview : enable
 
-const int MAX_LIGHTS = 5;
+const int MAX_LIGHTS = 8;
 
 // Set 0: Global Data — lights (should be an array)
 layout(set = 0, binding = 1) uniform Light {

@@ -27,28 +27,11 @@ void gbe::editor::LightExplorer::DrawSelf()
 	{
 		if (ImGui::BeginMenu("Create"))
 		{
-			if (ImGui::BeginMenu("Light"))
+			for (const auto& item : CreateFunctions::GetCreators_light())
 			{
-				for (const auto& item : CreateFunctions::GetCreators_light())
-				{
-					if (ImGui::MenuItem(item.first.c_str())) {
-						created_object = item.second();
-					}
+				if (ImGui::MenuItem(item.first.c_str())) {
+					created_object = item.second();
 				}
-
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("Primitives"))
-			{
-				for (const auto& item : CreateFunctions::GetCreators_light())
-				{
-					if (ImGui::MenuItem(item.first.c_str())) {
-						created_object = item.second();
-					}
-				}
-
-				ImGui::EndMenu();
 			}
 
 			ImGui::EndMenu();

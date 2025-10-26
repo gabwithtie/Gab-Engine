@@ -115,6 +115,12 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 
 	//==================FIRST PASS [0]========================//
 	// Loop through each light that casts a shadow.
+	if (frameinfo.lightdatas.size() == 0) {
+		renderer->StartShadowPass(0);
+
+		renderer->EndShadowPass();
+	}
+
 	for (size_t lightIndex = 0; lightIndex < renderer->Get_max_lights(); lightIndex++)
 	{
 		if (lightIndex == frameinfo.lightdatas.size())
@@ -273,6 +279,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 			drawcall->ApplyOverride<Matrix4>(lightProjMat, "light_proj", vulkanInstance->GetCurrentFrameIndex(), light_index);
 			drawcall->ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
 			drawcall->ApplyOverride<int>(light->type, "light_type", vulkanInstance->GetCurrentFrameIndex(), light_index);
+			drawcall->ApplyOverride<int>(light->square_project, "light_is_square", vulkanInstance->GetCurrentFrameIndex(), light_index);
 			drawcall->ApplyOverride<float>(light->near_clip, "light_nearclip", vulkanInstance->GetCurrentFrameIndex(), light_index);
 			drawcall->ApplyOverride<float>(light->range, "light_range", vulkanInstance->GetCurrentFrameIndex(), light_index);
 			drawcall->ApplyOverride<float>(light->bias_min, "bias_min", vulkanInstance->GetCurrentFrameIndex(), light_index);
@@ -280,12 +287,6 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 			drawcall->ApplyOverride<float>(light->angle_inner, "light_cone_inner", vulkanInstance->GetCurrentFrameIndex(), light_index);
 			drawcall->ApplyOverride<float>(light->angle_outer, "light_cone_outer", vulkanInstance->GetCurrentFrameIndex(), light_index);
 			drawcall->ApplyOverride<float>(1, "shadow_strength", vulkanInstance->GetCurrentFrameIndex(), light_index);
-
-			switch (light->type)
-			{
-			case Light::DIRECTIONAL:
-				break;
-			}
 
 			light_index++;
 		}

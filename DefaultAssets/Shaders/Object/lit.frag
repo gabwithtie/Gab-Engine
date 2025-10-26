@@ -21,7 +21,7 @@ layout(set = 2, binding = 2) uniform sampler2D normal_tex;
 layout(set = 2, binding = 3) uniform sampler2D arm_tex;
 
 //=================LIGHTING====================//
-const int MAX_LIGHTS = 5;
+const int MAX_LIGHTS = 8;
 // Light Types
 const int LIGHT_TYPE_DIRECTIONAL = 0;
 const int LIGHT_TYPE_SPOT = 1;
@@ -35,6 +35,7 @@ layout(set = 0, binding = 1) uniform Light {
     mat4 light_proj;
     vec3 light_color;
     int light_type;
+    int light_is_square;
     float light_nearclip;
     float light_range;
     float light_cone_inner;
@@ -102,31 +103,40 @@ void main() {
             float dist = length(L_to_P);
             
             // Range attenuation (simple inverse square falloff adjusted by light_range)
-            attenuation = 1.0 / (1.0 + ((dist * dist) / (lights[i].light_range * lights[i].light_range)));
+            attenuation = max(0, 1 - (dist / lights[i].light_range));
 
             lightDir = normalize(L_to_P);
             
             // Light's forward direction (negative Z-axis of the light's view matrix)
             vec3 spotDir = normalize(vec3(lights[i].light_view[0][2], lights[i].light_view[1][2], lights[i].light_view[2][2]));
-            
-            // Dot product of the direction *to* the light, and the spot's *direction*
-            float theta = acos(dot(lightDir, spotDir));
-            
-            // Calculate cone intensity (smoothstep interpolation)
-            float c_outer = radians(lights[i].light_cone_outer * 0.5);
-            float c_inner = radians(lights[i].light_cone_inner * 0.5);
-            float intensity = 0.0;
-            if (theta < c_outer) // For smooth falloff
-            {
-                intensity = smoothstep(c_outer, c_inner, theta);
-            }
-            if (theta < c_inner)
-            {
-                intensity = 1.0; // Inside the main cone
-            }
+            float cos_theta = dot(lightDir, spotDir); // LightDir is P->L, SpotDir is L->P's face
 
-            // Combine range attenuation with cone intensity
-            attenuation *= intensity;
+            if (lights[i].light_is_square > 0) {
+                // Crucial check: fragment must be on the hemisphere facing this light
+                if (cos_theta <= 0.0) {
+                    attenuation = 0.0; // Turn light off for this face
+                }
+                // If cos_theta > 0, attenuation is still based on distance (already calculated)
+            } else{
+                // Dot product of the direction *to* the light, and the spot's *direction*
+                float theta = acos(dot(lightDir, spotDir));
+            
+                // Calculate cone intensity (smoothstep interpolation)
+                float c_outer = radians(lights[i].light_cone_outer*0.5);
+                float c_inner = radians(lights[i].light_cone_inner*0.5);
+                float intensity = 0.0;
+                if (theta < c_outer) // For smooth falloff
+                {
+                    intensity = smoothstep(c_outer, c_inner, theta);
+                }
+                if (theta < c_inner)
+                {
+                    intensity = 1.0; // Inside the main cone
+                }
+
+                // Combine range attenuation with cone intensity
+                attenuation *= intensity;
+            }
         }
 
         // Diffuse component

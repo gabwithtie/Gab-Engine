@@ -9,8 +9,8 @@ namespace gbe::gfx {
         };
 
         //==============RUNTIME DATA
-        Vector3 position;       // For point/spot lights
-        Vector3 direction;      // For directional/spot lights
+        Vector3 position;
+        Vector3 direction;
         Matrix4 cam_view;
         Matrix4 cam_proj;
 
@@ -28,7 +28,8 @@ namespace gbe::gfx {
         float angle_inner = 50;
         float angle_outer = 80;
         float near_clip = 1;
-        float range = 50;
+        float range = 15;
+        bool square_project = false;
 
         //BIAS
         float bias_min = 0.005;
@@ -88,7 +89,7 @@ namespace gbe::gfx {
                 break;
             }
             case POINT:
-                throw new std::runtime_error("Incompatible.");
+                view_cache = Matrix4(1);
             }
             
             created_context_view = true;
@@ -110,7 +111,8 @@ namespace gbe::gfx {
                 break;
             }
             case POINT: {
-                throw new std::runtime_error("Incompatible.");
+                proj_cache = Matrix4(1);
+                break;
             }
             }
 

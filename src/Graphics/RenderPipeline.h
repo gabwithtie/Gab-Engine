@@ -77,7 +77,6 @@ namespace gbe {
 		bool handled_resolution_change = true;
 
 		void UpdateReferences();
-		void PrepareCall(DrawCall* drawcall);
 	public:
 		struct FrameRenderInfo {
 			//Camera info
@@ -95,6 +94,7 @@ namespace gbe {
 
 		
 		RenderPipeline(gbe::Window&, Vector2Int);
+		void PrepareCall(DrawCall* drawcall);
 		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material, int order = 0);
 		static DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* GetDefaultDrawCall();

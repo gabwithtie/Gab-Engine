@@ -5,6 +5,8 @@
 #include "Graphics/RenderPipeline.h"
 #include "Asset/gbe_asset.h"
 
+#include <string>
+
 using namespace gbe::gfx;
 
 std::unordered_map<gbe::RenderObject::PrimitiveType, gbe::gfx::DrawCall*> gbe::RenderObject::primitive_drawcalls;
@@ -39,10 +41,9 @@ void gbe::RenderObject::SetUserCreated()
 		auto ro = new RigidObject(true);
 		ro->SetParent(this);
 		ro->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
+		ro->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 
 		auto col = new MeshCollider(this->mDrawCall->get_mesh());
-		col->Local().scale.Set(Vector3(1));
-		col->Local().position.Set(Vector3(0));
 		col->SetParent(ro);
 	}
 }
@@ -81,6 +82,8 @@ void gbe::RenderObject::On_Change_enabled(bool _to) {
 gbe::SerializedObject gbe::RenderObject::Serialize() {
 	auto data = gbe::Object::Serialize();
 
+	data.serialized_variables.insert_or_assign("usercreated", std::to_string(this->user_created));
+
 	data.serialized_variables.insert_or_assign("primitive", PrimitiveTypeStr(this->ptype));
 	data.serialized_variables.insert_or_assign("mesh", this->mDrawCall->get_mesh()->Get_assetId());
 	data.serialized_variables.insert_or_assign("mat", this->mDrawCall->get_material()->Get_assetId());
@@ -114,5 +117,10 @@ gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
 		this->mDrawCall = primitive_drawcalls[curptype];
 		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
 		this->ptype = curptype;
+	}
+
+	if (std::stoi(data->serialized_variables["usercreated"]))
+	{
+		this->SetUserCreated();
 	}
 }

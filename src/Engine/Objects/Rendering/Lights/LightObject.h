@@ -14,6 +14,18 @@ namespace gbe {
 	public:
 		LightObject(SerializedObject* data);
 
+		inline void Set_noninstance_data(gfx::Light& data) {
+			auto old_position = mLight.position;
+			auto old_direction = mLight.direction;
+			auto old_cam_view = mLight.cam_view;
+			auto old_cam_proj = mLight.cam_proj;
+
+			this->mLight = data;
+			mLight.position = old_position;
+			mLight.direction = old_direction;
+			mLight.cam_view = old_cam_view;
+			mLight.cam_proj = old_cam_proj;
+		}
 		void InitializeInspectorData() override;
 		SerializedObject Serialize() override;
 

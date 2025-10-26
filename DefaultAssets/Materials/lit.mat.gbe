@@ -26,16 +26,8 @@
 			"value_single": 0
 		},
 		{
-			"id": "normal_tex",
-			"value_tex": "brick_norm"
-		},
-		{
 			"id": "has_normal_tex",
 			"value_single": 0
-		},
-		{
-			"id": "arm_tex",
-			"value_tex": "brick_arm"
 		},
 		{
 			"id": "has_arm_tex",

@@ -154,13 +154,25 @@ namespace gbe {
 		auto lit_mat = asset::Material::GetAssetById("lit");
 
 		//DRAW CALL CACHING X PRIMITIVES CACHING
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, renderpipeline.RegisterDrawCall(cube_mesh, grid_mat, 0));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, renderpipeline.RegisterDrawCall(sphere_mesh, grid_mat, 0));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, renderpipeline.RegisterDrawCall(plane_mesh, grid_mat, 0));
-		RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, renderpipeline.RegisterDrawCall(capsule_mesh, grid_mat, 0));
-		
-		auto wire_plane = renderpipeline.RegisterDrawCall(plane_mesh, wire_mat, 0);
+		{
+			auto newcall = renderpipeline.RegisterDrawCall(cube_mesh, grid_mat, 0);
+			RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, newcall);
+		}
+		{
+			auto newcall = renderpipeline.RegisterDrawCall(sphere_mesh, grid_mat, 0);
+			RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, newcall);
+		}
+		{
+			auto newcall = renderpipeline.RegisterDrawCall(plane_mesh, grid_mat, 0);
+			RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, newcall);
+		}
+		{
+			auto newcall = renderpipeline.RegisterDrawCall(capsule_mesh, grid_mat, 0);
+			RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, newcall);
+		}
 
+		
+		
 		//TYPE SERIALIZER REGISTERING
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(RenderObject).name(), [](SerializedObject* data) {return new RenderObject(data); });
 
@@ -184,8 +196,12 @@ namespace gbe {
 #pragma endregion
 #pragma region Root Loaders
 		SerializedObject savedscene;
-		gbe::asset::serialization::gbeParser::PopulateClass(savedscene, "out/default.level");
-		this->current_root = this->CreateBlankRoot(&savedscene);
+		if (gbe::asset::serialization::gbeParser::PopulateClass(savedscene, "out/default.level")) {
+			this->current_root = this->CreateBlankRoot(&savedscene);
+		}
+		else {
+			this->current_root = this->CreateBlankRoot();
+		}
 		this->InitializeRoot();
 		this->Set_state(EngineState::Edit, false);
 #pragma region scene singletons
@@ -302,7 +318,13 @@ namespace gbe {
 
 			//Lights colating
 			this->current_root->GetHandler<LightObject>()->DoOnEnabled([&](LightObject* light) {
-				frameinfo.lightdatas.push_back(light->GetData());
+				PointLight* plight = nullptr;
+				plight = dynamic_cast<PointLight*>(light);
+
+				if (plight != nullptr)
+					plight->Resync_sublights();
+				else
+					frameinfo.lightdatas.push_back(light->GetData());
 			});
 
 			Camera* current_camera = GetActiveCamera();
