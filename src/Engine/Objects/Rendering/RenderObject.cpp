@@ -36,6 +36,7 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 void gbe::RenderObject::SetUserCreated()
 {
 	this->user_created = true;
+	this->PushEditorFlag(Object::SERIALIZABLE);
 
 	if (Engine::Get_state() == Engine::EngineState::Edit) {
 		auto ro = new RigidObject(true);
@@ -119,7 +120,9 @@ gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
 		this->ptype = curptype;
 	}
 
-	if (std::stoi(data->serialized_variables["usercreated"]))
+	auto usercreated = data->serialized_variables["usercreated"];
+
+	if (usercreated.size() > 0 && std::stoi(usercreated))
 	{
 		this->SetUserCreated();
 	}

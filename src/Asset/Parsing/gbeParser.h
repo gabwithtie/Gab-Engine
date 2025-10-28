@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glaze/glaze.hpp>
+
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -58,7 +59,6 @@ namespace gbe {
 					ValidateDirectory(asset_path);
 					std::ofstream file(asset_path);
 					auto ec = glz::write_json(target);
-					file << ec;
 					file.close();
 				}
 			};

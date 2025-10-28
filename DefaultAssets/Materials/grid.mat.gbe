@@ -23,7 +23,7 @@
 		},
 		{
 			"id": "shadow_strength",
-			"value_single": 0.3
+			"value_single": 0.8
 		}
 	]
 }

@@ -286,8 +286,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 			drawcall->ApplyOverride<float>(light->bias_mult, "bias_mult", vulkanInstance->GetCurrentFrameIndex(), light_index);
 			drawcall->ApplyOverride<float>(light->angle_inner, "light_cone_inner", vulkanInstance->GetCurrentFrameIndex(), light_index);
 			drawcall->ApplyOverride<float>(light->angle_outer, "light_cone_outer", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<float>(1, "shadow_strength", vulkanInstance->GetCurrentFrameIndex(), light_index);
-
+			
 			light_index++;
 		}
 

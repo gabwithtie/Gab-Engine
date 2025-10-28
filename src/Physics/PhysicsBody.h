@@ -43,6 +43,10 @@ namespace gbe {
 				this->world = register_to;
 			}
 
+			inline bool IsActive() {
+				return active;
+			}
+
 			inline virtual void Activate() {
 				active = true;
 			}

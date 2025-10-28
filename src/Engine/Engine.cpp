@@ -284,6 +284,8 @@ namespace gbe {
 			//Update input system
 			auto inputhandler = this->current_root->GetHandler<InputPlayer>();
 
+
+			auto teststate = this->window.GetKeyState(1) == true;
 			if (editor != nullptr && !editor->FocusedOnEditorUI())
 				mInputSystem->UpdateStates([=](std::string name, gbe::input::InputAction* action, bool changed) {
 				for (auto input_player : inputhandler->t_object_list) {

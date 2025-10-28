@@ -74,6 +74,7 @@ namespace gbe::ext::AnitoBuilder {
 			for (size_t i = 0; i < need_to_create; i++)
 			{
 				auto renderer = new RenderObject(RenderObject::cube);
+				renderer->SetShadowCaster();
 				renderer->SetParent(handle_ro);
 				this->renderObjects.push_back(renderer);
 			}

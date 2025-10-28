@@ -28,6 +28,9 @@ namespace gbe {
 			bool Init();
 			void Tick(double delta);
 			inline void RegisterBody(PhysicsBody* body) {
+				if (body->IsActive())
+					UnRegisterBody(body);
+
 				body_wrapper_dictionary.insert_or_assign(body->Get_wrapped_data(), body);
 				body->Register(this);
 				body->Activate();

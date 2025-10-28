@@ -31,7 +31,15 @@
       "name": "imgui",
       "features": [ "vulkan-binding", "sdl2-binding", "docking-experimental" ]
     },
-    "imguizmo"
+    "imguizmo",
 
+    "nativefiledialog-extended"
+
+  ],
+  "overrides": [
+    {
+      "name": "glaze",
+      "version": "2.6.9"
+    }
   ]
 }

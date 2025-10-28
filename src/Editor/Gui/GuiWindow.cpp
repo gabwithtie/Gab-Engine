@@ -32,8 +32,7 @@ bool gbe::editor::GuiWindow::ext_Begin() {
 	ImVec2 content_max = ImVec2(content_min.x + content_size.x, content_min.y + content_size.y);
 
 	// Perform the check
-	this->pointer_here = (mouse_pos.x >= content_min.x && mouse_pos.x <= content_max.x &&
-		mouse_pos.y >= content_min.y && mouse_pos.y <= content_max.y);
+	this->pointer_here = ImGui::IsWindowHovered();
 
 	return true;
 }

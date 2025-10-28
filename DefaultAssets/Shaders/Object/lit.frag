@@ -140,7 +140,7 @@ void main() {
         }
 
         // Diffuse component
-        float diff = max(dot(_normal, lightDir), 0.0);
+        float diff = max(dot(_normal, lightDir), 1.0 - shadow_strength);
         vec3 diffuse = _color * diff * lights[i].light_color;
 
         // Specular component
@@ -187,19 +187,12 @@ void main() {
 		    }
 	    }
 
-	    shadow = shadow / count;
+	    shadow = max(shadow / count, 1 - shadow_strength);
 
         // REVISED: Apply shadow factor to lighting
         vec3 sub_final = (diffuse + specular) * attenuation;
         
-        final_result += mix(sub_final, sub_final * shadow, shadow_strength);
-
-        /*
-        if(shadowcoord.x > 0.50)
-            final_result += linear_d - 0.02; // Outside light frustum, no shadow
-        else
-            final_result += texture(shadow_tex, vec3(shadowcoord.xy, i)).r;
-        */
+        final_result += sub_final * shadow;
     }
 
     outColor = vec4(final_result, 1.0);

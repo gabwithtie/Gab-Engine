@@ -32,6 +32,10 @@
 		{
 			"id": "has_arm_tex",
 			"value_single": 0
+		},
+		{
+			"id": "shadow_strength",
+			"value_single": 0.8
 		}
 	]
 }

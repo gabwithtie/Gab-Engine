@@ -26,7 +26,8 @@ void gbe::physics::Rigidbody::Activate()
 
 void gbe::physics::Rigidbody::Deactivate()
 {
-	this->world->Get_world()->removeRigidBody(btRigidBody::upcast(this->base_data));
+	if (this->world != nullptr)
+		this->world->Get_world()->removeRigidBody(btRigidBody::upcast(this->base_data));
 	PhysicsBody::Deactivate();
 }
 

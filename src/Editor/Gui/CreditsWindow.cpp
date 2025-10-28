@@ -8,7 +8,7 @@ gbe::editor::CreditsWindow::CreditsWindow()
 }
 
 void gbe::editor::CreditsWindow::DrawSelf() {
-	ImGui::Image(this->logo_tex_DS, { 128, 128 }, { 0, 1 }, { 1, 0 });
+	ImGui::Image((ImTextureID)this->logo_tex_DS, { 128, 128 }, { 0, 1 }, { 1, 0 });
 	ImGui::Text("About");
 	ImGui::Text("GabEngine v0.1");
 	ImGui::Text("Developed by Gabriel Rayo");

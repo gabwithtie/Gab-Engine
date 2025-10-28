@@ -14,7 +14,7 @@ void gbe::editor::ViewportWindow::DrawSelf()
 		RenderPipeline::SetViewportResolution(cur_resolution, { (int)content_min.x, (int)content_min.y });
 	}
 
-	ImGui::Image(gfx::TextureLoader::GetGuiHandle(this->selected_data), availableSize, { 0, 0 }, { 1, 1 });
+	ImGui::Image((ImTextureID)gfx::TextureLoader::GetGuiHandle(this->selected_data), availableSize, { 0, 0 }, { 1, 1 });
 	this->gizmoLayer.Draw();
 
 	if (this->gizmoLayer.Get_pointer_here())
