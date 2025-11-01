@@ -16,7 +16,7 @@ namespace gbe {
 			};
 		public:
 			ModelExport(std::vector<gbe::Object*> selected);
-			void Export(std::string path);
+			void Export(std::filesystem::path path);
 		};
 	}
 }

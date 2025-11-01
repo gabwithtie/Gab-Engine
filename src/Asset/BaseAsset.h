@@ -5,7 +5,7 @@
 #include <filesystem>
 
 #include "Asset/AssetLoading/AssetLoader.h"
-#include "Asset/Parsing/gbeParser.h"
+#include "Asset/File/gbeParser.h"
 
 namespace fs = std::filesystem;
 

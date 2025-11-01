@@ -78,6 +78,14 @@ namespace gbe {
 			}
 		};
 
+		struct InspectorBool : public InspectorField {
+			bool* x = nullptr;
+
+			InspectorBool() {
+				this->fieldtype = FieldType::BOOLEAN;
+			}
+		};
+
 		struct InspectorString : public InspectorField {
 			std::string* str = nullptr;
 

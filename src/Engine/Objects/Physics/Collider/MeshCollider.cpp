@@ -7,6 +7,9 @@ gbe::MeshCollider::MeshCollider(asset::Mesh* mesh)
 
 	for (const auto& tri : mesh->Get_load_data().faces)
 	{
+		if (tri.size() < 3)
+			continue;
+
 		newtris.push_back({ verts[tri[0]].pos,verts[tri[1]].pos, verts[tri[2]].pos });
 	}
 

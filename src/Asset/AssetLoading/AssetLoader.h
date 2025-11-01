@@ -62,11 +62,12 @@ namespace gbe {
 
 					auto it = active_instance->lookup_map.find(asset->Get_assetId());
 					if (it != active_instance->lookup_map.end()) {
-						throw std::exception("Asset with same ID already loaded");
+						//implement deloading logic for old asset
 					}
-					else {
-						active_instance->lookup_map.insert_or_assign(asset->Get_assetId(), asset);
-					}
+					
+					//Always override
+					active_instance->lookup_map.insert_or_assign(asset->Get_assetId(), asset);
+					
 
 					return true;
 					};

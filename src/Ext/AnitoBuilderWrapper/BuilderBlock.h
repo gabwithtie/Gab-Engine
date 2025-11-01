@@ -52,6 +52,7 @@ namespace gbe::ext::AnitoBuilder {
 		float max_dist = 40;
 		float wall_max_width = 2.5f;
 		float wall_max_height = 4;
+		bool multisegment_models = true;
 
 		float height;
 

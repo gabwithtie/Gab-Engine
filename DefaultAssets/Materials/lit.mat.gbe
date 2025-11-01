@@ -18,20 +18,28 @@
 			"value_vec3": [ 0.0, 0.0, 0.0 ]
 		},
 		{
-			"id": "color_tex",
-			"value_tex": "grid"
-		},
-		{
 			"id": "has_color_tex",
-			"value_single": 0
+			"value_single": 1
 		},
 		{
 			"id": "has_normal_tex",
-			"value_single": 0
+			"value_single": 1
 		},
 		{
 			"id": "has_arm_tex",
-			"value_single": 0
+			"value_single": 1
+		},
+		{
+			"id": "color_tex",
+			"value_tex": "plaster_a"
+		},
+		{
+			"id": "arm_tex",
+			"value_tex": "plaster_arm"
+		},
+		{
+			"id": "normal_tex",
+			"value_tex": "plaster_n"
 		},
 		{
 			"id": "shadow_strength",

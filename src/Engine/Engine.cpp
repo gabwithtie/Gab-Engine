@@ -10,6 +10,10 @@
 #include "Audio/gbe_audio.h"
 #include "Asset/gbe_asset.h"
 
+#include <nfd.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 namespace gbe {
 	Engine* Engine::instance;
 
@@ -20,6 +24,8 @@ namespace gbe {
 		instance = this;
 
 		//EDITOR SETUP
+		NFD_Init();
+
 		editor = new Editor(&renderpipeline, &window, &time);
 		if (editor != nullptr) {
 			this->window.AddAdditionalEventProcessor([=](void* newevent) {
@@ -139,6 +145,7 @@ namespace gbe {
 	{
 #pragma region Asset Loading
 		asset::BatchLoader::LoadAssetsFromDirectory("DefaultAssets");
+		asset::BatchLoader::LoadAssetsFromDirectory("cache");
 
 		//Init all that needs assets here
 		renderpipeline.InitializeAssetRequisites();

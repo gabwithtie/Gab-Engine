@@ -13,4 +13,4 @@
 #include "Assetloading/AssetDeserializer.h"
 #include "AssetLoading/BatchLoader.h"
 
-#include "Parsing/gbeParser.h"
+#include "File/gbeParser.h"

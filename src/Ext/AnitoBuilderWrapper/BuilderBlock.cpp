@@ -83,11 +83,34 @@ namespace gbe::ext::AnitoBuilder {
 		this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
 
 		//INSPECTOR
-		auto height_field = new gbe::editor::InspectorFloat();
-		height_field->name = "Height";
-		height_field->x = &this->height;
+		{
+			auto field = new gbe::editor::InspectorFloat();
+			field->name = "Height";
+			field->x = &this->height;
 
-		this->inspectorData->fields.push_back(height_field);
+			this->inspectorData->fields.push_back(field);
+		}
+		{
+			auto field = new gbe::editor::InspectorFloat();
+			field->name = "segment_max_width";
+			field->x = &this->wall_max_width;
+
+			this->inspectorData->fields.push_back(field);
+		}
+		{
+			auto field = new gbe::editor::InspectorFloat();
+			field->name = "segment_max_height";
+			field->x = &this->wall_max_height;
+
+			this->inspectorData->fields.push_back(field);
+		}
+		{
+			auto field = new gbe::editor::InspectorBool();
+			field->name = "Allow multi-segments";
+			field->x = &this->multisegment_models;
+
+			this->inspectorData->fields.push_back(field);
+		}
 	}
 
 	SerializedObject BuilderBlock::Serialize()
@@ -159,61 +182,64 @@ namespace gbe::ext::AnitoBuilder {
 
 					int floor_index = handle->Get_floor(obj);
 					int row_index = handle->Get_row(obj);
+
 					RenderObject* newrenderer = [=]()
 					{
-						bool center3x_able = handle->Get_cur_width() >= 5 && handle->Get_cur_width() % 2 == 1;
-						int center_based_x = 0;
+							if (this->multisegment_models) {
+								bool center3x_able = handle->Get_cur_width() >= 5 && handle->Get_cur_width() % 2 == 1;
+								int center_based_x = 0;
 
-						if (handle->Get_cur_width() % 2 == 1)
-							center_based_x = row_index - (handle->Get_cur_width() / 2);
-						else {
-							center_based_x = row_index - (handle->Get_cur_width() / 2);
+								if (handle->Get_cur_width() % 2 == 1)
+									center_based_x = row_index - (handle->Get_cur_width() / 2);
+								else {
+									center_based_x = row_index - (handle->Get_cur_width() / 2);
 
-							if(center_based_x >= 0)
-								center_based_x -= 1;
-						}
+									if (center_based_x >= 0)
+										center_based_x -= 1;
+								}
 
-						if (center3x_able && handle->Get_cur_height() >= 4) //3x4 walls
-						{
-							int choice_x = center_based_x + 1;
-							choice_x = 2 - choice_x; //Flip for correct side
+								if (center3x_able && handle->Get_cur_height() >= 4) //3x4 walls
+								{
+									int choice_x = center_based_x + 1;
+									choice_x = 2 - choice_x; //Flip for correct side
 
-							if(choice_x >= 0 && choice_x < 3 && floor_index < 4)
-								return new RenderObject(wall3x4_DC[floor_index][choice_x]);
-						}
+									if (choice_x >= 0 && choice_x < 3 && floor_index < 4)
+										return new RenderObject(wall3x4_DC[floor_index][choice_x]);
+								}
 
-						if (!center3x_able || abs(center_based_x) >= 3) {
-							int choice_x = -1;
-							int interval_x = center_based_x % 5;
+								if (!center3x_able || abs(center_based_x) >= 3) { //2x3 walls
+									int choice_x = -1;
+									int interval_x = center_based_x % 5;
 
 
-							if (center_based_x > 0)
-							{
-								if (interval_x == 3)
-									if (row_index + 1 < handle->Get_cur_width())
-										choice_x = 1;
-								if (interval_x == 4)
-									choice_x = 0;
+									if (center_based_x > 0)
+									{
+										if (interval_x == 3)
+											if (row_index + 1 < handle->Get_cur_width())
+												choice_x = 1;
+										if (interval_x == 4)
+											choice_x = 0;
+									}
+									else {
+										if (interval_x == -3)
+											if (row_index - 1 >= 0)
+												choice_x = 0;
+										if (interval_x == -4)
+											choice_x = 1;
+									}
+
+
+									if (choice_x >= 0 && floor_index < 3)
+										return new RenderObject(wall2x3_DC[floor_index][choice_x]);
+								}
 							}
-							else {
-								if (interval_x == -3)
-									if (row_index - 1 >= 0)
-										choice_x = 0;
-								if (interval_x == -4)
-									choice_x = 1;
-							}
 
-
-							if (choice_x >= 0 && floor_index < 3)
-								return new RenderObject(wall2x3_DC[floor_index][choice_x]);
-						}
-
-						if (floor_index == 0)
-							return new RenderObject(wallnorm_DC[0]);
-						if (floor_index > 0)
-							return new RenderObject(wallnorm_DC[1]);
+							if (floor_index == 0)
+								return new RenderObject(wallnorm_DC[0]);
+							if (floor_index > 0)
+								return new RenderObject(wallnorm_DC[1]);
 						
-					}();
+						}();
 
 					newrenderer->SetParent(renderer_parent);
 					newrenderer->World().position.Set(pos);

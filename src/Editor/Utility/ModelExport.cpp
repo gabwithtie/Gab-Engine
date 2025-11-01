@@ -9,7 +9,7 @@ gbe::editor::ModelExport::ModelExport(std::vector<gbe::Object*> selected)
 	this->selected = selected;
 }
 
-void gbe::editor::ModelExport::Export(std::string path)
+void gbe::editor::ModelExport::Export(std::filesystem::path path)
 {
 	std::vector<export_subobject> export_subobjects;
 	std::vector<RenderObject*> renderers;
@@ -20,7 +20,7 @@ void gbe::editor::ModelExport::Export(std::string path)
 		root_object->CallRecursively([&](Object* obj) {
 			RenderObject* target = dynamic_cast<RenderObject*>(obj);
 
-			if (target != nullptr && !target->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE)) {
+			if (target != nullptr && target->Get_enabled()) {
 				auto it = std::find(renderers.begin(), renderers.end(), target);
 
 				// Check if the value was found
@@ -109,11 +109,9 @@ void gbe::editor::ModelExport::Export(std::string path)
 		std::cout << "Mesh output directory creation failed or already exists." << std::endl;
 	}
 
-	auto file = std::ofstream("out/" + path, std::ios::out | std::ios::binary);
+	auto base_path = std::filesystem::path("out");
+
+	auto file = std::ofstream(base_path / path, std::ios::out | std::ios::binary);
 	file << out_string.str();
 	file.close();
-
-	auto meta_file = std::ofstream("out/" + path + ".gbe", std::ios::out | std::ios::binary);
-	meta_file << "{\"path\":" << "\"" << path << "\"" << "}";
-	meta_file.close();
 }

@@ -167,6 +167,24 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 			//DRAW THE CUSTOM INSPECTORS
 			for (auto& field : inspectordata->fields)
 			{
+				if (field->fieldtype == editor::InspectorField::BOOLEAN) {
+					auto boolfield = static_cast<editor::InspectorBool*>(field);
+					bool proxy_bool = *boolfield->x;
+
+					ImGui::PushID(boolfield->name.c_str());
+
+					DrawFieldLabel(boolfield->name);
+					std::string field_id = "##" + boolfield->name;
+					bool changed = ImGui::Checkbox(field_id.c_str(), &proxy_bool);
+
+					if (changed)
+					{
+						*boolfield->x = proxy_bool;
+					}
+
+					ImGui::PopID();
+				}
+
 				if (field->fieldtype == editor::InspectorField::FLOAT) {
 					auto floatfield = static_cast<editor::InspectorFloat*>(field);
 					float proxy_float = *floatfield->x;
