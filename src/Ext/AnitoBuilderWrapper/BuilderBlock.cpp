@@ -443,9 +443,6 @@ namespace gbe::ext::AnitoBuilder {
 					moved_i = i;
 					break;
 				}
-				else if (this->handle_pool[l.handleindex]->CheckState(Object::ObjectStateName::TRANSFORMED_LOCAL, this)) {
-					ResetHandle(s, i);
-				}
 			}
 
 			if (moved_obj != nullptr)
@@ -502,6 +499,8 @@ namespace gbe::ext::AnitoBuilder {
 			SetPosition(moved_pos_r, updated_r);
 		}
 		else {
+			ResetHandle(moved_s, moved_i);
+
 			return;
 		}
 

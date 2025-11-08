@@ -262,12 +262,12 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 		};
 		drawcall->ApplyOverride<TextureData>(shadowmaptex, "shadow_tex", vulkanInstance->GetCurrentFrameIndex());
 
-		size_t light_index = 0;
+		size_t lightIndex = 0;
 		for (size_t lightIndex = 0; lightIndex < renderer->Get_max_lights(); lightIndex++)
 		{
 			if (lightIndex >= frameinfo.lightdatas.size())
 			{
-				drawcall->ApplyOverride<Vector3>(Vector3(0), "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
+				drawcall->ApplyOverride<Vector3>(Vector3(0, 0, 0), "light_color", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
 				continue;
 			}
 
@@ -275,25 +275,17 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 			auto lightProjMat = light->GetProjectionMatrix();
 			lightProjMat[1][1] = -lightProjMat[1][1];
 
-			drawcall->ApplyOverride<Matrix4>(light->GetViewMatrix(), "light_view", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<Matrix4>(lightProjMat, "light_proj", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<int>(light->type, "light_type", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<int>(light->square_project, "light_is_square", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<float>(light->near_clip, "light_nearclip", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<float>(light->range, "light_range", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<float>(light->bias_min, "bias_min", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<float>(light->bias_mult, "bias_mult", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<float>(light->angle_inner, "light_cone_inner", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			drawcall->ApplyOverride<float>(light->angle_outer, "light_cone_outer", vulkanInstance->GetCurrentFrameIndex(), light_index);
-			
-			light_index++;
-		}
-
-		//RESET DATA OF THE REST OF THE LIGHT SETS
-		for (size_t i = light_index; i < renderer->Get_max_lights(); i++)
-		{
-			drawcall->ApplyOverride<Vector3>(Vector3(0), "light_color", vulkanInstance->GetCurrentFrameIndex(), light_index);
+			drawcall->ApplyOverride<Matrix4>(light->GetViewMatrix(), "light_view", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+			drawcall->ApplyOverride<Matrix4>(lightProjMat, "light_proj", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+			drawcall->ApplyOverride<Vector3>(light->color, "light_color", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+			drawcall->ApplyOverride<int>(light->type, "light_type", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+			drawcall->ApplyOverride<int>(light->square_project, "light_is_square", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+			drawcall->ApplyOverride<float>(light->near_clip, "light_nearclip", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+			drawcall->ApplyOverride<float>(light->range, "light_range", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+			drawcall->ApplyOverride<float>(light->bias_min, "bias_min", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+			drawcall->ApplyOverride<float>(light->bias_mult, "bias_mult", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+			drawcall->ApplyOverride<float>(light->angle_inner, "light_cone_inner", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
+			drawcall->ApplyOverride<float>(light->angle_outer, "light_cone_outer", vulkanInstance->GetCurrentFrameIndex(), lightIndex);
 		}
 
 		VkBuffer vertexBuffers[] = { curmesh.vertexBuffer->GetData() };

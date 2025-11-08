@@ -8,15 +8,21 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Gui/CreditsWindow.cpp"
 	"Gui/GuiWindow.cpp"
 	"Gui/GuiElement.cpp"
-	 "Gui/MenuBar.cpp"
-	 "Gui/HierarchyWindow.cpp"
-	 "Gui/StateWindow.cpp"
-	 "Gui/SpawnWindow.cpp"
-	 "Gui/ConsoleWindow.cpp"
-	 "Gui/GizmoLayer.cpp"
+	"Gui/MenuBar.cpp"
+	"Gui/HierarchyWindow.cpp"
+	"Gui/StateWindow.cpp"
+	"Gui/SpawnWindow.cpp"
+	"Gui/ConsoleWindow.cpp"
+	"Gui/GizmoLayer.cpp"
 
-	 "Utility/ModelExport.cpp"
- "Gui/ImageDebugger.h" "Gui/ImageDebugger.cpp" "Gui/ViewportWindow.h" "Gui/ViewportWindow.cpp" "Utility/CreateFunctions.h" "Utility/CreateFunctions.cpp" "Gui/LightExplorer.h" "Gui/LightExplorer.cpp" "Ext_Gui/AnitoBuilderWindow.h" "Ext_Gui/AnitoBuilderWindow.cpp" "Utility/FileDialogue.h")
+	"Gui/ImageDebugger.cpp"
+	"Gui/ViewportWindow.cpp"
+	"Utility/CreateFunctions.cpp"
+	"Gui/LightExplorer.cpp"
+	"Ext_Gui/AnitoBuilderWindow.cpp"
+
+	"Utility/ModelExport.cpp"
+)
 
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_graphics)

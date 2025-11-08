@@ -66,10 +66,79 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	init_info.RenderPass = vulkan::RenderPass::GetActive("main")->GetData();
 	ImGui_ImplVulkan_Init(&init_info); //init for vulkan
 
-	
-
 	//IO FLAGS
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+	//IO FEEL
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.Alpha = 1.0f;
+	style.FrameRounding = 4.0f;
+	style.WindowRounding = 4.0f;
+	style.ChildRounding = 4.0f;
+	style.PopupRounding = 4.0f;
+	style.GrabRounding = 4.0f;
+	style.TabRounding = 4.0f;
+	style.ScrollbarSize = 10.0f;
+	style.ScrollbarRounding = 12.0f;
+	style.WindowBorderSize = 0.0f;
+	style.FrameBorderSize = 0.0f;
+	style.IndentSpacing = 20.0f;
+	style.ItemSpacing = ImVec2(8.0f, 4.0f);
+	style.FramePadding = ImVec2(6.0f, 4.0f);
+
+	// Normalized R, G, B, A values [0.0f to 1.0f]
+	ImVec4* colors = style.Colors;
+
+	//COLOR CACHING
+	auto green = ImVec4(0.47f, 0.56f, 0.28f, 1.00f);
+	auto green_b = ImVec4(0.40f, 0.50f, 0.23f, 1.00f);
+
+	// Main background colors
+	colors[ImGuiCol_Text] = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+	colors[ImGuiCol_WindowBg] = ImVec4(0.13f, 0.14f, 0.17f, 1.00f); // Main Editor Background
+	colors[ImGuiCol_ChildBg] = ImVec4(0.13f, 0.14f, 0.17f, 1.00f);
+	colors[ImGuiCol_PopupBg] = ImVec4(0.13f, 0.14f, 0.17f, 1.00f);
+	colors[ImGuiCol_Border] = ImVec4(green.x, green.y, green.z, 0.70f); // Subtle Border
+
+	// Interactive element backgrounds (Input fields, sliders, etc.)
+	colors[ImGuiCol_FrameBg] = ImVec4(0.20f, 0.22f, 0.27f, 1.00f); // Slightly lighter than WindowBg
+	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.25f, 0.28f, 0.35f, 1.00f);
+	colors[ImGuiCol_FrameBgActive] = ImVec4(green.x, green.y, green.z, 1.00f);
+
+	// Title Bars
+	colors[ImGuiCol_TitleBg] = ImVec4(0.09f, 0.10f, 0.12f, 1.00f);
+	colors[ImGuiCol_TitleBgActive] = ImVec4(0.13f, 0.14f, 0.17f, 1.00f);
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.09f, 0.10f, 0.12f, 0.51f);
+
+	// Accent Colors (Using a desaturated blue for sleekness)
+	ImVec4 accentColor = ImVec4(green.x, green.y, green.z, 1.00f); // A standard medium blue
+	ImVec4 activeColor = ImVec4(green_b.x, green_b.y, green_b.z, 1.00f); // Darker blue for active state
+
+	// Buttons/Headers
+	colors[ImGuiCol_Button] = colors[ImGuiCol_FrameBg];
+	colors[ImGuiCol_ButtonHovered] = accentColor;
+	colors[ImGuiCol_ButtonActive] = activeColor;
+
+	colors[ImGuiCol_Header] = colors[ImGuiCol_FrameBg];
+	colors[ImGuiCol_HeaderHovered] = accentColor;
+	colors[ImGuiCol_HeaderActive] = activeColor;
+
+	// Tab Bar (Crucial for game engine editors)
+	colors[ImGuiCol_Tab] = ImVec4(0.17f, 0.19f, 0.22f, 1.00f);
+	colors[ImGuiCol_TabHovered] = ImVec4(green.x, green.y, green.z, 1.00f); // Active tab is bright
+	colors[ImGuiCol_TabActive] = ImVec4(0.20f, 0.22f, 0.27f, 1.00f); // Tab body color
+	colors[ImGuiCol_TabUnfocused] = ImVec4(0.13f, 0.14f, 0.17f, 1.00f);
+	colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.17f, 0.19f, 0.22f, 1.00f);
+
+	// Slider Grab and Checkmark
+	colors[ImGuiCol_SliderGrab] = accentColor;
+	colors[ImGuiCol_SliderGrabActive] = activeColor;
+	colors[ImGuiCol_CheckMark] = accentColor;
+
+	// Resize Grip
+	colors[ImGuiCol_ResizeGrip] = ImVec4(0.20f, 0.22f, 0.27f, 0.50f);
+	colors[ImGuiCol_ResizeGripHovered] = accentColor;
+	colors[ImGuiCol_ResizeGripActive] = activeColor;
 }
 
 gbe::Editor::~Editor()
