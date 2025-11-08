@@ -198,6 +198,10 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 					if (changed)
 					{
 						*floatfield->x = proxy_float;
+
+						if (floatfield->onchange) {
+							floatfield->onchange();
+						}
 					}
 
 					ImGui::PopID();

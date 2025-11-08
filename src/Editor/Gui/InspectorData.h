@@ -72,6 +72,7 @@ namespace gbe {
 
 		struct InspectorFloat : public InspectorField {
 			float* x = nullptr;
+			std::function<void()> onchange;
 
 			InspectorFloat() {
 				this->fieldtype = FieldType::FLOAT;

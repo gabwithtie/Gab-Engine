@@ -97,6 +97,7 @@ namespace gbe::ext::AnitoBuilder {
 		}
 		bool CheckSetSegment(Vector3 p, Vector3 l, Vector3 r);
 		void ResetHandle(int set, int index);
+		void ResetAllHandles();
 		inline void SetPosition(int index, Vector3& newpos) {
 			const Vector3& oldpos = data.GetPosition(index);
 

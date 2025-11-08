@@ -87,6 +87,9 @@ namespace gbe::ext::AnitoBuilder {
 			auto field = new gbe::editor::InspectorFloat();
 			field->name = "Height";
 			field->x = &this->height;
+			field->onchange = [=]() {
+				this->ResetAllHandles();
+				};
 
 			this->inspectorData->fields.push_back(field);
 		}
@@ -170,6 +173,24 @@ namespace gbe::ext::AnitoBuilder {
 				if (!handle->Get_is_edge())
 					continue;
 
+				bool center3x_able = handle->Get_cur_width() >= 5 && handle->Get_cur_width() % 2 == 1;
+				const auto get_center_x = [=](RenderObject* obj) {
+					int row_index = handle->Get_row(obj);
+
+					int center_based_x = 0;
+
+					if (handle->Get_cur_width() % 2 == 1)
+						center_based_x = row_index - (handle->Get_cur_width() / 2);
+					else {
+						center_based_x = row_index - (handle->Get_cur_width() / 2);
+
+						if (center_based_x >= 0)
+							center_based_x -= 1;
+					}
+
+					return center_based_x;
+				};
+
 				//MAIN SEGMENTS
 				for (const auto& obj : handle->Get_all_segs())
 				{
@@ -182,23 +203,12 @@ namespace gbe::ext::AnitoBuilder {
 
 					int floor_index = handle->Get_floor(obj);
 					int row_index = handle->Get_row(obj);
+					int center_based_x = get_center_x(obj);
 
 					RenderObject* newrenderer = [=]()
 					{
 							if (this->multisegment_models) {
-								bool center3x_able = handle->Get_cur_width() >= 5 && handle->Get_cur_width() % 2 == 1;
-								int center_based_x = 0;
-
-								if (handle->Get_cur_width() % 2 == 1)
-									center_based_x = row_index - (handle->Get_cur_width() / 2);
-								else {
-									center_based_x = row_index - (handle->Get_cur_width() / 2);
-
-									if (center_based_x >= 0)
-										center_based_x -= 1;
-								}
-
-								if (center3x_able && handle->Get_cur_height() >= 4) //3x4 walls
+								if (center3x_able && handle->Get_cur_height() >= 3) //3x4 walls, minus 1 because the last layer can be pahabol
 								{
 									int choice_x = center_based_x + 1;
 									choice_x = 2 - choice_x; //Flip for correct side
@@ -207,7 +217,7 @@ namespace gbe::ext::AnitoBuilder {
 										return new RenderObject(wall3x4_DC[floor_index][choice_x]);
 								}
 
-								if (!center3x_able || abs(center_based_x) >= 3) { //2x3 walls
+								if ((!center3x_able || abs(center_based_x) >= 3) && handle->Get_cur_height() >= 3) { //2x3 walls
 									int choice_x = -1;
 									int interval_x = center_based_x % 5;
 
@@ -273,8 +283,21 @@ namespace gbe::ext::AnitoBuilder {
 					Quaternion flip_rot = Quaternion::Euler(Vector3(0, 180, 0));
 					rot *= flip_rot;
 
+					int center_based_x = get_center_x(obj);
+
 					RenderObject* newrenderer = [=]()
 						{
+							if (this->multisegment_models) {
+								if (center3x_able && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
+								{
+									int choice_x = center_based_x + 1;
+									choice_x = 2 - choice_x; //Flip for correct side
+
+									if (choice_x >= 0 && choice_x < 3 && floor_index < 4)
+										return new RenderObject(wall3x4_DC[3][choice_x]);
+								}
+							}
+
 							return new RenderObject(roof_DC);
 						}();
 
@@ -345,6 +368,8 @@ namespace gbe::ext::AnitoBuilder {
 	}
 
 	void BuilderBlock::ResetHandle(int s, int i) {
+		if (model_shown) //Dont do anything if models are shown
+			return;
 
 		auto& set = this->data.sets[s];
 		auto& seg = this->data.sets[s].segs[i].seg;
@@ -393,7 +418,17 @@ namespace gbe::ext::AnitoBuilder {
 		handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
 	}
 
-	inline bool BuilderBlock::CheckSetSegment(Vector3 p, Vector3 l, Vector3 r)
+	void BuilderBlock::ResetAllHandles()
+	{
+		for (size_t s = 0; s < data.sets.size(); s++) {
+			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+			{
+				ResetHandle(s, i);
+			}
+		}
+	}
+
+	bool BuilderBlock::CheckSetSegment(Vector3 p, Vector3 l, Vector3 r)
 	{
 		Vector3 delta_a = l - p;
 		Vector3 delta_b = r - p;
