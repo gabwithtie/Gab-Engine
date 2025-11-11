@@ -1,0 +1,25 @@
+{
+	"shader": "lit",
+	"overrides": [
+		{
+			"id": "color",
+			"value_vec3": [ 1, 1, 1 ]
+		},
+		{
+			"id": "metallic",
+			"value_single": 10
+		},
+		{
+			"id": "has_color_tex",
+			"value_single": 1
+		},
+		{
+			"id": "color_tex",
+			"value_tex": "preview_wall_2"
+		},
+		{
+			"id": "shadow_strength",
+			"value_single": 0.8
+		}
+	]
+}

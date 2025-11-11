@@ -13,6 +13,9 @@ namespace gbe::ext::AnitoBuilder {
 	struct BlockSeg {
 		SetSeg seg;
 		int handleindex;
+
+		bool allow_multiseg;
+		bool is_backside;
 	};
 
 	struct BlockSet {
@@ -52,9 +55,9 @@ namespace gbe::ext::AnitoBuilder {
 		float max_dist = 40;
 		float wall_max_width = 2.5f;
 		float wall_max_height = 4;
-		bool multisegment_models = true;
-
+		
 		float height;
+		float thickness = 1.3;
 
 		//IMPORT PARAMS
 		float wall_import_height_from_zero = 1.85f;
@@ -63,7 +66,9 @@ namespace gbe::ext::AnitoBuilder {
 		//Drawcalls
 		gfx::DrawCall* ceiling_editor_DC;
 		std::array<gfx::DrawCall*, 2> wallnorm_DC;
+		std::array<gfx::DrawCall*, 2> wallnorm_DC_corner;
 		std::array<std::array<gfx::DrawCall*, 3>, 4> wall3x4_DC;
+		std::array<std::array<gfx::DrawCall*, 2>, 1> windowwall_DC;
 		std::array<std::array<gfx::DrawCall*, 2>, 3> wall2x3_DC;
 		gfx::DrawCall* roof_DC;
 		gfx::DrawCall* ceiling_DC;

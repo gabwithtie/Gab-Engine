@@ -2,9 +2,16 @@
 #include "BuilderBlock.h"
 
 namespace gbe::ext::AnitoBuilder {
-	BuilderBlockSet::BuilderBlockSet(BuilderBlock* root_block)
+	BuilderBlockSet::BuilderBlockSet(BuilderBlock* root_block):
+		type1_renderers(*this),
+		type2_renderers(*this),
+		type3_renderers(*this)
 	{
 		this->root_block = root_block;
+
+		this->type1_renderers.drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("preview_wall_1"));
+		this->type2_renderers.drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("preview_wall_2"));
+		this->type3_renderers.drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("preview_wall_3"));
 
 		//EDITOR OBJECTS
 		handle_ro = new RigidObject(true);
@@ -15,6 +22,21 @@ namespace gbe::ext::AnitoBuilder {
 
 		//INSPECTOR
 		this->SetName("Anito Builder Block Set");
+
+		{
+			auto field = new gbe::editor::InspectorBool();
+			field->name = "allow special walls";
+			field->x = &this->allow_special_walls;
+
+			this->inspectorData->fields.push_back(field);
+		}
+		{
+			auto field = new gbe::editor::InspectorBool();
+			field->name = "is backside";
+			field->x = &this->is_backside;
+
+			this->inspectorData->fields.push_back(field);
+		}
 
 		auto add_block_button = new gbe::editor::InspectorButton();
 		add_block_button->name = "Append Block";
@@ -60,34 +82,26 @@ namespace gbe::ext::AnitoBuilder {
 
 		int total_segs_needed = walls_needed * layers_needed;
 
-		if (total_segs_needed < this->renderObjects.size()) {
+		if (total_segs_needed != this->renderObjects.size()) {
 			int seg_count = this->renderObjects.size();
 			for (size_t i = 0; i < seg_count; i++)
 			{
 				this->renderObjects[i]->Destroy();
 			}
 			this->renderObjects.clear();
-		}
 
-		if (total_segs_needed > this->renderObjects.size()) {
-			int need_to_create = total_segs_needed - this->renderObjects.size();
-			for (size_t i = 0; i < need_to_create; i++)
-			{
-				auto renderer = new RenderObject(RenderObject::cube);
-				renderer->SetShadowCaster();
-				renderer->SetParent(handle_ro);
-				this->renderObjects.push_back(renderer);
-			}
+			type1_renderers.ResetPool();
+			type2_renderers.ResetPool();
+			type3_renderers.ResetPool();
 		}
 
 		int seg_count = this->renderObjects.size();
-		for (size_t i = 0; i < seg_count; i++)
+		
+		type1_renderers.ResetGetIndex();
+		type2_renderers.ResetGetIndex();
+		type3_renderers.ResetGetIndex();
+		for (size_t i = 0; i < total_segs_needed; i++)
 		{
-			if (i > total_segs_needed) {
-				this->renderObjects[i]->Destroy();
-				continue;
-			}
-
 			int x = i % walls_needed;
 			int y = floor(i / walls_needed);
 
@@ -98,6 +112,16 @@ namespace gbe::ext::AnitoBuilder {
 			float pos_y = glm::mix(start_pos_y, end_pos_y, t_y);
 
 			pos.y = pos_y;
+
+			//Create or get here
+			RenderObject* renderertomove = nullptr;
+			
+			if (y == 0)
+				renderertomove = type1_renderers.Get();
+			else if(y < layers_needed - 1)
+				renderertomove = type2_renderers.Get();
+			else
+				renderertomove = type3_renderers.Get();
 
 			this->renderObjects[i]->World().position.Set(pos);
 			this->renderObjects[i]->Local().scale.Set(Vector3(local_wall_scale_x, local_wall_scale_y, 1));

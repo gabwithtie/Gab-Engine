@@ -44,6 +44,9 @@ namespace gbe::ext::AnitoBuilder {
 		wall2x3_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-2"), material);
 		wall2x3_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-1"), material);
 		wall2x3_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-2"), material);
+
+		windowwall_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("windowwall_1-1"), material);
+		windowwall_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("windowwall_1-2"), material);
 	}
 
 	BuilderBlock::BuilderBlock(gbe::Vector3 corners[4], float height)
@@ -88,7 +91,8 @@ namespace gbe::ext::AnitoBuilder {
 			field->name = "Height";
 			field->x = &this->height;
 			field->onchange = [=]() {
-				this->ResetAllHandles();
+				if(!model_shown)
+					this->ResetAllHandles();
 				};
 
 			this->inspectorData->fields.push_back(field);
@@ -108,9 +112,9 @@ namespace gbe::ext::AnitoBuilder {
 			this->inspectorData->fields.push_back(field);
 		}
 		{
-			auto field = new gbe::editor::InspectorBool();
-			field->name = "Allow multi-segments";
-			field->x = &this->multisegment_models;
+			auto field = new gbe::editor::InspectorFloat();
+			field->name = "segment_depth";
+			field->x = &this->thickness;
 
 			this->inspectorData->fields.push_back(field);
 		}
@@ -119,6 +123,16 @@ namespace gbe::ext::AnitoBuilder {
 	SerializedObject BuilderBlock::Serialize()
 	{
 		auto obj = Object::Serialize();
+
+		for (size_t s = 0; s < data.sets.size(); s++) {
+			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+			{
+				auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
+
+				this->data.sets[s].segs[i].allow_multiseg = handle->Get_allow_special_walls();
+				this->data.sets[s].segs[i].is_backside = handle->Get_is_backside();
+			}
+		}
 
 		auto data = gbe::asset::serialization::gbeParser::ExportClassStr(this->data);
 		obj.serialized_variables.insert_or_assign("data", data);
@@ -156,6 +170,16 @@ namespace gbe::ext::AnitoBuilder {
 			this->AddBlock(corner_ptrs);
 		}
 
+		for (size_t s = 0; s < newdata.sets.size(); s++) {
+			for (size_t i = 0; i < newdata.sets[s].segs.size(); i++)
+			{
+				auto handle = this->handle_pool[newdata.sets[s].segs[i].handleindex];
+
+				handle->Set_allow_special_walls(newdata.sets[s].segs[i].allow_multiseg);
+				handle->Set_is_backside(newdata.sets[s].segs[i].is_backside);
+			}
+		}
+
 		InitializeInspectorData();
 	}
 
@@ -173,19 +197,18 @@ namespace gbe::ext::AnitoBuilder {
 				if (!handle->Get_is_edge())
 					continue;
 
-				bool center3x_able = handle->Get_cur_width() >= 5 && handle->Get_cur_width() % 2 == 1;
+				bool odd = handle->Get_cur_width() % 2 == 1;
+				bool can_put_facade = handle->Get_cur_height() >= 3 && handle->Get_cur_width() >= 5 && odd;
+
 				const auto get_center_x = [=](RenderObject* obj) {
 					int row_index = handle->Get_row(obj);
 
 					int center_based_x = 0;
 
 					if (handle->Get_cur_width() % 2 == 1)
-						center_based_x = row_index - (handle->Get_cur_width() / 2);
+						center_based_x = - (row_index - (handle->Get_cur_width() / 2));
 					else {
-						center_based_x = row_index - (handle->Get_cur_width() / 2);
-
-						if (center_based_x >= 0)
-							center_based_x -= 1;
+						center_based_x = - (row_index - (handle->Get_cur_width() / 2));
 					}
 
 					return center_based_x;
@@ -207,35 +230,61 @@ namespace gbe::ext::AnitoBuilder {
 
 					RenderObject* newrenderer = [=]()
 					{
-							if (this->multisegment_models) {
-								if (center3x_able && handle->Get_cur_height() >= 3) //3x4 walls, minus 1 because the last layer can be pahabol
+							if (handle->Get_allow_special_walls()) {
+								if (can_put_facade) //5x4 walls, minus 1 because the last layer can be pahabol
 								{
 									int choice_x = center_based_x + 1;
-									choice_x = 2 - choice_x; //Flip for correct side
 
 									if (choice_x >= 0 && choice_x < 3 && floor_index < 4)
+									{
+										if (handle->Get_is_backside())
+										{
+											if (floor_index == 0 || floor_index == 3)
+												return new RenderObject(windowwall_DC[0][0]);
+											else if (floor_index < 4)
+												return new RenderObject(windowwall_DC[0][1]);
+										}
+
 										return new RenderObject(wall3x4_DC[floor_index][choice_x]);
+									}
+
+									if (choice_x == -1 || choice_x == 3) {
+										if (floor_index == 0 || floor_index == 3)
+											return new RenderObject(windowwall_DC[0][0]);
+										else if (floor_index < 4)
+											return new RenderObject(windowwall_DC[0][1]);
+									}
 								}
 
-								if ((!center3x_able || abs(center_based_x) >= 3) && handle->Get_cur_height() >= 3) { //2x3 walls
+								if (handle->Get_cur_height() >= 3) { //2x3 walls
 									int choice_x = -1;
-									int interval_x = center_based_x % 5;
+									int interval_x = abs(center_based_x) % 4;
 
+									int interval_choice_0 = 1;
+									int interval_choice_1 = 2;
 
 									if (center_based_x > 0)
 									{
-										if (interval_x == 3)
-											if (row_index + 1 < handle->Get_cur_width())
-												choice_x = 1;
-										if (interval_x == 4)
+										//LEFT
+										if (interval_x == interval_choice_0)
+											choice_x = 0;
+										if (interval_x == interval_choice_1)
+											choice_x = 1;
+									}
+									else
+									{
+										//RIGHT
+										if (interval_x == interval_choice_0)
+											choice_x = 1;
+										if (interval_x == interval_choice_1)
 											choice_x = 0;
 									}
-									else {
-										if (interval_x == -3)
-											if (row_index - 1 >= 0)
-												choice_x = 0;
-										if (interval_x == -4)
-											choice_x = 1;
+
+									if (interval_x == interval_choice_0 && abs(center_based_x) + 2 > (handle->Get_cur_width() / 2)) {
+										choice_x = -1;
+									}
+									if (interval_x == interval_choice_1 && abs(center_based_x) + 1 > (handle->Get_cur_width() / 2)) {
+										choice_x = -1;
 									}
 
 
@@ -260,6 +309,7 @@ namespace gbe::ext::AnitoBuilder {
 					Vector3 final_scale = Vector3(1);
 					final_scale.x = inv__import_scale.x * (handle->Get_width_per_wall() / 2.0f);
 					final_scale.y = inv__import_scale.y * (handle->Get_height_per_wall());
+					final_scale.z = thickness;
 
 					newrenderer->Local().scale.Set(final_scale);
 				}
@@ -287,14 +337,21 @@ namespace gbe::ext::AnitoBuilder {
 
 					RenderObject* newrenderer = [=]()
 						{
-							if (this->multisegment_models) {
-								if (center3x_able && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
+							if (handle->Get_allow_special_walls()) {
+								if (can_put_facade && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
 								{
 									int choice_x = center_based_x + 1;
-									choice_x = 2 - choice_x; //Flip for correct side
 
-									if (choice_x >= 0 && choice_x < 3 && floor_index < 4)
-										return new RenderObject(wall3x4_DC[3][choice_x]);
+									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
+										if (handle->Get_is_backside())
+											return new RenderObject(windowwall_DC[0][1]);
+										else
+											return new RenderObject(wall3x4_DC[3][choice_x]);
+									}
+
+									if (choice_x == -1 || choice_x == 3) {
+										return new RenderObject(windowwall_DC[0][0]);
+									}
 								}
 							}
 
@@ -310,6 +367,7 @@ namespace gbe::ext::AnitoBuilder {
 					Vector3 final_scale = Vector3(1);
 					final_scale.x = inv__import_scale.x * (handle->Get_width_per_wall() / 2.0f);
 					final_scale.y = inv__import_scale.y * (handle->Get_height_per_wall());
+					final_scale.z = thickness;
 
 					newrenderer->Local().scale.Set(final_scale);
 				}
@@ -368,9 +426,6 @@ namespace gbe::ext::AnitoBuilder {
 	}
 
 	void BuilderBlock::ResetHandle(int s, int i) {
-		if (model_shown) //Dont do anything if models are shown
-			return;
-
 		auto& set = this->data.sets[s];
 		auto& seg = this->data.sets[s].segs[i].seg;
 
@@ -486,48 +541,50 @@ namespace gbe::ext::AnitoBuilder {
 
 		if (moved_obj == nullptr) //nothing more to do if theres nothing that moved
 			return;
-		if (model_shown)
-			return; //no editing if models are shown
-
+		
 		bool valid_move = true;
 
-		for (size_t s = 0; s < data.sets.size(); s++) {
-			for (size_t i = 0; i < data.sets[moved_s].segs.size(); i++)
-			{
-				auto& l = GetHandle(s, i);
+		if (model_shown)
+			valid_move = false; //no editing if models are shown
+		else {
+			for (size_t s = 0; s < data.sets.size(); s++) {
+				for (size_t i = 0; i < data.sets[moved_s].segs.size(); i++)
+				{
+					auto& l = GetHandle(s, i);
 
-				if (handle_pool[l.handleindex] == moved_obj)
-					continue;
+					if (handle_pool[l.handleindex] == moved_obj)
+						continue;
 
-				if (l.seg.second == moved_pos_l) {
-					Vector3 other_vec = updated_r;
+					if (l.seg.second == moved_pos_l) {
+						Vector3 other_vec = updated_r;
 
-					if (moved_s != s) {
-						other_vec = data.GetPosition(GetHandle(s, i + 1).seg.second);
+						if (moved_s != s) {
+							other_vec = data.GetPosition(GetHandle(s, i + 1).seg.second);
+						}
+
+						valid_move = valid_move && CheckSetSegment(updated_l, other_vec, data.GetPosition(l.seg.first));
+						valid_move = valid_move && CheckSetSegment(data.GetPosition(l.seg.first), updated_l, data.GetPosition(GetHandle(s, i - 1).seg.first));
 					}
+					if (l.seg.first == moved_pos_r) {
+						Vector3 other_vec = updated_l;
 
-					valid_move = valid_move && CheckSetSegment(updated_l, other_vec, data.GetPosition(l.seg.first));
-					valid_move = valid_move && CheckSetSegment(data.GetPosition(l.seg.first), updated_l, data.GetPosition(GetHandle(s, i - 1).seg.first));
-				}
-				if (l.seg.first == moved_pos_r) {
-					Vector3 other_vec = updated_l;
+						if (moved_s != s) {
+							other_vec = data.GetPosition(GetHandle(s, i - 1).seg.first);
+						}
 
-					if (moved_s != s) {
-						other_vec = data.GetPosition(GetHandle(s, i - 1).seg.first);
+						valid_move = valid_move && CheckSetSegment(updated_r, other_vec, data.GetPosition(l.seg.second));
+						valid_move = valid_move && CheckSetSegment(data.GetPosition(l.seg.second), updated_r, data.GetPosition(GetHandle(s, i + 1).seg.second));
 					}
-
-					valid_move = valid_move && CheckSetSegment(updated_r, other_vec, data.GetPosition(l.seg.second));
-					valid_move = valid_move && CheckSetSegment(data.GetPosition(l.seg.second), updated_r, data.GetPosition(GetHandle(s, i + 1).seg.second));
 				}
 			}
-		}
 
-		//Prevent flipping
-		auto opp_pos = handle_pool[GetHandle(moved_s, moved_i + 2).handleindex]->Local().position.Get(); //The handle opposite of the moved handle
-		Vector3 opp_dir = opp_pos - moved_obj->Local().position.Get();
-		auto opp_dot = opp_dir.Dot(moved_obj->Local().GetForward());
-		if (opp_dot < 0)
-			valid_move = false;
+			//Prevent flipping
+			auto opp_pos = handle_pool[GetHandle(moved_s, moved_i + 2).handleindex]->Local().position.Get(); //The handle opposite of the moved handle
+			Vector3 opp_dir = opp_pos - moved_obj->Local().position.Get();
+			auto opp_dot = opp_dir.Dot(moved_obj->Local().GetForward());
+			if (opp_dot < 0)
+				valid_move = false;
+		}
 
 		if (valid_move) {
 			SetPosition(moved_pos_l, updated_l);
@@ -535,7 +592,6 @@ namespace gbe::ext::AnitoBuilder {
 		}
 		else {
 			ResetHandle(moved_s, moved_i);
-
 			return;
 		}
 

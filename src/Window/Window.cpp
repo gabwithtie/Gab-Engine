@@ -71,8 +71,6 @@ namespace gbe {
                     this->keystates[gbe::Keys::MOUSE_RIGHT] = true;
                 if (sdlevent.button.button == SDL_BUTTON_MIDDLE)
                     this->keystates[gbe::Keys::MOUSE_MIDDLE] = true;
-
-                std::cout << "SDL_MOUSEBUTTONDOWN" << std::endl;
             }
             if (sdlevent.type == SDL_MOUSEBUTTONUP) {
                 if (sdlevent.button.button == SDL_BUTTON_LEFT)
@@ -81,8 +79,6 @@ namespace gbe {
                     this->keystates[gbe::Keys::MOUSE_RIGHT] = false;
                 if (sdlevent.button.button == SDL_BUTTON_MIDDLE)
                     this->keystates[gbe::Keys::MOUSE_MIDDLE] = false;
-
-                std::cout << "SDL_MOUSEBUTTONUP" << std::endl;
             }
             if (sdlevent.type == SDL_MOUSEWHEEL) {
                 if (sdlevent.wheel.y > 0)
@@ -99,8 +95,6 @@ namespace gbe {
 
                 if (symcode == SDLK_SPACE) this->keystates[gbe::Keys::SPACE] = true;
                 if (symcode == SDLK_ESCAPE) this->keystates[gbe::Keys::ESCAPE] = true;
-
-                std::cout << "SDL_KEYDOWN" << std::endl;
             }
             if (sdlevent.type == SDL_KEYUP) {
                 auto symcode = sdlevent.key.keysym.sym;
@@ -111,8 +105,6 @@ namespace gbe {
 
                 if (symcode == SDLK_SPACE) this->keystates[gbe::Keys::SPACE] = false;
                 if (symcode == SDLK_ESCAPE) this->keystates[gbe::Keys::ESCAPE] = false;
-
-                std::cout << "SDL_KEYUP" << std::endl;
             }
 
             for (auto& eventprocessor : this->additionalEventProcessors)
