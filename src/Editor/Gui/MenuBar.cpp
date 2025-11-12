@@ -61,34 +61,37 @@ void gbe::editor::MenuBar::DrawSelf()
 	if (ImGui::BeginMenu("Import")) {
 		if (ImGui::MenuItem("Model")) {
 			std::string outPath = FileDialogue::GetFilePath(FileDialogue::OPEN);
-			std::filesystem::path outpathpath(outPath);
-			std::filesystem::path destpathpath("cache/models/");
-			std::filesystem::path destmetapath("cache/models/");
 
-			std::string filename = "cache_" + outpathpath.filename().string();
-			std::string metafilename = filename + ".gbe";
+			if (outPath.size() > 0) {
+				std::filesystem::path outpathpath(outPath);
+				std::filesystem::path destpathpath("cache/models/");
+				std::filesystem::path destmetapath("cache/models/");
 
-			destpathpath /= filename;
-			destmetapath /= metafilename;
+				std::string filename = "cache_" + outpathpath.filename().string();
+				std::string metafilename = filename + ".gbe";
 
-			asset::FileUtil::Copy(outPath, destpathpath);
+				destpathpath /= filename;
+				destmetapath /= metafilename;
 
-			auto importdata = asset::data::MeshImportData{
-				.path = filename
-			};
+				asset::FileUtil::Copy(outPath, destpathpath);
 
-			asset::serialization::gbeParser::ExportClass(importdata, destmetapath);
+				auto importdata = asset::data::MeshImportData{
+					.path = filename
+				};
 
-			auto newmesh = new asset::Mesh(destmetapath);
-			auto material = asset::Material::GetAssetById("lit");
+				asset::serialization::gbeParser::ExportClass(importdata, destmetapath);
 
-			auto newrenderer = new RenderObject(RenderPipeline::RegisterDrawCall(newmesh, material));
-			newrenderer->SetParent(Engine::GetCurrentRoot());
-			newrenderer->SetUserCreated();
+				auto newmesh = new asset::Mesh(destmetapath);
+				auto material = asset::Material::GetAssetById("lit");
 
-			auto pos = Engine::GetActiveCamera()->World().position.Get() + Engine::GetActiveCamera()->World().GetForward() * 5.0f;
-			newrenderer->World().position.Set(pos);
-			newrenderer->SetName("new " + filename);
+				auto newrenderer = new RenderObject(RenderPipeline::RegisterDrawCall(newmesh, material));
+				newrenderer->SetParent(Engine::GetCurrentRoot());
+				newrenderer->SetUserCreated();
+
+				auto pos = Engine::GetActiveCamera()->World().position.Get() + Engine::GetActiveCamera()->World().GetForward() * 5.0f;
+				newrenderer->World().position.Set(pos);
+				newrenderer->SetName("new " + filename);
+			}
 		}
 		ImGui::EndMenu();
 	}
