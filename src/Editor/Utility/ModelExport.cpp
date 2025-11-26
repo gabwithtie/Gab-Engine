@@ -61,7 +61,7 @@ namespace gbe {
                 root_object->CallRecursively([&](Object* obj) {
                     RenderObject* target = dynamic_cast<RenderObject*>(obj);
 
-                    if (target != nullptr && target->Get_enabled()) {
+                    if (target != nullptr && target->Get_enabled() && !target->shadow_caster) {
                         auto it = std::find(renderers.begin(), renderers.end(), target);
 
                         // Check if the value was found
@@ -139,6 +139,7 @@ namespace gbe {
                     local_mesh->mTangents[v] = ToAiVector3D(vtx.tangent);
                     local_mesh->mTextureCoords[0][v] = aiVector3D(vtx.texCoord.x, vtx.texCoord.y, 0.0f);
                     local_mesh->mColors[0][v] = aiColor4D(vtx.color.x, vtx.color.y, vtx.color.z, 1.0f);
+					std::cout << "Copying vertex (" << std::to_string(v) << "/" << std::to_string(num_vertices) << ")\r";
                 }
 
                 // Copy Face/Index Data
@@ -154,6 +155,7 @@ namespace gbe {
                     face.mIndices[0] = mesh_data->indices[f * 3 + 0];
                     face.mIndices[1] = mesh_data->indices[f * 3 + 1];
                     face.mIndices[2] = mesh_data->indices[f * 3 + 2];
+                    std::cout << "Copying face (" << std::to_string(f) << "/" << std::to_string(num_faces) << ")\r";
                 }
 
                 // --- B. Create aiNode and Link to aiMesh/aiMaterial ---
@@ -183,6 +185,8 @@ namespace gbe {
             }
 
             // 4. Perform the export
+            std::cout << "Performing Mesh Export." << std::endl;
+
 
             // Determine the format ID from the file extension
             std::string format_id = path.extension().string();

@@ -20,6 +20,8 @@ namespace gbe {
 		inline static std::string PrimitiveTypeStr(PrimitiveType _ptype) {
 			return PrimitiveTypeStrs.at(_ptype);
 		}
+
+		bool shadow_caster = false;
 	private:
 		//PRIMITIVES CACHE
 		static std::unordered_map<PrimitiveType, gfx::DrawCall*> primitive_drawcalls;

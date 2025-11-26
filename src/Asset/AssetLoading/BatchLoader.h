@@ -76,7 +76,8 @@ namespace gbe {
                         newasset = new Texture(filepath);
                     }
                     else if(is_file_extension(filename, ".gbe")) {
-                        throw new std::runtime_error("Unknown asset type.");
+                        //throw new std::runtime_error("Unknown asset type.");
+						std::cout << "Unknown Asset Type." << std::endl;
                     }
                 }
 

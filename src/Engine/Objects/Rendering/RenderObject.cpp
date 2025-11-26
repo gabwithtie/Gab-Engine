@@ -25,6 +25,7 @@ void gbe::RenderObject::SetShadowCaster()
 	auto shadow_drawcall = RenderPipeline::RegisterDrawCall(this->mDrawCall->get_mesh(), asset::Material::GetAssetById("shadow"), -1);
 	this->shadow_renderer = new RenderObject(shadow_drawcall);
 	this->shadow_renderer->SetParent(this);
+	this->shadow_caster = true;
 }
 
 gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
