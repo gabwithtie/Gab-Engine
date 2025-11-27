@@ -22,7 +22,7 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Ext_Gui/AnitoBuilderWindow.cpp"
 
 	"Utility/ModelExport.cpp"
-)
+ "Ext_Gui/GdparcmWindow.cpp")
 
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_graphics)
