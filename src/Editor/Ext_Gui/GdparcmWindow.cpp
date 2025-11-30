@@ -1,5 +1,7 @@
 #include "GdparcmWindow.h"
 
+#include "Ext/Gdparcm/MeshAsync.h"
+
 namespace gbe {
 	namespace editor {
 		void GdparcmWindow::DrawSelf()
@@ -12,9 +14,9 @@ namespace gbe {
 				ImGui::TableSetupColumn("Progress");
 				ImGui::TableHeadersRow();
 
-				for (const auto scenename : this->scene_names)
+				for (const auto scenename : gdparcm::MeshAsync::Get_active_mesh_requests())
 				{
-					ImGui::PushID(scenename.c_str());
+					ImGui::PushID(scenename->GetName().c_str());
 				
 					ImGui::TableNextRow(); // Start a new row
 					// Image Column
@@ -23,15 +25,11 @@ namespace gbe {
 					ImGui::Text("[Image]");
 					// Name Column
 					ImGui::TableNextColumn();
-					ImGui::Text("%s", scenename.c_str());
+					ImGui::Text("%s", scenename->GetName().c_str());
 					// Progress Column
 					ImGui::TableNextColumn();
-					float progress = 0;
 
-					if(this->scene_progress.find(scenename) != this->scene_progress.end())
-					{
-						progress = this->scene_progress[scenename];
-					}
+					float progress = 0;
 					ImGui::ProgressBar(progress, ImVec2(-1.0f, 0.0f), nullptr);
 
 					ImGui::PopID();

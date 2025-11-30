@@ -15,7 +15,7 @@ namespace gbe::gfx {
         Matrix4 cam_proj;
 
         //==============ATTRIBUTES
-        Vector3 color;
+        Vector3 color = Vector3(1,1,1);
         LightType type;
 
         //Directional

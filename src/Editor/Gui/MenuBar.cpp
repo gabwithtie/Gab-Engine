@@ -64,24 +64,8 @@ void gbe::editor::MenuBar::DrawSelf()
 
 			if (outPath.size() > 0) {
 				std::filesystem::path outpathpath(outPath);
-				std::filesystem::path destpathpath("cache/models/");
-				std::filesystem::path destmetapath("cache/models/");
+				auto newmesh = asset::Mesh::ImportMesh(outpathpath);
 
-				std::string filename = "cache_" + outpathpath.filename().string();
-				std::string metafilename = filename + ".gbe";
-
-				destpathpath /= filename;
-				destmetapath /= metafilename;
-
-				asset::FileUtil::Copy(outPath, destpathpath);
-
-				auto importdata = asset::data::MeshImportData{
-					.path = filename
-				};
-
-				asset::serialization::gbeParser::ExportClass(importdata, destmetapath);
-
-				auto newmesh = new asset::Mesh(destmetapath);
 				auto material = asset::Material::GetAssetById("lit");
 
 				auto newrenderer = new RenderObject(RenderPipeline::RegisterDrawCall(newmesh, material));
@@ -90,7 +74,7 @@ void gbe::editor::MenuBar::DrawSelf()
 
 				auto pos = Engine::GetActiveCamera()->World().position.Get() + Engine::GetActiveCamera()->World().GetForward() * 5.0f;
 				newrenderer->World().position.Set(pos);
-				newrenderer->SetName("new " + filename);
+				newrenderer->SetName("new " + outpathpath.filename().string());
 			}
 		}
 		ImGui::EndMenu();

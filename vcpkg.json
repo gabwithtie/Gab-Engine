@@ -33,7 +33,8 @@
     },
     "imguizmo",
 
-    "nativefiledialog-extended"
+    "nativefiledialog-extended",
+    "sockpp"
 
   ],
   "overrides": [

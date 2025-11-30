@@ -49,6 +49,8 @@ namespace gbe {
 		class Mesh : public BaseAsset<Mesh, data::MeshImportData, data::MeshLoadData> {
 		public:
 			Mesh(std::filesystem::path path);
+
+			static Mesh* ImportMesh(std::filesystem::path path);
 		};
 	}
 }

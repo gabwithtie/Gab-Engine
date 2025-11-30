@@ -1,6 +1,6 @@
 #include "Engine.h"
 
-#include "Ext/AnitoBuilderWrapper/BuilderBlock.h"
+#include "Ext/Gdparcm/MeshAsync.h"
 
 #include "Editor/gbe_editor.h"
 #include "Math/gbe_math.h"
@@ -184,8 +184,6 @@ namespace gbe {
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(DirectionalLight).name(), [](SerializedObject* data) {return new DirectionalLight(data); });
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(ConeLight).name(), [](SerializedObject* data) {return new ConeLight(data); });
 		
-		gbe::TypeSerializer::RegisterTypeCreator(typeid(ext::AnitoBuilder::BuilderBlock).name(), [](SerializedObject* data) {return new ext::AnitoBuilder::BuilderBlock(data); });
-
 #pragma endregion
 #pragma region Input
 		auto mInputSystem = new InputSystem();
@@ -200,13 +198,9 @@ namespace gbe {
 		mInputSystem->RegisterActionListener(player_name, new MouseDragImplementation<Keys::MOUSE_MIDDLE>());
 #pragma endregion
 #pragma region Root Loaders
-		SerializedObject savedscene;
-		if (gbe::asset::serialization::gbeParser::PopulateClass(savedscene, "out/default.level")) {
-			this->current_root = this->CreateBlankRoot(&savedscene);
-		}
-		else {
-			this->current_root = this->CreateBlankRoot();
-		}
+		
+		this->current_root = this->CreateBlankRoot();
+		
 		this->InitializeRoot();
 		this->Set_state(EngineState::Edit, false);
 #pragma region scene singletons
@@ -259,7 +253,18 @@ namespace gbe {
 #pragma endregion
 
 #pragma region scene objects
-		ext::AnitoBuilder::BuilderBlock::SetModelShown(true);
+		gbe::gdparcm::MeshAsync::Init_client();
+
+		auto ground = create_primitive(RenderObject::PrimitiveType::plane, Vector3(0, 0, 0), Vector3(50, 50, 1));
+		ground->Local().rotation.Set(Quaternion::Euler(Vector3(-90, 0, 0)));
+		ground->SetParent(this->current_root);
+
+		auto light = new DirectionalLight();
+		light->World().rotation.Set(Quaternion::Euler(Vector3(45, 45, 0)));
+		light->SetParent(this->current_root);
+
+		auto mesh_0 = gbe::gdparcm::MeshAsync(8080, "0");
+
 #pragma endregion
 
 #pragma endregion
