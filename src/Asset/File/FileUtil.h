@@ -18,6 +18,9 @@ namespace gbe {
 			}
 
 			inline static void Copy(std::filesystem::path from, std::filesystem::path to) {
+				if(from == to)
+					return;
+				
 				ValidateDirectory(to);
 				
 				std::ifstream src(from, std::ios::binary);

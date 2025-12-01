@@ -32,7 +32,13 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
-		throw new std::runtime_error("Failed to load mesh");
+	throw new std::runtime_error("Failed to load mesh");
+
+        return MeshData{
+            loaddata,
+            nullptr,
+            nullptr
+        };
     }
 
     std::map<Vertex, uint16_t> unique_vertices;

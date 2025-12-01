@@ -23,10 +23,6 @@ void MeshAsync_thread_func(gbe::gdparcm::MeshAsync* instance, int port, std::str
             return;
         }
 
-        if (!connector.set_non_blocking(true)) {
-            std::cerr << "Error setting socket to non-blocking: " << connector.last_error_str() << std::endl;
-        }
-
         std::cout << "Successfully connected to server. Sending client ID..." << std::endl;
 
         // ... (Rest of the function remains the same)
@@ -48,32 +44,31 @@ void MeshAsync_thread_func(gbe::gdparcm::MeshAsync* instance, int port, std::str
         }
 
 
-        char buffer[4096];
-        ssize_t bytes_read;
+        char buffer[4024];
+        std::string full_response;
 
+        // Loop until we find the newline terminator or encounter an error
+        while (true) {
+            // 1. Read data from the socket using the sockpp connector's read()
+            // read() returns the number of bytes read, or a negative value on error.
+            ssize_t bytes_received = connector.read(buffer, sizeof(buffer));
 
-        do {
-            // bytes_read should be the result of the read operation
-            bytes_read = connector.read(buffer, sizeof(buffer));
-
-            // Check for EOF (0) or Error (< 0) immediately after the read
-            if (bytes_read <= 0) {
-                break; // Exit the loop on EOF or error
+            if (bytes_received > 0) {
+                // Append the data received (using a range constructor for safety)
+                full_response.append(buffer, bytes_received);
+                output_file << full_response;
             }
-
-            // Process the data only if bytes_read is > 0
-            std::string line = std::string(buffer);
-            line = line.substr(0, bytes_read);
-
-            output_file << line;
-
-        } while (true); // Loop indefinitely until an explicit break
-
-        // Check if the loop terminated due to an error (bytes_read < 0)
-        if (bytes_read < 0) {
-            std::cerr << "File async log: " << connector.last_error_str() << std::endl;
-            output_file.close();
-            return;
+            else if (bytes_received == 0) {
+                // Connection closed by the server (EOF)
+                std::cerr << "Server closed the connection." << std::endl;
+                break;
+            }
+            else {
+                // An error occurred (sockpp throws an exception on error, 
+                // but for simple read errors, it might return -1)
+                std::cerr << "Error receiving data: " << connector.last_error_str() << std::endl;
+                break;
+            }
         }
 
         output_file.close();
