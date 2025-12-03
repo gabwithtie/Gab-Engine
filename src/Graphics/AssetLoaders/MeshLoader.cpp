@@ -26,9 +26,9 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(pathcstr,
         aiProcess_Triangulate |
-        aiProcess_GenSmoothNormals |
-        aiProcess_CalcTangentSpace |
-        aiProcess_FlipUVs);
+        aiProcess_CalcTangentSpace| 
+        aiProcess_FlipUVs
+        );
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
@@ -41,61 +41,57 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
         };
     }
 
-    std::map<Vertex, uint16_t> unique_vertices;
+    for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
+        aiMesh* assimpMesh = scene->mMeshes[i];
+        
+        // Process Vertices, Normals, and TexCoords
+        for (unsigned int v = 0; v < assimpMesh->mNumVertices; v++) {
+            Vertex vertex = {};
 
-    aiMesh* mesh = scene->mMeshes[0];
+            // Position (Mandatory)
+            vertex.pos = glm::vec3(
+                assimpMesh->mVertices[v].x,
+                assimpMesh->mVertices[v].y,
+                assimpMesh->mVertices[v].z
+            );
 
-    // Iterate over each face
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-        aiFace face_obj = mesh->mFaces[i];
-
-        // A temporary vector to hold the indices for the current face
-        std::vector<uint16_t> current_face_indices;
-
-        // Iterate over each index in the face
-        for (unsigned int j = 0; j < face_obj.mNumIndices; j++) {
-            unsigned int assimp_vertex_index = face_obj.mIndices[j];
-
-            Vertex vertex;
-
-            // Populate the temporary vertex object
-            if (mesh->HasPositions()) {
-                vertex.pos.x = mesh->mVertices[assimp_vertex_index].x;
-                vertex.pos.y = mesh->mVertices[assimp_vertex_index].y;
-                vertex.pos.z = mesh->mVertices[assimp_vertex_index].z;
+            // Normal (Conditional)
+            if (assimpMesh->HasNormals()) {
+                vertex.normal = glm::vec3(
+                    assimpMesh->mNormals[v].x,
+                    assimpMesh->mNormals[v].y,
+                    assimpMesh->mNormals[v].z
+                );
             }
 
-            if (mesh->HasNormals()) {
-                vertex.normal.x = mesh->mNormals[assimp_vertex_index].x;
-                vertex.normal.y = mesh->mNormals[assimp_vertex_index].y;
-                vertex.normal.z = mesh->mNormals[assimp_vertex_index].z;
+            // Texture Coordinates (Conditional - Assimp supports multiple sets, we use the first)
+            if (assimpMesh->HasTextureCoords(0)) {
+                vertex.texCoord = glm::vec2(
+                    assimpMesh->mTextureCoords[0][v].x,
+                    assimpMesh->mTextureCoords[0][v].y
+                );
             }
 
-            if (mesh->HasTextureCoords(0)) {
-                vertex.texCoord.x = mesh->mTextureCoords[0][assimp_vertex_index].x;
-                vertex.texCoord.y = mesh->mTextureCoords[0][assimp_vertex_index].y;
+            if (assimpMesh->HasTangentsAndBitangents()) {
+                vertex.tangent.x = assimpMesh->mTangents[v].x;
+                vertex.tangent.y = assimpMesh->mTangents[v].y;
+                vertex.tangent.z = assimpMesh->mTangents[v].z;
             }
 
-            if (mesh->HasTangentsAndBitangents()) {
-                vertex.tangent.x = mesh->mTangents[assimp_vertex_index].x;
-                vertex.tangent.y = mesh->mTangents[assimp_vertex_index].y;
-                vertex.tangent.z = mesh->mTangents[assimp_vertex_index].z;
-            }
-
-            // Deduplication logic
-            if (unique_vertices.find(vertex) == unique_vertices.end()) {
-                unique_vertices[vertex] = static_cast<uint16_t>(vertices.size());
-                vertices.push_back(vertex);
-            }
-
-            // Add the index to both the main indices vector and the current face's indices vector
-            uint16_t deduplicated_index = unique_vertices[vertex];
-            indices.push_back(deduplicated_index);
-            current_face_indices.push_back(deduplicated_index);
+            vertices.push_back(vertex);
         }
 
-        // Add the completed face to the faces vector
-        faces.push_back(current_face_indices);
+        // Process Indices (Faces)
+        if (assimpMesh->HasFaces()) {
+            // Because we used aiProcess_Triangulate, we know faces are triangles (3 indices).
+            for (unsigned int f = 0; f < assimpMesh->mNumFaces; f++) {
+                aiFace face = assimpMesh->mFaces[f];
+                // Since we used Triangulate, face.mNumIndices will always be 3.
+                for (unsigned int k = 0; k < face.mNumIndices; k++) {
+                    indices.push_back(face.mIndices[k]);
+                }
+            }
+        }
     }
 
     //VULKAN MESH SETUP vvvvvvvvvvv

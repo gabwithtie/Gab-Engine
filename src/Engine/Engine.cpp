@@ -263,7 +263,31 @@ namespace gbe {
 		light->World().rotation.Set(Quaternion::Euler(Vector3(45, 45, 0)));
 		light->SetParent(this->current_root);
 
-		auto mesh_0 = gbe::gdparcm::MeshAsync(8080, "0");
+		{
+			auto mesh_async = new gbe::gdparcm::MeshAsync(8080, "0");
+			mesh_async->Local().position.Set(Vector3(0, 0, 0));
+			mesh_async->SetParent(this->current_root);
+		}
+		{
+			auto mesh_async = new gbe::gdparcm::MeshAsync(8080, "1");
+			mesh_async->Local().position.Set(Vector3(10, 0, 10));
+			mesh_async->SetParent(this->current_root);
+		}
+		{
+			auto mesh_async = new  gbe::gdparcm::MeshAsync(8080, "2");
+			mesh_async->Local().position.Set(Vector3(10, 0, -10));
+			mesh_async->SetParent(this->current_root);
+		}
+		{
+			auto mesh_async = new  gbe::gdparcm::MeshAsync(8080, "3");
+			mesh_async->Local().position.Set(Vector3(-10, 0, -10));
+			mesh_async->SetParent(this->current_root);
+		}
+		{
+			auto mesh_async = new gbe::gdparcm::MeshAsync(8080, "4");
+			mesh_async->Local().position.Set(Vector3(-10, 0, 10));
+			mesh_async->SetParent(this->current_root);
+		}
 
 #pragma endregion
 

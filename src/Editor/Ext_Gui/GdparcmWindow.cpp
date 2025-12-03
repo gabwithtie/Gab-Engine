@@ -7,6 +7,14 @@ namespace gbe {
 		void GdparcmWindow::DrawSelf()
 		{
 			ImGui::SeparatorText("GDP ARCM Explorer");
+
+			if (ImGui::Button("Reload All")) {
+				for (const auto meshloader : gdparcm::MeshAsync::Get_active_mesh_requests())
+				{
+					meshloader->Reload();
+				}
+			}
+
 			if (ImGui::BeginTable("GDPARCMTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable))
 			{
 				ImGui::TableSetupColumn("Image");
@@ -14,9 +22,9 @@ namespace gbe {
 				ImGui::TableSetupColumn("Progress");
 				ImGui::TableHeadersRow();
 
-				for (const auto scenename : gdparcm::MeshAsync::Get_active_mesh_requests())
+				for (const auto meshloader : gdparcm::MeshAsync::Get_active_mesh_requests())
 				{
-					ImGui::PushID(scenename->GetName().c_str());
+					ImGui::PushID(meshloader->GetName().c_str());
 				
 					ImGui::TableNextRow(); // Start a new row
 					// Image Column
@@ -25,12 +33,11 @@ namespace gbe {
 					ImGui::Text("[Image]");
 					// Name Column
 					ImGui::TableNextColumn();
-					ImGui::Text("%s", scenename->GetName().c_str());
+					ImGui::Text("%s", meshloader->GetName().c_str());
 					// Progress Column
 					ImGui::TableNextColumn();
 
-					float progress = 0;
-					ImGui::ProgressBar(progress, ImVec2(-1.0f, 0.0f), nullptr);
+					ImGui::ProgressBar(meshloader->Get_progress(), ImVec2(-1.0f, 0.0f), nullptr);
 
 					ImGui::PopID();
 				}

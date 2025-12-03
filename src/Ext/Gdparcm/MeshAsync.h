@@ -8,9 +8,11 @@
 
 #include <sockpp/version.h> // Include this header
 
+#include <thread>
+
 namespace gbe::gdparcm
 {
-	class MeshAsync : public Object {
+	class MeshAsync : public Object, public Update {
 	private:
 		static std::vector<MeshAsync*> active_mesh_requests;
 
@@ -22,7 +24,20 @@ namespace gbe::gdparcm
 		inline std::filesystem::path Get_filepath() {
 			return mesh_file_directory / std::string(client_id + ".obj");
 		}
+
+		std::thread* worker_thread = nullptr;
+		gbe::RenderObject* this_renderer = nullptr;
+
+		
 	public:
+		float progress = 0.0f;
+		int file_size = 1;
+		bool worker_done = false;
+		
+		inline float Get_progress() const {
+			return progress;
+		}
+
 		inline static void Init_client() {
 			sockpp::initialize();
 			std::cout << "Socket library initialized successfully." << std::endl;
@@ -40,5 +55,9 @@ namespace gbe::gdparcm
 				active_mesh_requests.erase(it);
 		}
 		void CreateRenderer();
+
+		void InvokeUpdate(float deltatime) override;
+
+		void Reload();
 	};
 }

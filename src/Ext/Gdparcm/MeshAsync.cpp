@@ -25,6 +25,36 @@ void MeshAsync_thread_func(gbe::gdparcm::MeshAsync* instance, int port, std::str
 
         std::cout << "Successfully connected to server. Sending client ID..." << std::endl;
 
+        //GET FILE SIZE
+        {
+            auto req_str = client_id + "l";
+            if (connector.write(req_str) != req_str.length()) {
+                std::cerr << "Error sending client_id to server: "
+                    << connector.last_error_str() << std::endl;
+                return;
+            }
+
+            char buffer[128];
+            ssize_t bytes_received = connector.read(buffer, sizeof(buffer) - 1);
+
+            if (bytes_received > 0) {
+                buffer[bytes_received] = '\0';
+                
+				instance->file_size = std::stoi(buffer);
+            }
+            else if (bytes_received == 0) {
+                // Connection closed by the server (EOF)
+                std::cerr << "Server closed the connection." << std::endl;
+            }
+            else {
+                // An error occurred (sockpp throws an exception on error, 
+                // but for simple read errors, it might return -1)
+                std::cerr << "Error receiving data: " << connector.last_error_str() << std::endl;
+            }
+
+            instance->file_size = std::stoi(buffer);
+        }
+
         // ... (Rest of the function remains the same)
 
         // 3. Send the client_id to the server
@@ -34,8 +64,6 @@ void MeshAsync_thread_func(gbe::gdparcm::MeshAsync* instance, int port, std::str
             return;
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-
         // 4. Receive the server reply (the mesh file) and write to disk
         std::ofstream output_file(filepath);
         if (!output_file.is_open()) {
@@ -43,20 +71,21 @@ void MeshAsync_thread_func(gbe::gdparcm::MeshAsync* instance, int port, std::str
             return;
         }
 
-
         char buffer[4024];
-        std::string full_response;
+		int total_bytes_received = 0;
 
         // Loop until we find the newline terminator or encounter an error
         while (true) {
-            // 1. Read data from the socket using the sockpp connector's read()
-            // read() returns the number of bytes read, or a negative value on error.
-            ssize_t bytes_received = connector.read(buffer, sizeof(buffer));
+            ssize_t bytes_received = connector.read(buffer, sizeof(buffer) - 1);
+			total_bytes_received += bytes_received;
 
             if (bytes_received > 0) {
-                // Append the data received (using a range constructor for safety)
-                full_response.append(buffer, bytes_received);
-                output_file << full_response;
+				buffer[bytes_received] = '\0';
+                output_file << buffer;
+
+				instance->progress = (float)total_bytes_received / (float)instance->file_size;
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
             else if (bytes_received == 0) {
                 // Connection closed by the server (EOF)
@@ -74,14 +103,12 @@ void MeshAsync_thread_func(gbe::gdparcm::MeshAsync* instance, int port, std::str
         output_file.close();
 
         std::cout << "Successfully received and saved mesh file to: " << filepath.string() << std::endl;
-
-        // 5. Call CreateRenderer() when the file is successfully saved
-        instance->CreateRenderer();
-
     }
     catch (const std::exception& e) {
         std::cerr << "Standard exception caught: " << e.what() << std::endl;
     }
+
+	instance->worker_done = true;
 }
 
 // ... (MeshAsync::MeshAsync and MeshAsync::CreateRenderer remain the same)
@@ -101,11 +128,31 @@ namespace gbe::gdparcm
 
         // Create the full filepath for the output file
         std::filesystem::path output_filepath = Get_filepath();
+    }
 
-        // Launch a new detached thread to handle the asynchronous networking
-        std::thread t(MeshAsync_thread_func, this, this->server_port, this->client_id, output_filepath);
-        t.detach();
+    void MeshAsync::InvokeUpdate(float deltatime)
+    {
+        if (this->worker_thread != nullptr && worker_done) {
+            this->worker_thread->join();
 
+			std::cout << "Mesh download thread joined for client ID: " << this->client_id << std::endl;
+            
+            this->CreateRenderer();
+
+			free(this->worker_thread);
+			this->worker_thread = nullptr; // Prevent further joins
+        }
+    }
+
+    void MeshAsync::Reload()
+    {
+        if (this->this_renderer != nullptr) {
+            this->this_renderer->Destroy();
+            this->this_renderer = nullptr;
+        }
+
+        this->worker_thread = new std::thread(MeshAsync_thread_func, this, this->server_port, this->client_id, Get_filepath());
+        this->worker_done = false;
     }
 
     void gbe::gdparcm::MeshAsync::CreateRenderer()
@@ -126,8 +173,8 @@ namespace gbe::gdparcm
 
         auto material = asset::Material::GetAssetById("lit");
 
-        auto newrenderer = new RenderObject(RenderPipeline::RegisterDrawCall(newmesh, material));
-        newrenderer->SetParent(this);
+        this->this_renderer = new RenderObject(RenderPipeline::RegisterDrawCall(newmesh, material));
+        this->this_renderer->SetParent(this);
 
         std::cout << "Renderer created successfully for client ID: " << this->client_id << std::endl;
     }
