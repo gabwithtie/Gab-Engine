@@ -22,7 +22,8 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 
 	spawnWindow(this->selected),
 	inspectorwindow(this->selected),
-	viewportWindow(this->selected)
+	viewportWindow(this->selected),
+	gdparcmWindow(this->viewportWindow)
 {
 	instance = this;
 

@@ -28,12 +28,17 @@ namespace gbe::gdparcm
 		std::thread* worker_thread = nullptr;
 		gbe::RenderObject* this_renderer = nullptr;
 
+		bool shown = false;
 		
 	public:
 		float progress = 0.0f;
 		int file_size = 1;
 		bool worker_done = false;
 		
+		inline bool Get_shown() const {
+			return shown;
+		}
+
 		inline float Get_progress() const {
 			return progress;
 		}
@@ -58,6 +63,9 @@ namespace gbe::gdparcm
 
 		void InvokeUpdate(float deltatime) override;
 
-		void Reload();
+		void Unload();
+		void Load();
+		void Show();
+		void Hide();
 	};
 }

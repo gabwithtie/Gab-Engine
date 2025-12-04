@@ -267,26 +267,31 @@ namespace gbe {
 			auto mesh_async = new gbe::gdparcm::MeshAsync(8080, "0");
 			mesh_async->Local().position.Set(Vector3(0, 0, 0));
 			mesh_async->SetParent(this->current_root);
+			mesh_async->SetName("armadillo");
 		}
 		{
 			auto mesh_async = new gbe::gdparcm::MeshAsync(8080, "1");
 			mesh_async->Local().position.Set(Vector3(10, 0, 10));
 			mesh_async->SetParent(this->current_root);
+			mesh_async->SetName("beast");
 		}
 		{
 			auto mesh_async = new  gbe::gdparcm::MeshAsync(8080, "2");
 			mesh_async->Local().position.Set(Vector3(10, 0, -10));
 			mesh_async->SetParent(this->current_root);
+			mesh_async->SetName("cheburashka");
 		}
 		{
 			auto mesh_async = new  gbe::gdparcm::MeshAsync(8080, "3");
 			mesh_async->Local().position.Set(Vector3(-10, 0, -10));
 			mesh_async->SetParent(this->current_root);
+			mesh_async->SetName("cow");
 		}
 		{
 			auto mesh_async = new gbe::gdparcm::MeshAsync(8080, "4");
 			mesh_async->Local().position.Set(Vector3(-10, 0, 10));
 			mesh_async->SetParent(this->current_root);
+			mesh_async->SetName("horse");
 		}
 
 #pragma endregion

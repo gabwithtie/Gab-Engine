@@ -144,15 +144,44 @@ namespace gbe::gdparcm
         }
     }
 
-    void MeshAsync::Reload()
+    void MeshAsync::Unload()
     {
         if (this->this_renderer != nullptr) {
             this->this_renderer->Destroy();
             this->this_renderer = nullptr;
+			this->progress = 0.0f;
+        }
+    }
+
+    void MeshAsync::Load()
+    {
+        if (this->this_renderer == nullptr && this->worker_thread == nullptr) {
+            this->worker_thread = new std::thread(MeshAsync_thread_func, this, this->server_port, this->client_id, Get_filepath());
+            this->worker_done = false;
+        }
+        else {
+            this->Show();
         }
 
-        this->worker_thread = new std::thread(MeshAsync_thread_func, this, this->server_port, this->client_id, Get_filepath());
-        this->worker_done = false;
+		this->shown = true;
+    }
+
+    void MeshAsync::Show()
+    {
+        if (this->this_renderer != nullptr) {
+            this->this_renderer->Set_enabled(true);
+        }
+
+		this->shown = true;
+    }
+
+    void MeshAsync::Hide()
+    {
+        if (this->this_renderer != nullptr) {
+            this->this_renderer->Set_enabled(false);
+        }
+
+		this->shown = false;
     }
 
     void gbe::gdparcm::MeshAsync::CreateRenderer()
@@ -177,6 +206,10 @@ namespace gbe::gdparcm
         this->this_renderer->SetParent(this);
 
         std::cout << "Renderer created successfully for client ID: " << this->client_id << std::endl;
+
+        if (!this->shown) {
+            this->this_renderer->Set_enabled(false);
+		}
     }
 
 }
