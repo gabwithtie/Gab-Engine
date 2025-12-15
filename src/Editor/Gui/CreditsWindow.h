@@ -14,8 +14,7 @@ namespace gbe {
 			std::string GetWindowId() override;
 
 			gbe::asset::Texture* logo_tex;
-			VkDescriptorSet logo_tex_DS;
-
+			TextureData& logo_tex_data;
 		public:
 			CreditsWindow();
 			void DrawSelf() override;

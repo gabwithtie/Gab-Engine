@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Math/gbe_math.h"
+
 namespace gbe::gfx {
     struct Light {
         enum LightType {
@@ -9,19 +11,19 @@ namespace gbe::gfx {
         };
 
         //==============RUNTIME DATA
-        Vector3 position;
-        Vector3 direction;
-        Matrix4 cam_view;
-        Matrix4 cam_proj;
+        gbe::Vector3 position;
+        gbe::Vector3 direction;
+        gbe::Matrix4 cam_view;
+        gbe::Matrix4 cam_proj;
 
         //==============ATTRIBUTES
-        Vector3 color;
+        gbe::Vector3 color;
         LightType type;
 
         //Directional
         float override_dist = 50;
         float dir_backtrack_dist = 100;
-        std::vector<Vector4> frustrum_corners;
+        std::vector<gbe::Vector4> frustrum_corners;
         Vector3 frustrum_center;
 
         //Cone
@@ -39,10 +41,10 @@ namespace gbe::gfx {
         bool created_context_view = false;
         bool created_context_proj = false;
 
-        Matrix4 proj_cache;
-        Matrix4 view_cache;
+        gbe::Matrix4 proj_cache;
+        gbe::Matrix4 view_cache;
 
-        inline void UpdateContext(Matrix4 _cam_view, Matrix4 _cam_proj) {
+        inline void UpdateContext(gbe::Matrix4 _cam_view, gbe::Matrix4 _cam_proj) {
             cam_view = _cam_view;
             cam_proj = _cam_proj;
 
@@ -52,8 +54,8 @@ namespace gbe::gfx {
             if(type != DIRECTIONAL)
 				return;
 
-            frustrum_corners = Matrix4::get_frustrum_corners(cam_proj, cam_view);
-            frustrum_center = Matrix4::get_frustrum_center(frustrum_corners);
+            frustrum_corners = gbe::Matrix4::get_frustrum_corners(cam_proj, cam_view);
+            frustrum_center = gbe::Matrix4::get_frustrum_center(frustrum_corners);
 
             float radius = 0.0f;
             for (uint32_t j = 0; j < 8; j++) {
@@ -75,7 +77,7 @@ namespace gbe::gfx {
             near_clip = 0;
         }
 
-        inline Matrix4 GetViewMatrix() {
+        inline gbe::Matrix4 GetViewMatrix() {
             if (created_context_view)
                 return view_cache;
 
@@ -89,14 +91,14 @@ namespace gbe::gfx {
                 break;
             }
             case POINT:
-                view_cache = Matrix4(1);
+                view_cache = gbe::Matrix4(1);
             }
             
             created_context_view = true;
             return view_cache;
         }
 
-        inline Matrix4 GetProjectionMatrix() {
+        inline gbe::Matrix4 GetProjectionMatrix() {
             if (created_context_proj)
                 return proj_cache;
 
@@ -111,7 +113,7 @@ namespace gbe::gfx {
                 break;
             }
             case POINT: {
-                proj_cache = Matrix4(1);
+                proj_cache = gbe::Matrix4(1);
                 break;
             }
             }

@@ -7,21 +7,19 @@
 #include <optional>
 #include <tuple>
 
-#include "Ext/GabVulkan/Objects.h"
+// Replaced Vulkan objects with bgfx
+#include <bgfx/bgfx.h> 
 
 namespace gbe {
 	namespace gfx {
-		struct TransformUBO {
-			gbe::Matrix4 model;
-			gbe::Matrix4 view;
-			gbe::Matrix4 proj;
-		};
+		// TransformUBO removed as it is typically managed by RenderPipeline/DrawCall in a bgfx context
 
 		struct MeshData {
 			asset::data::MeshLoadData* loaddata;
 
-			vulkan::Buffer* vertexBuffer;
-			vulkan::Buffer* indexBuffer;
+			// Replaced vulkan::Buffer* with bgfx handles
+			bgfx::VertexBufferHandle vertex_vbh = BGFX_INVALID_HANDLE;
+			bgfx::IndexBufferHandle index_vbh = BGFX_INVALID_HANDLE;
 		};
 
 		class MeshLoader : public asset::AssetLoader<asset::Mesh, asset::data::MeshImportData, asset::data::MeshLoadData, MeshData> {

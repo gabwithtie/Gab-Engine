@@ -1,7 +1,8 @@
 #include "MeshLoader.h"
 
-#include "../RenderPipeline.h"
-#include "Ext/GabVulkan/Objects.h"
+// Remove Vulkan includes
+#include "../RenderPipeline.h" 
+// #include "Ext/GabVulkan/Objects.h" // REMOVED
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -10,15 +11,38 @@
 #include <vector>
 #include <map>
 
+// BGFX: Define the vertex layout. This must match asset::data::Vertex.
+// Note: This should ideally be defined once in your engine/pipeline setup,
+// but is defined here for completeness of this file's operation.
+static bgfx::VertexLayout s_vertexLayout;
+static bool s_layoutInitialized = false;
+
 using namespace gbe::asset::data;
 
-gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const asset::data::MeshImportData & importdata, asset::data::MeshLoadData * loaddata)
+// Helper function to ensure layout is initialized before use
+static void initLayout() {
+    if (!s_layoutInitialized) {
+        // Assuming asset::data::Vertex is: pos(vec3), normal(vec3), texCoord(vec2), tangent(vec3)
+        s_vertexLayout.begin()
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float) // pos
+            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float) // normal
+            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float) // texCoord
+            .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float) // tangent (if used)
+            .end();
+        s_layoutInitialized = true;
+    }
+}
+
+
+gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* loaddata)
 {
+    initLayout(); // Ensure bgfx layout is set up
+
     auto meshpath = asset->Get_asset_filepath().parent_path() / importdata.path;
 
     auto pathstr = meshpath.generic_string();
     auto pathcstr = pathstr.c_str();
-    
+
     std::vector<asset::data::Vertex> vertices = {};
     std::vector<uint16_t> indices = {};
     std::vector<std::vector<uint16_t>> faces = {};
@@ -32,7 +56,7 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
-		throw new std::runtime_error("Failed to load mesh");
+        throw new std::runtime_error("Failed to load mesh");
     }
 
     std::map<Vertex, uint16_t> unique_vertices;
@@ -92,55 +116,53 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh * asset, const a
         faces.push_back(current_face_indices);
     }
 
-    //VULKAN MESH SETUP vvvvvvvvvvv
-    VkDeviceSize vbufferSize = sizeof(vertices[0]) * vertices.size();
+    //===================BGFX MESH SETUP===================
 
-    vulkan::Buffer stagingBuffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    // VERTEX BUFFER
+    const size_t vbufferSize = sizeof(vertices[0]) * vertices.size();
 
-    void* vdata;
-    vulkan::VirtualDevice::GetActive()->MapMemory(stagingBuffer.GetMemory(), 0, vbufferSize, 0, &vdata);
-    memcpy(vdata, vertices.data(), (size_t)vbufferSize);
-    vulkan::VirtualDevice::GetActive()->UnMapMemory(stagingBuffer.GetMemory());
+    // BGFX: Create a memory reference and create the vertex buffer
+    const bgfx::Memory* vertexMem = bgfx::makeRef(vertices.data(), (uint32_t)vbufferSize);
+    bgfx::VertexBufferHandle vertexBufferHandle = bgfx::createVertexBuffer(vertexMem, s_vertexLayout, BGFX_BUFFER_NONE);
 
-    //MM_note: Will be freed by unload asset.
+    if (vertexBufferHandle.idx == bgfx::kInvalidHandle) {
+        throw std::runtime_error("Failed to create bgfx Vertex Buffer");
+    }
 
-    vulkan::Buffer* vertexBuffer = new vulkan::Buffer(vbufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    vulkan::Buffer::CopyBuffer(&stagingBuffer, vertexBuffer, vbufferSize);
+    // INDEX BUFFER
+    const size_t ibufferSize = sizeof(indices[0]) * indices.size();
 
-    //INDEX BUFFER
-    VkDeviceSize ibufferSize = sizeof(indices[0]) * indices.size();
+    // BGFX: Create a memory reference and create the index buffer (using 16-bit indices)
+    const bgfx::Memory* indexMem = bgfx::makeRef(indices.data(), (uint32_t)ibufferSize);
+    bgfx::IndexBufferHandle indexBufferHandle = bgfx::createIndexBuffer(indexMem, BGFX_BUFFER_INDEX32); // Use BGFX_BUFFER_INDEX32 for 32-bit indices if needed, BGFX_BUFFER_NONE defaults to 16-bit. Sticking to 16-bit since indices is uint16_t.
 
-    vulkan::Buffer istagingBuffer(ibufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    if (indexBufferHandle.idx == bgfx::kInvalidHandle) {
+        throw std::runtime_error("Failed to create bgfx Index Buffer");
+    }
 
-    void* idata;
-    vulkan::VirtualDevice::GetActive()->MapMemory(istagingBuffer.GetMemory(), 0, ibufferSize, 0, &idata);
-    memcpy(idata, indices.data(), (size_t)ibufferSize);
-    vulkan::VirtualDevice::GetActive()->UnMapMemory(istagingBuffer.GetMemory());
-
-    vulkan::Buffer* indexBuffer = new vulkan::Buffer(ibufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    vulkan::Buffer::CopyBuffer(&istagingBuffer, indexBuffer, ibufferSize);
-
-    //UNIFORM BUFFER
-    std::vector<VkBuffer> uniformBuffers;
-    std::vector<VkDeviceMemory> uniformBuffersMemory;
-    std::vector<void*> uniformBuffersMapped;
-
-    //COMMITTING
+    // COMMITTING
     loaddata->indices = indices;
     loaddata->vertices = vertices;
     loaddata->faces = faces;
 
     return MeshData{
         loaddata,
-        vertexBuffer,
-        indexBuffer
-        };
+        vertexBufferHandle, // Pass the bgfx handle
+        indexBufferHandle   // Pass the bgfx handle
+    };
 }
 
 void gbe::gfx::MeshLoader::UnLoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* data)
 {
     const auto& meshdata = this->GetAssetData(asset);
 
-    delete meshdata.vertexBuffer;
-    delete meshdata.indexBuffer;
+    // BGFX: Destroy the handles to free GPU memory
+    if (bgfx::isValid(meshdata.vertex_vbh)) {
+        bgfx::destroy(meshdata.vertex_vbh);
+    }
+    if (bgfx::isValid(meshdata.index_vbh)) {
+        bgfx::destroy(meshdata.index_vbh);
+    }
+
+    // Note: loaddata is managed by the AssetLoader base class/user
 }

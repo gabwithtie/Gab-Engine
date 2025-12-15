@@ -20,6 +20,7 @@ add_executable(${PROJECT_NAME} "src/gab-engine.h" "src/gab-engine.cpp")
 target_link_libraries(${PROJECT_NAME} PRIVATE gbe_engine_src)
 
 #Dependency Loading
+
 #WINDOW CORE LIBRARY
 find_package(SDL2 CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME}
@@ -29,6 +30,9 @@ target_link_libraries(${PROJECT_NAME}
 )
 find_package(SDL2_mixer CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>)
+
+#RENDERER CORE LIBRARY
+add_subdirectory("bgfx.cmake")
 
 #DEBUGGING PROJECT FILES/TOOLS
 message("[GABENGINE] Project install prefix at: " "${CMAKE_INSTALL_PREFIX}")

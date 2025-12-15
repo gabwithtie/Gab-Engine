@@ -48,10 +48,6 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 
 	gui_ds = new vulkan::DescriptorPool(pool_sizes, 1000, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
 
-	TextureLoader::Set_Ui_Callback([](vulkan::Sampler* sampler, vulkan::ImageView* imgview) {
-		return ImGui_ImplVulkan_AddTexture(sampler->GetData(), imgview->GetData(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-			});
-
 	ImGui::CreateContext(); //init self
 	ImGui_ImplSDL2_InitForVulkan(static_cast<SDL_Window*>(window->Get_implemented_window())); //init for sdl
 	ImGui_ImplVulkan_InitInfo init_info = {};
@@ -375,7 +371,7 @@ void gbe::Editor::PrepareUpdate()
 	ImGui::Render();
 }
 
-void gbe::Editor::RenderPass(vulkan::CommandBuffer* cmd)
+void gbe::Editor::RenderPass()
 {
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd->GetData());
+	throw new std::runtime_error("Editor::RenderPass not implemented for BGFX.");
 }

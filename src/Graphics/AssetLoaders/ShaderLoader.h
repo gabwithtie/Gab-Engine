@@ -4,6 +4,7 @@
 #include "Math/gbe_math.h"
 
 #include "TextureLoader.h"
+#include <bgfx/bgfx.h> // ADDED bgfx header
 
 #include <optional>
 #include <tuple>
@@ -11,9 +12,11 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+#include <map> 
 
 namespace gbe {
 	namespace gfx {
+		// (ShaderStageMeta, TextureMeta, UboType, UboMeta structs remain the same)
 		struct ShaderStageMeta {
 			struct TextureMeta {
 				std::string name;
@@ -54,6 +57,8 @@ namespace gbe {
 				unsigned int set = 0;
 				unsigned int binding = 0;
 				unsigned int array_size = 1;
+				// NEW: Bgfx Uniform Handle for the uniform block (e.g., UBOs)
+				bgfx::UniformHandle uniformHandle = BGFX_INVALID_HANDLE;
 			};
 
 			struct ShaderField {
@@ -65,14 +70,17 @@ namespace gbe {
 				unsigned int array_size = 1;
 				size_t offset = 0;
 				size_t size = 0;
+				// NEW: Bgfx Uniform Handle for Samplers or single uniforms (if not in a block)
+				bgfx::UniformHandle uniformHandle = BGFX_INVALID_HANDLE;
 			};
 
-			std::map<unsigned int, std::vector<VkDescriptorSetLayoutBinding>> binding_sets;
-			std::map<unsigned int, VkDescriptorSetLayout> descriptorSetLayouts;
+			// REMOVED VULKAN MEMBERS (DescriptorSetLayouts, PipelineLayout, Pipeline)
+
+			// NEW BGFX PROGRAM HANDLE
+			bgfx::ProgramHandle programHandle = BGFX_INVALID_HANDLE;
+
 			std::vector<ShaderBlock> uniformblocks;
 			std::vector<ShaderField> uniformfields;
-			VkPipelineLayout pipelineLayout;
-			VkPipeline pipeline;
 			asset::Shader* asset;
 
 			bool FindUniformField(std::string id, ShaderField& out_field, ShaderBlock& out_block);
@@ -80,12 +88,13 @@ namespace gbe {
 		};
 
 		class ShaderLoader : public asset::AssetLoader<asset::Shader, asset::data::ShaderImportData, asset::data::ShaderLoadData, ShaderData> {
-		private:
-			VkShaderModule TryCompileShader(const std::vector<char>& code);
 		protected:
 			ShaderData LoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, asset::data::ShaderLoadData* data) override;
 			void UnLoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, asset::data::ShaderLoadData* data) override;
+
+			// REMOVED TryCompileShader as bgfx shaders are typically pre-compiled
 		public:
+			void AssignSelfAsLoader() override;
 		};
 	}
 }

@@ -92,7 +92,7 @@ namespace gbe {
 		void UpdateSelectionGui(Object* newlyclicked);
 		void PrepareUpdate();
 		void ProcessRawWindowEvent(void* rawwindowevent);
-		void RenderPass(vulkan::CommandBuffer* cmd);
+		void RenderPass();
 		inline bool FocusedOnEditorUI() {
 			bool pointer_really_inUi = pointer_inUi && !viewportWindow.Get_pointer_here();
 			return pointer_really_inUi || keyboard_inUi;

@@ -1,7 +1,10 @@
 #include "DrawCall.h"
 
+// Update includes
 #include "../RenderPipeline.h"
 #include "CallInstance.h"
+#include "../AssetLoaders/TextureLoader.h" 
+#include "Math/gbe_math.h" // For Vector2, Vector3, Vector4 types
 
 namespace gbe {
     using namespace gfx;
@@ -13,16 +16,13 @@ namespace gbe {
         this->m_mesh = mesh;
         this->m_material = material;
     }
+
+    // BGFX: Destructor simplified. No per-frame buffers to delete.
     gfx::DrawCall::~DrawCall()
     {
-        for (size_t i = 0; i < uniformBuffers.size(); i++)
-        {
-            for (size_t j = 0; j < uniformBuffers[i].uboPerFrame.size(); j++)
-            {
-                vulkan::VirtualDevice::GetActive()->UnMapMemory(uniformBuffers[i].uboPerFrame[j]->GetMemory());
-                delete uniformBuffers[i].uboPerFrame[j];
-            }
-        }
+        // bgfx::BufferHandles for uniforms are managed by the ShaderData/RenderPipeline, not per DrawCall UBOs.
+        // We only need to clean up resources we explicitly created.
+        // In this adapted model, uniformBuffers were mostly for tracking and don't hold BGFX handles to destroy.
     }
 
     asset::Mesh* gfx::DrawCall::get_mesh()
@@ -37,6 +37,9 @@ namespace gbe {
 
     bool gfx::DrawCall::SyncMaterialData(unsigned int frameindex)
     {
+        // NOTE: The frameindex parameter is mostly a vestige of the per-frame Vulkan UBOs.
+        // In bgfx, calling setUniform/setTexture updates the state for the current frame/view submission.
+
         for (size_t m_i = 0; m_i < this->get_material()->getOverrideCount(); m_i++)
         {
             std::string id;
@@ -44,12 +47,12 @@ namespace gbe {
 
             if (overridedata.registered_change == false)
             {
-				overrideHandledList.insert_or_assign(id, std::vector<int>()); //reset handled list for this id
+                overrideHandledList.insert_or_assign(id, std::vector<int>()); //reset handled list for this id
             }
             else {
                 for (const auto& frame_handled : overrideHandledList[id])
                 {
-					if (frame_handled == frameindex) //already handled this frame
+                    if (frame_handled == frameindex) //already handled this frame
                         continue;
                 }
             }
@@ -61,14 +64,18 @@ namespace gbe {
             if (!found)
                 continue;
 
+            // BGFX: ApplyOverride template handles setting the uniform state.
+            // Note: The original INT override used value_float, which is potentially a bug in the original code,
+            // but is preserved here by casting/passing a float to the int override.
             if (overridedata.type == asset::Shader::UniformFieldType::BOOL) {
-                this->ApplyOverride<bool>(overridedata.value_bool, id, frameindex);
+                // BOOL is typically represented as a float/int in shaders
+                this->ApplyOverride<float>(overridedata.value_bool ? 1.0f : 0.0f, id, frameindex);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::FLOAT) {
                 this->ApplyOverride<float>(overridedata.value_float, id, frameindex);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::INT) {
-                this->ApplyOverride<int>(overridedata.value_float, id, frameindex);
+                this->ApplyOverride<int>((int)overridedata.value_float, id, frameindex); // Cast float to int
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::VEC2) {
                 this->ApplyOverride<Vector2>(overridedata.value_vec2, id, frameindex);
@@ -81,13 +88,12 @@ namespace gbe {
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::TEXTURE)
             {
+                // TextureData must now be adapted to hold a bgfx::TextureHandle
                 auto findtexturedata = TextureLoader::GetAssetData(overridedata.value_tex);
-
                 this->ApplyOverride(findtexturedata, id, frameindex);
             }
 
-			overrideHandledList[id].push_back(frameindex);
-
+            overrideHandledList[id].push_back(frameindex);
             overridedata.registered_change = true;
         }
 

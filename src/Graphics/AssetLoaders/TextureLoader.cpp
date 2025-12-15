@@ -1,9 +1,16 @@
 #include "TextureLoader.h"
 
-#include "../RenderPipeline.h"
+#include <stb_image.h>
 
-//Function is to be injected by the UI library in use
-gbe::gfx::GbeUiCallbackFunction gbe::gfx::TextureLoader::Ui_Callback;
+#include "../RenderPipeline.h"
+#include <stdexcept>
+
+// BGFX: Helper function to map channels to bgfx format (using RGBA8 / 4 channels)
+bgfx::TextureFormat::Enum GetBgfxFormat(int colorchannels) {
+	// Assuming 4 channels (RGBA) are always loaded for consistency
+	return bgfx::TextureFormat::RGBA8;
+}
+
 
 gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* loaddata) {
 	const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.filename;
@@ -13,114 +20,113 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
 	int tex_height;
 	int colorchannels;
 
+	// Force 4 channels (RGBA) for consistent GPU loading
 	stbi_set_flip_vertically_on_load(true);
 	pixels = stbi_load(pathstr.string().c_str(), &tex_width, &tex_height, &colorchannels, 4);
 
-	if(pixels == nullptr) {
+	if (pixels == nullptr) {
 		throw std::runtime_error("Failed to load texture image!");
 	}
-
-	//GET PIXEL COLORS HERE
 
 	loaddata->colorchannels = colorchannels;
 	loaddata->dimensions = Vector2Int(tex_width, tex_height);
 
-	//VULKAN TEXTURE LOAD
-	VkDeviceSize imageSizevk = tex_width * tex_height * 4;
+	//===================BGFX TEXTURE LOAD===================
 
-	vulkan::Buffer stagingBuffer(imageSizevk, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	bgfx::TextureFormat::Enum format = GetBgfxFormat(4);
 
-	void* vkdata;
-	vulkan::VirtualDevice::GetActive()->MapMemory(stagingBuffer.GetMemory(), 0, imageSizevk, 0, &vkdata);
-	memcpy(vkdata, pixels, static_cast<size_t>(imageSizevk));
-	vulkan::VirtualDevice::GetActive()->UnMapMemory(stagingBuffer.GetMemory());
+	// 1. Create a memory buffer for bgfx from the loaded pixels
+	const bgfx::Memory* mem = bgfx::copy(pixels, tex_width * tex_height * 4);
 
-	stbi_image_free(pixels);
-	
-	//MM_note: will be freed by Unload asset function.
+	// 2. Create the texture handle
+	uint64_t flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
 
-	vulkan::Image* textureImage = new vulkan::Image(tex_width, tex_height, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	vulkan::ImageView* textureImageView = new vulkan::ImageView(textureImage, VK_IMAGE_ASPECT_COLOR_BIT);
-	vulkan::Sampler* textureSampler = new vulkan::Sampler();
-
-	//DO UI LOADING HERE
-	VkDescriptorSet tex_DS = nullptr;
-	bool ui_initted = false;
-
-	if (importdata.type == "UI") {
-		if (TextureLoader::Ui_Callback)
-		{
-			tex_DS = TextureLoader::Ui_Callback(textureSampler, textureImageView);
-			ui_initted = true;
-		}
-		else {
-			std::cerr << "Texture loaded as a UI Texture but UI Texture Loader not initialized." << std::endl;
-		}
+	// Assuming a property for SRGB might be available
+	//if (importdata.srgb_enabled)
+	{
+		flags |= BGFX_TEXTURE_SRGB;
 	}
 
-	//Map memory
-	textureImage->transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	vulkan::Image::copyBufferToImage(&stagingBuffer, textureImage);
-	textureImage->transitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
+		(uint16_t)tex_width,
+		(uint16_t)tex_height,
+		false, // Not using mips generated from the original data
+		1,     // Number of layers/array slices
+		format,
+		flags,
+		mem
+	);
 
+	// 3. Free CPU memory
+	stbi_image_free(pixels);
+
+	if (textureHandle.idx == bgfx::kInvalidHandle) {
+		throw std::runtime_error("Failed to create bgfx texture handle!");
+	}
+
+
+	//COMMITTING
 	return TextureData{
-		.textureImageView = textureImageView,
-		.textureImage = textureImage,
-		.textureSampler = textureSampler,
-		.gui_initialized = ui_initted,
-		.DS = tex_DS
+		.textureHandle = textureHandle,
+		.width = (unsigned int)tex_width,
+		.height = (unsigned int)tex_height
 	};
 }
-void gbe::gfx::TextureLoader::UnLoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) {
-	const auto& assetdata = GetAssetData(target);
 
-	delete assetdata.textureImage;
-	delete assetdata.textureImageView;
-	delete assetdata.textureSampler;
+
+void gbe::gfx::TextureLoader::UnLoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data)
+{
+	const auto& texturedata = this->GetAssetData(asset);
+
+	// BGFX: Destroy the handle
+	if (bgfx::isValid(texturedata.textureHandle)) {
+		bgfx::destroy(texturedata.textureHandle);
+	}
+}
+
+void gbe::gfx::TextureLoader::AssignSelfAsLoader()
+{
+	// Load the default image (1x1 white pixel)
+	int tex_width = 1;
+	int tex_height = 1;
+	int colorchannels = 4; // Force RGBA
+
+	// Allocate and set the pixel to white
+	stbi_uc* pixels = (stbi_uc*)calloc(tex_width * tex_height * colorchannels, 1);
+	pixels[0] = 255; // R
+	pixels[1] = 255; // G
+	pixels[2] = 255; // B
+	pixels[3] = 255; // A
+
+	//===================BGFX DEFAULT TEXTURE LOAD===================
+	bgfx::TextureFormat::Enum format = GetBgfxFormat(4);
+	const bgfx::Memory* mem = bgfx::copy(pixels, tex_width * tex_height * 4);
+
+	bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
+		(uint16_t)tex_width,
+		(uint16_t)tex_height,
+		false,
+		1,
+		format,
+		BGFX_TEXTURE_NONE,
+		mem
+	);
+
+	free(pixels);
+
+	if (textureHandle.idx == bgfx::kInvalidHandle) {
+		throw std::runtime_error("Failed to create bgfx default texture handle!");
+	}
+
+	// COMMITTING
+	defaultImage = TextureData{
+		.textureHandle = textureHandle,
+		.width = (unsigned int)tex_width,
+		.height = (unsigned int)tex_height
+	};
 }
 
 gbe::gfx::TextureData& gbe::gfx::TextureLoader::GetDefaultImage()
 {
-	return static_cast<TextureLoader*>(active_instance)->defaultImage;
-}
-
-void gbe::gfx::TextureLoader::AssignSelfAsLoader() {
-	asset::AssetLoader<asset::Texture, asset::data::TextureImportData, asset::data::TextureLoadData, TextureData>::AssignSelfAsLoader();
-
-	//CREATING DEFAULT IMAGE
-	int tex_width = 1;
-	int tex_height = 1;
-	int colorchannels = 3;
-
-	stbi_uc* pixels = (stbi_uc*)calloc(tex_width * tex_height * colorchannels, 1);
-
-	//VULKAN TEXTURE LOAD
-	VkDeviceSize imageSize = tex_width * tex_height * (colorchannels + 1);
-
-	vulkan::Buffer stagingBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-	void* vkdata;
-	vulkan::VirtualDevice::GetActive()->MapMemory(stagingBuffer.GetMemory(), 0, imageSize, 0, &vkdata);
-	memcpy(vkdata, pixels, static_cast<size_t>(imageSize));
-	vulkan::VirtualDevice::GetActive()->UnMapMemory(stagingBuffer.GetMemory());
-
-	stbi_image_free(pixels);
-
-	vulkan::Image* textureImage = new vulkan::Image(tex_width, tex_height, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	vulkan::ImageView* textureImageView = new vulkan::ImageView(textureImage, VK_IMAGE_ASPECT_COLOR_BIT);
-	vulkan::Sampler* textureSampler = new vulkan::Sampler();
-
-	textureImage->transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	vulkan::Image::copyBufferToImage(&stagingBuffer, textureImage);
-	textureImage->transitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-	this->defaultImage = TextureData{
-		textureImageView,
-		textureImage,
-		textureSampler
-	};
-}
-
-const void gbe::gfx::TextureLoader::Set_Ui_Callback(GbeUiCallbackFunction func) {
-	gbe::gfx::TextureLoader::Ui_Callback = func;
+	return static_cast<gbe::gfx::TextureLoader*>(active_base_instance)->defaultImage;
 }
