@@ -2,8 +2,13 @@
 
 #include <imgui.h>
 #include <imgui_internal.h>
-#include <imgui_impl_vulkan.h>
 #include <imgui_impl_sdl2.h>
+#include "Ext/bgfx-imgui/imgui_impl_bgfx.h"
+
+#include <bx/bx.h>
+#include <bx/allocator.h>
+#include <bgfx/bgfx.h>
+#include <bgfx/platform.h>
 
 #include <ImGuizmo.h>
 
@@ -31,36 +36,19 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	this->mtime = _mtime;
 
 	//===========================IMGUI=============================//
-	std::vector<VkDescriptorPoolSize> pool_sizes =
-	{
-		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-	};
+	SDL_Window* implemented_window = static_cast<SDL_Window*>(window->Get_implemented_window());
 
-	gui_ds = new vulkan::DescriptorPool(pool_sizes, 1000, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+	ImGui::CreateContext();
 
-	ImGui::CreateContext(); //init self
-	ImGui_ImplSDL2_InitForVulkan(static_cast<SDL_Window*>(window->Get_implemented_window())); //init for sdl
-	ImGui_ImplVulkan_InitInfo init_info = {};
-	init_info.Instance = vulkan::Instance::GetActive()->GetData();
-	init_info.PhysicalDevice = vulkan::PhysicalDevice::GetActive()->GetData();
-	init_info.Device = vulkan::VirtualDevice::GetActive()->GetData();
-	init_info.Queue = vulkan::VirtualDevice::GetActive()->Get_graphicsQueue();
-	init_info.DescriptorPool = gui_ds->GetData();
-	init_info.MinImageCount = 3;
-	init_info.ImageCount = 3;
-	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-	init_info.RenderPass = vulkan::RenderPass::GetActive("main")->GetData();
-	ImGui_ImplVulkan_Init(&init_info); //init for vulkan
+	ImGui_Implbgfx_Init(255);
+#if BX_PLATFORM_WINDOWS
+	ImGui_ImplSDL2_InitForD3D(implemented_window);
+#elif BX_PLATFORM_OSX
+	ImGui_ImplSDL2_InitForMetal(implemented_window);
+#elif BX_PLATFORM_LINUX || BX_PLATFORM_EMSCRIPTEN
+	ImGui_ImplSDL2_InitForOpenGL(implemented_window, nullptr);
+#endif // BX_PLATFORM_WINDOWS ? BX_PLATFORM_OSX ? BX_PLATFORM_LINUX ?
+	// BX_PLATFORM_EMSCRIPTEN
 
 	//IO FLAGS
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;

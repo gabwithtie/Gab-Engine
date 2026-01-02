@@ -4,9 +4,6 @@
 #include <stdexcept>
 #include "Editor/gbe_editor.h" 
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-
 // BGFX: Define vertex layout for line drawing (must match asset::data::Vertex)
 // Assuming asset::data::Vertex contains pos(vec3), normal(vec3), texcoord(vec2)
 static bgfx::VertexLayout s_vertexLayout;
@@ -37,31 +34,42 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions) 
 	bgfx::Init init;
 	// Use platform data from SDL
 	SDL_Window* implemented_window = static_cast<SDL_Window*>(window.Get_implemented_window());
+	
+#if !BX_PLATFORM_EMSCRIPTEN
 	SDL_SysWMinfo wmi;
 	SDL_VERSION(&wmi.version);
 	if (!SDL_GetWindowWMInfo(implemented_window, &wmi)) {
-		throw std::runtime_error("Failed to get SDL window info.");
+		throw new std::runtime_error("SDL_SysWMinfo could not be retrieved. SDL_Error: %s\n" + std::string(SDL_GetError()));
 	}
+	bgfx::renderFrame(); // single threaded mode
+#endif // !BX_PLATFORM_EMSCRIPTEN
 
+	bgfx::PlatformData pd{};
 #if BX_PLATFORM_WINDOWS
-	init.platformData.nwh = wmi.info.win.window;
-#elif BX_PLATFORM_LINUX
-	init.platformData.ndt = wmi.info.x11.display;
-	init.platformData.nwh = (void*)(uintptr_t)wmi.info.x11.window;
+	pd.nwh = wmi.info.win.window;
 #elif BX_PLATFORM_OSX
-	init.platformData.nwh = wmi.info.cocoa.window;
-#endif
+	pd.nwh = wmi.info.cocoa.window;
+#elif BX_PLATFORM_LINUX
+	pd.ndt = wmi.info.x11.display;
+	pd.nwh = (void*)(uintptr_t)wmi.info.x11.window;
+#elif BX_PLATFORM_EMSCRIPTEN
+	pd.nwh = (void*)"#canvas";
+#endif // BX_PLATFORM_WINDOWS ? BX_PLATFORM_OSX ? BX_PLATFORM_LINUX ?
+	// BX_PLATFORM_EMSCRIPTEN
 
-	init.resolution.width = dimensions.x;
-	init.resolution.height = dimensions.y;
-	init.resolution.reset = BGFX_RESET_VSYNC; // Default reset flags
+	bgfx::Init bgfx_init;
+	bgfx_init.type = bgfx::RendererType::Count; // auto choose renderer
+	bgfx_init.resolution.width = dimensions.x;
+	bgfx_init.resolution.height = dimensions.y;
+	bgfx_init.resolution.reset = BGFX_RESET_VSYNC;
+	bgfx_init.platformData = pd;
+	bgfx::init(bgfx_init);
 
-	if (!bgfx::init(init)) {
-		throw std::runtime_error("bgfx::init failed!");
-	}
 
 	// Set main view to be the whole window/viewport
-	bgfx::setViewRect(m_mainViewId, 0, 0, (uint16_t)dimensions.x, (uint16_t)dimensions.y);
+	bgfx::setViewClear(
+		0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
+	bgfx::setViewRect(0, 0, 0, dimensions.x, dimensions.y);
 	bgfx::setDebug(BGFX_DEBUG_TEXT);
 
 	// BGFX: Initialize Vertex Layout

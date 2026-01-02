@@ -11,8 +11,7 @@ namespace gbe {
 			struct ShaderImportData {
 				std::string vert;
 				std::string frag;
-				std::string vert_meta;
-				std::string frag_meta;
+				std::string def;
 				std::string wireframe;
 				std::string line;
 				std::string renderpass;

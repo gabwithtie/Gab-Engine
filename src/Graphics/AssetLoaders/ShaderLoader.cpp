@@ -2,6 +2,7 @@
 // #include "Ext/GabVulkan/Utility/DebugObjectName.h" // Vulkan utility removed
 #include <stdexcept>
 
+
 namespace {
     // Utility to read a binary file (shader)
     std::vector<char> readfile(std::filesystem::path path) {
@@ -26,8 +27,6 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
     //============READING SHADER BINARIES AND METADATA============//
     auto vertpath = asset->Get_asset_filepath().parent_path() / importdata.vert;
     auto fragpath = asset->Get_asset_filepath().parent_path() / importdata.frag;
-    auto vertmetapath = asset->Get_asset_filepath().parent_path() / importdata.vert_meta;
-    auto fragmetapath = asset->Get_asset_filepath().parent_path() / importdata.frag_meta;
 
     // Read the compiled shader code (assuming these are BGFX-compiled binaries)
     auto vertShaderCode = readfile(vertpath);
@@ -156,4 +155,5 @@ bool gbe::gfx::ShaderData::FindUniformBlock(std::string id, ShaderBlock& out_blo
 
 void gbe::gfx::ShaderLoader::AssignSelfAsLoader()
 {
+    AssetLoader::AssignSelfAsLoader();
 }

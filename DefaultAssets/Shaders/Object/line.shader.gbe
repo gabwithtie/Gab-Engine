@@ -1,8 +1,5 @@
 {
-  "asset_id": "wireframe",
-  "vert": "line.vert.spv",
-  "vert_meta": "line.vert.json",
-  "frag": "vertcolor.frag.spv",
-  "frag_meta": "vertcolor.frag.json",
+  "vert": "vs_sms_mesh.sc.bin",
+  "frag": "fs_sms_mesh.sc.bin",
   "line": "true"
 }

@@ -25,7 +25,6 @@ vcpkg-manifest-install.log
 *.ipch
 *.db
 # CMAKE
-*.cmake
 CMakeCache.txt
 **/CMakeFiles
 /doxygen

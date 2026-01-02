@@ -1,132 +1,117 @@
 #include "TextureLoader.h"
-
-#include <stb_image.h>
-
 #include "../RenderPipeline.h"
+
+#include <bx/bx.h>
+#include <bx/file.h>
+#include <bimg/decode.h>
 #include <stdexcept>
 
-// BGFX: Helper function to map channels to bgfx format (using RGBA8 / 4 channels)
-bgfx::TextureFormat::Enum GetBgfxFormat(int colorchannels) {
-	// Assuming 4 channels (RGBA) are always loaded for consistency
-	return bgfx::TextureFormat::RGBA8;
-}
+// Global or static allocator for bimg
+static bx::DefaultAllocator s_allocator;
 
+// Helper to release bimg container memory once bgfx is done with it
+static void imageReleaseCallback(void* _ptr, void* _userData) {
+    bimg::ImageContainer* imageContainer = (bimg::ImageContainer*)_userData;
+    bimg::imageFree(imageContainer);
+}
 
 gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* loaddata) {
-	const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.filename;
+    const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.filename;
+    std::string path = pathstr.string();
 
-	stbi_uc* pixels;
-	int tex_width;
-	int tex_height;
-	int colorchannels;
+    // 1. Read file into memory (same as before)
+    bx::FileReader reader;
+    bx::open(&reader, pathstr.string().c_str());
+    uint32_t size = (uint32_t)bx::getSize(&reader);
+    uint8_t* raw_data = (uint8_t*)bx::alloc(&s_allocator, size);
+    bx::Error read_err;
+    bx::read(&reader, raw_data, size, &read_err);
+    bx::close(&reader);
 
-	// Force 4 channels (RGBA) for consistent GPU loading
-	stbi_set_flip_vertically_on_load(true);
-	pixels = stbi_load(pathstr.string().c_str(), &tex_width, &tex_height, &colorchannels, 4);
+    // 2. Parse the header to get dimensions
+    bx::Error err;
+    bimg::ImageContainer header;
+    bimg::imageParse(header, static_cast<bx::ReaderSeekerI*>(&reader), & err);
+    if (!err.isOk()) {
+        bx::free(&s_allocator, raw_data);
+        throw std::runtime_error("Failed to parse texture header");
+    }
 
-	if (pixels == nullptr) {
-		throw std::runtime_error("Failed to load texture image!");
-	}
+    uint32_t width = header.m_width;
+    uint32_t height = header.m_height;
+    uint32_t depth = header.m_depth;
 
-	loaddata->colorchannels = colorchannels;
-	loaddata->dimensions = Vector2Int(tex_width, tex_height);
+    // 3. Allocate memory for the 32-bit Float RGBA output
+    // (Width * Height * 4 channels * 4 bytes per float)
+    uint32_t dst_pitch = width * 16;
+    uint32_t dest_size = width * height * 16;
+    float* float_pixels = (float*)bx::alloc(&s_allocator, dest_size);
 
-	//===================BGFX TEXTURE LOAD===================
+    // 4. Decode specifically to RGBA32F
+    // Note the signature: (allocator, dest, src, src_size, error)
+    bimg::imageDecodeToRgba32f(&s_allocator, float_pixels, raw_data, width, height, depth, dst_pitch, header.m_format);
 
-	bgfx::TextureFormat::Enum format = GetBgfxFormat(4);
+    // Clean up header and raw file data immediately
+    bimg::imageFree(&header);
+    bx::free(&s_allocator, raw_data);
 
-	// 1. Create a memory buffer for bgfx from the loaded pixels
-	const bgfx::Memory* mem = bgfx::copy(pixels, tex_width * tex_height * 4);
+    // 5. Create the bgfx Texture
+    // IMPORTANT: You MUST use bgfx::TextureFormat::RGBA32F
+    const bgfx::Memory* mem = bgfx::makeRef(float_pixels, dest_size, [](void* ptr, void* userData) {
+        bx::free(&s_allocator, ptr); // Custom free to clean up the float buffer
+        }, nullptr);
 
-	// 2. Create the texture handle
-	uint64_t flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
+    bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
+        (uint16_t)width,
+        (uint16_t)height,
+        false, 1,
+        bgfx::TextureFormat::RGBA32F,
+        BGFX_TEXTURE_NONE,
+        mem
+    );
 
-	// Assuming a property for SRGB might be available
-	//if (importdata.srgb_enabled)
-	{
-		flags |= BGFX_TEXTURE_SRGB;
-	}
-
-	bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
-		(uint16_t)tex_width,
-		(uint16_t)tex_height,
-		false, // Not using mips generated from the original data
-		1,     // Number of layers/array slices
-		format,
-		flags,
-		mem
-	);
-
-	// 3. Free CPU memory
-	stbi_image_free(pixels);
-
-	if (textureHandle.idx == bgfx::kInvalidHandle) {
-		throw std::runtime_error("Failed to create bgfx texture handle!");
-	}
-
-
-	//COMMITTING
-	return TextureData{
-		.textureHandle = textureHandle,
-		.width = (unsigned int)tex_width,
-		.height = (unsigned int)tex_height
-	};
+    return TextureData{
+        .textureHandle = textureHandle,
+        .width = width,
+        .height = height
+    };
 }
-
 
 void gbe::gfx::TextureLoader::UnLoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data)
 {
-	const auto& texturedata = this->GetAssetData(asset);
-
-	// BGFX: Destroy the handle
-	if (bgfx::isValid(texturedata.textureHandle)) {
-		bgfx::destroy(texturedata.textureHandle);
-	}
+    const auto& texturedata = this->GetAssetData(asset);
+    if (bgfx::isValid(texturedata.textureHandle)) {
+        bgfx::destroy(texturedata.textureHandle);
+    }
 }
 
 void gbe::gfx::TextureLoader::AssignSelfAsLoader()
 {
-	// Load the default image (1x1 white pixel)
-	int tex_width = 1;
-	int tex_height = 1;
-	int colorchannels = 4; // Force RGBA
+    AssetLoader::AssignSelfAsLoader();
 
-	// Allocate and set the pixel to white
-	stbi_uc* pixels = (stbi_uc*)calloc(tex_width * tex_height * colorchannels, 1);
-	pixels[0] = 255; // R
-	pixels[1] = 255; // G
-	pixels[2] = 255; // B
-	pixels[3] = 255; // A
+    // Default 1x1 White Pixel
+    const uint32_t width = 1;
+    const uint32_t height = 1;
+    const bgfx::Memory* mem = bgfx::alloc(width * height * 4);
+    uint32_t* pixels = (uint32_t*)mem->data;
+    pixels[0] = 0xffffffff;
 
-	//===================BGFX DEFAULT TEXTURE LOAD===================
-	bgfx::TextureFormat::Enum format = GetBgfxFormat(4);
-	const bgfx::Memory* mem = bgfx::copy(pixels, tex_width * tex_height * 4);
+    bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
+        (uint16_t)width,
+        (uint16_t)height,
+        false, 1,
+        bgfx::TextureFormat::RGBA8,
+        BGFX_TEXTURE_NONE,
+        mem
+    );
 
-	bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
-		(uint16_t)tex_width,
-		(uint16_t)tex_height,
-		false,
-		1,
-		format,
-		BGFX_TEXTURE_NONE,
-		mem
-	);
-
-	free(pixels);
-
-	if (textureHandle.idx == bgfx::kInvalidHandle) {
-		throw std::runtime_error("Failed to create bgfx default texture handle!");
-	}
-
-	// COMMITTING
-	defaultImage = TextureData{
-		.textureHandle = textureHandle,
-		.width = (unsigned int)tex_width,
-		.height = (unsigned int)tex_height
-	};
+    defaultImage = TextureData{
+        .textureHandle = textureHandle,
+        .width = width,
+        .height = height
+    };
 }
 
-gbe::gfx::TextureData& gbe::gfx::TextureLoader::GetDefaultImage()
-{
-	return static_cast<gbe::gfx::TextureLoader*>(active_base_instance)->defaultImage;
+gbe::gfx::TextureData& gbe::gfx::TextureLoader::GetDefaultImage() {
+    return static_cast<gbe::gfx::TextureLoader*>(active_base_instance)->defaultImage;
 }

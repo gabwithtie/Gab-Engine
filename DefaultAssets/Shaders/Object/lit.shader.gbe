@@ -1,6 +1,4 @@
 {
-  "vert": "3d.vert.spv",
-  "vert_meta": "3d.vert.json",
-  "frag": "lit.frag.spv",
-  "frag_meta": "lit.frag.json"
+  "vert": "vs_sms_mesh.sc.bin",
+  "frag": "fs_sms_mesh.sc.bin"
 }

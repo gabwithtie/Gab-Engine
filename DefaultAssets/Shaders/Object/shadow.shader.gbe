@@ -1,7 +1,5 @@
 {
-  "vert": "shadow.vert.spv",
-  "vert_meta": "shadow.vert.json",
-  "frag": "depth.frag.spv",
-  "frag_meta": "depth.frag.json",
+  "vert": "vs_sms_shadow.sc.bin",
+  "frag": "fs_sms_shadow.sc.bin",
   "renderpass": "shadow"
 }

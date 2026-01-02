@@ -19,9 +19,6 @@
 #include <bgfx/defines.h>
 #include <bgfx/platform.h>
 #include <bx/bx.h>
-// #include "Ext/GabVulkan/Utility/ValidationLayers.h" // Removed
-// #include "Ext/GabVulkan/Utility/MemoryBarrier.h" // Removed
-// #include "Ext/GabVulkan/Components/ForwardRenderer/ForwardRenderer.h" // Removed
 
 #include "Math/gbe_math.h"
 #include "Asset/gbe_asset.h"

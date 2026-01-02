@@ -1,0 +1,24 @@
+{
+	"shaders": [
+		{
+			"file": "fs_sms_mesh.sc",
+			"type": "fragment",
+			"varying": "varying.def.sc"
+		},
+		{
+			"file": "fs_sms_shadow.sc",
+			"type": "fragment",
+			"varying": "varying.def.sc"
+		},
+		{
+			"file": "vs_sms_mesh.sc",
+			"type": "vertex",
+			"varying": "varying.def.sc"
+		},
+		{
+			"file": "vs_sms_shadow.sc",
+			"type": "vertex",
+			"varying": "varying.def.sc"
+		}
+	]
+}
