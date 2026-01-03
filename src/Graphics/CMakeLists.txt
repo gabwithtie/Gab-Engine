@@ -34,6 +34,6 @@ target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE assimp::assimp)
 find_package(OpenCV REQUIRED)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE opencv_core opencv_highgui)
 
-target_link_libraries(${CURRENT_CMAKE_LIB} PUBLIC bgfx bimg bx)
+target_link_libraries(${CURRENT_CMAKE_LIB} PUBLIC bgfx bimg bx bgfx-imgui bgfx-utils)
 
 message("[GABENGINE] LOADED: " ${CMAKE_CURRENT_SOURCE_DIR})

@@ -297,7 +297,8 @@ namespace gbe::ext::AnitoBuilder {
 								return new RenderObject(wallnorm_DC[0]);
 							if (floor_index > 0)
 								return new RenderObject(wallnorm_DC[1]);
-						
+							
+							return (RenderObject*)nullptr;
 						}();
 
 					newrenderer->SetParent(renderer_parent);

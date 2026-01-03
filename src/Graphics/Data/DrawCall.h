@@ -85,7 +85,14 @@ namespace gbe {
             template<typename T>
             inline bool ApplyOverride(const T& valueref, std::string target, unsigned int frameindex, unsigned int arrayindex = 0) const {
                 
-                throw std::runtime_error("TextureData override not implemented in this snippet.");
+                bgfx::UniformHandle handle;
+                    
+                if (!this->shaderdata->GetUniform(handle, target))
+                    this->shaderdata->SetUniform<T>(target); //temporary fix, we want to do this at shader loading stage
+
+                this->shaderdata->GetUniform(handle, target);
+
+                bgfx::setUniform(handle, &valueref, 1);
 
                 return true;
             }
@@ -94,7 +101,14 @@ namespace gbe {
             template <>
             inline bool ApplyOverride<TextureData>(const TextureData& valueref, std::string target, unsigned int frameindex, unsigned int arrayindex) const {
                 
-				throw std::runtime_error("TextureData override not implemented in this snippet.");
+                bgfx::UniformHandle handle;
+
+                if (!this->shaderdata->GetUniform(handle, target))
+                    this->shaderdata->SetUniform<TextureData>(target); //temporary fix, we want to do this at shader loading stage
+
+                this->shaderdata->GetUniform(handle, target);
+
+                bgfx::setTexture(0, handle, valueref.textureHandle);
 
                 return true;
             }

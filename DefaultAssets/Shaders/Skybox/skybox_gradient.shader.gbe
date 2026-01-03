@@ -1,7 +1,0 @@
-{
-  "vert": "skybox.vert.spv",
-  "vert_meta": "skybox.vert.json",
-  "frag": "skybox_gradient.frag.spv",
-  "frag_meta": "skybox_gradient.frag.json",
-  "backfacecull" :  "false"
-}

@@ -16,39 +16,6 @@
 
 namespace gbe {
 	namespace gfx {
-		// (ShaderStageMeta, TextureMeta, UboType, UboMeta structs remain the same)
-		struct ShaderStageMeta {
-			struct TextureMeta {
-				std::string name;
-				std::string type;
-				unsigned int set;
-				unsigned int binding;
-				std::vector<int> array;
-			};
-			struct UboType {
-				struct UboTypeMember {
-					std::string name;
-					std::string type;
-					unsigned int offset;
-				};
-
-				std::string name;
-				std::vector<UboTypeMember> members;
-			};
-			struct UboMeta {
-				std::string name;
-				std::string type;
-				unsigned int block_size;
-				unsigned int set;
-				unsigned int binding;
-				std::vector<int> array;
-			};
-			std::unordered_map<std::string, UboType> types;
-			std::vector<TextureMeta> textures;
-			std::vector<UboMeta> ubos;
-			std::vector<UboMeta> push_constants;
-		};
-
 		struct ShaderData {
 			struct ShaderBlock {
 				std::string name = "";
@@ -83,8 +50,60 @@ namespace gbe {
 			std::vector<ShaderField> uniformfields;
 			asset::Shader* asset;
 
-			bool FindUniformField(std::string id, ShaderField& out_field, ShaderBlock& out_block);
-			bool FindUniformBlock(std::string id, ShaderBlock& out_block);
+			std::unordered_map<std::string, bgfx::UniformHandle> m_uniforms;
+
+			inline bool GetUniform(bgfx::UniformHandle& out, const std::string& name) {
+				auto it = m_uniforms.find(name);
+				if (it != m_uniforms.end())
+				{
+					out = it->second;
+					return true;
+				}
+
+				return false;
+			}
+
+			template<typename T>
+			void SetUniform(const std::string& name) {
+				throw new std::runtime_error("Unsupported uniform type.");
+			}
+
+			void Internal_CreateVec4Uniform(const std::string& name) {
+				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Vec4);
+				m_uniforms[name] = handle;
+			}
+
+			template <>
+			void SetUniform<int>(const std::string& name) {
+				Internal_CreateVec4Uniform(name);
+			}
+			template <>
+			void SetUniform<float>(const std::string& name) {
+				Internal_CreateVec4Uniform(name);
+			}
+			template <>
+			void SetUniform<Vector2>(const std::string& name) {
+				Internal_CreateVec4Uniform(name);
+			}
+			template <>
+			void SetUniform<Vector3>(const std::string& name) {
+				Internal_CreateVec4Uniform(name);
+			}
+			template <>
+			void SetUniform<Vector4>(const std::string& name) {
+				Internal_CreateVec4Uniform(name);
+			}
+			template <>
+			void SetUniform<Matrix4>(const std::string& name) {
+				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Mat4);
+				m_uniforms[name] = handle;
+			}
+
+			template <>
+			void SetUniform<TextureData>(const std::string& name) {
+				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Sampler);
+				m_uniforms[name] = handle;
+			}
 		};
 
 		class ShaderLoader : public asset::AssetLoader<asset::Shader, asset::data::ShaderImportData, asset::data::ShaderLoadData, ShaderData> {

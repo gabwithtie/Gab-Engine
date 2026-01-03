@@ -6,6 +6,8 @@
 #include <bimg/decode.h>
 #include <stdexcept>
 
+#include <bgfx_utils.h>
+
 // Global or static allocator for bimg
 static bx::DefaultAllocator s_allocator;
 
@@ -19,67 +21,50 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
     const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.filename;
     std::string path = pathstr.string();
 
-    // 1. Read file into memory (same as before)
-    bx::FileReader reader;
-    bx::open(&reader, pathstr.string().c_str());
-    uint32_t size = (uint32_t)bx::getSize(&reader);
-    uint8_t* raw_data = (uint8_t*)bx::alloc(&s_allocator, size);
-    bx::Error read_err;
-    bx::read(&reader, raw_data, size, &read_err);
-    bx::close(&reader);
+    bimg::ImageContainer* imageContainer = imageLoad(pathstr.string().c_str(), bgfx::TextureFormat::Count);
 
-    // 2. Parse the header to get dimensions
-    bx::Error err;
-    bimg::ImageContainer header;
-    bimg::imageParse(header, static_cast<bx::ReaderSeekerI*>(&reader), & err);
-    if (!err.isOk()) {
-        bx::free(&s_allocator, raw_data);
-        throw std::runtime_error("Failed to parse texture header");
+    if (imageContainer == nullptr) {
+        throw std::runtime_error("Failed to decode texture: " + path);
     }
 
-    uint32_t width = header.m_width;
-    uint32_t height = header.m_height;
-    uint32_t depth = header.m_depth;
+    loaddata->dimensions = Vector2Int(imageContainer->m_width, imageContainer->m_height);
 
-    // 3. Allocate memory for the 32-bit Float RGBA output
-    // (Width * Height * 4 channels * 4 bytes per float)
-    uint32_t dst_pitch = width * 16;
-    uint32_t dest_size = width * height * 16;
-    float* float_pixels = (float*)bx::alloc(&s_allocator, dest_size);
+    // 3. Create bgfx Texture
+    uint64_t flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
 
-    // 4. Decode specifically to RGBA32F
-    // Note the signature: (allocator, dest, src, src_size, error)
-    bimg::imageDecodeToRgba32f(&s_allocator, float_pixels, raw_data, width, height, depth, dst_pitch, header.m_format);
-
-    // Clean up header and raw file data immediately
-    bimg::imageFree(&header);
-    bx::free(&s_allocator, raw_data);
-
-    // 5. Create the bgfx Texture
-    // IMPORTANT: You MUST use bgfx::TextureFormat::RGBA32F
-    const bgfx::Memory* mem = bgfx::makeRef(float_pixels, dest_size, [](void* ptr, void* userData) {
-        bx::free(&s_allocator, ptr); // Custom free to clean up the float buffer
-        }, nullptr);
+    // Use makeRef with a callback so we don't have to copy the decoded memory again.
+    // bgfx will call imageReleaseCallback when it no longer needs the pointer.
+    const bgfx::Memory* mem = bgfx::makeRef(
+        imageContainer->m_data,
+        imageContainer->m_size,
+        imageReleaseCallback,
+        imageContainer
+    );
 
     bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
-        (uint16_t)width,
-        (uint16_t)height,
+        (uint16_t)imageContainer->m_width,
+        (uint16_t)imageContainer->m_height,
         false, 1,
-        bgfx::TextureFormat::RGBA32F,
-        BGFX_TEXTURE_NONE,
+        (bgfx::TextureFormat::Enum)imageContainer->m_format,
+        flags,
         mem
     );
 
+    // Always check if the handle is valid
+    if (!bgfx::isValid(textureHandle)) {
+        throw std::runtime_error("bgfx failed to create texture: Invalid parameters or unsupported format.");
+    }
+
     return TextureData{
         .textureHandle = textureHandle,
-        .width = width,
-        .height = height
+        .width = (uint16_t)imageContainer->m_width,
+        .height = (uint16_t)imageContainer->m_height
     };
 }
 
 void gbe::gfx::TextureLoader::UnLoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data)
 {
-    const auto& texturedata = this->GetAssetData(asset);
+    const auto& texturedata = this->GetAssetRuntimeData(asset->Get_assetId());
     if (bgfx::isValid(texturedata.textureHandle)) {
         bgfx::destroy(texturedata.textureHandle);
     }

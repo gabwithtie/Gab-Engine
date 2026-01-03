@@ -13,10 +13,13 @@ namespace gbe {
     }
 
     Window::Window() {
+        std::cout << "[WINDOW] Initializing..." << std::endl;
     }
 
     gbe::Window::Window(Vector2Int dimentions)
     {
+        std::cout << "[WINDOW] Initializing..." << std::endl;
+
         this->dimentions = dimentions; 
         this->viewport_subscale = Vector2(1.0f, 1.0f);
 

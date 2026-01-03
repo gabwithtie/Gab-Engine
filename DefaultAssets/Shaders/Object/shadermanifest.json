@@ -19,6 +19,16 @@
 			"file": "vs_sms_shadow.sc",
 			"type": "vertex",
 			"varying": "varying.def.sc"
+		},
+		{
+			"file": "fs_cubes.sc",
+			"type": "fragment",
+			"varying": "unlit_varying.def.sc"
+		},
+		{
+			"file": "vs_cubes.sc",
+			"type": "vertex",
+			"varying": "unlit_varying.def.sc"
 		}
 	]
 }

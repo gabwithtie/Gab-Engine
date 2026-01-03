@@ -38,6 +38,6 @@ target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE imguizmo::imguizmo)
 find_package(nfd CONFIG REQUIRED)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE nfd::nfd)
 
-target_link_libraries(${CURRENT_CMAKE_LIB} PUBLIC bgfx bimg bx)
+target_link_libraries(${CURRENT_CMAKE_LIB} PUBLIC bgfx bimg bx bgfx-imgui)
 
 message("[GABENGINE] LOADED: " ${CMAKE_CURRENT_SOURCE_DIR})

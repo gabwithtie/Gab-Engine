@@ -19,6 +19,8 @@ namespace gbe {
 		window(Vector2Int(1280, 720)),
 		renderpipeline(this->window, this->window.Get_dimentions())
 	{
+		std::cout << "[ENGINE] Initializing..." << std::endl;
+
 		instance = this;
 
 		//EDITOR SETUP
@@ -199,17 +201,7 @@ namespace gbe {
 		mInputSystem->RegisterActionListener(player_name, new MouseDragImplementation<Keys::MOUSE_RIGHT>());
 		mInputSystem->RegisterActionListener(player_name, new MouseDragImplementation<Keys::MOUSE_MIDDLE>());
 #pragma endregion
-#pragma region Root Loaders
-		SerializedObject savedscene;
-		if (gbe::asset::serialization::gbeParser::PopulateClass(savedscene, "out/default.level")) {
-			this->current_root = this->CreateBlankRoot(&savedscene);
-		}
-		else {
-			this->current_root = this->CreateBlankRoot();
-		}
-		this->InitializeRoot();
-		this->Set_state(EngineState::Edit, false);
-#pragma region scene singletons
+#pragma region scene helpers
 		//Spawn funcs
 		auto create_mesh = [&](gfx::DrawCall* drawcall, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
 			RigidObject* parent = new RigidObject(true);
@@ -241,7 +233,25 @@ namespace gbe {
 
 			return parent;
 			};
+#pragma endregion
+#pragma region Root Loaders
+		SerializedObject savedscene;
+		if (gbe::asset::serialization::gbeParser::PopulateClass(savedscene, "out/default.level")) {
+			this->current_root = this->CreateBlankRoot(&savedscene);
+		}
+		else {
+			this->current_root = this->CreateBlankRoot();
 
+			create_primitive(RenderObject::cube, Vector3(0, 0, 0), Vector3(2));
+			create_primitive(RenderObject::cube, Vector3(0, 0, 5), Vector3(2));
+			create_primitive(RenderObject::cube, Vector3(0, 0, 10), Vector3(2));
+			create_primitive(RenderObject::cube, Vector3(0, 0, 15), Vector3(2));
+			create_primitive(RenderObject::cube, Vector3(0, 0, 20), Vector3(2));
+			create_primitive(RenderObject::cube, Vector3(0, 0, 25), Vector3(2));
+		}
+		this->InitializeRoot();
+		this->Set_state(EngineState::Edit, false);
+#pragma region scene singletons
 		//PERSISTENT OBJECTS
 
 		//EDITOR CAMERA
@@ -255,7 +265,7 @@ namespace gbe {
 		Engine::MakePersistent(editor_input);
 		editor_cam->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
 		editor_input->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
-		editor_camera_controller->World().position.Set(Vector3(0, 5, -15));
+		editor_camera_controller->World().position.Set(Vector3(0, 3, -15));
 #pragma endregion
 
 #pragma region scene objects

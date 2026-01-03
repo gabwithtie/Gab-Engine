@@ -64,25 +64,28 @@ namespace gbe {
                     internal::BaseAsset_base* newasset = nullptr;
 
                     if (is_file_extension(filename, ".obj.gbe")) {
+                        std::cout << "[BATCHLOADER] Loading Mesh: \"" << filepath << "\"" << std::endl;
                         newasset = new Mesh(filepath);
                     }
                     else if (is_file_extension(filename, ".shader.gbe")) {
+                        std::cout << "[BATCHLOADER] Loading Shader: \"" << filepath << "\"" << std::endl;
                         newasset = new Shader(filepath);
                     }
                     else if (is_file_extension(filename, ".mat.gbe")) {
 						filepaths_material.push_back(filepath); // Defer material loading
                     }
                     else if (is_file_extension(filename, ".img.gbe")) {
+                        std::cout << "[BATCHLOADER] Loading Texture: \"" << filepath << "\"" << std::endl;
                         newasset = new Texture(filepath);
                     }
                     else if(is_file_extension(filename, ".gbe")) {
-                        //throw new std::runtime_error("Unknown asset type.");
-						std::cout << "Unknown Asset Type." << std::endl;
+						std::cout << "[BATCHLOADER] Unknown Asset Type in: \"" << filepath << "\"" << std::endl;
                     }
                 }
 
                 for (const auto& fp_mat : filepaths_material)
                 {
+                    std::cout << "[BATCHLOADER] Loading Material: \"" << fp_mat << "\"" << std::endl;
 					internal::BaseAsset_base* newasset = new Material(fp_mat);
                 }
 			}

@@ -57,13 +57,6 @@ namespace gbe {
                 }
             }
 
-            //CONFIRM UNIFORM FIELD EXISTS
-            ShaderData::ShaderField fieldinfo;
-            ShaderData::ShaderBlock blockinfo;
-            bool found = shaderdata->FindUniformField(id, fieldinfo, blockinfo);
-            if (!found)
-                continue;
-
             // BGFX: ApplyOverride template handles setting the uniform state.
             // Note: The original INT override used value_float, which is potentially a bug in the original code,
             // but is preserved here by casting/passing a float to the int override.
@@ -89,7 +82,7 @@ namespace gbe {
             else if (overridedata.type == asset::Shader::UniformFieldType::TEXTURE)
             {
                 // TextureData must now be adapted to hold a bgfx::TextureHandle
-                auto findtexturedata = TextureLoader::GetAssetData(overridedata.value_tex);
+                auto findtexturedata = TextureLoader::GetAssetRuntimeData(overridedata.value_tex->Get_assetId());
                 this->ApplyOverride(findtexturedata, id, frameindex);
             }
 

@@ -90,17 +90,7 @@ namespace gbe {
 				active_instance->loaded_assets.insert_or_assign(id, assetdata);
 			}
 
-			static TAssetRuntimeData& GetAssetData(TAsset* asset) {
-				auto it = active_instance->loaded_assets.find(asset->Get_assetId());
-				if (it != active_instance->loaded_assets.end()) {
-					return it->second;
-				}
-				else {
-					throw std::exception("Asset not found");
-				}
-			}
-
-			static TAssetRuntimeData& GetAssetData(std::string assetid) {
+			static TAssetRuntimeData& GetAssetRuntimeData(std::string assetid) {
 				auto it = active_instance->loaded_assets.find(assetid);
 				if (it != active_instance->loaded_assets.end()) {
 					return it->second;

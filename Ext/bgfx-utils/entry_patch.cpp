@@ -1,0 +1,232 @@
+/*
+ * Copyright 2011-2025 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
+ */
+
+#include <bx/bx.h>
+#include <bx/file.h>
+#include <bx/sort.h>
+#include <bgfx/bgfx.h>
+
+#include <time.h>
+
+#if BX_PLATFORM_EMSCRIPTEN
+#	include <emscripten.h>
+#endif // BX_PLATFORM_EMSCRIPTEN
+
+extern "C" int32_t _main_(int32_t _argc, char** _argv);
+
+namespace entry
+{
+	static uint32_t s_debug = BGFX_DEBUG_NONE;
+	static uint32_t s_reset = BGFX_RESET_NONE;
+	static bool s_exit = false;
+
+	static bx::FileReaderI* s_fileReader = NULL;
+	static bx::FileWriterI* s_fileWriter = NULL;
+
+	extern bx::AllocatorI* getDefaultAllocator();
+	bx::AllocatorI* g_allocator = getDefaultAllocator();
+
+	using FixedString4096 = bx::FixedStringT<4096>;
+	static FixedString4096 s_currentDir;
+
+	class FileReader : public bx::FileReader
+	{
+		typedef bx::FileReader super;
+
+	public:
+		virtual bool open(const bx::FilePath& _filePath, bx::Error* _err) override
+		{
+			FixedString4096 filePath(s_currentDir);
+			filePath.append(_filePath);
+
+			return super::open(filePath.getCPtr(), _err);
+		}
+	};
+
+	class FileWriter : public bx::FileWriter
+	{
+		typedef bx::FileWriter super;
+
+	public:
+		virtual bool open(const bx::FilePath& _filePath, bool _append, bx::Error* _err) override
+		{
+			bx::FilePath filePath(s_currentDir);
+			filePath.join(_filePath);
+			return super::open(filePath.getCPtr(), _append, _err);
+		}
+	};
+
+	void setCurrentDir(const char* _dir)
+	{
+		s_currentDir.set(_dir);
+	}
+
+	bx::AllocatorI* getDefaultAllocator()
+	{
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4459); // warning C4459: declaration of 's_allocator' hides global declaration
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow");
+		static bx::DefaultAllocator s_allocator;
+		return &s_allocator;
+BX_PRAGMA_DIAGNOSTIC_POP();
+	}
+
+	static const char* s_keyName[] =
+	{
+		"None",
+		"Esc",
+		"Return",
+		"Tab",
+		"Space",
+		"Backspace",
+		"Up",
+		"Down",
+		"Left",
+		"Right",
+		"Insert",
+		"Delete",
+		"Home",
+		"End",
+		"PageUp",
+		"PageDown",
+		"Print",
+		"Plus",
+		"Minus",
+		"LeftBracket",
+		"RightBracket",
+		"Semicolon",
+		"Quote",
+		"Comma",
+		"Period",
+		"Slash",
+		"Backslash",
+		"Tilde",
+		"F1",
+		"F2",
+		"F3",
+		"F4",
+		"F5",
+		"F6",
+		"F7",
+		"F8",
+		"F9",
+		"F10",
+		"F11",
+		"F12",
+		"NumPad0",
+		"NumPad1",
+		"NumPad2",
+		"NumPad3",
+		"NumPad4",
+		"NumPad5",
+		"NumPad6",
+		"NumPad7",
+		"NumPad8",
+		"NumPad9",
+		"Key0",
+		"Key1",
+		"Key2",
+		"Key3",
+		"Key4",
+		"Key5",
+		"Key6",
+		"Key7",
+		"Key8",
+		"Key9",
+		"KeyA",
+		"KeyB",
+		"KeyC",
+		"KeyD",
+		"KeyE",
+		"KeyF",
+		"KeyG",
+		"KeyH",
+		"KeyI",
+		"KeyJ",
+		"KeyK",
+		"KeyL",
+		"KeyM",
+		"KeyN",
+		"KeyO",
+		"KeyP",
+		"KeyQ",
+		"KeyR",
+		"KeyS",
+		"KeyT",
+		"KeyU",
+		"KeyV",
+		"KeyW",
+		"KeyX",
+		"KeyY",
+		"KeyZ",
+		"GamepadA",
+		"GamepadB",
+		"GamepadX",
+		"GamepadY",
+		"GamepadThumbL",
+		"GamepadThumbR",
+		"GamepadShoulderL",
+		"GamepadShoulderR",
+		"GamepadUp",
+		"GamepadDown",
+		"GamepadLeft",
+		"GamepadRight",
+		"GamepadBack",
+		"GamepadStart",
+		"GamepadGuide",
+	};
+
+	bool setOrToggle(uint32_t& _flags, const char* _name, uint32_t _bit, int _first, int _argc, char const* const* _argv)
+	{
+		if (0 == bx::strCmp(_argv[_first], _name) )
+		{
+			int arg = _first+1;
+			if (_argc > arg)
+			{
+				_flags &= ~_bit;
+
+				bool set = false;
+				bx::fromString(&set, _argv[arg]);
+
+				_flags |= set ? _bit : 0;
+			}
+			else
+			{
+				_flags ^= _bit;
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	bx::FileReaderI* getFileReader()
+	{
+		if (NULL == s_fileReader)
+			s_fileReader = BX_NEW(g_allocator, FileReader);
+
+		return s_fileReader;
+	}
+
+	bx::FileWriterI* getFileWriter()
+	{
+		if (NULL == s_fileWriter)
+			s_fileWriter = BX_NEW(g_allocator, FileWriter);
+
+		return s_fileWriter;
+	}
+
+	bx::AllocatorI* getAllocator()
+	{
+		if (NULL == g_allocator)
+		{
+			g_allocator = getDefaultAllocator();
+		}
+
+		return g_allocator;
+	}
+
+} // namespace entry

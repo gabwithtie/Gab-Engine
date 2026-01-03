@@ -15,13 +15,13 @@ function(add_bgfx_shader_task INPUT TYPE VARYING OUTPUT)
             -o ${OUTPUT}
             --type ${TYPE}
             --platform windows
-            --profile spirv
+            -p "spirv"
             --varyingdef ${VARYING}
             -i "${BGFX_DIR}/src"
             -i "${BGFX_DIR}/examples/common"
             -i "${CMAKE_BINARY_DIR}/DefaultAssets"
-        DEPENDS ${INPUT} ${VARYING} COPY_ASSETS_TARGET
-        COMMENT "Compiling bgfx shader: ${INPUT}"
+        DEPENDS ${INPUT} ${VARYING}
+        COMMENT "Compiling bgfx shader (spirv): ${INPUT}"
         VERBATIM
     )
 endfunction()
@@ -67,7 +67,7 @@ endforeach()
 
 # --- Create a Build Target ---
 # This ensures that 'make' or 'Build Solution' triggers the compilation
-add_custom_target(COMPILE_SHADERS_TARGET ALL DEPENDS ${COMPILED_SHADER_BINARIES})
+add_custom_target(COMPILED_SHADERS_TARGET ALL DEPENDS ${COMPILED_SHADER_BINARIES})
 
 # Optional: Ensure your main executable waits for shaders to finish compiling
 # add_dependencies(MyEngineExecutable CompileShaders)

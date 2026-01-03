@@ -122,8 +122,11 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const as
     const size_t vbufferSize = sizeof(vertices[0]) * vertices.size();
 
     // BGFX: Create a memory reference and create the vertex buffer
-    const bgfx::Memory* vertexMem = bgfx::makeRef(vertices.data(), (uint32_t)vbufferSize);
-    bgfx::VertexBufferHandle vertexBufferHandle = bgfx::createVertexBuffer(vertexMem, s_vertexLayout, BGFX_BUFFER_NONE);
+    bgfx::VertexBufferHandle vertexBufferHandle = bgfx::createVertexBuffer(
+        bgfx::copy(vertices.data(), (uint32_t)vbufferSize),
+        s_vertexLayout,
+        BGFX_BUFFER_NONE
+    );
 
     if (vertexBufferHandle.idx == bgfx::kInvalidHandle) {
         throw std::runtime_error("Failed to create bgfx Vertex Buffer");
@@ -133,8 +136,10 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const as
     const size_t ibufferSize = sizeof(indices[0]) * indices.size();
 
     // BGFX: Create a memory reference and create the index buffer (using 16-bit indices)
-    const bgfx::Memory* indexMem = bgfx::makeRef(indices.data(), (uint32_t)ibufferSize);
-    bgfx::IndexBufferHandle indexBufferHandle = bgfx::createIndexBuffer(indexMem, BGFX_BUFFER_INDEX32); // Use BGFX_BUFFER_INDEX32 for 32-bit indices if needed, BGFX_BUFFER_NONE defaults to 16-bit. Sticking to 16-bit since indices is uint16_t.
+    bgfx::IndexBufferHandle indexBufferHandle = bgfx::createIndexBuffer(
+        bgfx::copy(indices.data(), (uint32_t)ibufferSize),
+        BGFX_BUFFER_NONE // <--- FIX: Use NONE for 16-bit (uint16_t)
+    );
 
     if (indexBufferHandle.idx == bgfx::kInvalidHandle) {
         throw std::runtime_error("Failed to create bgfx Index Buffer");
@@ -154,7 +159,7 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const as
 
 void gbe::gfx::MeshLoader::UnLoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* data)
 {
-    const auto& meshdata = this->GetAssetData(asset);
+    const auto& meshdata = this->GetAssetRuntimeData(asset->Get_assetId());
 
     // BGFX: Destroy the handles to free GPU memory
     if (bgfx::isValid(meshdata.vertex_vbh)) {

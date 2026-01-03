@@ -1,7 +1,7 @@
 #include "CreditsWindow.h"
 
 gbe::editor::CreditsWindow::CreditsWindow():
-	logo_tex_data(TextureLoader::GetAssetData(this->logo_tex))
+	logo_tex_data(TextureLoader::GetAssetRuntimeData(this->logo_tex->Get_assetId()))
 {
 	this->logo_tex = new gbe::asset::Texture("DefaultAssets/Tex/UI/logo.img.gbe");
 }

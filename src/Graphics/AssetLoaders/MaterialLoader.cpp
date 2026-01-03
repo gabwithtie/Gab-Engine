@@ -16,7 +16,7 @@ MaterialData MaterialLoader::LoadAsset_(asset::Material* asset, const asset::dat
 		};
 
 	//Default overrides
-	for (const auto& field : ShaderLoader::GetAssetData(data->shader).uniformfields)
+	for (const auto& field : ShaderLoader::GetAssetRuntimeData(data->shader->Get_assetId()).uniformfields)
 	{
 		auto importedoverride = FindImportedOverride(field.name);
 

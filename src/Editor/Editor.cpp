@@ -3,7 +3,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_impl_sdl2.h>
-#include "Ext/bgfx-imgui/imgui_impl_bgfx.h"
+#include <bgfx-imgui/imgui_impl_bgfx.h>
 
 #include <bx/bx.h>
 #include <bx/allocator.h>
@@ -18,8 +18,6 @@
 #include "Engine/gbe_engine.h"
 #include "Physics/gbe_physics.h"
 
-#include "Ext/GabVulkan/Objects.h"
-
 gbe::Editor* gbe::Editor::instance = nullptr;
 
 gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime):
@@ -29,6 +27,8 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	inspectorwindow(this->selected),
 	viewportWindow(this->selected)
 {
+	std::cout << "[EDITOR] Initializing..." << std::endl;
+
 	instance = this;
 
 	this->mwindow = window;
@@ -301,8 +301,9 @@ void gbe::Editor::UpdateSelectionGui(Object* newlyclicked) {
 void gbe::Editor::PrepareUpdate()
 {
 	//imgui new frame
-	ImGui_ImplVulkan_NewFrame();
-	ImGui_ImplSDL2_NewFrame();
+	ImGui_Implbgfx_NewFrame();
+	auto window_dimensions = this->mwindow->Get_dimentions();
+	ImGui::GetIO().DisplaySize = ImVec2((float)window_dimensions.x, (float)window_dimensions.y);
 	ImGui::NewFrame();
 	ImGuizmo::BeginFrame();
 
@@ -361,5 +362,5 @@ void gbe::Editor::PrepareUpdate()
 
 void gbe::Editor::RenderPass()
 {
-	throw new std::runtime_error("Editor::RenderPass not implemented for BGFX.");
+	ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 }

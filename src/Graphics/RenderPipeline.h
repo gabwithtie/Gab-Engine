@@ -91,11 +91,6 @@ namespace gbe {
 		DrawCall* skybox_call;
 
 		//============DYNAMICALLY ALLOCATED=======================//
-		// BGFX: Replace Vulkan instance and renderer with BGFX handles
-		// vulkan::Instance* vulkanInstance; // Removed
-		// vulkan::ForwardRenderer* renderer; // Removed
-		// vulkan::Buffer* line_vertexBuffer = nullptr; // Replaced with bgfx handle
-
 		// BGFX: Vertex buffer for lines
 		bgfx::DynamicVertexBufferHandle m_line_vbh = BGFX_INVALID_HANDLE;
 

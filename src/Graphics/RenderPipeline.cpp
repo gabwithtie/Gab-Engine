@@ -21,6 +21,8 @@ gbe::RenderPipeline* gbe::RenderPipeline::Instance;
 gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions) :
 	window(window)
 {
+	std::cout << "[RENDERER] Initializing..." << std::endl;
+
 	if (this->Instance != nullptr)
 		throw std::runtime_error("RenderPipeline instance already exists!");
 
@@ -58,7 +60,7 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions) 
 	// BX_PLATFORM_EMSCRIPTEN
 
 	bgfx::Init bgfx_init;
-	bgfx_init.type = bgfx::RendererType::Count; // auto choose renderer
+	bgfx_init.type = bgfx::RendererType::Vulkan; // auto choose renderer
 	bgfx_init.resolution.width = dimensions.x;
 	bgfx_init.resolution.height = dimensions.y;
 	bgfx_init.resolution.reset = BGFX_RESET_VSYNC;
@@ -77,9 +79,13 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions) 
 	s_vertexLayout.begin()
 		.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float) // Vector3 pos
 		.add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float) // Vector3 normal
-		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float) // Vector2 texcoord
+		.add(bgfx::Attrib::Color0, 3, bgfx::AttribType::Float)
+		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float) 
+		.add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float) 
 		.end();
 
+	assert(s_vertexLayout.getStride() == sizeof(asset::data::Vertex) && "BGFX Layout stride must match Vertex struct size!");
+	
 	// Asset Loaders (no change, but their implementation now uses bgfx handles)
 	this->shaderloader.AssignSelfAsLoader();
 	this->meshloader.AssignSelfAsLoader();
@@ -221,11 +227,6 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 	// BGFX: Frame submission must start with a `bgfx::touch` or `bgfx::frame`
 	bgfx::touch(VIEW_MAIN_PASS); // Touch one view to start frame
 
-	// Use bgfx::setViewTransform to set the view and projection matrices for the view
-	// Note: bgfx automatically handles the Y-flip for projection matrix
-	Matrix4 bgfx_projmat = frameinfo.projmat;
-	// bgfx_projmat[1][1] = -bgfx_projmat[1][1]; // Vulkan Y-flip removed
-
 	//==================SHADOW PASS [VIEW_SHADOW_PASS]========================//
 	bgfx::setViewClear(VIEW_SHADOW_PASS, BGFX_CLEAR_DEPTH, 0x00000000, 1.0f, 0);
 
@@ -241,7 +242,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 		Matrix4 lightViewMat = light->GetViewMatrix();
 		Matrix4 lightProjMat = light->GetProjectionMatrix();
 
-		// bgfx::setViewTransform(VIEW_SHADOW_PASS, (const float*)&lightViewMat, (const float*)&lightProjMat);
+		bgfx::setViewTransform(VIEW_SHADOW_PASS, (const float*)&lightViewMat, (const float*)&lightProjMat);
 		// BGFX uses standard convention, we might not need the y-flip in the projection matrix like in Vulkan
 		lightProjMat[1][1] = -lightProjMat[1][1]; // Preserve the original engine's light Y-flip behavior
 
@@ -262,7 +263,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 			drawcall->ApplyOverride<float>(light->range, "light_range", 0, (unsigned int)lightIndex);
 
 			// 3. Bind Mesh
-			const auto& curmesh = this->meshloader.GetAssetData(drawcall->get_mesh());
+			const auto& curmesh = this->meshloader.GetAssetRuntimeData(drawcall->get_mesh()->Get_assetId());
 
 			// BGFX: Use bgfx::setVertexBuffer/setIndexBuffer
 			bgfx::setIndexBuffer(curmesh.index_vbh);
@@ -293,20 +294,20 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 	//==================MAIN PASS [VIEW_MAIN_PASS]========================//
 	// Clear the main pass color/depth before rendering
 	bgfx::setViewClear(VIEW_MAIN_PASS, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x181818ff, 1.0f, 0);
-	bgfx::setViewTransform(VIEW_MAIN_PASS, (const float*)&frameinfo.viewmat, (const float*)&bgfx_projmat);
+	bgfx::setViewTransform(VIEW_MAIN_PASS, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
 
 	//===============LINE PASS [VIEW_LINE_PASS]
-	if (lines_this_frame.size() > 0) {
+	if (lines_this_frame.size() > 0 && false) {
 
 		// BGFX: Update dynamic vertex buffer
 		bgfx::update(m_line_vbh, 0, bgfx::makeRef(lines_this_frame.data(), (uint32_t)(lines_this_frame.size() * sizeof(asset::data::Vertex))));
 
 		auto lineshaderasset = this->line_call->get_material()->Get_load_data().shader;
-		const auto& lineshader = shaderloader.GetAssetData(lineshaderasset);
+		const auto& lineshader = shaderloader.GetAssetRuntimeData(lineshaderasset->Get_assetId());
 
 		// 1. Set uniforms
 		this->line_call->ApplyOverride<Matrix4>(Matrix4(1), "model", 0);
-		this->line_call->ApplyOverride<Matrix4>(bgfx_projmat, "proj", 0);
+		this->line_call->ApplyOverride<Matrix4>(frameinfo.projmat, "proj", 0);
 		this->line_call->ApplyOverride<Matrix4>(frameinfo.viewmat, "view", 0);
 		this->line_call->ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", 0);
 
@@ -331,14 +332,15 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 	//=================END OF LINE PASS
 
 	//=================SKYBOX PASS [VIEW_SKYBOX_PASS]
+	if(false)
 	{
-		const auto& skyboxmesh = this->meshloader.GetAssetData(this->skybox_call->get_mesh());
+		const auto& skyboxmesh = this->meshloader.GetAssetRuntimeData(this->skybox_call->get_mesh()->Get_assetId());
 		auto skyboxshaderasset = this->skybox_call->get_material()->Get_load_data().shader;
-		const auto& skyboxshader = shaderloader.GetAssetData(skyboxshaderasset);
+		const auto& skyboxshader = shaderloader.GetAssetRuntimeData(skyboxshaderasset->Get_assetId());
 
 		// 1. Set uniforms
 		this->skybox_call->ApplyOverride<Matrix4>(Matrix4(1), "model", 0);
-		this->skybox_call->ApplyOverride<Matrix4>(bgfx_projmat, "proj", 0);
+		this->skybox_call->ApplyOverride<Matrix4>(frameinfo.projmat, "proj", 0);
 		this->skybox_call->ApplyOverride<Matrix4>(frameinfo.viewmat, "view", 0);
 		this->skybox_call->ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", 0);
 
@@ -370,12 +372,12 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 		drawcall->SyncMaterialData(0);
 
 		// Set camera/general uniforms
-		drawcall->ApplyOverride<Matrix4>(bgfx_projmat, "proj", 0);
+		drawcall->ApplyOverride<Matrix4>(frameinfo.projmat, "proj", 0);
 		drawcall->ApplyOverride<Matrix4>(frameinfo.viewmat, "view", 0);
 		drawcall->ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos", 0);
 
 		// Set shadow map texture (already registered in UpdateReferences as "shadow_tex")
-		TextureData shadowmaptex = textureloader.GetAssetData(textureloader.GetAsset("shadow_tex"));
+		TextureData shadowmaptex = textureloader.GetAssetRuntimeData("shadow_tex");
 		drawcall->ApplyOverride<TextureData>(shadowmaptex, "shadow_tex", 0);
 
 		// Set light data uniforms
@@ -409,7 +411,7 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 		}
 
 		// Bind Mesh
-		const auto& curmesh = this->meshloader.GetAssetData(drawcall->get_mesh());
+		const auto& curmesh = this->meshloader.GetAssetRuntimeData(drawcall->get_mesh()->Get_assetId());
 		bgfx::setIndexBuffer(curmesh.index_vbh);
 		bgfx::setVertexBuffer(0, curmesh.vertex_vbh);
 
@@ -429,30 +431,14 @@ void gbe::RenderPipeline::RenderFrame(const FrameRenderInfo& frameinfo)
 		}
 	}
 
-	// BGFX: The "TransitionToScreenPass" logic is replaced by a blit or setting the final view.
-	// We use the Main Pass Color Texture and render it to the default frame buffer (the screen).
-	bgfx::ViewId finalBlitView = VIEW_COUNT;
-	bgfx::setViewClear(finalBlitView, BGFX_CLEAR_NONE);
-	bgfx::setViewRect(finalBlitView, 0, 0, (uint16_t)screen_resolution.x, (uint16_t)screen_resolution.y);
-	bgfx::blit(finalBlitView, BGFX_INVALID_HANDLE, 0, 0, m_mainColorTexture, 0, 0, (uint16_t)screen_resolution.x, (uint16_t)screen_resolution.y);
-
-
 	//EDITOR/GUI PASS [VIEW_EDITOR_PASS]
 	// The editor/GUI is rendered last to the screen.
 	if (editor != nullptr) {
-		// Editor must be adapted to use bgfx views/commands (e.g., ImGui's bgfx backend)
-		// We set its view to render directly to the screen (FBO is BGFX_INVALID_HANDLE)
-		bgfx::setViewClear(VIEW_EDITOR_PASS, BGFX_CLEAR_NONE);
-		// Assuming the editor has a method that submits its draw commands to VIEW_EDITOR_PASS
 		this->editor->RenderPass();
 	}
 
 	// BGFX: Present the frame
 	bgfx::frame();
-
-	// Handled resolution change is only for FBOs, bgfx::frame is the final presentation
-	// if (!handled_resolution_change) { ... } // Moved to the top of RenderFrame
-
 }
 
 std::vector<unsigned char> gbe::RenderPipeline::ScreenShot(bool write_file) {
@@ -511,7 +497,7 @@ gbe::gfx::DrawCall* gbe::RenderPipeline::RegisterDrawCall(asset::Mesh* mesh, ass
 		}
 	}
 
-	auto newdrawcall = new DrawCall(mesh, material, &Instance->shaderloader.GetAssetData(material->Get_load_data().shader), order);
+	auto newdrawcall = new DrawCall(mesh, material, &Instance->shaderloader.GetAssetRuntimeData(material->Get_load_data().shader->Get_assetId()), order);
 
 	return newdrawcall;
 }
