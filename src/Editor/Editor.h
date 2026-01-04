@@ -2,8 +2,6 @@
 
 #include "Engine/gbe_engine.h"
 
-#include "Ext/GabVulkan/Objects.h"
-
 #include "Gui/InspectorData.h"
 #include "Gui/CreditsWindow.h"
 #include "Gui/InspectorWindow.h"
@@ -76,9 +74,6 @@ namespace gbe {
 
 			&anitobuilderWindow
 		};
-
-		//DYNAMICALLY ALLOCATED
-		vulkan::DescriptorPool* gui_ds;
 
 	public:
 		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime);

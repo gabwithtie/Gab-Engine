@@ -63,46 +63,70 @@ namespace gbe {
 				return false;
 			}
 
+			std::unordered_map<std::string, bgfx::UniformHandle> m_uniformarrays;
+
+			inline bool GetUniformArray(bgfx::UniformHandle& out, const std::string& name) {
+				auto it = m_uniformarrays.find(name);
+				if (it != m_uniformarrays.end())
+				{
+					out = it->second;
+					return true;
+				}
+
+				return false;
+			}
+
 			template<typename T>
-			void SetUniform(const std::string& name) {
+			void RegisterUniform(const std::string& name, int size = 1) {
 				throw new std::runtime_error("Unsupported uniform type.");
 			}
 
-			void Internal_CreateVec4Uniform(const std::string& name) {
-				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Vec4);
-				m_uniforms[name] = handle;
+			void Internal_CreateVec4Uniform(const std::string& name, int size) {
+				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Vec4, size);
+				
+				if(size == 1)
+					m_uniforms[name] = handle;
+				else
+					m_uniformarrays[name] = handle;
+
 			}
 
 			template <>
-			void SetUniform<int>(const std::string& name) {
-				Internal_CreateVec4Uniform(name);
+			void RegisterUniform<int>(const std::string& name, int size) {
+				Internal_CreateVec4Uniform(name, size);
 			}
 			template <>
-			void SetUniform<float>(const std::string& name) {
-				Internal_CreateVec4Uniform(name);
+			void RegisterUniform<float>(const std::string& name, int size) {
+				Internal_CreateVec4Uniform(name, size);
 			}
 			template <>
-			void SetUniform<Vector2>(const std::string& name) {
-				Internal_CreateVec4Uniform(name);
+			void RegisterUniform<Vector2>(const std::string& name, int size) {
+				Internal_CreateVec4Uniform(name, size);
 			}
 			template <>
-			void SetUniform<Vector3>(const std::string& name) {
-				Internal_CreateVec4Uniform(name);
+			void RegisterUniform<Vector3>(const std::string& name, int size) {
+				Internal_CreateVec4Uniform(name, size);
 			}
 			template <>
-			void SetUniform<Vector4>(const std::string& name) {
-				Internal_CreateVec4Uniform(name);
+			void RegisterUniform<Vector4>(const std::string& name, int size) {
+				Internal_CreateVec4Uniform(name, size);
 			}
 			template <>
-			void SetUniform<Matrix4>(const std::string& name) {
-				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Mat4);
-				m_uniforms[name] = handle;
+			void RegisterUniform<Matrix4>(const std::string& name, int size) {
+				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Mat4, size);
+				if (size == 1)
+					m_uniforms[name] = handle;
+				else
+					m_uniformarrays[name] = handle;
 			}
 
 			template <>
-			void SetUniform<TextureData>(const std::string& name) {
-				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Sampler);
-				m_uniforms[name] = handle;
+			void RegisterUniform<TextureData>(const std::string& name, int size) {
+				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Sampler, size);
+				if (size == 1)
+					m_uniforms[name] = handle;
+				else
+					m_uniformarrays[name] = handle;
 			}
 		};
 

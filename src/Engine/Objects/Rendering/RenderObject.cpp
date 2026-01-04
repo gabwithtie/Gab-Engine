@@ -22,9 +22,6 @@ const std::unordered_map<gbe::RenderObject::PrimitiveType, std::string> gbe::Ren
 
 void gbe::RenderObject::SetShadowCaster()
 {
-	auto shadow_drawcall = RenderPipeline::RegisterDrawCall(this->mDrawCall->get_mesh(), asset::Material::GetAssetById("shadow"), -1);
-	this->shadow_renderer = new RenderObject(shadow_drawcall);
-	this->shadow_renderer->SetParent(this);
 	this->shadow_caster = true;
 }
 
@@ -60,7 +57,7 @@ gbe::RenderObject::RenderObject(PrimitiveType _ptype)
 gbe::RenderObject::~RenderObject()
 {
 	if (to_update != nullptr)
-		RenderPipeline::Get_Instance()->UnRegisterCall(this);
+		RenderPipeline::Get_Instance()->UnRegisterInstance(this);
 }
 
 void gbe::RenderObject::InvokeEarlyUpdate()
@@ -76,7 +73,7 @@ void gbe::RenderObject::On_Change_enabled(bool _to) {
 		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
 	}
 	else if(to_update != nullptr) {
-		RenderPipeline::Get_Instance()->UnRegisterCall(this);
+		RenderPipeline::Get_Instance()->UnRegisterInstance(this);
 		to_update = nullptr;
 	}
 }

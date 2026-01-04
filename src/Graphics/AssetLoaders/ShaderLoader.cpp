@@ -1,5 +1,4 @@
 #include "ShaderLoader.h"
-// #include "Ext/GabVulkan/Utility/DebugObjectName.h" // Vulkan utility removed
 #include <stdexcept>
 
 

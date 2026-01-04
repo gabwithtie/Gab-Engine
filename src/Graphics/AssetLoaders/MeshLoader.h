@@ -12,6 +12,8 @@
 
 namespace gbe {
 	namespace gfx {
+		extern bgfx::VertexLayout s_VERTEXLAYOUT;
+
 		// TransformUBO removed as it is typically managed by RenderPipeline/DrawCall in a bgfx context
 
 		struct MeshData {
@@ -26,6 +28,8 @@ namespace gbe {
 		protected:
 			MeshData LoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* data) override;
 			void UnLoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* data) override;
+		public:
+			void AssignSelfAsLoader() override;
 		};
 	}
 }

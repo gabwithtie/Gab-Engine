@@ -3,7 +3,6 @@
 #include "Root.h"
 #include "Object.h"
 #include "GenericObject.h"
-#include "ObjectNamer.h"
 
 #include "Rendering/Camera.h"
 #include "Rendering/RenderObject.h"

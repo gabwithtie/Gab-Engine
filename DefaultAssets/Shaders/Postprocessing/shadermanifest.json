@@ -1,0 +1,9 @@
+{
+	"shaders": [
+		{
+			"file": "ssao.sc",
+			"type": "fragment",
+			"varying": "postprocessing.def.sc"
+		}
+	]
+}

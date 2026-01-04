@@ -35,11 +35,8 @@ namespace gbe {
         return this->m_material;
     }
 
-    bool gfx::DrawCall::SyncMaterialData(unsigned int frameindex)
+    bool gfx::DrawCall::SyncMaterialData()
     {
-        // NOTE: The frameindex parameter is mostly a vestige of the per-frame Vulkan UBOs.
-        // In bgfx, calling setUniform/setTexture updates the state for the current frame/view submission.
-
         for (size_t m_i = 0; m_i < this->get_material()->getOverrideCount(); m_i++)
         {
             std::string id;
@@ -47,14 +44,7 @@ namespace gbe {
 
             if (overridedata.registered_change == false)
             {
-                overrideHandledList.insert_or_assign(id, std::vector<int>()); //reset handled list for this id
-            }
-            else {
-                for (const auto& frame_handled : overrideHandledList[id])
-                {
-                    if (frame_handled == frameindex) //already handled this frame
-                        continue;
-                }
+                overrideHandledList.insert_or_assign(id, false); //reset handled list for this id
             }
 
             // BGFX: ApplyOverride template handles setting the uniform state.
@@ -62,31 +52,31 @@ namespace gbe {
             // but is preserved here by casting/passing a float to the int override.
             if (overridedata.type == asset::Shader::UniformFieldType::BOOL) {
                 // BOOL is typically represented as a float/int in shaders
-                this->ApplyOverride<float>(overridedata.value_bool ? 1.0f : 0.0f, id, frameindex);
+                this->ApplyOverride<float>(overridedata.value_bool ? 1.0f : 0.0f, id);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::FLOAT) {
-                this->ApplyOverride<float>(overridedata.value_float, id, frameindex);
+                this->ApplyOverride<float>(overridedata.value_float, id);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::INT) {
-                this->ApplyOverride<int>((int)overridedata.value_float, id, frameindex); // Cast float to int
+                this->ApplyOverride<int>((int)overridedata.value_float, id); // Cast float to int
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::VEC2) {
-                this->ApplyOverride<Vector2>(overridedata.value_vec2, id, frameindex);
+                this->ApplyOverride<Vector2>(overridedata.value_vec2, id);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::VEC3) {
-                this->ApplyOverride<Vector3>(overridedata.value_vec3, id, frameindex);
+                this->ApplyOverride<Vector3>(overridedata.value_vec3, id);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::VEC4) {
-                this->ApplyOverride<Vector4>(overridedata.value_vec4, id, frameindex);
+                this->ApplyOverride<Vector4>(overridedata.value_vec4, id);
             }
             else if (overridedata.type == asset::Shader::UniformFieldType::TEXTURE)
             {
                 // TextureData must now be adapted to hold a bgfx::TextureHandle
                 auto findtexturedata = TextureLoader::GetAssetRuntimeData(overridedata.value_tex->Get_assetId());
-                this->ApplyOverride(findtexturedata, id, frameindex);
+                this->ApplyOverride(findtexturedata, id);
             }
 
-            overrideHandledList[id].push_back(frameindex);
+            overrideHandledList[id] = true;
             overridedata.registered_change = true;
         }
 

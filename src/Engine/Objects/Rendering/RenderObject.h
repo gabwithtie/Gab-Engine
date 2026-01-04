@@ -30,8 +30,6 @@ namespace gbe {
 		gfx::DrawCall* mDrawCall = nullptr;
 		Matrix4* to_update = nullptr;
 
-		RenderObject* shadow_renderer = nullptr;
-
 		PrimitiveType ptype = PrimitiveType::NONE;
 
 		bool user_created = false;

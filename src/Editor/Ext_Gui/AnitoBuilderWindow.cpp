@@ -29,7 +29,7 @@ void gbe::editor::AnitoBuilderWindow::DrawSelf()
 	{
 		if (ImGui::BeginMenu("Create"))
 		{
-			for (const auto& item : CreateFunctions::GetCreators_anitobuilder())
+			for (const auto& item : CreateFunctions::createfunctions_ext_anitobuilder)
 			{
 				if (ImGui::MenuItem(item.first.c_str())) {
 					created_object = item.second();

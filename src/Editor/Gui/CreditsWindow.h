@@ -4,8 +4,6 @@
 
 #include "Graphics/gbe_graphics.h"
 
-#include <imgui_impl_vulkan.h>
-
 #include <string>
 
 namespace gbe {

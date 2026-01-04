@@ -47,6 +47,7 @@ FetchContent_Declare(
 add_subdirectory("Ext/bgfx.cmake")
 add_subdirectory("Ext/bgfx-imgui")
 add_subdirectory("Ext/bgfx-utils")
+add_subdirectory("Ext/bgfx-gab")
 
 #RELOAD BASE ASSETS TO BUILD
 add_custom_target(

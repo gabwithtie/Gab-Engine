@@ -50,7 +50,7 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Objects/Physics/Collider/CapsuleCollider.cpp"
 	"Global/Console.h"
 	"Global/Console.cpp"
-	"Objects/ObjectNamer.cpp"
+	
 	"Objects/Rendering/Lights/ConeLight.cpp"
 	"Objects/Rendering/Lights/PointLight.cpp")
 

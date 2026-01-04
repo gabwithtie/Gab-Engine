@@ -20,16 +20,11 @@
 
     "glaze",
     "stb",
-    "opencv2",
     "assimp",
-    "spirv-cross",
 
-
-    "vulkan-sdk-components",
-    "vulkan-validationlayers",
     {
       "name": "imgui",
-      "features": [ "vulkan-binding", "sdl2-binding", "docking-experimental" ]
+      "features": [ "sdl2-binding", "docking-experimental" ]
     },
     "imguizmo",
 

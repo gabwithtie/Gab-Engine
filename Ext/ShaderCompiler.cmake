@@ -19,7 +19,7 @@ function(add_bgfx_shader_task INPUT TYPE VARYING OUTPUT)
             --varyingdef ${VARYING}
             -i "${BGFX_DIR}/src"
             -i "${BGFX_DIR}/examples/common"
-            -i "${CMAKE_BINARY_DIR}/DefaultAssets"
+            -i "${OUT_DIR}"
         DEPENDS ${INPUT} ${VARYING}
         COMMENT "Compiling bgfx shader (spirv): ${INPUT}"
         VERBATIM

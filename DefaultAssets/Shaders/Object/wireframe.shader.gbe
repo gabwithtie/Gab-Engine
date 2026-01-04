@@ -1,7 +1,7 @@
 {
 
-  "vert": "vs_sms_mesh.sc.bin",
-  "frag": "fs_sms_mesh.sc.bin",
+  "vert": "vs_mesh.sc.bin",
+  "frag": "fs_mesh.sc.bin",
 
   "wireframe": "true"
 }

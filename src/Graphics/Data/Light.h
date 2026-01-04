@@ -34,8 +34,8 @@ namespace gbe::gfx {
         bool square_project = false;
 
         //BIAS
-        float bias_min = 0.001;
-        float bias_mult = 0.01;
+        float bias_min = 0.005;
+        float bias_mult = 0.05;
         
         //===============CACHE
         bool created_context_view = false;

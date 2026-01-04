@@ -7,8 +7,6 @@
 
 #include "Editor/gbe_editor.h"
 
-#include "ObjectNamer.h"
-
 unsigned int gbe::Object::next_avail_id = 0;
 std::unordered_map<unsigned int, gbe::Object*> gbe::Object::valid_objects;
 
@@ -55,8 +53,6 @@ void gbe::Object::OnExternalTransformationChange(TransformChangeType changetype,
 
 void gbe::Object::General_init()
 {
-	ObjectNamer::ResetName(this);
-
 	//TRANSFORM
 	this->parent_matrix = Matrix4(1.0f);
 	this->parent = nullptr;

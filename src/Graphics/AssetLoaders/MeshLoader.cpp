@@ -2,7 +2,6 @@
 
 // Remove Vulkan includes
 #include "../RenderPipeline.h" 
-// #include "Ext/GabVulkan/Objects.h" // REMOVED
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -11,33 +10,29 @@
 #include <vector>
 #include <map>
 
-// BGFX: Define the vertex layout. This must match asset::data::Vertex.
-// Note: This should ideally be defined once in your engine/pipeline setup,
-// but is defined here for completeness of this file's operation.
-static bgfx::VertexLayout s_vertexLayout;
-static bool s_layoutInitialized = false;
-
 using namespace gbe::asset::data;
 
-// Helper function to ensure layout is initialized before use
-static void initLayout() {
-    if (!s_layoutInitialized) {
-        // Assuming asset::data::Vertex is: pos(vec3), normal(vec3), texCoord(vec2), tangent(vec3)
-        s_vertexLayout.begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float) // pos
-            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float) // normal
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float) // texCoord
-            .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float) // tangent (if used)
-            .end();
-        s_layoutInitialized = true;
-    }
-}
+bgfx::VertexLayout gbe::gfx::s_VERTEXLAYOUT;
 
+void gbe::gfx::MeshLoader::AssignSelfAsLoader()
+{
+    AssetLoader::AssignSelfAsLoader();
+
+    bgfx::VertexLayout newlayout;
+
+    newlayout.begin()
+        .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float) // Vector3 pos
+        .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float) // Vector3 normal
+        .add(bgfx::Attrib::Color0, 3, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float)
+        .end();
+
+    s_VERTEXLAYOUT = newlayout;
+}
 
 gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* loaddata)
 {
-    initLayout(); // Ensure bgfx layout is set up
-
     auto meshpath = asset->Get_asset_filepath().parent_path() / importdata.path;
 
     auto pathstr = meshpath.generic_string();
@@ -124,7 +119,7 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const as
     // BGFX: Create a memory reference and create the vertex buffer
     bgfx::VertexBufferHandle vertexBufferHandle = bgfx::createVertexBuffer(
         bgfx::copy(vertices.data(), (uint32_t)vbufferSize),
-        s_vertexLayout,
+        s_VERTEXLAYOUT,
         BGFX_BUFFER_NONE
     );
 

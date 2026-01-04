@@ -55,7 +55,7 @@ namespace gbe::editor {
 	};
 	const std::unordered_map<std::string, std::function<Object* ()>> CreateFunctions::createfunctions_light = {
 		{
-			ObjectNamer::GetName(typeid(DirectionalLight))
+			"Directional"
 			,
 			[]() {
 
@@ -70,7 +70,7 @@ namespace gbe::editor {
 			}
 		}
 		,{
-			ObjectNamer::GetName(typeid(ConeLight))
+			"Cone"
 			,
 			[]() {
 
@@ -84,7 +84,7 @@ namespace gbe::editor {
 			return object;
 			}
 		},{
-			ObjectNamer::GetName(typeid(PointLight))
+			"Point"
 			,
 			[]() {
 
@@ -101,7 +101,7 @@ namespace gbe::editor {
 	};
 	const std::unordered_map<std::string, std::function<Object* ()>> CreateFunctions::createfunctions_ext_anitobuilder = {
 		{
-			ObjectNamer::GetName(typeid(ext::AnitoBuilder::BuilderBlock))
+			"Anito Builder Block"
 			,
 			[]() {
 			Vector3 cubecorners[4] = {

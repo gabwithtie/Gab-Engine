@@ -127,7 +127,7 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 
 gbe::Editor::~Editor()
 {
-	delete gui_ds;
+
 }
 
 void gbe::Editor::SelectSingle(Object* other) {

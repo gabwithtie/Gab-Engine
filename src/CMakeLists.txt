@@ -3,9 +3,6 @@
 set(GABENGINE_INCLUDE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
 message("SET: GABENGINE_INCLUDE_DIRECTORY -> " ${GABENGINE_INCLUDE_DIRECTORY})
 
-#EXTERNAL LIBRARIES (DEPENDENCIES)
-add_subdirectory("Ext/GabVulkan")
-
 #SUBDIRECTORY LOADING
 add_subdirectory(Math)
 add_subdirectory(Asset)
@@ -31,7 +28,6 @@ target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_editor)
 target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_engine)
 
 #EXTERNAL LIBARIES
-target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_gabvulkan)
 target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_anitobuilder)
 
 
@@ -39,7 +35,7 @@ get_target_property(LINKED_LIBS ${CURRENT_CMAKE_LIB} INTERFACE_LINK_LIBRARIES)
 #include directory for all libraries above
     foreach(lib ${LINKED_LIBS})
         string(APPEND LINKED_LIBS_STRING " | ${lib} ")
-        target_include_directories(${lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+        target_include_directories(${lib} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
     endforeach()
 
 message("LINKED LIBRARIES IN GABENGINE INTERFACE: " ${LINKED_LIBS_STRING})

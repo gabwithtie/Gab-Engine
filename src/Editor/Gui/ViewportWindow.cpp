@@ -1,7 +1,6 @@
 #include "ViewportWindow.h"
 
 #include "Graphics/gbe_graphics.h"
-#include "Ext/GabVulkan/Objects.h"
 
 void gbe::editor::ViewportWindow::DrawSelf()
 {

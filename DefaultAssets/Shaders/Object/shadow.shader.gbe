@@ -1,5 +1,5 @@
 {
-  "vert": "vs_sms_shadow.sc.bin",
-  "frag": "fs_sms_shadow.sc.bin",
+  "vert": "vs_mesh.sc.bin",
+  "frag": "fs_mesh.sc.bin",
   "renderpass": "shadow"
 }

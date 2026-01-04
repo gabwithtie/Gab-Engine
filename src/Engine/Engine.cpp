@@ -331,7 +331,7 @@ namespace gbe {
 			//EDITOR pushing
 			editor->PrepareUpdate();
 
-			RenderPipeline::FrameRenderInfo frameinfo{};
+			gfx::SceneRenderInfo frameinfo{};
 
 			//Lights colating
 			this->current_root->GetHandler<LightObject>()->DoOnEnabled([&](LightObject* light) {

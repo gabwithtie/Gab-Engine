@@ -17,7 +17,7 @@ void gbe::editor::HierarchyWindow::DrawSelf()
 		{
 			if (ImGui::BeginMenu("Primitives"))
 			{
-				for (const auto& item : CreateFunctions::GetCreators_primitives())
+				for (const auto& item : CreateFunctions::createfunctions_primitives)
 				{
 					if (ImGui::MenuItem(item.first.c_str())) {
 						created_object = item.second();
@@ -29,7 +29,7 @@ void gbe::editor::HierarchyWindow::DrawSelf()
 
 			if (ImGui::BeginMenu("Light"))
 			{
-				for (const auto& item : CreateFunctions::GetCreators_light())
+				for (const auto& item : CreateFunctions::createfunctions_light)
 				{
 					if (ImGui::MenuItem(item.first.c_str())) {
 						created_object = item.second();
