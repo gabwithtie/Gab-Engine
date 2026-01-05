@@ -3,12 +3,17 @@
 		{
 			"file": "fs_mesh.sc",
 			"type": "fragment",
-			"varying": "unlit_varying.def.sc"
+			"varying": "mesh_varying.def.sc"
+		},
+		{
+			"file": "fs_gbuffer.sc",
+			"type": "fragment",
+			"varying": "mesh_varying.def.sc"
 		},
 		{
 			"file": "vs_mesh.sc",
 			"type": "vertex",
-			"varying": "unlit_varying.def.sc"
+			"varying": "mesh_varying.def.sc"
 		}
 	]
 }

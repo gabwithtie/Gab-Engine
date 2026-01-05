@@ -13,6 +13,7 @@
 namespace gbe {
 	namespace gfx {
 		namespace bgfx_gab {
+
 			class ForwardRenderer : public Renderer {
 
 				// BGFX: Define the View IDs for each rendering pass
@@ -61,6 +62,8 @@ namespace gbe {
 				bgfx::TextureHandle m_mainColorTexture = BGFX_INVALID_HANDLE;
 				bgfx::TextureHandle m_mainDepthTexture = BGFX_INVALID_HANDLE;
 
+				std::vector<Vector4>  m_ssao_kernel_data;
+
 				bgfx::TextureHandle m_shadowArrayTexture = BGFX_INVALID_HANDLE;
 				std::vector<bgfx::TextureHandle> m_debugShadowTextures;
 
@@ -69,6 +72,8 @@ namespace gbe {
 
 				// BGFX: Vertex buffer for lines
 				bgfx::DynamicVertexBufferHandle m_line_vbh = BGFX_INVALID_HANDLE;
+
+				Vector2Int resolution;
 			public:
 				ForwardRenderer(const GraphicsRenderInfo& passinfo);
 

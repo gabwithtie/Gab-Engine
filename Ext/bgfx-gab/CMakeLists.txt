@@ -2,7 +2,7 @@ set(CURRENT_CMAKE_LIB bgfx-gab)
 
 #SUBDIRECTORY LOADING
 add_library(${CURRENT_CMAKE_LIB} STATIC
-	"bgfx-gab/forwardrenderer.cpp")
+	"bgfx-gab/forwardrenderer.cpp" "bgfx-gab/ScreenUtil.cpp")
 
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_editor)

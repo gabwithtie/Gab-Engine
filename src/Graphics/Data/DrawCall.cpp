@@ -42,14 +42,6 @@ namespace gbe {
             std::string id;
             auto& overridedata = this->get_material()->getOverride(m_i, id);
 
-            if (overridedata.registered_change == false)
-            {
-                overrideHandledList.insert_or_assign(id, false); //reset handled list for this id
-            }
-
-            // BGFX: ApplyOverride template handles setting the uniform state.
-            // Note: The original INT override used value_float, which is potentially a bug in the original code,
-            // but is preserved here by casting/passing a float to the int override.
             if (overridedata.type == asset::Shader::UniformFieldType::BOOL) {
                 // BOOL is typically represented as a float/int in shaders
                 this->ApplyOverride<float>(overridedata.value_bool ? 1.0f : 0.0f, id);
@@ -75,9 +67,6 @@ namespace gbe {
                 auto findtexturedata = TextureLoader::GetAssetRuntimeData(overridedata.value_tex->Get_assetId());
                 this->ApplyOverride(findtexturedata, id);
             }
-
-            overrideHandledList[id] = true;
-            overridedata.registered_change = true;
         }
 
         return true;

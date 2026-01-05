@@ -52,7 +52,7 @@ namespace gbe {
 
 			std::unordered_map<std::string, bgfx::UniformHandle> m_uniforms;
 
-			inline bool GetUniform(bgfx::UniformHandle& out, const std::string& name) {
+			inline bool GetUniform(bgfx::UniformHandle& out, std::string& name) const {
 				auto it = m_uniforms.find(name);
 				if (it != m_uniforms.end())
 				{
@@ -65,7 +65,7 @@ namespace gbe {
 
 			std::unordered_map<std::string, bgfx::UniformHandle> m_uniformarrays;
 
-			inline bool GetUniformArray(bgfx::UniformHandle& out, const std::string& name) {
+			inline bool GetUniformArray(bgfx::UniformHandle& out, const std::string& name) const {
 				auto it = m_uniformarrays.find(name);
 				if (it != m_uniformarrays.end())
 				{
@@ -77,11 +77,11 @@ namespace gbe {
 			}
 
 			template<typename T>
-			void RegisterUniform(const std::string& name, int size = 1) {
+			void RegisterUniform(std::string& name, int size = 1) {
 				throw new std::runtime_error("Unsupported uniform type.");
 			}
 
-			void Internal_CreateVec4Uniform(const std::string& name, int size) {
+			void Internal_CreateVec4Uniform(std::string& name, int size) {
 				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Vec4, size);
 				
 				if(size == 1)
@@ -92,27 +92,27 @@ namespace gbe {
 			}
 
 			template <>
-			void RegisterUniform<int>(const std::string& name, int size) {
+			void RegisterUniform<int>(std::string& name, int size) {
 				Internal_CreateVec4Uniform(name, size);
 			}
 			template <>
-			void RegisterUniform<float>(const std::string& name, int size) {
+			void RegisterUniform<float>(std::string& name, int size) {
 				Internal_CreateVec4Uniform(name, size);
 			}
 			template <>
-			void RegisterUniform<Vector2>(const std::string& name, int size) {
+			void RegisterUniform<Vector2>(std::string& name, int size) {
 				Internal_CreateVec4Uniform(name, size);
 			}
 			template <>
-			void RegisterUniform<Vector3>(const std::string& name, int size) {
+			void RegisterUniform<Vector3>(std::string& name, int size) {
 				Internal_CreateVec4Uniform(name, size);
 			}
 			template <>
-			void RegisterUniform<Vector4>(const std::string& name, int size) {
+			void RegisterUniform<Vector4>(std::string& name, int size) {
 				Internal_CreateVec4Uniform(name, size);
 			}
 			template <>
-			void RegisterUniform<Matrix4>(const std::string& name, int size) {
+			void RegisterUniform<Matrix4>(std::string& name, int size) {
 				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Mat4, size);
 				if (size == 1)
 					m_uniforms[name] = handle;
@@ -121,12 +121,64 @@ namespace gbe {
 			}
 
 			template <>
-			void RegisterUniform<TextureData>(const std::string& name, int size) {
+			void RegisterUniform<TextureData>(std::string& name, int size) {
 				bgfx::UniformHandle handle = bgfx::createUniform(name.c_str(), bgfx::UniformType::Sampler, size);
 				if (size == 1)
 					m_uniforms[name] = handle;
 				else
 					m_uniformarrays[name] = handle;
+			}
+
+			// BGFX: ApplyOverride for simple types (bool, float, vec, matrix)
+			// It uses bgfx::setUniform to update the uniform on the active view/command buffer.
+			template<typename T>
+			inline bool ApplyOverride(const T& valueref, std::string target) {
+
+				bgfx::UniformHandle handle;
+
+				if (!this->GetUniform(handle, target))
+					this->RegisterUniform<T>(target); //temporary fix, we want to do this at shader loading stage
+
+				this->GetUniform(handle, target);
+
+				bgfx::setUniform(handle, &valueref, 1);
+
+				return true;
+			}
+
+			template<>
+			inline bool ApplyOverride<TextureData>(const TextureData& valueref, std::string target)
+			{
+				throw new std::runtime_error("Use ApplyTextureOverride instead.");
+			}
+			// BGFX: ApplyOverride specialization for TextureData
+			inline bool ApplyTextureOverride(const TextureData& valueref, std::string target, int stage) {
+
+				bgfx::UniformHandle handle;
+
+				if (!this->GetUniform(handle, target))
+					this->RegisterUniform<TextureData>(target); //temporary fix, we want to do this at shader loading stage
+
+				this->GetUniform(handle, target);
+
+				bgfx::setTexture(stage, handle, valueref.textureHandle);
+
+				return true;
+			}
+
+			template<typename T>
+			inline bool ApplyOverrideArray(const T* valueref, std::string target, int count) {
+
+				bgfx::UniformHandle handle;
+
+				if (!this->GetUniformArray(handle, target))
+					this->RegisterUniform<T>(target, count); //temporary fix, we want to do this at shader loading stage
+
+				this->GetUniformArray(handle, target);
+
+				bgfx::setUniform(handle, valueref, count);
+
+				return true;
 			}
 		};
 

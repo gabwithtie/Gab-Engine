@@ -27,6 +27,14 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
     auto vertpath = asset->Get_asset_filepath().parent_path() / importdata.vert;
     auto fragpath = asset->Get_asset_filepath().parent_path() / importdata.frag;
 
+    //obscure error catcher
+    if (importdata.vert.contains("fs")) {
+        std::cout << "Vertex shader is tagged as fragment shader, check if you got it swapped." << std::endl;
+    }
+    if (importdata.frag.contains("vs")) {
+        std::cout << "Fragment shader is tagged as vertex shader, check if you got it swapped." << std::endl;
+    }
+
     // Read the compiled shader code (assuming these are BGFX-compiled binaries)
     auto vertShaderCode = readfile(vertpath);
     auto fragShaderCode = readfile(fragpath);

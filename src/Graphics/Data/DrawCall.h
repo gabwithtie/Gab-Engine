@@ -24,8 +24,6 @@ namespace gbe {
             asset::Mesh* m_mesh;
             asset::Material* m_material;
 
-            std::unordered_map<std::string, bool> overrideHandledList;
-
             // BGFX: Stores the shader program and uniform handles
             ShaderData* shaderdata;
 
@@ -48,47 +46,13 @@ namespace gbe {
             // It uses bgfx::setUniform to update the uniform on the active view/command buffer.
             template<typename T>
             inline bool ApplyOverride(const T& valueref, std::string target) const {
-                
-                bgfx::UniformHandle handle;
-                    
-                if (!this->shaderdata->GetUniform(handle, target))
-                    this->shaderdata->RegisterUniform<T>(target); //temporary fix, we want to do this at shader loading stage
-
-                this->shaderdata->GetUniform(handle, target);
-
-                bgfx::setUniform(handle, &valueref, 1);
-
-                return true;
-            }
-
-            // BGFX: ApplyOverride specialization for TextureData
-            template <>
-            inline bool ApplyOverride<TextureData>(const TextureData& valueref, std::string target) const {
-                
-                bgfx::UniformHandle handle;
-
-                if (!this->shaderdata->GetUniform(handle, target))
-                    this->shaderdata->RegisterUniform<TextureData>(target); //temporary fix, we want to do this at shader loading stage
-
-                this->shaderdata->GetUniform(handle, target);
-
-                bgfx::setTexture(0, handle, valueref.textureHandle);
-
+                this->shaderdata->ApplyOverride(valueref, target);
                 return true;
             }
 
             template<typename T>
             inline bool ApplyOverrideArray(const T* valueref, std::string target, int count) const {
-
-                bgfx::UniformHandle handle;
-
-                if (!this->shaderdata->GetUniformArray(handle, target))
-                    this->shaderdata->RegisterUniform<T>(target, count); //temporary fix, we want to do this at shader loading stage
-
-                this->shaderdata->GetUniformArray(handle, target);
-
-                bgfx::setUniform(handle, valueref, count);
-
+                this->shaderdata->ApplyOverrideArray(valueref, target, count);
                 return true;
             }
         };

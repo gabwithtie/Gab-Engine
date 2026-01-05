@@ -4,6 +4,11 @@
 			"file": "ssao.sc",
 			"type": "fragment",
 			"varying": "postprocessing.def.sc"
+		},
+		{
+			"file": "vs_pp.sc",
+			"type": "vertex",
+			"varying": "postprocessing.def.sc"
 		}
 	]
 }

@@ -2,6 +2,10 @@
 
 #include "Graphics/gbe_graphics.h"
 
+#include <random> // Added for SSAO kernel generation
+
+#include "ScreenUtil.h"
+
 gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& passinfo) {
 	m_line_vbh = bgfx::createDynamicVertexBuffer(passinfo.max_lines, s_VERTEXLAYOUT, BGFX_BUFFER_NONE);
 
@@ -57,6 +61,19 @@ gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& p
 	light_bias_mult_arr.resize(max_lights);
 	light_cone_inner_arr.resize(max_lights);
 	light_cone_outer_arr.resize(max_lights);
+
+	// Generate 64 random samples in a hemisphere
+	m_ssao_kernel_data.resize(64);
+	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+	std::default_random_engine generator;
+	for (unsigned int i = 0; i < 64; ++i) {
+		Vector3 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator));
+		sample.Normalize();
+		sample *= randomFloats(generator);
+		float scale = (float)i / 64.0f;
+		scale = 0.1f + scale * scale * (1.0f - 0.1f); // Lerp for distribution
+		m_ssao_kernel_data[i] = Vector4(sample.x * scale, sample.y * scale, sample.z * scale, 0.0f);
+	}
 }
 
 void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
@@ -69,6 +86,8 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
 	RenderPipeline::PrepareCall(this->skybox_call);
 
 	shadow_shader = ShaderLoader::GetAssetRuntimeData("shadow");
+	ssao_shader = ShaderLoader::GetAssetRuntimeData("ssao");
+	gbuffer_shader = ShaderLoader::GetAssetRuntimeData("gbuffer");
 }
 
 void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& frameinfo, GraphicsRenderInfo& passinfo)
@@ -117,36 +136,31 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	bgfx::setViewTransform(VIEW_GBUFFER_PASS, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
 
 	for (const auto& shaderset : passinfo.sortedcalls[0]) {
-		const auto& drawcall = shaderset.first;
-		const auto& curmesh = MeshLoader::GetAssetRuntimeData(drawcall->get_mesh()->Get_assetId());
-
-		// Instance logic (Simplified for brevity - same as your existing instance logic)
-		bgfx::InstanceDataBuffer idb;
-		uint32_t instanceCount = (uint32_t)shaderset.second.size();
-		bgfx::allocInstanceDataBuffer(&idb, instanceCount, 64);
-		// ... Fill idb ...
-
-		bgfx::setIndexBuffer(curmesh.index_vbh);
-		bgfx::setVertexBuffer(0, curmesh.vertex_vbh);
-		bgfx::setInstanceDataBuffer(&idb);
+		drawbatch(shaderset);
 		bgfx::setState(BGFX_STATE_DEFAULT);
 		bgfx::submit(VIEW_GBUFFER_PASS, gbuffer_shader.programHandle);
 	}
 
 	//================== 2. SSAO CALCULATION PASS ========================//
 	bgfx::setViewTransform(VIEW_SSAO_PASS, nullptr, nullptr); // Screen space
-	bgfx::setTexture(0, m_s_ssao_normal, m_gbufferNormal);
-	bgfx::setTexture(1, m_s_ssao_depth, m_gbufferDepth);
-	bgfx::setTexture(2, m_s_ssao_noise, m_ssaoNoiseTexture);
-	bgfx::setUniform(u_ssao_kernel, m_ssao_kernel_data->data, 64);
+	ssao_shader.ApplyTextureOverride(TextureData{
+		.textureHandle = m_gbufferNormal
+		},
+		"tex_normal",
+		0);
+	ssao_shader.ApplyTextureOverride(TextureData{
+		.textureHandle = m_gbufferDepth
+		},
+		"tex_depth",
+		1);
+
+	ssao_shader.ApplyOverrideArray(m_ssao_kernel_data.data(), "u_kernel", 64);
 
 	// Params: x=radius, y=bias, z=screenWidth, w=screenHeight
-	Vector4 params(0.5f, 0.025f, (float)m_current_width, (float)m_current_height);
-	bgfx::setUniform(u_ssao_params, &params);
+	Vector4 params(0.5f, 0.025f, (float)resolution.x, (float)resolution.y);
+	ssao_shader.ApplyOverride(params, "u_ssao_params");
 
-	bgfx::setState(BGFX_STATE_WRITE_RGB);
-	bgfx::setScreenSpaceQuad((float)m_current_width, (float)m_current_height);
-	bgfx::submit(VIEW_SSAO_PASS, ssao_shader.programHandle);
+	RenderFullscreenPass(VIEW_SSAO_PASS, ssao_shader.programHandle);
 
 	//==================SHADOW PASS [VIEW_SHADOW_PASS]========================//
 	for (size_t i = 0; i < max_lights; i++)
@@ -200,12 +214,6 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 
 		auto lineshaderasset = this->line_call->get_material()->Get_load_data().shader;
 		const auto& lineshader = ShaderLoader::GetAssetRuntimeData(lineshaderasset->Get_assetId());
-
-		// 1. Set uniforms
-		this->line_call->ApplyOverride<Matrix4>(Matrix4(1), "model");
-		this->line_call->ApplyOverride<Matrix4>(frameinfo.projmat, "proj");
-		this->line_call->ApplyOverride<Matrix4>(frameinfo.viewmat, "view");
-		this->line_call->ApplyOverride<Vector3>(frameinfo.camera_pos, "camera_pos");
 
 		// 2. Set Vertex Buffer
 		bgfx::setVertexBuffer(0, m_line_vbh, 0, (uint32_t)passinfo.lines_this_frame.size());
@@ -353,6 +361,7 @@ gbe::gfx::TextureData gbe::gfx::bgfx_gab::ForwardRenderer::ReloadFrame(Vector2In
 	bgfx::TextureHandle gbufferAttachments[] = { m_gbufferNormal, m_gbufferDepth };
 	m_gbufferFB = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAttachments), gbufferAttachments, true);
 
+	resolution = reso;
 
 	//DEBUG
 	int counter = 0;
