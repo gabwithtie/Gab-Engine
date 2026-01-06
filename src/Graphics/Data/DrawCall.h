@@ -50,6 +50,11 @@ namespace gbe {
                 return true;
             }
 
+            inline bool ApplyTextureOverride(const TextureData& valueref, std::string target, int stage) const {
+                this->shaderdata->ApplyTextureOverride(valueref, target, stage);
+                return true;
+            }
+
             template<typename T>
             inline bool ApplyOverrideArray(const T* valueref, std::string target, int count) const {
                 this->shaderdata->ApplyOverrideArray(valueref, target, count);

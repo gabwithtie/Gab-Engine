@@ -4,8 +4,6 @@
 
 #include <random> // Added for SSAO kernel generation
 
-#include "ScreenUtil.h"
-
 gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& passinfo) {
 	m_line_vbh = bgfx::createDynamicVertexBuffer(passinfo.max_lines, s_VERTEXLAYOUT, BGFX_BUFFER_NONE);
 
@@ -41,13 +39,17 @@ gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& p
 
 	m_debugShadowTextures.resize(max_lights);
 	for (int i = 0; i < max_lights; ++i) {
-		m_debugShadowTextures[i] = bgfx::createTexture2D(
-			shadow_map_resolution,
-			shadow_map_resolution,
-			false, 1,
-			bgfx::TextureFormat::D16,
-			BGFX_TEXTURE_BLIT_DST // Required for blitting
-		);
+		m_debugShadowTextures[i] = TextureData{
+			.textureHandle = bgfx::createTexture2D(
+				shadow_map_resolution,
+				shadow_map_resolution,
+				false, 1,
+				bgfx::TextureFormat::D16,
+				BGFX_TEXTURE_BLIT_DST // Required for blitting
+			)
+		};
+
+		TextureLoader::RegisterExternal("shadowmap_" + std::to_string(i), m_debugShadowTextures[i]);
 	}
 
 	light_view_arr.resize(max_lights);
@@ -85,9 +87,10 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
 	this->skybox_call = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("skybox_gradient"), 0);
 	RenderPipeline::PrepareCall(this->skybox_call);
 
-	shadow_shader = ShaderLoader::GetAssetRuntimeData("shadow");
+	shadow_shader = ShaderLoader::GetAssetRuntimeData("shadow"); 
 	ssao_shader = ShaderLoader::GetAssetRuntimeData("ssao");
 	gbuffer_shader = ShaderLoader::GetAssetRuntimeData("gbuffer");
+	bilateralblur_shader = ShaderLoader::GetAssetRuntimeData("bilateralblur");
 }
 
 void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& frameinfo, GraphicsRenderInfo& passinfo)
@@ -141,26 +144,39 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		bgfx::submit(VIEW_GBUFFER_PASS, gbuffer_shader.programHandle);
 	}
 
+	Vector4 cam_params(frameinfo.nearclip, frameinfo.farclip, (float)resolution.x, (float)resolution.y);
 	//================== 2. SSAO CALCULATION PASS ========================//
+	bgfx::setViewClear(VIEW_SSAO_PASS, BGFX_CLEAR_COLOR, 0xffffffff, 1.0f, 0);
 	bgfx::setViewTransform(VIEW_SSAO_PASS, nullptr, nullptr); // Screen space
-	ssao_shader.ApplyTextureOverride(TextureData{
-		.textureHandle = m_gbufferNormal
-		},
-		"tex_normal",
-		0);
-	ssao_shader.ApplyTextureOverride(TextureData{
-		.textureHandle = m_gbufferDepth
-		},
-		"tex_depth",
-		1);
+	ssao_shader.ApplyTextureOverride(m_gbufferNormal,"tex_normal",0);
+	ssao_shader.ApplyTextureOverride(m_gbufferDepth,"tex_depth",1);
 
 	ssao_shader.ApplyOverrideArray(m_ssao_kernel_data.data(), "u_kernel", 64);
 
 	// Params: x=radius, y=bias, z=screenWidth, w=screenHeight
-	Vector4 params(0.5f, 0.025f, (float)resolution.x, (float)resolution.y);
-	ssao_shader.ApplyOverride(params, "u_ssao_params");
+	Vector4 ssao_params(0.07, 0.01f, (float)resolution.x, (float)resolution.y);
+	ssao_shader.ApplyOverride(cam_params, "u_camera_params");
+	ssao_shader.ApplyOverride(ssao_params, "u_ssao_params");
 
 	RenderFullscreenPass(VIEW_SSAO_PASS, ssao_shader.programHandle);
+
+	//================== 3. BILATERAL BLUR: HORIZONTAL PASS ========================//
+	float blurrad = 8;
+	float blur_sharpness = 9;
+	InitPP(bilateralblur_shader);
+	curppshader.ApplyTextureOverride(m_ssaoTexture, "s_tex_input", 0);
+	curppshader.ApplyTextureOverride(m_gbufferDepth, "s_tex_depth", 1);
+	Vector4 blur_h_params(blurrad, blur_sharpness, 1.0f, 0.0f); // Direction: Horizontal (1,0)
+	curppshader.ApplyOverride(cam_params, "u_camera_params");
+	curppshader.ApplyOverride(blur_h_params, "u_blur_params");
+	SubmitPP();
+	InitPP(bilateralblur_shader);
+	curppshader.ApplyTextureOverride(GetPrevPP(), "s_tex_input", 0);
+	curppshader.ApplyTextureOverride(m_gbufferDepth, "s_tex_depth", 1);
+	Vector4 blur_v_params(blurrad, blur_sharpness, 0.0f, 1.0f);
+	curppshader.ApplyOverride(cam_params, "u_camera_params");
+	curppshader.ApplyOverride(blur_v_params, "u_blur_params");
+	SubmitPP();
 
 	//==================SHADOW PASS [VIEW_SHADOW_PASS]========================//
 	for (size_t i = 0; i < max_lights; i++)
@@ -297,6 +313,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		}
 
 		bgfx::setTexture(0, m_shadowArraySampler, m_shadowArrayTexture);
+		drawcall->ApplyTextureOverride(GetPrevPP(), "tex_ao", 4); // SSAO map bound to slot 4
 
 		drawcall->ApplyOverrideArray<Matrix4>(light_view_arr.data(), "light_view", max_lights);
 		drawcall->ApplyOverrideArray<Matrix4>(light_proj_arr.data(), "light_proj", max_lights);
@@ -323,7 +340,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		// blit(viewId, dst, dstMip, dstX, dstY, dstZ, src, srcMip, srcX, srcY, srcZ, width, height, depth)
 		bgfx::blit(
 			VIEW_DEBUG_BLITTER,           // The view that performs the copy
-			m_debugShadowTextures[i], // Destination: Singular 2D texture
+			m_debugShadowTextures[i].textureHandle, // Destination: Singular 2D texture
 			0, 0, 0, 0,               // Mip 0, X 0, Y 0, Z 0
 			m_shadowArrayTexture,     // Source: Your Texture Array
 			0, 0, 0, i,               // Mip 0, X 0, Y 0, Layer 'i'
@@ -338,45 +355,66 @@ gbe::gfx::TextureData gbe::gfx::bgfx_gab::ForwardRenderer::ReloadFrame(Vector2In
 	// Destroy existing FBOs and textures if any
 	if (bgfx::isValid(m_mainPassFBO)) {
 		bgfx::destroy(m_mainPassFBO);
-		bgfx::destroy(m_mainColorTexture);
-		bgfx::destroy(m_mainDepthTexture);
+		bgfx::destroy(m_mainColorTexture.textureHandle);
+		bgfx::destroy(m_mainDepthTexture.textureHandle);
 	}
 
 	uint16_t w = (uint16_t)reso.x;
 	uint16_t h = (uint16_t)reso.y;
 
+	//PINGPONGING
+	m_pp_0 = TextureData{
+		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_RT)
+	};
+	m_ppFB_0 = bgfx::createFrameBuffer(1, &m_pp_0.textureHandle, false);
+	bgfx::setViewFrameBuffer(VIEW_PP0_PASS, m_ppFB_0);
+	bgfx::setViewRect(VIEW_PP0_PASS, 0, 0, w, h);
+	m_pp_1 = TextureData{
+		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_RT)
+	};
+	m_ppFB_1 = bgfx::createFrameBuffer(1, &m_pp_1.textureHandle, false);
+	bgfx::setViewFrameBuffer(VIEW_PP1_PASS, m_ppFB_1);
+	bgfx::setViewRect(VIEW_PP1_PASS, 0, 0, w, h);
+
+	//GBUFFERS
+	m_gbufferNormal = TextureData{
+		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT)
+	};
+	TextureLoader::RegisterExternal("m_gbufferNormal", m_gbufferNormal);
+	m_gbufferDepth = TextureData{
+		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24, BGFX_TEXTURE_RT)
+	};
+	TextureLoader::RegisterExternal("m_gbufferDepth", m_gbufferDepth);
+	bgfx::TextureHandle gbufferAttachments[] = { m_gbufferNormal.textureHandle, m_gbufferDepth.textureHandle };
+	m_gbufferFB = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAttachments), gbufferAttachments, false);
+
+	bgfx::setViewFrameBuffer(VIEW_GBUFFER_PASS, m_gbufferFB);
+	bgfx::setViewRect(VIEW_GBUFFER_PASS, 0, 0, w, h);
+
+	//SSAO
+	m_ssaoTexture = TextureData{
+		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_RT)
+	};
+	m_ssaoFB = bgfx::createFrameBuffer(1, &m_ssaoTexture.textureHandle, false);
+	TextureLoader::RegisterExternal("m_ssaoTexture", m_ssaoTexture);
+
+	bgfx::setViewFrameBuffer(VIEW_SSAO_PASS, m_ssaoFB);
+	bgfx::setViewRect(VIEW_SSAO_PASS, 0, 0, w, h);
+
 	// Create Main Pass FBO (Color + Depth)
 	// Use BGFX_TEXTURE_RT to mark as a render target
-	m_mainColorTexture = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT);
-	m_mainDepthTexture = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT_WRITE_ONLY);
-	bgfx::TextureHandle mainAttachments[] = { m_mainColorTexture, m_mainDepthTexture };
+	m_mainColorTexture = TextureData{
+		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT)
+	};
+	m_mainDepthTexture = TextureData{
+		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT_WRITE_ONLY)
+	};
+	bgfx::TextureHandle mainAttachments[] = { m_mainColorTexture.textureHandle, m_mainDepthTexture.textureHandle };
 	m_mainPassFBO = bgfx::createFrameBuffer(BX_COUNTOF(mainAttachments), mainAttachments, false);
-	bgfx::setViewRect(VIEW_MAIN_PASS, 0, 0, w, h);
 	bgfx::setViewFrameBuffer(VIEW_MAIN_PASS, m_mainPassFBO);
-
-	//SSBO
-	m_gbufferNormal = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT);
-	m_gbufferDepth = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24, BGFX_TEXTURE_RT);
-
-	bgfx::TextureHandle gbufferAttachments[] = { m_gbufferNormal, m_gbufferDepth };
-	m_gbufferFB = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAttachments), gbufferAttachments, true);
+	bgfx::setViewRect(VIEW_MAIN_PASS, 0, 0, w, h);
 
 	resolution = reso;
 
-	//DEBUG
-	int counter = 0;
-	for (const auto& shadowmap : this->m_debugShadowTextures)
-	{
-		TextureData shadowmap_tex = {
-			.textureHandle = shadowmap,
-		};
-		TextureLoader::RegisterExternal("shadowmap_" + std::to_string(counter), shadowmap_tex);
-		counter++;
-	}
-
-	// Main Pass Color Texture
-	TextureData mainpass_tex = {
-		.textureHandle = m_mainColorTexture, // Pass the bgfx handle
-	};
-	return mainpass_tex;
+	return m_mainColorTexture;
 }

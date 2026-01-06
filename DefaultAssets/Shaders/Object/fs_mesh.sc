@@ -9,8 +9,10 @@ $input v_pos, v_view, v_normal, v_color0
 
 #define MAX_LIGHTS 10
 
+//Camera buffers
 SAMPLER2D(tex_ao, 4);
 
+//Lights
 SAMPLER2DARRAY(light_map, 0);
 uniform mat4 light_view[MAX_LIGHTS];
 uniform mat4 light_proj[MAX_LIGHTS];
@@ -127,12 +129,12 @@ void main() {
     }
 
     // Ambient light baseline
-    vec3 ambientcolor = vec3(0.05f, 0.05f, 0.05f);
+    finalLight += vec3(0.5f);
 
     // Sample SSAO using screen coordinates
     vec2 screenUV = gl_FragCoord.xy / u_viewRect.zw;
-    float ambientOcclusion = min(texture2D(tex_ao, screenUV).r, 0.9f);
+    float ambientOcclusion = max(texture2D(tex_ao, screenUV).r, 0.1f);
 
-    vec3 result = (ambientcolor + finalLight) * vec3(1.0, 1.0, 1.0) * ambientOcclusion; // Multiply by albedo/color0 here
+    vec3 result = finalLight * vec3(1.0, 1.0, 1.0) * ambientOcclusion; // Multiply by albedo/color0 here
     gl_FragColor = vec4(result, 1.0);
 }
