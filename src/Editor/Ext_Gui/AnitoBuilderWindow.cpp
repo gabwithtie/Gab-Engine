@@ -6,10 +6,6 @@
 
 void gbe::editor::AnitoBuilderWindow::DrawSelf()
 {
-	if (ImGui::Button("Toggle Model")) {
-		ext::AnitoBuilder::BuilderBlock::ToggleModel();
-	}
-
 	ImGui::SeparatorText("Block Explorer");
 	if (ImGui::BeginTable("BlockTable", 1, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable))
 	{

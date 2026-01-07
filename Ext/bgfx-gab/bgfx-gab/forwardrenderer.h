@@ -20,12 +20,12 @@ namespace gbe {
 				// BGFX: Define the View IDs for each rendering pass
 				enum RenderViewId
 				{
-					VIEW_MAIN_PASS = 20,
-					VIEW_GBUFFER_PASS = 5,
-					VIEW_SSAO_PASS = 6,
-					VIEW_PP0_PASS = 7,
-					VIEW_PP1_PASS = 8,
-					VIEW_DEBUG_BLITTER = 0
+					VIEW_GBUFFER_PASS,
+					VIEW_SSAO_PASS,
+					VIEW_BLUR0_PASS,
+					VIEW_BLUR1_PASS,
+					VIEW_MAIN_PASS = 100,
+					VIEW_DEBUG_BLITTER
 				};
 
 			private:
@@ -47,7 +47,7 @@ namespace gbe {
 
 				std::vector<Matrix4> light_view_arr;
 				std::vector<Matrix4> light_proj_arr;
-				std::vector<Vector3> light_color_arr;
+				std::vector<Vector4> light_color_arr;
 				std::vector<int> light_type_arr;
 				std::vector<int> light_is_square_arr;
 				std::vector<float> light_nearclip_arr;
@@ -63,44 +63,31 @@ namespace gbe {
 				TextureData m_gbufferNormal = BGFX_INVALID_HANDLE;
 				TextureData m_gbufferDepth = BGFX_INVALID_HANDLE;
 				TextureData m_ssaoTexture;
-				bgfx::FrameBufferHandle m_ssaoFB;
 
-				TextureData m_pp_0 = BGFX_INVALID_HANDLE;
-				TextureData m_pp_1 = BGFX_INVALID_HANDLE;
-				bgfx::FrameBufferHandle m_ppFB_0;
-				bgfx::FrameBufferHandle m_ppFB_1;
 				ShaderData curppshader;
-				int pp_switch = 1;
-				inline TextureData& InitPP(ShaderData& ppshaderdata) {
-					TextureData& selectedpp = m_pp_0;
-					RenderViewId selectedid = VIEW_PP0_PASS;
+				RenderViewId curppview;
 
-					if (pp_switch == 1) selectedpp = m_pp_1;
-					if (pp_switch == 1) selectedid = VIEW_PP1_PASS;
-					
+				std::vector<bgfx::FrameBufferHandle> m_ppFBs;
+				std::unordered_map<RenderViewId, TextureData> m_pp_textures;
+
+				inline void InitPP(ShaderData& ppshaderdata, RenderViewId viewid) {
+					curppview = viewid;
 					curppshader = ppshaderdata;
-					bgfx::setViewClear(selectedid, BGFX_CLEAR_COLOR, 0xffffffff, 1.0f, 0);
-					bgfx::setViewTransform(selectedid, nullptr, nullptr);
-					
-					return selectedpp;
-				}
-				inline TextureData& GetPP() {
-					TextureData& selectedpp = m_pp_0;
-					if (pp_switch == 1) selectedpp = m_pp_1;
-					return selectedpp;
-				}
-				inline TextureData& GetPrevPP() {
-					TextureData& selectedpp = m_pp_1;
-					if (pp_switch == 1) selectedpp = m_pp_0;
-					return selectedpp;
+					bgfx::setViewClear(viewid, BGFX_CLEAR_COLOR, 0xffffffff, 1.0f, 0);
+					bgfx::setViewTransform(viewid, nullptr, nullptr);
 				}
 				inline void SubmitPP() {
-					RenderViewId selectedid = VIEW_PP0_PASS;
-					if (pp_switch == 1) selectedid = VIEW_PP1_PASS;
-					RenderFullscreenPass(selectedid, curppshader.programHandle);
-
-					pp_switch++;
-					pp_switch %= 2;
+					RenderFullscreenPass(curppview, curppshader.programHandle);
+				}
+				inline void RegisterPPFramebuffer(RenderViewId viewid, bgfx::TextureFormat::Enum tformat = bgfx::TextureFormat::R8) {
+					auto newtexdata = TextureData{
+						.textureHandle = bgfx::createTexture2D(resolution.x, resolution.y, false, 1, tformat, BGFX_TEXTURE_RT)
+					};
+					m_pp_textures.insert_or_assign(viewid, newtexdata);
+					auto newfb = bgfx::createFrameBuffer(1, &newtexdata.textureHandle, false);
+					m_ppFBs.push_back(newfb);
+					bgfx::setViewFrameBuffer(viewid, newfb);
+					bgfx::setViewRect(viewid, 0, 0, resolution.x, resolution.y);
 				}
 
 				bgfx::FrameBufferHandle m_mainPassFBO = BGFX_INVALID_HANDLE;

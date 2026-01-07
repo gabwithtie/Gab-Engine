@@ -1,5 +1,4 @@
-$input v_pos, v_view, v_normal, v_color0
-
+$input v_pos, v_view, v_normal, v_color0, v_texcoord0, v_tangent, v_bitangent
 /*
  * Copyright 2011-2025 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
@@ -8,6 +7,18 @@ $input v_pos, v_view, v_normal, v_color0
 #include <bgfx_shader.sh>
 
 #define MAX_LIGHTS 10
+
+//Material stuff
+
+uniform vec4 color;
+uniform float metallic;
+
+uniform float has_color_tex;
+SAMPLER2D(color_tex, 1); 
+uniform float has_normal_tex;
+SAMPLER2D(normal_tex, 2);
+uniform float has_arm_tex;
+SAMPLER2D(arm_tex, 3);
 
 //Camera buffers
 SAMPLER2D(tex_ao, 4);
@@ -83,14 +94,39 @@ float getShadow(int _layer, vec3 _wpos, vec3 _normal, vec3 _lightDir, float _min
 }
 
 void main() {
+    vec3 albedo = color.xyz;
+    if (has_color_tex > 0.5) {
+        albedo *= texture2D(color_tex, v_texcoord0).xyz;
+    }
+
     vec3 normal = normalize(v_normal);
+    if (has_normal_tex > 0.5) {
+        vec3 normalSample = texture2D(normal_tex, v_texcoord0).xyz * 2.0 - 1.0;
+        
+        mat3 TBN = mat3(
+            normalize(v_tangent),
+            normalize(v_bitangent),
+            normal
+        );
+        normal = normalize(mul(TBN, normalSample));
+    }
+
+    float _matAO = 1.0;
+    float _roughness = 0.5; // Default middle-ground
+    float _metallic = metallic;  // Default non-metal
+    
+    if (has_arm_tex > 0.5) {
+        vec3 arm = texture2D(arm_tex, v_texcoord0).rgb;
+        _matAO = arm.r;
+        _roughness = arm.g;
+        _metallic = arm.b;
+    }
+
     vec3 viewDir = normalize(v_view);
-    vec3 finalLight = vec3(0.0, 0.0, 0.0);
+    vec3 finalDiffuse = vec3(0.0, 0.0, 0.0);
+    vec3 finalSpecular = vec3(0.0, 0.0, 0.0);
     
     for (int i = 0; i < MAX_LIGHTS; ++i) {
-        // Skip lights with no intensity
-        if (length(light_color[i].xyz) < 0.01) continue;
-
         vec3 lightDir;
         float attenuation = 1.0;
 
@@ -120,21 +156,33 @@ void main() {
 
         // Diffuse (Lambert)
         float diff = max(dot(normal, lightDir), 0.0);
-        
+        // --- Specular (Simplified Blinn-Phong for PBR-ish look) ---
+        vec3 halfDir = normalize(lightDir + viewDir);
+        float specPower = pow(8192.0, 1.0 - _roughness); // Map roughness to shininess
+        float spec = pow(max(dot(normal, halfDir), 0.0), specPower);
+
         // Shadow Calculation
         float shadow = getShadow(i, v_pos, normal, lightDir, light_bias_min[i].x, light_bias_mult[i].x);
 
-        // Accumulate
-        finalLight += light_color[i].xyz * diff * attenuation * shadow;
+        // Metallic colors the specular reflection with albedo
+        vec3 specColor = lerp(vec3(0.04), albedo, _metallic);
+        
+        finalDiffuse += light_color[i].xyz * diff * attenuation * shadow;
+        finalSpecular += light_color[i].xyz * spec * attenuation * shadow * specColor;
     }
 
     // Ambient light baseline
-    finalLight += vec3(0.5f);
+    finalDiffuse += vec3(0.5f);
 
     // Sample SSAO using screen coordinates
     vec2 screenUV = gl_FragCoord.xy / u_viewRect.zw;
-    float ambientOcclusion = max(texture2D(tex_ao, screenUV).r, 0.1f);
+    float combinedAO = _matAO * max(texture2D(tex_ao, screenUV).r, 0.1f);
 
-    vec3 result = finalLight * vec3(1.0, 1.0, 1.0) * ambientOcclusion; // Multiply by albedo/color0 here
-    gl_FragColor = vec4(result, 1.0);
+    vec3 diffuseResult = finalDiffuse * albedo * (1.0 - metallic);
+    vec3 ambientResult = vec3(0.05) * albedo * combinedAO;
+
+    vec3 result = ambientResult + (diffuseResult + finalSpecular) * combinedAO;
+
+    result = clamp(result, 0.0, 1.0);
+    gl_FragColor = vec4(albedo, 1.0);
 }

@@ -65,7 +65,7 @@ namespace gbe {
             {
                 // TextureData must now be adapted to hold a bgfx::TextureHandle
                 auto findtexturedata = TextureLoader::GetAssetRuntimeData(overridedata.value_tex->Get_assetId());
-                this->ApplyOverride(findtexturedata, id);
+                this->ApplyTextureOverride(findtexturedata, id);
             }
         }
 

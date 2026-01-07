@@ -269,7 +269,6 @@ namespace gbe {
 #pragma endregion
 
 #pragma region scene objects
-		ext::AnitoBuilder::BuilderBlock::SetModelShown(true);
 #pragma endregion
 
 #pragma endregion

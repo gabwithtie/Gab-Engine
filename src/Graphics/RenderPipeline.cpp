@@ -232,7 +232,7 @@ void gbe::RenderPipeline::UnRegisterInstance(void* instance_id)
 
 	for (auto& drawcallmap : Instance->currentrenderinfo.sortedcalls)
 		for (auto& pair : drawcallmap.second) {
-			auto drawcall = pair.first;
+			auto& drawcall = pair.first;
 			auto& instance_list = pair.second;
 
 			for (size_t i = 0; i < instance_list.size(); i++)

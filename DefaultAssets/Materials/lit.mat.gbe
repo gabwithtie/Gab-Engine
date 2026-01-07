@@ -6,16 +6,8 @@
 			"value_vec3": [ 1, 1, 1 ]
 		},
 		{
-			"id": "light_color",
-			"value_vec3": [ 1, 1, 1 ]
-		},
-		{
 			"id": "metallic",
 			"value_single": 10
-		},
-		{
-			"id": "tint",
-			"value_vec3": [ 0.0, 0.0, 0.0 ]
 		},
 		{
 			"id": "has_color_tex",

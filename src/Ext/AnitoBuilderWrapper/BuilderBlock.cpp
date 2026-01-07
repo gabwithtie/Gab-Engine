@@ -8,8 +8,6 @@
 #include "Math/gbe_math.h"
 
 namespace gbe::ext::AnitoBuilder {
-	bool BuilderBlock::model_shown = false;
-
 	void BuilderBlock::LoadAssets()
 	{
 		auto material = asset::Material::GetAssetById("lit");
@@ -74,6 +72,8 @@ namespace gbe::ext::AnitoBuilder {
 		AddBlock(corner_ptrs);
 
 		InitializeInspectorData();
+
+		this->SetModelShown(true);
 	}
 
 	void BuilderBlock::InitializeInspectorData()
@@ -181,6 +181,8 @@ namespace gbe::ext::AnitoBuilder {
 		}
 
 		InitializeInspectorData();
+		
+		this->SetModelShown(true);
 	}
 
 	void BuilderBlock::UpdateModelShown()
@@ -400,16 +402,7 @@ namespace gbe::ext::AnitoBuilder {
 	void BuilderBlock::SetModelShown(bool value)
 	{
 		model_shown = value;
-
-		Engine::GetCurrentRoot()->CallRecursively([](Object* obj) {
-			BuilderBlock* builderobj = nullptr;
-			builderobj = dynamic_cast<BuilderBlock*>(obj);
-
-			if (builderobj != nullptr) {
-				builderobj->UpdateModelShown();
-			}
-
-			});
+		this->UpdateModelShown();
 	}
 
 	void BuilderBlock::UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r)
@@ -540,52 +533,57 @@ namespace gbe::ext::AnitoBuilder {
 				break;
 		}
 
-		if (moved_obj == nullptr) //nothing more to do if theres nothing that moved
-			return;
-		
+		if (moved_obj == nullptr) //toggle model back once nothing has moved
+		{
+			if (!model_shown)
+				SetModelShown(true);
+
+			return; //nothing more to do
+		}
+
 		bool valid_move = true;
 
-		if (model_shown)
-			valid_move = false; //no editing if models are shown
-		else {
-			for (size_t s = 0; s < data.sets.size(); s++) {
-				for (size_t i = 0; i < data.sets[moved_s].segs.size(); i++)
-				{
-					auto& l = GetHandle(s, i);
+		if (model_shown) // toggle model off when a handle is moved
+			SetModelShown(false);
 
-					if (handle_pool[l.handleindex] == moved_obj)
-						continue;
+		for (size_t s = 0; s < data.sets.size(); s++) {
+			for (size_t i = 0; i < data.sets[moved_s].segs.size(); i++)
+			{
+				auto& l = GetHandle(s, i);
 
-					if (l.seg.second == moved_pos_l) {
-						Vector3 other_vec = updated_r;
+				if (handle_pool[l.handleindex] == moved_obj)
+					continue;
 
-						if (moved_s != s) {
-							other_vec = data.GetPosition(GetHandle(s, i + 1).seg.second);
-						}
+				if (l.seg.second == moved_pos_l) {
+					Vector3 other_vec = updated_r;
 
-						valid_move = valid_move && CheckSetSegment(updated_l, other_vec, data.GetPosition(l.seg.first));
-						valid_move = valid_move && CheckSetSegment(data.GetPosition(l.seg.first), updated_l, data.GetPosition(GetHandle(s, i - 1).seg.first));
+					if (moved_s != s) {
+						other_vec = data.GetPosition(GetHandle(s, i + 1).seg.second);
 					}
-					if (l.seg.first == moved_pos_r) {
-						Vector3 other_vec = updated_l;
 
-						if (moved_s != s) {
-							other_vec = data.GetPosition(GetHandle(s, i - 1).seg.first);
-						}
+					valid_move = valid_move && CheckSetSegment(updated_l, other_vec, data.GetPosition(l.seg.first));
+					valid_move = valid_move && CheckSetSegment(data.GetPosition(l.seg.first), updated_l, data.GetPosition(GetHandle(s, i - 1).seg.first));
+				}
+				if (l.seg.first == moved_pos_r) {
+					Vector3 other_vec = updated_l;
 
-						valid_move = valid_move && CheckSetSegment(updated_r, other_vec, data.GetPosition(l.seg.second));
-						valid_move = valid_move && CheckSetSegment(data.GetPosition(l.seg.second), updated_r, data.GetPosition(GetHandle(s, i + 1).seg.second));
+					if (moved_s != s) {
+						other_vec = data.GetPosition(GetHandle(s, i - 1).seg.first);
 					}
+
+					valid_move = valid_move && CheckSetSegment(updated_r, other_vec, data.GetPosition(l.seg.second));
+					valid_move = valid_move && CheckSetSegment(data.GetPosition(l.seg.second), updated_r, data.GetPosition(GetHandle(s, i + 1).seg.second));
 				}
 			}
-
-			//Prevent flipping
-			auto opp_pos = handle_pool[GetHandle(moved_s, moved_i + 2).handleindex]->Local().position.Get(); //The handle opposite of the moved handle
-			Vector3 opp_dir = opp_pos - moved_obj->Local().position.Get();
-			auto opp_dot = opp_dir.Dot(moved_obj->Local().GetForward());
-			if (opp_dot < 0)
-				valid_move = false;
 		}
+
+		//Prevent flipping
+		auto opp_pos = handle_pool[GetHandle(moved_s, moved_i + 2).handleindex]->Local().position.Get(); //The handle opposite of the moved handle
+		Vector3 opp_dir = opp_pos - moved_obj->Local().position.Get();
+		auto opp_dot = opp_dir.Dot(moved_obj->Local().GetForward());
+		if (opp_dot < 0)
+			valid_move = false;
+
 
 		if (valid_move) {
 			SetPosition(moved_pos_l, updated_l);

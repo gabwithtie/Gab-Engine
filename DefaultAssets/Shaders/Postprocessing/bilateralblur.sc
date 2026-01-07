@@ -43,7 +43,9 @@ void main() {
     for (float i = -8.0; i <= 8.0; i += 1.0) {
         if (i == 0.0) continue;
 
-        vec2 offset = direction * i * invScreen * (radius / 8.0);
+        float noise = fract(sin(dot(v_texcoord0 + i, vec2(12.9898, 78.233))) * 43758.5453);
+        vec2 offset = direction * (i + noise - 0.5) * invScreen * (radius / 8.0);
+
         vec2 sampleUV = v_texcoord0 + offset;
 
         float sampleValue = texture2D(s_tex_input, sampleUV).r;

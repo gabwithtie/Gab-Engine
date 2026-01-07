@@ -77,15 +77,12 @@ namespace gbe::ext::AnitoBuilder {
 		Object* renderer_parent;
 		std::vector<RenderObject*> renderers;
 
-		static void SetModelShown(bool value);
-		inline static void ToggleModel() {
-			SetModelShown(!model_shown);
-		}
+		void SetModelShown(bool value);
 	protected:
 		void InitializeInspectorData() override;
 	private:
 		//WORKING DATA
-		static bool model_shown;
+		bool model_shown = true;
 
 		BuilderBlockData data;
 
