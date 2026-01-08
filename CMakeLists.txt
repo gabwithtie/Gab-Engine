@@ -49,6 +49,16 @@ add_subdirectory("Ext/bgfx-imgui")
 add_subdirectory("Ext/bgfx-utils")
 add_subdirectory("Ext/bgfx-gab")
 
+#MikkTSpace
+FetchContent_Declare(
+  "bgfx.cmake"
+  GIT_REPOSITORY "https://github.com/mmikk/MikkTSpace.git"
+  GIT_TAG        "master"
+  SOURCE_DIR     "${CMAKE_CURRENT_SOURCE_DIR}/Ext/mikktspace"
+)
+
+include("Ext/MikkTSpace.cmake")
+
 #RELOAD BASE ASSETS TO BUILD
 add_custom_target(
     COPY_ASSETS_TARGET

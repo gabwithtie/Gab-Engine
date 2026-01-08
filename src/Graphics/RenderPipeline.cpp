@@ -136,9 +136,9 @@ void gbe::RenderPipeline::RenderFrame(const SceneRenderInfo& frameinfo)
 	bgfx::frame();
 }
 
-gbe::gfx::DrawCall* gbe::RenderPipeline::RegisterDrawCall(asset::Mesh* mesh, asset::Material* material, int order)
+gbe::gfx::DrawCall* gbe::RenderPipeline::RegisterDrawCall(asset::Mesh* mesh, asset::Material* material)
 {
-	for (const auto& pair : Instance->currentrenderinfo.sortedcalls[order])
+	for (const auto& pair : Instance->currentrenderinfo.callgroups)
 	{
 		const auto& drawcall = pair.first;
 
@@ -147,14 +147,14 @@ gbe::gfx::DrawCall* gbe::RenderPipeline::RegisterDrawCall(asset::Mesh* mesh, ass
 		}
 	}
 
-	auto newdrawcall = new DrawCall(mesh, material, &Instance->shaderloader.GetAssetRuntimeData(material->Get_load_data().shader->Get_assetId()), order);
+	auto newdrawcall = new DrawCall(mesh, material, &Instance->shaderloader.GetAssetRuntimeData(material->Get_load_data().shader->Get_assetId()));
 
 	return newdrawcall;
 }
 
 DrawCall* gbe::RenderPipeline::RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material)
 {
-	Instance->default_drawcall = RegisterDrawCall(mesh, material, 0);
+	Instance->default_drawcall = RegisterDrawCall(mesh, material);
 
 	return Instance->default_drawcall;
 }
@@ -164,85 +164,54 @@ DrawCall* gbe::RenderPipeline::GetDefaultDrawCall()
 	return Instance->default_drawcall;
 }
 
-gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix)
+gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int rendergroup)
 {
-	bool exists_matrix = this->currentrenderinfo.matrix_map.find(instance_id) != this->currentrenderinfo.matrix_map.end();
-	bool exists_instance = false;
-
-	bool ordermap_exists = this->currentrenderinfo.sortedcalls.find(drawcall->order) != this->currentrenderinfo.sortedcalls.end();
-
-	if (ordermap_exists) {
-		bool drawcall_exists = this->currentrenderinfo.sortedcalls[drawcall->order].find(drawcall) != this->currentrenderinfo.sortedcalls[drawcall->order].end();
-
-		if (drawcall_exists) {
-			auto& instance_list = this->currentrenderinfo.sortedcalls[drawcall->order][drawcall];
-
-			for (const auto& instance_ptr : instance_list)
-			{
-				if (instance_ptr == instance_id) {
-					exists_instance = true;
-					break;
-				}
-			}
-
-			if (!exists_instance) {
-				instance_list.push_back(instance_id);
-			}
-
-			return &this->currentrenderinfo.matrix_map[instance_id];
-		}
-	}
-
-	//FORCE UPDATE OVERRIDES
-	for (size_t m_i = 0; m_i < drawcall->get_material()->getOverrideCount(); m_i++)
-	{
-		std::string id;
-		auto& overridedata = drawcall->get_material()->getOverride(m_i, id);
-		overridedata.registered_change = false; // Reset handled change for new call
-	}
-
-	this->PrepareCall(drawcall);
-
 	//COMMITTING
-	if (!exists_matrix)
-		this->currentrenderinfo.matrix_map[instance_id] = Matrix4();
-
-	if (currentrenderinfo.sortedcalls.find(drawcall->order) == currentrenderinfo.sortedcalls.end())
-		currentrenderinfo.sortedcalls[drawcall->order] = std::unordered_map<DrawCall*, std::vector<void*>>();
-	if (currentrenderinfo.sortedcalls[drawcall->order].find(drawcall) == currentrenderinfo.sortedcalls[drawcall->order].end())
-		currentrenderinfo.sortedcalls[drawcall->order][drawcall] = std::vector<void*>();
-
-	currentrenderinfo.sortedcalls[drawcall->order][drawcall].push_back(instance_id);
-
-	return &this->currentrenderinfo.matrix_map[instance_id];
-}
-
-void gbe::RenderPipeline::PrepareCall(DrawCall* drawcall)
-{
-
-}
-
-void gbe::RenderPipeline::UnRegisterInstance(void* instance_id)
-{
-	auto iter = Instance->currentrenderinfo.matrix_map.find(instance_id);
-	bool exists = iter != Instance->currentrenderinfo.matrix_map.end();
-
-	if (!exists)
-		throw new std::runtime_error("CallInstance does not exist!");
-
-	for (auto& drawcallmap : Instance->currentrenderinfo.sortedcalls)
-		for (auto& pair : drawcallmap.second) {
-			auto& drawcall = pair.first;
-			auto& instance_list = pair.second;
-
-			for (size_t i = 0; i < instance_list.size(); i++)
-			{
-				if (instance_list[i] == instance_id) {
-					instance_list.erase(instance_list.begin() + i);
-					break;
+	this->currentrenderinfo.infomap.insert_or_assign(
+		instance_id,
+		GraphicsRenderInfo::InstanceInfo{
+			.transform = matrix,
+			.drawcall = drawcall,
+			.rendergroups = {
+				{
+					rendergroup, true
 				}
 			}
-		}
+		});
 
-	Instance->currentrenderinfo.matrix_map.erase(instance_id);
+	auto drawcall_it = this->currentrenderinfo.callgroups.find(drawcall);
+
+	if (drawcall_it == this->currentrenderinfo.callgroups.end()) {
+		this->currentrenderinfo.callgroups.insert_or_assign(
+			drawcall,
+			std::vector<void*>{ instance_id }
+		);
+	}
+	else {
+		drawcall_it->second.push_back(instance_id);
+	}
+
+	return &this->currentrenderinfo.infomap[instance_id].transform;
+}
+
+void gbe::RenderPipeline::UnRegisterInstance(void* instance_id, int rendergroup)
+{
+	auto info_it = Instance->currentrenderinfo.infomap.find(instance_id);
+
+	if (info_it == Instance->currentrenderinfo.infomap.end())
+		return;
+
+	info_it->second.rendergroups.erase(rendergroup);
+
+	if (info_it->second.rendergroups.size() == 0)
+	{
+		auto& callgroup = Instance->currentrenderinfo.callgroups[info_it->second.drawcall];
+
+		callgroup.erase(
+			std::remove(callgroup.begin(), callgroup.end(), instance_id),
+			callgroup.end()
+		);
+
+		Instance->currentrenderinfo.infomap.erase(instance_id);
+	}
 }

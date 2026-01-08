@@ -1,41 +1,49 @@
 {
 	"shader": "lit",
+	"shadowcaster": 1,
 	"overrides": [
 		{
 			"id": "color",
+			"type": "vec3",
 			"value_vec3": [ 1, 1, 1 ]
 		},
 		{
 			"id": "metallic",
-			"value_single": 10
+			"type": "single",
+			"value_single": 0
 		},
 		{
 			"id": "has_color_tex",
+			"type": "single",
 			"value_single": 1
 		},
 		{
 			"id": "has_normal_tex",
+			"type": "single",
 			"value_single": 1
 		},
 		{
 			"id": "has_arm_tex",
+			"type": "single",
 			"value_single": 1
 		},
 		{
 			"id": "color_tex",
-			"value_tex": "plaster_a"
+			"type": "texture",
+			"value_tex": "plaster_a",
+			"tex_stage": 1
 		},
 		{
 			"id": "arm_tex",
-			"value_tex": "plaster_arm"
+			"type": "texture",
+			"value_tex": "plaster_arm",
+			"tex_stage": 3
 		},
 		{
 			"id": "normal_tex",
-			"value_tex": "plaster_n"
-		},
-		{
-			"id": "shadow_strength",
-			"value_single": 0.8
+			"type": "texture",
+			"value_tex": "plaster_n",
+			"tex_stage": 2
 		}
 	]
 }

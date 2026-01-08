@@ -24,28 +24,30 @@ namespace gbe {
 			Vector4 value_vec4;
 			Matrix4 value_mat4;
 			asset::Texture* value_tex;
-
-			bool registered_change = false;
+			int tex_stage;
 		};
 
 		namespace data {
 			struct MaterialOverrideImport {
 				std::string id;
+				std::string type;
 				bool value_bool;
 				float value_single;
 				float value_vec2[2];
 				float value_vec3[3];
 				float value_vec4[4];
 				std::string value_tex;
+				int tex_stage;
 			};
 
 			struct MaterialImportData {
 				std::string shader;
-
+				int shadowcaster;
 				std::vector<MaterialOverrideImport> overrides;
 			};
 			struct MaterialLoadData {
 				std::unordered_map<std::string, MaterialOverride> overrides;
+				bool shadowcaster;
 				asset::Shader* shader = nullptr;
 			};
 		}
@@ -117,11 +119,12 @@ namespace gbe {
 
 				this->load_data.overrides.insert_or_assign(id, materialOverride);
 			}
-			template<>
-			void setOverride<asset::Texture*>(std::string id, asset::Texture* value) {
+
+			void setTextureOverride(std::string id, asset::Texture* value, int stage) {
 				auto materialOverride = MaterialOverride();
 				materialOverride.type = Shader::UniformFieldType::TEXTURE;
 				materialOverride.value_tex = value;
+				materialOverride.tex_stage = stage;
 
 				this->load_data.overrides.insert_or_assign(id, materialOverride);
 			}

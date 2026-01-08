@@ -162,19 +162,19 @@ namespace gbe {
 
 		//DRAW CALL CACHING X PRIMITIVES CACHING
 		{
-			auto newcall = renderpipeline.RegisterDrawCall(cube_mesh, grid_mat, 0);
+			auto newcall = renderpipeline.RegisterDrawCall(cube_mesh, lit_mat);
 			RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::cube, newcall);
 		}
 		{
-			auto newcall = renderpipeline.RegisterDrawCall(sphere_mesh, grid_mat, 0);
+			auto newcall = renderpipeline.RegisterDrawCall(sphere_mesh, lit_mat);
 			RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::sphere, newcall);
 		}
 		{
-			auto newcall = renderpipeline.RegisterDrawCall(plane_mesh, grid_mat, 0);
+			auto newcall = renderpipeline.RegisterDrawCall(plane_mesh, lit_mat);
 			RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::plane, newcall);
 		}
 		{
-			auto newcall = renderpipeline.RegisterDrawCall(capsule_mesh, grid_mat, 0);
+			auto newcall = renderpipeline.RegisterDrawCall(capsule_mesh, lit_mat);
 			RenderObject::RegisterPrimitiveDrawcall(RenderObject::PrimitiveType::capsule, newcall);
 		}
 
@@ -229,7 +229,6 @@ namespace gbe {
 			meshcollider->Local().position.Set(Vector3(0, 0, 0));
 			RenderObject* platform_renderer = new RenderObject(ptype);
 			platform_renderer->SetParent(parent);
-			platform_renderer->SetShadowCaster();
 
 			return parent;
 			};

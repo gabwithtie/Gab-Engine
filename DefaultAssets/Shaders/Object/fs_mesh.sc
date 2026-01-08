@@ -13,11 +13,14 @@ $input v_pos, v_view, v_normal, v_color0, v_texcoord0, v_tangent, v_bitangent
 uniform vec4 color;
 uniform float metallic;
 
-uniform float has_color_tex;
+uniform vec4 has_color_tex;
+#define has_color_tex has_color_tex.x
 SAMPLER2D(color_tex, 1); 
-uniform float has_normal_tex;
+uniform vec4 has_normal_tex;
+#define has_normal_tex has_normal_tex.x
 SAMPLER2D(normal_tex, 2);
-uniform float has_arm_tex;
+uniform vec4 has_arm_tex;
+#define has_arm_tex has_arm_tex.x
 SAMPLER2D(arm_tex, 3);
 
 //Camera buffers
@@ -178,11 +181,11 @@ void main() {
     vec2 screenUV = gl_FragCoord.xy / u_viewRect.zw;
     float combinedAO = _matAO * max(texture2D(tex_ao, screenUV).r, 0.1f);
 
-    vec3 diffuseResult = finalDiffuse * albedo * (1.0 - metallic);
-    vec3 ambientResult = vec3(0.05) * albedo * combinedAO;
+    vec3 diffuseResult = finalDiffuse * albedo * (1.0 - _metallic) * combinedAO;
+    vec3 ambientResult = vec3(0.05) * albedo;
 
-    vec3 result = ambientResult + (diffuseResult + finalSpecular) * combinedAO;
+    vec3 result = ambientResult + (diffuseResult + finalSpecular);
 
     result = clamp(result, 0.0, 1.0);
-    gl_FragColor = vec4(albedo, 1.0);
+    gl_FragColor = vec4(result, 1.0);
 }

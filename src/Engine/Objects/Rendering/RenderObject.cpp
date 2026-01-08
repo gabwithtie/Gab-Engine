@@ -20,11 +20,6 @@ const std::unordered_map<gbe::RenderObject::PrimitiveType, std::string> gbe::Ren
 	{ PrimitiveType::plane, "Plane" }
 };
 
-void gbe::RenderObject::SetShadowCaster()
-{
-	this->shadow_caster = true;
-}
-
 gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 {
 	this->mDrawCall = mDrawCall;
@@ -86,7 +81,6 @@ gbe::SerializedObject gbe::RenderObject::Serialize() {
 	data.serialized_variables.insert_or_assign("primitive", PrimitiveTypeStr(this->ptype));
 	data.serialized_variables.insert_or_assign("mesh", this->mDrawCall->get_mesh()->Get_assetId());
 	data.serialized_variables.insert_or_assign("mat", this->mDrawCall->get_material()->Get_assetId());
-	data.serialized_variables.insert_or_assign("order", std::to_string(this->mDrawCall->order));
 
 	return data;
 }
@@ -98,8 +92,7 @@ gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
 	if (_ptype == gbe::RenderObject::PrimitiveTypeStr(gbe::RenderObject::PrimitiveType::NONE)) {
 		auto input_mesh = MeshLoader::GetAssetByPath(data->serialized_variables["mesh"]);
 		auto input_mat = MaterialLoader::GetAssetByPath(data->serialized_variables["mat"]);
-		auto input_order = std::stoi(data->serialized_variables["order"]);
-		auto drawcall = RenderPipeline::RegisterDrawCall(input_mesh, input_mat, input_order);
+		auto drawcall = RenderPipeline::RegisterDrawCall(input_mesh, input_mat);
 		
 		this->mDrawCall = drawcall;
 		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());

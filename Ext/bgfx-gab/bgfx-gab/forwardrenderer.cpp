@@ -81,11 +81,9 @@ gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& p
 void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
 {
 	//Register Line Drawcall
-	this->line_call = RenderPipeline::RegisterDrawCall(nullptr, asset::Material::GetAssetById("line"), 0);
-	RenderPipeline::PrepareCall(this->line_call);
+	this->line_call = RenderPipeline::RegisterDrawCall(nullptr, asset::Material::GetAssetById("line"));
 
-	this->skybox_call = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("skybox_gradient"), 0);
-	RenderPipeline::PrepareCall(this->skybox_call);
+	this->skybox_call = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("skybox_gradient"));
 
 	shadow_shader = ShaderLoader::GetAssetRuntimeData("shadow"); 
 	ssao_shader = ShaderLoader::GetAssetRuntimeData("ssao");
@@ -96,16 +94,26 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
 void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& frameinfo, GraphicsRenderInfo& passinfo)
 {
 	//helper function for drawbatch
-	const auto drawbatch = [&passinfo](std::pair<DrawCall*, std::vector<void*>> shaderset) {
-		const auto& drawcall = shaderset.first;
+	const auto drawbatch = [&passinfo](DrawCall* drawcall, int rendergroup) {
+		std::vector<void*> instances;
 
+		for (const auto& instanceid : passinfo.callgroups[drawcall])
+		{
+			const auto& info = passinfo.infomap[instanceid];
+			auto rendergroup_it = info.rendergroups.find(rendergroup);
+
+			if (rendergroup_it != info.rendergroups.end())
+				if (rendergroup_it->second)
+					instances.push_back(instanceid);
+		}
+		
 		// 3. Bind Mesh
 		const auto& curmesh = MeshLoader::GetAssetRuntimeData(drawcall->get_mesh()->Get_assetId());
 		bgfx::setIndexBuffer(curmesh.index_vbh);
 		bgfx::setVertexBuffer(0, curmesh.vertex_vbh);
 
 		// 1. Get the number of instances
-		uint32_t instanceCount = (uint32_t)shaderset.second.size();
+		uint32_t instanceCount = (uint32_t)instances.size();
 		if (instanceCount == 0) return false;
 
 		// 2. Allocate an Instance Data Buffer
@@ -116,9 +124,9 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 
 		// 3. Fill the buffer with your matrices
 		uint8_t* data = idb.data;
-		for (const auto& call_ptr : shaderset.second)
+		for (const auto& call_ptr : instances)
 		{
-			Matrix4 modelMatrix = passinfo.matrix_map[call_ptr];
+			Matrix4 modelMatrix = passinfo.infomap[call_ptr].transform;
 			memcpy(data, &modelMatrix, stride);
 			data += stride;
 		}
@@ -138,11 +146,11 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	bgfx::setViewClear(VIEW_GBUFFER_PASS, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
 	bgfx::setViewTransform(VIEW_GBUFFER_PASS, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
 
-	for (const auto& shaderset : passinfo.sortedcalls[0]) {
+	for (const auto& shaderset : passinfo.callgroups) {
 		if(shaderset.second.size() == 0)
 			continue;
 
-		drawbatch(shaderset);
+		drawbatch(shaderset.first, 0);
 		bgfx::setState(BGFX_STATE_DEFAULT);
 		bgfx::submit(VIEW_GBUFFER_PASS, gbuffer_shader.programHandle);
 	}
@@ -208,12 +216,12 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		
 		Matrix4 lightProjView = lightProjMat * lightViewMat;
 
-		for (const auto& shaderset : passinfo.sortedcalls[0])
+		for (const auto& shaderset : passinfo.callgroups)
 		{
 			if (shaderset.second.size() == 0)
 				continue;
 
-			drawbatch(shaderset);
+			drawbatch(shaderset.first, 0);
 
 			// BGFX: Set State (Depth Test, Culling, etc.)
 			bgfx::setState(
@@ -314,7 +322,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		light_cone_outer_arr[i] = light->angle_outer;
 	}
 
-	for (const auto& shaderset : passinfo.sortedcalls[0])
+	for (const auto& shaderset : passinfo.callgroups)
 	{
 		if (shaderset.second.size() == 0)
 			continue;
@@ -341,10 +349,8 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		drawcall->ApplyOverrideArray<float>(light_cone_inner_arr.data(), "light_cone_inner", max_lights);
 		drawcall->ApplyOverrideArray<float>(light_cone_outer_arr.data(), "light_cone_outer", max_lights);
 
-		drawbatch(shaderset);
+		drawbatch(shaderset.first, 0);
 
-		// 5. Submit ONCE for all instances
-		drawcall->SyncMaterialData();
 		bgfx::setState(BGFX_STATE_DEFAULT);
 		bgfx::submit(VIEW_MAIN_PASS, currentshaderdata->programHandle);
 	}

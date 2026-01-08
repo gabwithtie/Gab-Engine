@@ -28,9 +28,7 @@ namespace gbe {
             ShaderData* shaderdata;
 
         public:
-            int order;
-
-            DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* shaderdata, int order);
+            DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* shaderdata);
             ~DrawCall(); // The destructor must now destroy bgfx handles
 
             asset::Mesh* get_mesh();

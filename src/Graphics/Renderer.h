@@ -23,8 +23,13 @@ namespace gbe {
 		};
 
 		struct GraphicsRenderInfo {
-			std::unordered_map<void*, gbe::Matrix4> matrix_map;
-			std::unordered_map<int, std::unordered_map<DrawCall*, std::vector<void*>>> sortedcalls;
+			struct InstanceInfo {
+				gbe::Matrix4 transform;
+				DrawCall* drawcall;
+				std::unordered_map<int, bool> rendergroups;
+			};
+			std::unordered_map<void*, InstanceInfo> infomap;\
+			std::unordered_map<DrawCall*, std::vector<void*>> callgroups;
 
 			//LINES
 			const size_t max_lines = 1000;

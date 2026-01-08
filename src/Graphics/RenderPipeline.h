@@ -69,8 +69,7 @@ namespace gbe {
 	public:
 		RenderPipeline(gbe::Window&, Vector2Int);
 		~RenderPipeline(); // Must destroy bgfx handles
-		static void PrepareCall(DrawCall* drawcall);
-		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material, int order = 0);
+		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* GetDefaultDrawCall();
 		static void DrawLine(Vector3 a, Vector3 b);
@@ -111,7 +110,7 @@ namespace gbe {
 
 		void RenderFrame(const SceneRenderInfo& frameinfo);
 
-		gbe::Matrix4* RegisterInstance(void* instance_id, DrawCall* drawcall, gbe::Matrix4 matrix);
-		static void UnRegisterInstance(void* instance_id);
+		gbe::Matrix4* RegisterInstance(void* instance_id, DrawCall* drawcall, gbe::Matrix4 matrix, int rendergroup = 0);
+		static void UnRegisterInstance(void* instance_id, int rendergroup = 0);
 	};
 }

@@ -9,9 +9,8 @@
 namespace gbe {
     using namespace gfx;
 
-    DrawCall::DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* _shaderdata, int order)
+    DrawCall::DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* _shaderdata)
     {
-        this->order = order;
         this->shaderdata = _shaderdata;
         this->m_mesh = mesh;
         this->m_material = material;
@@ -65,7 +64,7 @@ namespace gbe {
             {
                 // TextureData must now be adapted to hold a bgfx::TextureHandle
                 auto findtexturedata = TextureLoader::GetAssetRuntimeData(overridedata.value_tex->Get_assetId());
-                this->ApplyTextureOverride(findtexturedata, id);
+                this->ApplyTextureOverride(findtexturedata, id, overridedata.tex_stage);
             }
         }
 

@@ -21,7 +21,7 @@ namespace gbe {
 			return PrimitiveTypeStrs.at(_ptype);
 		}
 
-		bool shadow_caster = false;
+
 	private:
 		//PRIMITIVES CACHE
 		static std::unordered_map<PrimitiveType, gfx::DrawCall*> primitive_drawcalls;
@@ -42,8 +42,6 @@ namespace gbe {
 		}
 
 		void SetUserCreated();
-
-		void SetShadowCaster();
 
 		RenderObject(SerializedObject* data);
 		RenderObject(gfx::DrawCall* mDrawCall);

@@ -47,7 +47,6 @@ namespace gbe::ext::AnitoBuilder {
 			inline RenderObject* Get() {
 				if (renderers.size() <= get_index) {
 					auto newrenderer = new RenderObject(drawcall);
-					newrenderer->SetShadowCaster();
 					newrenderer->SetParent(owner.handle_ro);
 					owner.renderObjects.push_back(newrenderer);
 

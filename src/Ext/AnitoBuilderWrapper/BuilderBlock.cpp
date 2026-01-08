@@ -306,7 +306,6 @@ namespace gbe::ext::AnitoBuilder {
 					newrenderer->SetParent(renderer_parent);
 					newrenderer->World().position.Set(pos);
 					newrenderer->World().rotation.Set(rot);
-					newrenderer->SetShadowCaster();
 
 					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
 					Vector3 final_scale = Vector3(1);
@@ -364,7 +363,6 @@ namespace gbe::ext::AnitoBuilder {
 					newrenderer->SetParent(renderer_parent);
 					newrenderer->World().position.Set(pos);
 					newrenderer->World().rotation.Set(rot);
-					newrenderer->SetShadowCaster();
 
 					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
 					Vector3 final_scale = Vector3(1);
@@ -383,7 +381,6 @@ namespace gbe::ext::AnitoBuilder {
 					RenderObject* newrenderer = new RenderObject(ceiling_DC);
 					newrenderer->SetParent(renderer_parent);
 					newrenderer->Local().SetMatrix(roof_obj->Local().GetMatrix());
-					newrenderer->SetShadowCaster();
 				}
 			}
 		}

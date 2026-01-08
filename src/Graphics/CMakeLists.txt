@@ -23,6 +23,6 @@ target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_editor)
 find_package(assimp CONFIG REQUIRED)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE assimp::assimp)
 
-target_link_libraries(${CURRENT_CMAKE_LIB} PUBLIC bgfx bimg bx bgfx-imgui bgfx-utils bgfx-gab)
+target_link_libraries(${CURRENT_CMAKE_LIB} PUBLIC bgfx bimg bx bgfx-imgui bgfx-utils bgfx-gab mikktspace)
 
 message("[GABENGINE] LOADED: " ${CMAKE_CURRENT_SOURCE_DIR})

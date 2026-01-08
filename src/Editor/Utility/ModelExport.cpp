@@ -61,7 +61,7 @@ namespace gbe {
                 root_object->CallRecursively([&](Object* obj) {
                     RenderObject* target = dynamic_cast<RenderObject*>(obj);
 
-                    if (target != nullptr && target->Get_enabled() && !target->shadow_caster) {
+                    if (target != nullptr && target->Get_enabled()) {
                         auto it = std::find(renderers.begin(), renderers.end(), target);
 
                         // Check if the value was found
