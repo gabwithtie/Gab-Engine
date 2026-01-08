@@ -13,7 +13,7 @@ endif()
 include(FetchContent)
 
 #PROJECT DECLARATION
-project ("gab-engine" LANGUAGES CXX)
+project ("gab-engine" LANGUAGES C CXX)
 add_subdirectory(src)
 add_executable(${PROJECT_NAME} "src/gab-engine.h" "src/gab-engine.cpp")
 target_link_libraries(${PROJECT_NAME} PRIVATE gbe_engine_src)
@@ -43,19 +43,20 @@ FetchContent_Declare(
   GIT_TAG        "v1.135.9062-502"
   SOURCE_DIR     "${CMAKE_CURRENT_SOURCE_DIR}/Ext/bgfx.cmake"
 )
+FetchContent_MakeAvailable(bgfx.cmake)
 
-add_subdirectory("Ext/bgfx.cmake")
 add_subdirectory("Ext/bgfx-imgui")
 add_subdirectory("Ext/bgfx-utils")
 add_subdirectory("Ext/bgfx-gab")
 
 #MikkTSpace
 FetchContent_Declare(
-  "bgfx.cmake"
+  "mikktspace"
   GIT_REPOSITORY "https://github.com/mmikk/MikkTSpace.git"
   GIT_TAG        "master"
   SOURCE_DIR     "${CMAKE_CURRENT_SOURCE_DIR}/Ext/mikktspace"
 )
+FetchContent_MakeAvailable(mikktspace)
 
 include("Ext/MikkTSpace.cmake")
 

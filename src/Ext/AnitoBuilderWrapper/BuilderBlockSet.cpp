@@ -3,16 +3,12 @@
 
 namespace gbe::ext::AnitoBuilder {
 	BuilderBlockSet::BuilderBlockSet(BuilderBlock* root_block):
-		type1_renderers(*this),
-		type2_renderers(*this),
-		type3_renderers(*this)
+		type1_renderers(*this)
 	{
 		this->root_block = root_block;
 
 		this->type1_renderers.drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("preview_wall_1"));
-		this->type2_renderers.drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("preview_wall_2"));
-		this->type3_renderers.drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("preview_wall_3"));
-
+		
 		//EDITOR OBJECTS
 		handle_ro = new RigidObject(true);
 		handle_ro->SetParent(this);
@@ -91,15 +87,11 @@ namespace gbe::ext::AnitoBuilder {
 			this->renderObjects.clear();
 
 			type1_renderers.ResetPool();
-			type2_renderers.ResetPool();
-			type3_renderers.ResetPool();
 		}
 
 		int seg_count = this->renderObjects.size();
 		
 		type1_renderers.ResetGetIndex();
-		type2_renderers.ResetGetIndex();
-		type3_renderers.ResetGetIndex();
 		for (size_t i = 0; i < total_segs_needed; i++)
 		{
 			int x = i % walls_needed;
@@ -114,14 +106,7 @@ namespace gbe::ext::AnitoBuilder {
 			pos.y = pos_y;
 
 			//Create or get here
-			RenderObject* renderertomove = nullptr;
-			
-			if (y == 0)
-				renderertomove = type1_renderers.Get();
-			else if(y < layers_needed - 1)
-				renderertomove = type2_renderers.Get();
-			else
-				renderertomove = type3_renderers.Get();
+			RenderObject* renderertomove = type1_renderers.Get();
 
 			this->renderObjects[i]->World().position.Set(pos);
 			this->renderObjects[i]->Local().scale.Set(Vector3(local_wall_scale_x, local_wall_scale_y, 1));

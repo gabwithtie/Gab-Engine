@@ -17,7 +17,7 @@ namespace gbe {
 				Vector3 normal;
 				Vector3 color;
 				Vector2 texCoord;
-				Vector3 tangent;
+				Vector4 tangent;
 
 				// Comparison operator for deduplication
 				inline bool operator<(const Vertex& other) const {

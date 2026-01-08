@@ -111,7 +111,7 @@ void main() {
             normalize(v_bitangent),
             normal
         );
-        normal = normalize(mul(TBN, normalSample));
+        //normal = normalize(mul(TBN, normalSample));
     }
 
     float _matAO = 1.0;

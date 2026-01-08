@@ -9,7 +9,7 @@
 		{
 			"id": "metallic",
 			"type": "single",
-			"value_single": 10
+			"value_single": 0
 		},
 		{
 			"id": "has_color_tex",
@@ -19,7 +19,8 @@
 		{
 			"id": "color_tex",
 			"type": "texture",
-			"value_tex": "preview_wall_1"
+			"value_tex": "preview_wall_1",
+			"tex_stage": 1
 		}
 	]
 }

@@ -74,6 +74,7 @@ namespace gbe::ext::AnitoBuilder {
 		InitializeInspectorData();
 
 		this->SetModelShown(true);
+		this->UpdateModelShown();
 	}
 
 	void BuilderBlock::InitializeInspectorData()
@@ -183,6 +184,7 @@ namespace gbe::ext::AnitoBuilder {
 		InitializeInspectorData();
 		
 		this->SetModelShown(true);
+		this->UpdateModelShown();
 	}
 
 	void BuilderBlock::UpdateModelShown()
@@ -389,17 +391,14 @@ namespace gbe::ext::AnitoBuilder {
 		{
 			handle->Set_visible(!model_shown);
 		}
-		for (const auto& roof : this->roof_pool)
-		{
-			roof.objs[0]->Set_enabled(!model_shown);
-			roof.objs[1]->Set_enabled(!model_shown);
-		}
 	}
 
 	void BuilderBlock::SetModelShown(bool value)
 	{
-		model_shown = value;
-		this->UpdateModelShown();
+		if (model_shown != value) {
+			model_shown = value;
+			this->UpdateModelShown();
+		}
 	}
 
 	void BuilderBlock::UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r)

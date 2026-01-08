@@ -2,25 +2,26 @@
 #include <stdexcept>
 
 
-namespace {
-    // Utility to read a binary file (shader)
-    std::vector<char> readfile(std::filesystem::path path) {
-        std::ifstream file(path, std::ios::ate | std::ios::binary);
-        if (!file.is_open()) {
-            throw std::runtime_error("failed to open file: " + path.string());
-        }
+std::unordered_map<std::string, bgfx::UniformHandle> gbe::gfx::ShaderData::m_uniforms;
+std::unordered_map<std::string, bgfx::UniformHandle> gbe::gfx::ShaderData::m_uniformarrays;
 
-        size_t fileSize = (size_t)file.tellg();
-        std::vector<char> buffer(fileSize);
+// Utility to read a binary file (shader)
+std::vector<char> readfile(std::filesystem::path path) {
+    std::ifstream file(path, std::ios::ate | std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("failed to open file: " + path.string());
+    }
 
-        file.seekg(0);
-        file.read(buffer.data(), fileSize);
+    size_t fileSize = (size_t)file.tellg();
+    std::vector<char> buffer(fileSize);
 
-        file.close();
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
 
-        return buffer;
-    };
-}
+    file.close();
+
+    return buffer;
+};
 
 gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, asset::data::ShaderLoadData* data) {
     //============READING SHADER BINARIES AND METADATA============//

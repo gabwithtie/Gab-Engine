@@ -50,7 +50,8 @@ namespace gbe {
 			std::vector<ShaderField> uniformfields;
 			asset::Shader* asset;
 
-			std::unordered_map<std::string, bgfx::UniformHandle> m_uniforms;
+			static std::unordered_map<std::string, bgfx::UniformHandle> m_uniforms;
+			static std::unordered_map<std::string, bgfx::UniformHandle> m_uniformarrays;
 
 			inline bool GetUniform(bgfx::UniformHandle& out, std::string& name) const {
 				auto it = m_uniforms.find(name);
@@ -63,7 +64,6 @@ namespace gbe {
 				return false;
 			}
 
-			std::unordered_map<std::string, bgfx::UniformHandle> m_uniformarrays;
 
 			inline bool GetUniformArray(bgfx::UniformHandle& out, const std::string& name) const {
 				auto it = m_uniformarrays.find(name);

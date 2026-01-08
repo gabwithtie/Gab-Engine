@@ -10,7 +10,92 @@
 #include <vector>
 #include <map>
 
+#include <mikktspace.h>
+
 using namespace gbe::asset::data;
+
+struct MikkUserData {
+    aiMesh* mesh;
+    std::vector<gbe::asset::data::Vertex>& outVertices;
+};
+
+// Helper callbacks for MikkTSpace
+int getNumFaces(const SMikkTSpaceContext* context) {
+    auto data = static_cast<MikkUserData*>(context->m_pUserData);
+    return data->mesh->mNumFaces;
+}
+
+int getNumVerticesOfFace(const SMikkTSpaceContext* context, int iFace) {
+    return 3; // We use aiProcess_Triangulate
+}
+
+// 1. Safe Position Retrieval
+void getPosition(const SMikkTSpaceContext* context, float outpos[], int iFace, int iVert) {
+    auto data = static_cast<MikkUserData*>(context->m_pUserData);
+
+    // Bounds check for the face
+    if (static_cast<unsigned int>(iFace) >= data->mesh->mNumFaces) return;
+
+    aiFace& face = data->mesh->mFaces[iFace];
+    // Bounds check for the vertex index within the face
+    if (static_cast<unsigned int>(iVert) >= face.mNumIndices) return;
+
+    unsigned int index = face.mIndices[iVert];
+
+    // CRITICAL: Bounds check for the vertex array
+    if (index < data->mesh->mNumVertices) {
+        auto& v = data->mesh->mVertices[index];
+        outpos[0] = v.x; outpos[1] = v.y; outpos[2] = v.z;
+    }
+}
+
+// 2. Safe Normal Retrieval
+void getNormal(const SMikkTSpaceContext* context, float outnorm[], int iFace, int iVert) {
+    auto data = static_cast<MikkUserData*>(context->m_pUserData);
+
+    if (static_cast<unsigned int>(iFace) >= data->mesh->mNumFaces) return;
+
+    aiFace& face = data->mesh->mFaces[iFace];
+    if (static_cast<unsigned int>(iVert) >= face.mNumIndices) return;
+
+    unsigned int index = face.mIndices[iVert];
+
+    if (index < data->mesh->mNumVertices && data->mesh->HasNormals()) {
+        auto& n = data->mesh->mNormals[index];
+        outnorm[0] = n.x; outnorm[1] = n.y; outnorm[2] = n.z;
+    }
+}
+
+// 3. Safe UV Retrieval
+void getTexCoord(const SMikkTSpaceContext* context, float outuv[], int iFace, int iVert) {
+    auto data = static_cast<MikkUserData*>(context->m_pUserData);
+
+    if (static_cast<unsigned int>(iFace) >= data->mesh->mNumFaces) return;
+
+    aiFace& face = data->mesh->mFaces[iFace];
+    if (static_cast<unsigned int>(iVert) >= face.mNumIndices) return;
+
+    unsigned int index = face.mIndices[iVert];
+
+    if (index < data->mesh->mNumVertices && data->mesh->HasTextureCoords(0)) {
+        auto& uv = data->mesh->mTextureCoords[0][index];
+        outuv[0] = uv.x; outuv[1] = uv.y;
+    }
+    else {
+        outuv[0] = 0.0f; outuv[1] = 0.0f;
+    }
+}
+
+void setTSpaceBasic(const SMikkTSpaceContext* context, const float tangent[], float fSign, int iFace, int iVert) {
+    auto data = static_cast<MikkUserData*>(context->m_pUserData);
+    // MikkTSpace works on a per-vertex-per-face basis. 
+    // We store this in our temporary flat vertex list.
+    int vertexIndex = iFace * 3 + iVert;
+    data->outVertices[vertexIndex].tangent.x = tangent[0];
+    data->outVertices[vertexIndex].tangent.y = tangent[1];
+    data->outVertices[vertexIndex].tangent.z = tangent[2];
+    data->outVertices[vertexIndex].tangent.w = fSign; // Handedness
+}
 
 bgfx::VertexLayout gbe::gfx::s_VERTEXLAYOUT;
 
@@ -25,7 +110,7 @@ void gbe::gfx::MeshLoader::AssignSelfAsLoader()
         .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float) // Vector3 normal
         .add(bgfx::Attrib::Color0, 3, bgfx::AttribType::Float)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-        .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Float)
         .end();
 
     s_VERTEXLAYOUT = newlayout;
@@ -38,77 +123,115 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const as
     auto pathstr = meshpath.generic_string();
     auto pathcstr = pathstr.c_str();
 
-    std::vector<asset::data::Vertex> vertices = {};
-    std::vector<uint16_t> indices = {};
-    std::vector<std::vector<uint16_t>> faces = {};
-
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(pathcstr,
         aiProcess_Triangulate |
         aiProcess_GenSmoothNormals |
-        aiProcess_CalcTangentSpace |
         aiProcess_FlipUVs);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
-        throw new std::runtime_error("Failed to load mesh");
+        throw std::runtime_error("Assimp Error: " + std::string(importer.GetErrorString()));
     }
 
-    std::map<Vertex, uint16_t> unique_vertices;
+    if (scene->mNumMeshes == 0) {
+        throw std::runtime_error("MeshLoader: Scene contains no meshes.");
+    }
 
     aiMesh* mesh = scene->mMeshes[0];
 
-    // Iterate over each face
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-        aiFace face_obj = mesh->mFaces[i];
+    // --- Safety Checks ---
+    if (!mesh->HasPositions()) {
+        throw std::runtime_error("MeshLoader: Mesh has no vertex positions.");
+    }
+    if (!mesh->HasNormals()) {
+        throw std::runtime_error("MeshLoader: Mesh has no normals.");
+    }
 
-        // A temporary vector to hold the indices for the current face
+    // 1. Create a flat list of vertices (required for MikkTSpace)
+    std::vector<Vertex> flat_vertices(mesh->mNumFaces * 3);
+
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+        aiFace& face = mesh->mFaces[i];
+
+        // Ensure face is actually a triangle (aiProcess_Triangulate should ensure this)
+        if (face.mNumIndices != 3) continue;
+
+        for (unsigned int j = 0; j < 3; j++) {
+            unsigned int assimp_idx = face.mIndices[j];
+
+            // --- CRITICAL BOUNDS CHECK ---
+            if (assimp_idx >= mesh->mNumVertices) {
+                throw std::out_of_range("MeshLoader: Face index " + std::to_string(assimp_idx) +
+                    " is out of bounds for mNumVertices (" +
+                    std::to_string(mesh->mNumVertices) + ").");
+            }
+
+            Vertex& v = flat_vertices[i * 3 + j];
+
+            // Positions
+            v.pos = { mesh->mVertices[assimp_idx].x, mesh->mVertices[assimp_idx].y, mesh->mVertices[assimp_idx].z };
+
+            // Normals
+            v.normal = { mesh->mNormals[assimp_idx].x, mesh->mNormals[assimp_idx].y, mesh->mNormals[assimp_idx].z };
+
+            // UVs
+            if (mesh->HasTextureCoords(0)) {
+                v.texCoord = { mesh->mTextureCoords[0][assimp_idx].x, mesh->mTextureCoords[0][assimp_idx].y };
+            }
+            else {
+                v.texCoord = { 0.0f, 0.0f };
+            }
+
+            // Colors
+            if (mesh->HasVertexColors(0)) {
+                v.color = { mesh->mColors[0][assimp_idx].r, mesh->mColors[0][assimp_idx].g, mesh->mColors[0][assimp_idx].b };
+            }
+            else {
+                v.color = { 1.0f, 1.0f, 1.0f };
+            }
+        }
+    }
+
+    // 2. MikkTSpace Context
+    MikkUserData user_data = { mesh, flat_vertices };
+    SMikkTSpaceInterface interface = {};
+    interface.m_getNumFaces = getNumFaces;
+    interface.m_getNumVerticesOfFace = getNumVerticesOfFace;
+    interface.m_getPosition = getPosition;
+    interface.m_getNormal = getNormal;
+    interface.m_getTexCoord = getTexCoord;
+    interface.m_setTSpaceBasic = setTSpaceBasic;
+
+    SMikkTSpaceContext context = {};
+    context.m_pInterface = &interface;
+    context.m_pUserData = &user_data;
+
+    if (!genTangSpaceDefault(&context)) {
+        std::cerr << "Warning: MikkTSpace failed to generate tangents for " << pathstr << std::endl;
+    }
+
+    // 3. Deduplicate and generate 'indices' and 'faces'
+    std::vector<Vertex> vertices;
+    std::vector<uint16_t> indices;
+    std::vector<std::vector<uint16_t>> faces_list;
+    std::map<Vertex, uint16_t> unique_vertices;
+
+    for (size_t i = 0; i < flat_vertices.size(); i += 3) {
         std::vector<uint16_t> current_face_indices;
 
-        // Iterate over each index in the face
-        for (unsigned int j = 0; j < face_obj.mNumIndices; j++) {
-            unsigned int assimp_vertex_index = face_obj.mIndices[j];
+        for (size_t j = 0; j < 3; ++j) {
+            const Vertex& v = flat_vertices[i + j];
 
-            Vertex vertex;
-
-            // Populate the temporary vertex object
-            if (mesh->HasPositions()) {
-                vertex.pos.x = mesh->mVertices[assimp_vertex_index].x;
-                vertex.pos.y = mesh->mVertices[assimp_vertex_index].y;
-                vertex.pos.z = mesh->mVertices[assimp_vertex_index].z;
+            if (unique_vertices.find(v) == unique_vertices.end()) {
+                unique_vertices[v] = static_cast<uint16_t>(vertices.size());
+                vertices.push_back(v);
             }
 
-            if (mesh->HasNormals()) {
-                vertex.normal.x = mesh->mNormals[assimp_vertex_index].x;
-                vertex.normal.y = mesh->mNormals[assimp_vertex_index].y;
-                vertex.normal.z = mesh->mNormals[assimp_vertex_index].z;
-            }
-
-            if (mesh->HasTextureCoords(0)) {
-                vertex.texCoord.x = mesh->mTextureCoords[0][assimp_vertex_index].x;
-                vertex.texCoord.y = mesh->mTextureCoords[0][assimp_vertex_index].y;
-            }
-
-            if (mesh->HasTangentsAndBitangents()) {
-                vertex.tangent.x = mesh->mTangents[assimp_vertex_index].x;
-                vertex.tangent.y = mesh->mTangents[assimp_vertex_index].y;
-                vertex.tangent.z = mesh->mTangents[assimp_vertex_index].z;
-            }
-
-            // Deduplication logic
-            if (unique_vertices.find(vertex) == unique_vertices.end()) {
-                unique_vertices[vertex] = static_cast<uint16_t>(vertices.size());
-                vertices.push_back(vertex);
-            }
-
-            // Add the index to both the main indices vector and the current face's indices vector
-            uint16_t deduplicated_index = unique_vertices[vertex];
+            uint16_t deduplicated_index = unique_vertices[v];
             indices.push_back(deduplicated_index);
             current_face_indices.push_back(deduplicated_index);
         }
-
-        // Add the completed face to the faces vector
-        faces.push_back(current_face_indices);
+        faces_list.push_back(current_face_indices);
     }
 
     //===================BGFX MESH SETUP===================
@@ -143,7 +266,7 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const as
     // COMMITTING
     loaddata->indices = indices;
     loaddata->vertices = vertices;
-    loaddata->faces = faces;
+    loaddata->faces = faces_list;
 
     return MeshData{
         loaddata,

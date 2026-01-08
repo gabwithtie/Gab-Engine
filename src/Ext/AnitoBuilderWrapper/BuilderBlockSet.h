@@ -62,8 +62,6 @@ namespace gbe::ext::AnitoBuilder {
 		};
 
 		RendererSubpool type1_renderers;
-		RendererSubpool type2_renderers;
-		RendererSubpool type3_renderers;
 
 		std::unordered_map<RenderObject*, int> object_floors;
 		std::unordered_map<RenderObject*, int> object_rows;

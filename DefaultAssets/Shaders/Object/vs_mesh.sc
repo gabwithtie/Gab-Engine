@@ -31,6 +31,6 @@ void main()
 	vec3 camPos = u_invView[3].xyz; 
 	v_view = camPos - worldPos.xyz;
 
-    v_tangent = normalize(mul(normalMatrix, a_tangent.xyz));
+    v_tangent = normalize(mul(normalMatrix, a_tangent.xyz) * a_tangent.w);
 	v_bitangent = cross(v_normal, v_tangent);
 }

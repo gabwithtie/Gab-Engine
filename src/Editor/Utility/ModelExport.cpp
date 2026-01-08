@@ -136,7 +136,6 @@ namespace gbe {
                     const auto& vtx = mesh_data->vertices[v];
                     local_mesh->mVertices[v] = ToAiVector3D(vtx.pos);
                     local_mesh->mNormals[v] = ToAiVector3D(vtx.normal);
-                    local_mesh->mTangents[v] = ToAiVector3D(vtx.tangent);
                     local_mesh->mTextureCoords[0][v] = aiVector3D(vtx.texCoord.x, vtx.texCoord.y, 0.0f);
                     local_mesh->mColors[0][v] = aiColor4D(vtx.color.x, vtx.color.y, vtx.color.z, 1.0f);
 					std::cout << "Copying vertex (" << std::to_string(v) << "/" << std::to_string(num_vertices) << ")\r";

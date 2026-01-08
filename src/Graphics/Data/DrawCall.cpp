@@ -63,7 +63,7 @@ namespace gbe {
             else if (overridedata.type == asset::Shader::UniformFieldType::TEXTURE)
             {
                 // TextureData must now be adapted to hold a bgfx::TextureHandle
-                auto findtexturedata = TextureLoader::GetAssetRuntimeData(overridedata.value_tex->Get_assetId());
+                auto& findtexturedata = TextureLoader::GetAssetRuntimeData(overridedata.value_tex->Get_assetId());
                 this->ApplyTextureOverride(findtexturedata, id, overridedata.tex_stage);
             }
         }
