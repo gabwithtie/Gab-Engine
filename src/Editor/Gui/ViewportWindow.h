@@ -3,17 +3,23 @@
 #include "GuiWindow.h"
 #include "GizmoLayer.h"
 
-#include "Engine/gbe_engine.h"
-
 #include <string>
+#include "Math/gbe_math.h"
 
 namespace gbe {
+	namespace gfx
+	{
+		class TextureData;
+	}
+
+	class Object;
+
 	namespace editor {
 
 		class ViewportWindow : public GuiWindow {
 			void DrawSelf() override;
 
-			TextureData* selected_data = nullptr;
+			gfx::TextureData* selected_data = nullptr;
 			Vector2Int old_resolution;
 
 			editor::GizmoLayer gizmoLayer;
@@ -28,11 +34,7 @@ namespace gbe {
 			inline std::string GetWindowId() override {
 				return "ViewportWindow";
 			}
-			inline ViewportWindow(std::vector<gbe::Object*>& _selected) :
-				gizmoLayer(_selected)
-			{
-				selected_data = &gfx::TextureLoader::GetDataMap().at("mainpass");
-			}
+			ViewportWindow(std::vector<gbe::Object*>& _selected);
 		};
 	}
 }

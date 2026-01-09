@@ -13,7 +13,6 @@
 #include "Gui/MenuBar.h"
 #include "Gui/ViewportWindow.h"
 #include "Gui/LightExplorer.h"
-#include "Ext_Gui/AnitoBuilderWindow.h"
 
 namespace gbe {
 	class RenderPipeline;
@@ -60,9 +59,7 @@ namespace gbe {
 		editor::ViewportWindow viewportWindow;
 		editor::LightExplorer lightWindow;
 
-		editor::AnitoBuilderWindow anitobuilderWindow;
-
-		std::list<editor::GuiWindow*> windows = {
+		std::vector<editor::GuiWindow*> windows = {
 			&hierarchyWindow,
 			&inspectorwindow,
 			&spawnWindow,
@@ -70,14 +67,13 @@ namespace gbe {
 			&consoleWindow,
 			&imageDebuggerWindow,
 			&viewportWindow,
-			&lightWindow,
-
-			&anitobuilderWindow
+			&lightWindow
 		};
 
 	public:
-		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime);
+		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionalwindows);
 		~Editor();
+		static void OnDeselect(Object* other);
 		static void SelectSingle(Object* other);
 		static void DeselectAll();
 		static void CommitAction(std::function<void()> redo, std::function<void()> undo);

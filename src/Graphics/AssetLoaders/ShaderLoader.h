@@ -190,6 +190,9 @@ namespace gbe {
 			// REMOVED TryCompileShader as bgfx shaders are typically pre-compiled
 		public:
 			void AssignSelfAsLoader() override;
+			inline virtual void OnAsyncTaskCompleted(AsyncLoadTask* loadtask) override {
+				//This is a synchronous loader
+			}
 		};
 	}
 }

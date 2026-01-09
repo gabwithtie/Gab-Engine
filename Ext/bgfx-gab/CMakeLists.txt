@@ -15,5 +15,6 @@ target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE assimp::assimp)
 target_link_libraries(${CURRENT_CMAKE_LIB} PUBLIC bgfx bimg bx bgfx-imgui bgfx-utils)
 
 target_include_directories(${CURRENT_CMAKE_LIB} INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(${CURRENT_CMAKE_LIB} PRIVATE ${GABENGINE_INCLUDE_DIRECTORY})
 
 message("[GABENGINE] LOADED: " ${CMAKE_CURRENT_SOURCE_DIR})

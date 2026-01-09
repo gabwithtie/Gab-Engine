@@ -1,12 +1,11 @@
 #include "Engine.h"
 
-#include "Ext/AnitoBuilderWrapper/BuilderBlock.h"
-
 #include "Editor/gbe_editor.h"
 #include "Math/gbe_math.h"
 #include "Physics/gbe_physics.h"
 #include "Audio/gbe_audio.h"
 #include "Asset/gbe_asset.h"
+#include "Extension/Extension.h"
 
 #include <nfd.h>
 #include <stdio.h>
@@ -15,7 +14,7 @@
 namespace gbe {
 	Engine* Engine::instance;
 
-	Engine::Engine() : 
+	Engine::Engine(std::vector<Extension*> _engine_extensions) :
 		window(Vector2Int(1280, 720)),
 		renderpipeline(this->window, this->window.Get_dimentions())
 	{
@@ -23,10 +22,23 @@ namespace gbe {
 
 		instance = this;
 
+		this->engine_extensions = _engine_extensions;
+		std::vector<editor::GuiWindow*> extension_windows;
+
+		for (const auto& extension : this->engine_extensions)
+		{
+			extension->OnEngineInitialize();
+
+			for (const auto& extension_window : extension->extension_windows)
+			{
+				extension_windows.push_back(extension_window);
+			}
+		}
+
 		//EDITOR SETUP
 		NFD_Init();
 
-		editor = new Editor(&renderpipeline, &window, &time);
+		editor = new Editor(&renderpipeline, &window, &time, extension_windows);
 		if (editor != nullptr) {
 			this->window.AddAdditionalEventProcessor([=](void* newevent) {
 				editor->ProcessRawWindowEvent(newevent);
@@ -68,8 +80,10 @@ namespace gbe {
 		Camera* current_camera = nullptr;
 		auto camera_handler = instance->current_root->GetHandler<Camera>();
 
-		for (const auto cam : camera_handler->t_object_list)
+		for (const auto& cpair : camera_handler->object_list)
 		{
+			auto cam = cpair.second;
+
 			if (!cam->Get_enabled())
 				continue;
 			if (instance->Get_state() == EngineState::Edit && !cam->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE))
@@ -147,6 +161,20 @@ namespace gbe {
 		asset::BatchLoader::LoadAssetsFromDirectory("DefaultAssets");
 		asset::BatchLoader::LoadAssetsFromDirectory("cache");
 
+		//Wait here for all async tasks to finish
+		bool batchload_done = false;
+		while (!batchload_done)
+		{
+			batchload_done = true;
+
+			for (const auto& loader : gbe::asset::all_asset_loaders)
+			{
+				if (loader->CheckAsynchrounousTasks() > 0) {
+					batchload_done = false;
+				}
+			}
+		}
+
 		//Init all that needs assets here
 		renderpipeline.InitializeAssetRequisites();
 
@@ -185,8 +213,6 @@ namespace gbe {
 
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(DirectionalLight).name(), [](SerializedObject* data) {return new DirectionalLight(data); });
 		gbe::TypeSerializer::RegisterTypeCreator(typeid(ConeLight).name(), [](SerializedObject* data) {return new ConeLight(data); });
-		
-		gbe::TypeSerializer::RegisterTypeCreator(typeid(ext::AnitoBuilder::BuilderBlock).name(), [](SerializedObject* data) {return new ext::AnitoBuilder::BuilderBlock(data); });
 
 #pragma endregion
 #pragma region Input
@@ -272,7 +298,6 @@ namespace gbe {
 
 #pragma endregion
 #pragma region MAIN LOOP
-
 		/// MAIN GAME LOOP
 		while (!this->window.ShouldClose())
 		{
@@ -457,8 +482,9 @@ namespace gbe {
 			this->current_root->CallRecursively([&toDeleteRoots](Object* object) {
 				if (object->get_isDestroyed()) {
 					toDeleteRoots.push_back(object);
+					return;
 				}
-				});
+				}, false);
 
 			for (auto rootdeletee : toDeleteRoots)
 			{

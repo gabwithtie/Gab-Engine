@@ -12,6 +12,5 @@ namespace gbe::editor {
 	public:
 		const static std::unordered_map<std::string, std::function<Object* ()>> createfunctions_primitives;
 		const static std::unordered_map<std::string, std::function<Object* ()>> createfunctions_light;
-		const static std::unordered_map<std::string, std::function<Object* ()>> createfunctions_ext_anitobuilder;
 	};
 }

@@ -167,7 +167,7 @@ DrawCall* gbe::RenderPipeline::GetDefaultDrawCall()
 gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int rendergroup)
 {
 	//COMMITTING
-	this->currentrenderinfo.infomap.insert_or_assign(
+	Instance->currentrenderinfo.infomap.insert_or_assign(
 		instance_id,
 		GraphicsRenderInfo::InstanceInfo{
 			.transform = matrix,
@@ -179,10 +179,9 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall*
 			}
 		});
 
-	auto drawcall_it = this->currentrenderinfo.callgroups.find(drawcall);
-
-	if (drawcall_it == this->currentrenderinfo.callgroups.end()) {
-		this->currentrenderinfo.callgroups.insert_or_assign(
+	auto drawcall_it = Instance->currentrenderinfo.callgroups.find(drawcall);
+	if (drawcall_it == Instance->currentrenderinfo.callgroups.end()) {
+		Instance->currentrenderinfo.callgroups.insert_or_assign(
 			drawcall,
 			std::vector<void*>{ instance_id }
 		);
@@ -191,7 +190,17 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall*
 		drawcall_it->second.push_back(instance_id);
 	}
 
-	return &this->currentrenderinfo.infomap[instance_id].transform;
+	return &Instance->currentrenderinfo.infomap[instance_id].transform;
+}
+
+void gbe::RenderPipeline::RegisterAdditionalGroup(void* instance_id, int rendergroup)
+{
+	auto it = Instance->currentrenderinfo.infomap.find(instance_id);
+
+	if (it == Instance->currentrenderinfo.infomap.end())
+		return;
+
+	it->second.rendergroups.insert_or_assign(rendergroup, true);
 }
 
 void gbe::RenderPipeline::UnRegisterInstance(void* instance_id, int rendergroup)
@@ -201,11 +210,13 @@ void gbe::RenderPipeline::UnRegisterInstance(void* instance_id, int rendergroup)
 	if (info_it == Instance->currentrenderinfo.infomap.end())
 		return;
 
-	info_it->second.rendergroups.erase(rendergroup);
+	auto& renderinfo = info_it->second;
 
-	if (info_it->second.rendergroups.size() == 0)
+	renderinfo.rendergroups.erase(rendergroup);
+
+	if (renderinfo.rendergroups.size() == 0)
 	{
-		auto& callgroup = Instance->currentrenderinfo.callgroups[info_it->second.drawcall];
+		auto& callgroup = Instance->currentrenderinfo.callgroups[renderinfo.drawcall];
 
 		callgroup.erase(
 			std::remove(callgroup.begin(), callgroup.end(), instance_id),

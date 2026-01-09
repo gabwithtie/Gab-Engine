@@ -175,7 +175,7 @@ void main() {
     }
 
     // Ambient light baseline
-    finalDiffuse += vec3(0.5f);
+    finalDiffuse += vec3(0.2f);
 
     // Sample SSAO using screen coordinates
     vec2 screenUV = gl_FragCoord.xy / u_viewRect.zw;

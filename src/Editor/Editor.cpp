@@ -20,7 +20,7 @@
 
 gbe::Editor* gbe::Editor::instance = nullptr;
 
-gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime):
+gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionalwindows):
 	menubar(this->windows),
 
 	spawnWindow(this->selected),
@@ -34,6 +34,11 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	this->mwindow = window;
 	this->mrenderpipeline = renderpipeline;
 	this->mtime = _mtime;
+
+	for (const auto& addwindow : additionalwindows)
+	{
+		this->windows.push_back(addwindow);
+	}
 
 	//===========================IMGUI=============================//
 	SDL_Window* implemented_window = static_cast<SDL_Window*>(window->Get_implemented_window());
@@ -130,6 +135,17 @@ gbe::Editor::~Editor()
 
 }
 
+void gbe::Editor::OnDeselect(Object* other)
+{
+	other->CallRecursively([&](Object* child) {
+		auto renderer_check = dynamic_cast<RenderObject*>(child);
+
+		if (renderer_check != nullptr) {
+			RenderPipeline::UnRegisterInstance(renderer_check, 1);
+		}
+		});
+}
+
 void gbe::Editor::SelectSingle(Object* other) {
 	if(other->GetEditorFlag(Object::SELECT_PARENT_INSTEAD)) {
 		if (other->GetParent() != nullptr) {
@@ -141,17 +157,7 @@ void gbe::Editor::SelectSingle(Object* other) {
 	}
 
 	auto newlyclicked = other;
-	RenderObject* renderer_has = nullptr;
-
-	other->CallRecursively([&](Object* child) {
-		auto renderer_check = dynamic_cast<RenderObject*>(child);
-
-		if (renderer_check != nullptr) {
-			renderer_has = renderer_check;
-		}
-		});
-
-
+	
 	bool deselection = false;
 
 	if (instance->keyboard_shifting) {
@@ -159,9 +165,8 @@ void gbe::Editor::SelectSingle(Object* other) {
 
 		// DESELECT IF FOUND
 		if (it != instance->selected.end()) {
+			OnDeselect(other);
 			instance->selected.erase(it);
-
-			deselection = true;
 		}
 	}
 	else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
@@ -169,12 +174,23 @@ void gbe::Editor::SelectSingle(Object* other) {
 	}
 
 	if (!deselection) {
-		//SELECT AND BOX
 		instance->selected.push_back(other);
+
+		other->CallRecursively([&](Object* child) {
+			auto renderer_check = dynamic_cast<RenderObject*>(child);
+
+			if (renderer_check != nullptr) {
+				RenderPipeline::RegisterAdditionalGroup(renderer_check, 1);
+			}
+			});
 	}
 }
 
 void gbe::Editor::DeselectAll() {
+	for (const auto& deselected: instance->selected)
+	{
+		OnDeselect(deselected);
+	}
 	instance->selected.clear();
 }
 
@@ -244,8 +260,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 
 			if (!result.result) { //NOTHING WAS CLICKED
 				if (!this->keyboard_shifting) { //NOT MULTISELECTING
-					//CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED NOTHING
-					this->selected.clear();
+					DeselectAll();
 				}
 			}
 			else {
@@ -338,12 +353,10 @@ void gbe::Editor::PrepareUpdate()
 		// Dock windows into the new nodes
 		this->viewportWindow.Set_is_open(true);
 		this->inspectorwindow.Set_is_open(true);
-		this->anitobuilderWindow.Set_is_open(true);
 		this->lightWindow.Set_is_open(true);
 
 		ImGui::DockBuilderDockWindow(this->viewportWindow.GetWindowId().c_str(), l);
 		ImGui::DockBuilderDockWindow(this->inspectorwindow.GetWindowId().c_str(), r_u);
-		ImGui::DockBuilderDockWindow(this->anitobuilderWindow.GetWindowId().c_str(), r_d);
 		ImGui::DockBuilderDockWindow(this->lightWindow.GetWindowId().c_str(), r_d);
 
 		ImGui::DockBuilderFinish(dockspace_id);

@@ -28,7 +28,7 @@ void gbe::gfx::bgfx_gab::RenderFullscreenPass(bgfx::ViewId _view, bgfx::ProgramH
         vertex[2] = { -1.0f,  3.0f, 0.0f, 0.0f, -1.0f };
 
         bgfx::setVertexBuffer(0, &vb);
-        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_ALWAYS);
+        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_WRITE_A);
         bgfx::submit(_view, _program);
     }
 }

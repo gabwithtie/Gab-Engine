@@ -32,7 +32,7 @@ gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& p
 		m_shadowbuffers[i] = bgfx::createFrameBuffer(1, &at, false);
 	}
 
-	for (size_t i = 10; i < 20; i++)
+	for (size_t i = VIEW_SHADOW_PASS; i < 20; i++)
 	{
 		available_views.push_back(i);
 	}
@@ -87,8 +87,10 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
 
 	shadow_shader = ShaderLoader::GetAssetRuntimeData("shadow"); 
 	ssao_shader = ShaderLoader::GetAssetRuntimeData("ssao");
+	outline_shader = ShaderLoader::GetAssetRuntimeData("outline");
 	gbuffer_shader = ShaderLoader::GetAssetRuntimeData("gbuffer");
 	bilateralblur_shader = ShaderLoader::GetAssetRuntimeData("bilateralblur");
+	bufferblend_shader = ShaderLoader::GetAssetRuntimeData("bufferblend");
 }
 
 void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& frameinfo, GraphicsRenderInfo& passinfo)
@@ -107,14 +109,14 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 					instances.push_back(instanceid);
 		}
 		
+		// 1. Get the number of instances
+		uint32_t instanceCount = (uint32_t)instances.size();
+		if (instanceCount == 0) return false;
+
 		// 3. Bind Mesh
 		const auto& curmesh = MeshLoader::GetAssetRuntimeData(drawcall->get_mesh()->Get_assetId());
 		bgfx::setIndexBuffer(curmesh.index_vbh);
 		bgfx::setVertexBuffer(0, curmesh.vertex_vbh);
-
-		// 1. Get the number of instances
-		uint32_t instanceCount = (uint32_t)instances.size();
-		if (instanceCount == 0) return false;
 
 		// 2. Allocate an Instance Data Buffer
 		// We need 64 bytes (16 floats) per instance for a Matrix4
@@ -139,58 +141,71 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		return true;
 		};
 
+	const auto drawgbuffer = [&passinfo, &frameinfo, drawbatch, this](GBuffer& buffer, int rendergroup) {
+		bgfx::setViewClear(buffer.viewId, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
+		bgfx::setViewTransform(buffer.viewId, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
+
+		bool submitted = false;
+
+		for (const auto& shaderset : passinfo.callgroups) {
+			if (shaderset.second.size() == 0)
+				continue;
+
+			if (drawbatch(shaderset.first, rendergroup)) {
+				bgfx::setState(BGFX_STATE_DEFAULT);
+				bgfx::submit(buffer.viewId, gbuffer_shader.programHandle);
+				submitted = true;
+			}
+		}
+
+		if (!submitted) {
+			bgfx::submit(buffer.viewId, BGFX_INVALID_HANDLE); // Submit empty to clear
+		}
+		};
+
 	// BGFX: Frame submission must start with a `bgfx::touch` or `bgfx::frame`
-	bgfx::touch(VIEW_MAIN_PASS); // Touch one view to start frame
+	bgfx::touch(VIEW_SCREEN_PASS); // Touch one view to start frame
 
 	//================== 1. G-BUFFER PRE-PASS (For SSAO) ========================//
-	bgfx::setViewClear(VIEW_GBUFFER_PASS, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
-	bgfx::setViewTransform(VIEW_GBUFFER_PASS, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
-
-	for (const auto& shaderset : passinfo.callgroups) {
-		if(shaderset.second.size() == 0)
-			continue;
-
-		drawbatch(shaderset.first, 0);
-		bgfx::setState(BGFX_STATE_DEFAULT);
-		bgfx::submit(VIEW_GBUFFER_PASS, gbuffer_shader.programHandle);
-	}
+	drawgbuffer(gbuffer_all, 0);
+	drawgbuffer(gbuffer_selected, 1); // outline pass for gbuffer
 
 	Vector4 cam_params(frameinfo.nearclip, frameinfo.farclip, (float)resolution.x, (float)resolution.y);
-	//================== 2. SSAO CALCULATION PASS ========================//
+	//================== OUTLINE PASS ========================//
+	InitPP(outline_shader, VIEW_OUTLINE_SELECTED_PASS);
+	outline_shader.ApplyTextureOverride(gbuffer_selected.m_gbufferNormal, "tex_normal", 0);
+	outline_shader.ApplyTextureOverride(gbuffer_selected.m_gbufferDepth, "tex_depth", 1);
+	Vector4 outline_params(0.09, 0.01f, 0, 0);
+	outline_shader.ApplyOverride(cam_params, "u_camera_params");
+	outline_shader.ApplyOverride(outline_params, "u_outline_params");
+	SubmitPP();
+	//================== SSAO CALCULATION PASS ========================//
 	InitPP(ssao_shader, VIEW_SSAO_PASS);
-	ssao_shader.ApplyTextureOverride(m_gbufferNormal,"tex_normal",0);
-	ssao_shader.ApplyTextureOverride(m_gbufferDepth,"tex_depth",1);
-	ssao_shader.ApplyOverrideArray(m_ssao_kernel_data.data(), "u_kernel", 64);
-	Vector4 ssao_params(0.09, 0.01f, (float)resolution.x, (float)resolution.y);
-	ssao_shader.ApplyOverride(cam_params, "u_camera_params");
-	ssao_shader.ApplyOverride(ssao_params, "u_ssao_params");
+	curppshader.ApplyTextureOverride(gbuffer_all.m_gbufferNormal,"tex_normal",0);
+	curppshader.ApplyTextureOverride(gbuffer_all.m_gbufferDepth,"tex_depth",1);
+	curppshader.ApplyOverrideArray(m_ssao_kernel_data.data(), "u_kernel", 64);
+	Vector4 ssao_params(0.09, 0.01f, 0, 0);
+	curppshader.ApplyOverride(cam_params, "u_camera_params");
+	curppshader.ApplyOverride(ssao_params, "u_ssao_params");
 	SubmitPP();
 	float blurrad = 9;
 	float blur_sharpness = 5;
 	InitPP(bilateralblur_shader, VIEW_BLUR0_PASS);
 	curppshader.ApplyTextureOverride(m_pp_textures[VIEW_SSAO_PASS], "s_tex_input", 0);
-	curppshader.ApplyTextureOverride(m_gbufferDepth, "s_tex_depth", 1);
+	curppshader.ApplyTextureOverride(gbuffer_all.m_gbufferDepth, "s_tex_depth", 1);
 	Vector4 blur_h_params(blurrad, blur_sharpness, 1.0f, 0.0f); // Direction: Horizontal (1,0)
 	curppshader.ApplyOverride(cam_params, "u_camera_params");
 	curppshader.ApplyOverride(blur_h_params, "u_blur_params");
 	SubmitPP();
 	InitPP(bilateralblur_shader, VIEW_BLUR1_PASS);
 	curppshader.ApplyTextureOverride(m_pp_textures[VIEW_BLUR0_PASS], "s_tex_input", 0);
-	curppshader.ApplyTextureOverride(m_gbufferDepth, "s_tex_depth", 1);
+	curppshader.ApplyTextureOverride(gbuffer_all.m_gbufferDepth, "s_tex_depth", 1);
 	Vector4 blur_v_params(blurrad, blur_sharpness, 0.0f, 1.0f);
 	curppshader.ApplyOverride(cam_params, "u_camera_params");
 	curppshader.ApplyOverride(blur_v_params, "u_blur_params");
 	SubmitPP();
 
-	bgfx::blit(
-		VIEW_DEBUG_BLITTER,           // The view that performs the copy
-		m_ssaoTexture.textureHandle, // Destination: Singular 2D texture
-		0, 0, 0, 0,               // Mip 0, X 0, Y 0, Z 0
-		m_pp_textures[VIEW_BLUR1_PASS].textureHandle,     // Source: Your Texture Array
-		0, 0, 0, 0,               // Mip 0, X 0, Y 0, Layer 'i'
-		resolution.x,
-		resolution.y
-	);
+	TransferPPtoTexture(VIEW_BLUR1_PASS, m_ssaoTexture);
 
 	//==================SHADOW PASS [VIEW_SHADOW_PASS]========================//
 	for (size_t i = 0; i < max_lights; i++)
@@ -203,19 +218,18 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		if (i == frameinfo.lightdatas.size())
 			break;
 
-		bgfx::setViewFrameBuffer(shadowViewId, m_shadowbuffers[i]);
-		bgfx::setViewRect(shadowViewId, 0, 0, shadow_map_resolution, shadow_map_resolution);
-		bgfx::setViewClear(shadowViewId, BGFX_CLEAR_DEPTH, 0, 1.0f, 0);
-
 		const auto& light = frameinfo.lightdatas[i];
 
 		light->UpdateContext(frameinfo.viewmat, frameinfo.projmat_lightusage);
 		Matrix4 lightViewMat = light->GetViewMatrix();
 		Matrix4 lightProjMat = light->GetProjectionMatrix();
-		bgfx::setViewTransform(shadowViewId, (const float*)&lightViewMat, (const float*)&lightProjMat);
 		
-		Matrix4 lightProjView = lightProjMat * lightViewMat;
+		bgfx::setViewFrameBuffer(shadowViewId, m_shadowbuffers[i]);
 
+		bgfx::setViewRect(shadowViewId, 0, 0, shadow_map_resolution, shadow_map_resolution);
+		bgfx::setViewClear(shadowViewId, BGFX_CLEAR_DEPTH, 0, 1.0f, 0);
+
+		bgfx::setViewTransform(shadowViewId, (const float*)&lightViewMat, (const float*)&lightProjMat);
 		for (const auto& shaderset : passinfo.callgroups)
 		{
 			if (shaderset.second.size() == 0)
@@ -236,8 +250,8 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 
 	//==================MAIN PASS [VIEW_MAIN_PASS]========================//
 	// Clear the main pass color/depth before rendering
-	bgfx::setViewClear(VIEW_MAIN_PASS, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x181818ff, 1.0f, 0);
-	bgfx::setViewTransform(VIEW_MAIN_PASS, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
+	bgfx::setViewClear(VIEW_SCENE_PASS, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x181818ff, 1.0f, 0);
+	bgfx::setViewTransform(VIEW_SCENE_PASS, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
 
 	//===============LINE PASS [VIEW_LINE_PASS]
 	if (passinfo.lines_this_frame.size() > 0 && false) {
@@ -262,7 +276,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		);
 
 		// 5. Submit
-		bgfx::submit(VIEW_MAIN_PASS, lineshader.programHandle);
+		bgfx::submit(VIEW_SCENE_PASS, lineshader.programHandle);
 
 		passinfo.lines_this_frame.clear();
 	}
@@ -291,7 +305,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		);
 
 		// 5. Submit
-		bgfx::submit(VIEW_MAIN_PASS, skyboxshader.programHandle);
+		bgfx::submit(VIEW_SCENE_PASS, skyboxshader.programHandle);
 	}
 	//=================END OF SKYBOX PASS
 
@@ -352,10 +366,19 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		drawbatch(shaderset.first, 0);
 
 		bgfx::setState(BGFX_STATE_DEFAULT);
-		bgfx::submit(VIEW_MAIN_PASS, currentshaderdata->programHandle);
+		bgfx::submit(VIEW_SCENE_PASS, currentshaderdata->programHandle);
 	}
 
-	//DEBUG
+	//============================== BLEND PASS =============================//
+
+	InitPP(bufferblend_shader, VIEW_SCREEN_PASS);
+	curppshader.ApplyTextureOverride(mainscene_buffer.m_mainColorTexture, "tex_buffer_a", 0);
+	curppshader.ApplyTextureOverride(m_pp_textures[VIEW_OUTLINE_SELECTED_PASS], "tex_buffer_b", 1);
+	Vector4 blend_params(0, 0, 0, 0);
+	curppshader.ApplyOverride(blend_params, "u_blend_params");
+	SubmitPP();
+
+	//============================== DEBUG CALLS =============================//
 	for (uint16_t i = 0; i < (uint16_t)max_lights; ++i) {
 		// blit(viewId, dst, dstMip, dstX, dstY, dstZ, src, srcMip, srcX, srcY, srcZ, width, height, depth)
 		bgfx::blit(
@@ -374,12 +397,7 @@ gbe::gfx::TextureData gbe::gfx::bgfx_gab::ForwardRenderer::ReloadFrame(Vector2In
 {
 	resolution = reso;
 
-	// Destroy existing FBOs and textures if any
-	if (bgfx::isValid(m_mainPassFBO)) {
-		bgfx::destroy(m_mainPassFBO);
-		bgfx::destroy(m_mainColorTexture.textureHandle);
-		bgfx::destroy(m_mainDepthTexture.textureHandle);
-	}
+	//TODO: Destroy previous buffers
 
 	uint16_t w = (uint16_t)reso.x;
 	uint16_t h = (uint16_t)reso.y;
@@ -388,21 +406,13 @@ gbe::gfx::TextureData gbe::gfx::bgfx_gab::ForwardRenderer::ReloadFrame(Vector2In
 	RegisterPPFramebuffer(VIEW_SSAO_PASS);
 	RegisterPPFramebuffer(VIEW_BLUR0_PASS);
 	RegisterPPFramebuffer(VIEW_BLUR1_PASS);
+	RegisterPPFramebuffer(VIEW_OUTLINE_SELECTED_PASS, bgfx::TextureFormat::BGRA8);
+	RegisterPPFramebuffer(VIEW_SCREEN_PASS, bgfx::TextureFormat::BGRA8);
+	TextureLoader::RegisterExternal("OUTLINE_PASS", m_pp_textures[VIEW_OUTLINE_SELECTED_PASS]);
 
 	//GBUFFERS
-	m_gbufferNormal = TextureData{
-		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT)
-	};
-	TextureLoader::RegisterExternal("m_gbufferNormal", m_gbufferNormal);
-	m_gbufferDepth = TextureData{
-		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24, BGFX_TEXTURE_RT)
-	};
-	TextureLoader::RegisterExternal("m_gbufferDepth", m_gbufferDepth);
-	bgfx::TextureHandle gbufferAttachments[] = { m_gbufferNormal.textureHandle, m_gbufferDepth.textureHandle };
-	m_gbufferFB = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAttachments), gbufferAttachments, false);
-
-	bgfx::setViewFrameBuffer(VIEW_GBUFFER_PASS, m_gbufferFB);
-	bgfx::setViewRect(VIEW_GBUFFER_PASS, 0, 0, w, h);
+	gbuffer_all = GBuffer(w, h, "ALL", VIEW_GBUFFER_PASS);
+	gbuffer_selected = GBuffer(w, h, "SELECTED", VIEW_GBUFFER_SELECTED_PASS);
 
 	//SSAO
 	m_ssaoTexture = TextureData{
@@ -410,18 +420,8 @@ gbe::gfx::TextureData gbe::gfx::bgfx_gab::ForwardRenderer::ReloadFrame(Vector2In
 	};
 	TextureLoader::RegisterExternal("m_ssaoTexture", m_ssaoTexture);
 
-	// Create Main Pass FBO (Color + Depth)
-	// Use BGFX_TEXTURE_RT to mark as a render target
-	m_mainColorTexture = TextureData{
-		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT)
-	};
-	m_mainDepthTexture = TextureData{
-		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT_WRITE_ONLY)
-	};
-	bgfx::TextureHandle mainAttachments[] = { m_mainColorTexture.textureHandle, m_mainDepthTexture.textureHandle };
-	m_mainPassFBO = bgfx::createFrameBuffer(BX_COUNTOF(mainAttachments), mainAttachments, false);
-	bgfx::setViewFrameBuffer(VIEW_MAIN_PASS, m_mainPassFBO);
-	bgfx::setViewRect(VIEW_MAIN_PASS, 0, 0, w, h);
-
-	return m_mainColorTexture;
+	//MAIN PASS
+	mainscene_buffer = ColorDepthBuffer(w, h, "MAINPASS", VIEW_SCENE_PASS);
+	
+	return m_pp_textures[VIEW_SCREEN_PASS];
 }

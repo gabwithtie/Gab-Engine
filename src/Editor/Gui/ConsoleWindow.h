@@ -1,9 +1,8 @@
 #pragma once
 #include "GuiWindow.h"
 
-#include "Engine/gbe_engine.h"
-
 #include <string>
+#include <vector>
 
 namespace gbe {
 	namespace editor {

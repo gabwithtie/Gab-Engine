@@ -1,5 +1,7 @@
 #include "ConsoleWindow.h"
 
+#include "Engine/gbe_engine.h"
+
 void gbe::editor::ConsoleWindow::DrawSelf()
 {
 	for (const auto log : this->logs)

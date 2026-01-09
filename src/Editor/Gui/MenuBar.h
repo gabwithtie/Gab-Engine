@@ -6,6 +6,7 @@
 
 #include <imgui.h>
 #include <list>
+#include <vector>
 
 namespace gbe {
 	namespace editor {
@@ -16,11 +17,11 @@ namespace gbe {
 			bool ext_Begin() override;
 			void ext_End() override;
 
-			std::list<GuiWindow*>& windows;
+			std::vector<GuiWindow*>& windows;
 		public:
 			void DrawSelf() override;
 			
-			inline MenuBar(std::list<GuiWindow*>& _windows) : windows(_windows) {
+			inline MenuBar(std::vector<GuiWindow*>& _windows) : windows(_windows) {
 			}
 		};
 	}

@@ -1,6 +1,7 @@
 #include "ViewportWindow.h"
 
 #include "Graphics/gbe_graphics.h"
+#include "Engine/gbe_engine.h"
 
 void gbe::editor::ViewportWindow::DrawSelf()
 {
@@ -18,4 +19,10 @@ void gbe::editor::ViewportWindow::DrawSelf()
 
 	if (this->gizmoLayer.Get_pointer_here())
 		this->pointer_here = false;
+}
+
+gbe::editor::ViewportWindow::ViewportWindow(std::vector<gbe::Object*>& _selected) :
+	gizmoLayer(_selected)
+{
+	selected_data = &gfx::TextureLoader::GetDataMap().at("mainpass");
 }

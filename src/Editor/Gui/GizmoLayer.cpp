@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <Imguizmo.h>
 
+#include "Engine/gbe_engine.h"
 
 void gbe::editor::GizmoLayer::DrawSelf()
 {

@@ -2,6 +2,7 @@
 //
 
 #include "gab-engine.h"
+#include "AnitoBuilderExtension.h"
 
 #if _WIN32 || _WIN64
 #include <Windows.h>
@@ -19,7 +20,13 @@ int main(int argc, char* argv[])
     }
 #endif // _WIN32 || _WIN64
 
-    auto engine = new gbe::Engine();
+	auto anito_builder_extension = new gbe::ext::AnitoBuilder::AnitoBuilderExtension();
+
+    std::vector<gbe::Extension*> extensions = {
+		(gbe::Extension*)anito_builder_extension
+    };
+
+    auto engine = new gbe::Engine(extensions);
     engine->Run();
 
     return 0;

@@ -1,4 +1,5 @@
 #include "StateWindow.h"
+#include "Engine/gbe_engine.h"
 
 void gbe::editor::StateWindow::DrawSelf()
 {

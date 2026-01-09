@@ -60,6 +60,10 @@ FetchContent_MakeAvailable(mikktspace)
 
 include("Ext/MikkTSpace.cmake")
 
+#Anito Builder extension
+add_subdirectory("Ext/AnitoBuilder")
+target_link_libraries(${PROJECT_NAME} PUBLIC gbe_anitobuilder)
+
 #RELOAD BASE ASSETS TO BUILD
 add_custom_target(
     COPY_ASSETS_TARGET

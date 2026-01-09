@@ -28,7 +28,7 @@ namespace gbe {
 				DrawCall* drawcall;
 				std::unordered_map<int, bool> rendergroups;
 			};
-			std::unordered_map<void*, InstanceInfo> infomap;\
+			std::unordered_map<void*, InstanceInfo> infomap;
 			std::unordered_map<DrawCall*, std::vector<void*>> callgroups;
 
 			//LINES

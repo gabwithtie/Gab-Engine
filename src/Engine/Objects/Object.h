@@ -59,10 +59,10 @@ namespace gbe {
 
 		bool isDestroyQueued = false;
 
-		std::list<Object*> children;
+		std::vector<Object*> children;
 
 		//A smart way to keep track of states and whether some external objects have already read the state or not.
-		std::unordered_map<ObjectStateName, std::vector<void*>> state_checkers;
+		std::unordered_map<int, std::vector<uint16_t>> state_checkers;
 		EditorFlags editor_flags = (EditorFlags)0;
 
 		Transform local;
@@ -95,32 +95,9 @@ namespace gbe {
 			this->name = newname;
 		}
 
-		inline void PushState(ObjectStateName state) {
-			auto it = this->state_checkers.find(state);
+		void PushState(ObjectStateName state);
+		bool CheckState(ObjectStateName state, void* checker);
 
-			if (it != this->state_checkers.end())
-			{
-				it->second.clear();
-			}
-			else {
-				this->state_checkers.insert_or_assign(state, std::vector<void*>());
-			}
-		}
-		inline bool CheckState(ObjectStateName state, void* checker) {
-			auto it = this->state_checkers.find(state);
-
-			if (it != this->state_checkers.end())
-			{
-				auto check_it = std::find(it->second.begin(), it->second.end(), checker);
-
-				if (check_it == it->second.end()) {
-					it->second.push_back(checker);
-					return true;
-				}
-			}
-
-			return false;
-		}
 		inline bool GetEditorFlag(EditorFlags flag) {
 			return (this->editor_flags & flag) == flag;
 		}

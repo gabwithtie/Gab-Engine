@@ -1,8 +1,28 @@
 #include "AnitoBuilderWindow.h"
 
-#include "Ext/AnitoBuilderWrapper/BuilderBlock.h"
-#include "../Editor.h"
-#include "../Utility/CreateFunctions.h"
+#include "../BuilderBlock.h"
+#include "Editor/Editor.h"
+
+
+namespace gbe {
+	const std::unordered_map<std::string, std::function<Object* ()>> createfunctions_ext_anitobuilder = {
+	{
+		"Anito Builder Block"
+		,
+		[]() {
+		Vector3 cubecorners[4] = {
+		Vector3(-2, 0, -2),
+		Vector3(2, 0, -2),
+		Vector3(2, 0, 2),
+		Vector3(-2, 0, 2),
+		};
+		auto object = new ext::AnitoBuilder::BuilderBlock(cubecorners, 4);
+
+		return object;
+		}
+	}
+	};
+}
 
 void gbe::editor::AnitoBuilderWindow::DrawSelf()
 {
@@ -25,7 +45,7 @@ void gbe::editor::AnitoBuilderWindow::DrawSelf()
 	{
 		if (ImGui::BeginMenu("Create"))
 		{
-			for (const auto& item : CreateFunctions::createfunctions_ext_anitobuilder)
+			for (const auto& item : createfunctions_ext_anitobuilder)
 			{
 				if (ImGui::MenuItem(item.first.c_str())) {
 					created_object = item.second();

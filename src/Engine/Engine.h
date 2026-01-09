@@ -6,6 +6,7 @@
 #include "Graphics/gbe_graphics.h"
 
 namespace gbe {
+	class Extension;
 	class Camera;
 	class Editor;
 
@@ -37,8 +38,10 @@ namespace gbe {
 		Root* queued_rootchange = nullptr;
 		std::vector<Object*> persistents;
 		void InitializeRoot();
+
+		std::vector<Extension*> engine_extensions;
 	public:
-		Engine();
+		Engine(std::vector<Extension*> _engine_extensions);
 
 		inline static EngineState Get_state() {
 			return instance->state;

@@ -1,11 +1,12 @@
 #pragma once
 #include "GuiElement.h"
 
-#include "Engine/gbe_engine.h"
-
 #include <string>
+#include <vector>
 
 namespace gbe {
+	class Object;
+
 	namespace editor {
 		class GizmoLayer : public GuiElement {
 			void DrawSelf() override;

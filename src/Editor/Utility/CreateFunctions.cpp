@@ -1,6 +1,5 @@
 #include "CreateFunctions.h"
 #include "Engine/gbe_engine.h"
-#include "Ext/AnitoBuilderWrapper/BuilderBlock.h"
 
 namespace gbe::editor {
 	const std::unordered_map<std::string, std::function<Object* ()>> CreateFunctions::createfunctions_primitives = {
@@ -94,23 +93,6 @@ namespace gbe::editor {
 			object->World().position.Set(pos);
 			object->SetName("New Point Light");
 			object->Set_Color(Vector3(1));
-
-			return object;
-			}
-		}
-	};
-	const std::unordered_map<std::string, std::function<Object* ()>> CreateFunctions::createfunctions_ext_anitobuilder = {
-		{
-			"Anito Builder Block"
-			,
-			[]() {
-			Vector3 cubecorners[4] = {
-			Vector3(-2, 0, -2),
-			Vector3(2, 0, -2),
-			Vector3(2, 0, 2),
-			Vector3(-2, 0, 2),
-			};
-			auto object = new ext::AnitoBuilder::BuilderBlock(cubecorners, 4);
 
 			return object;
 			}

@@ -79,8 +79,8 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::InitializeInspectorData()
 	{
-		renderer_parent = new Object();
-		renderer_parent->SetParent(this);
+		ceiling_parent = new Object();
+		ceiling_parent->SetParent(this);
 
 		Object::InitializeInspectorData();
 
@@ -189,11 +189,28 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::UpdateModelShown()
 	{
-		if (!model_shown)
-			for (size_t i = 0; i < renderer_parent->GetChildCount(); i++)
+		//set editor handle visibility
+		for (const auto& handle : this->handle_pool)
+		{
+			handle->Set_visible(!model_shown);
+		}
+		//set editor roof handle visibility
+		for (const auto& roofset : this->roof_pool)
+		{
+			for (const auto& roofobj : roofset.handle_renderers)
 			{
-				renderer_parent->GetChildAt(i)->Destroy();
+				roofobj->Set_enabled(!model_shown);
 			}
+		}
+
+		std::cout << "[ANITOBUILDERBLOCK]: Updating model visibility." << std::endl;
+
+		if (!model_shown) {
+			for (const auto& renderer : display_renderers)
+			{
+				renderer->Destroy();
+			}
+		}
 
 		if (model_shown) {
 			for (const auto& handle : this->handle_pool)
@@ -305,9 +322,8 @@ namespace gbe::ext::AnitoBuilder {
 							return (RenderObject*)nullptr;
 						}();
 
-					newrenderer->SetParent(renderer_parent);
-					newrenderer->World().position.Set(pos);
-					newrenderer->World().rotation.Set(rot);
+					newrenderer->SetParent(handle);
+					display_renderers.push_back(newrenderer);
 
 					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
 					Vector3 final_scale = Vector3(1);
@@ -316,6 +332,8 @@ namespace gbe::ext::AnitoBuilder {
 					final_scale.z = thickness;
 
 					newrenderer->Local().scale.Set(final_scale);
+					newrenderer->World().position.Set(pos);
+					newrenderer->World().rotation.Set(rot);
 				}
 
 				//PAHABOL SEGMENTS
@@ -362,9 +380,8 @@ namespace gbe::ext::AnitoBuilder {
 							return new RenderObject(roof_DC);
 						}();
 
-					newrenderer->SetParent(renderer_parent);
-					newrenderer->World().position.Set(pos);
-					newrenderer->World().rotation.Set(rot);
+					newrenderer->SetParent(handle);
+					display_renderers.push_back(newrenderer);
 
 					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
 					Vector3 final_scale = Vector3(1);
@@ -373,24 +390,23 @@ namespace gbe::ext::AnitoBuilder {
 					final_scale.z = thickness;
 
 					newrenderer->Local().scale.Set(final_scale);
+					newrenderer->World().position.Set(pos);
+					newrenderer->World().rotation.Set(rot);
 				}
 			}
 
 			for (const auto& roof : this->roof_pool)
 			{
-				for (const auto& roof_obj : roof.objs)
+				for (const auto& roof_obj : roof.handle_renderers)
 				{
 					RenderObject* newrenderer = new RenderObject(ceiling_DC);
-					newrenderer->SetParent(renderer_parent);
+					newrenderer->SetParent(ceiling_parent);
+					display_renderers.push_back(newrenderer);
 					newrenderer->Local().SetMatrix(roof_obj->Local().GetMatrix());
 				}
 			}
 		}
 
-		for (const auto& handle : this->handle_pool)
-		{
-			handle->Set_visible(!model_shown);
-		}
 	}
 
 	void BuilderBlock::SetModelShown(bool value)
@@ -408,7 +424,7 @@ namespace gbe::ext::AnitoBuilder {
 		auto& seg = this->data.sets[s].segs[i].seg;
 		auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
 
-		auto delta_right = handle->Local().GetRight() * (handle->Local().scale.Get().x);
+		auto delta_right = handle->Local().GetRight() * (handle->Get_handle_parent()->Local().scale.Get().x);
 		auto delta_up = -Vector3(0, height * 0.5f, 0);
 
 		l = handle->Local().position.Get() - delta_right + delta_up;
@@ -450,17 +466,18 @@ namespace gbe::ext::AnitoBuilder {
 
 			roof_obj->Local().SetMatrix(modelMatrix);
 			};
-		ResetRoof(set_roof->objs[0], 0);
-		ResetRoof(set_roof->objs[1], 2);
+		ResetRoof(set_roof->handle_renderers[0], 0);
+		ResetRoof(set_roof->handle_renderers[1], 2);
 
 		auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
+		auto handle_parent = handle->Get_handle_parent();
 
 		Vector3 delta = data.GetPosition(seg.first) - data.GetPosition(seg.second);
 		float half_mag = delta.Magnitude() * 0.5f;
 
 		handle->Local().position.Set(Vector3::Mid(data.GetPosition(seg.first), data.GetPosition(seg.second)) + Vector3(0, height * 0.5f, 0));
 		handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
-		handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
+		handle_parent->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
 	}
 
 	void BuilderBlock::ResetAllHandles()
@@ -695,7 +712,7 @@ namespace gbe::ext::AnitoBuilder {
 
 			handle->Local().position.Set(Vector3::Mid(data.GetPosition(src_seg.first), data.GetPosition(src_seg.second)) + Vector3(0, height * 0.5f, 0));
 			handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
-			handle->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
+			handle->Get_handle_parent()->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
 		}
 
 		//ROOF
@@ -736,7 +753,7 @@ namespace gbe::ext::AnitoBuilder {
 		this->data.sets.push_back(newset);
 
 		SetRoof newset_roof = {
-			.objs = {CreateRoof(0), CreateRoof(2)},
+			.handle_renderers = {CreateRoof(0), CreateRoof(2)},
 			.parent_index = (int)this->data.sets.size() - 1
 		};
 

@@ -46,6 +46,9 @@ namespace gbe {
 				}
 				return data->textureHandle;
 			}
+			inline virtual void OnAsyncTaskCompleted(AsyncLoadTask* loadtask) override {
+				//This is a synchronous loader
+			}
 		};
 	}
 }

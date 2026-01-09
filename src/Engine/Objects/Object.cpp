@@ -10,6 +10,44 @@
 unsigned int gbe::Object::next_avail_id = 0;
 std::unordered_map<unsigned int, gbe::Object*> gbe::Object::valid_objects;
 
+void gbe::Object::PushState(ObjectStateName state)
+{
+	if (this->isDestroyQueued)
+		return;
+
+	auto it = this->state_checkers.find(state);
+
+	if (it != this->state_checkers.end())
+	{
+		it->second.clear();
+	}
+	else {
+		this->state_checkers.insert_or_assign(state, std::vector<uint16_t>());
+	}
+}
+
+bool gbe::Object::CheckState(ObjectStateName state, void* checker)
+{
+	if (this->isDestroyQueued)
+		return false;
+
+	auto it = this->state_checkers.find(state);
+	
+	if (it != this->state_checkers.end())
+	{
+		auto& checkers = it->second;
+
+		auto check_it = std::find(checkers.begin(), checkers.end(), (uint16_t)checker);
+
+		if (check_it == checkers.end()) {
+			checkers.push_back((uint16_t)checker);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void gbe::Object::OnLocalTransformationChange(TransformChangeType changetype)
 {
 	this->PushState(ObjectStateName::TRANSFORMED_LOCAL);
@@ -18,6 +56,9 @@ void gbe::Object::OnLocalTransformationChange(TransformChangeType changetype)
 
 	for (auto child : this->children)
 	{
+		if (child->get_isDestroyed())
+			continue;
+
 		child->OnExternalTransformationChange(changetype, worldmat);
 	}
 
@@ -61,9 +102,13 @@ void gbe::Object::General_init()
 	OnExternalTransformationChange(TransformChangeType::ALL, this->parent_matrix);
 
 	this->world.position.AddCallback([this](Vector3 oldval, Vector3 newval) {
+		if (this->get_isDestroyed()) return;
+
 		this->Local().position.Set(Vector3(parent_matrix.Inverted() * Vector4(newval, 1.0f)));
 		});
 	this->world.scale.AddCallback([this](Vector3 oldval, Vector3 newval) {
+		if (this->get_isDestroyed()) return;
+
 		Vector3 finalLocalScale;
 
 		if (parent != nullptr) {
@@ -81,6 +126,8 @@ void gbe::Object::General_init()
 		this->Local().scale.Set(finalLocalScale);
 		});
 	this->world.rotation.AddCallback([this](Quaternion oldval, Quaternion newval) {
+		if (this->get_isDestroyed()) return;
+
 		auto parent_rot = Quaternion(parent_matrix);
 		auto new_local_rot = parent_rot.Inverted() * newval;
 		this->Local().rotation.Set(new_local_rot);
@@ -95,7 +142,7 @@ void gbe::Object::General_init()
 
 gbe::Object::Object():
 	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
-	world([](TransformChangeType type) {})
+	world()
 {
 	General_init();
 }
@@ -164,7 +211,7 @@ void gbe::Object::SetParent(Object* newParent)
 			propagate_upwards(child);
 			});
 
-		parent->children.remove_if([this](Object* child) {return child == this; });
+		std::erase(parent->children, this);
 
 		this->parent_matrix = Matrix4(1.0f);
 
@@ -183,8 +230,10 @@ void gbe::Object::SetParent(Object* newParent)
 
 	this->parent = newParent;
 
-	OnLocalTransformationChange(TransformChangeType::ALL);
-	OnExternalTransformationChange(TransformChangeType::ALL, this->parent_matrix);
+	if (!this->isDestroyQueued) { //skip updators because they might access invalid memory
+		OnLocalTransformationChange(TransformChangeType::ALL);
+		OnExternalTransformationChange(TransformChangeType::ALL, this->parent_matrix);
+	}
 }
 
 gbe::Object* gbe::Object::GetChildAt(size_t i)

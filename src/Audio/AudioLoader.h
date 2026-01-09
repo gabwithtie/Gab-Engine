@@ -18,6 +18,9 @@ namespace gbe {
 		protected:
 			AudioData LoadAsset_(asset::Audio* asset, const asset::data::AudioImportData& importdata, asset::data::AudioLoadData* data) override;
 			void UnLoadAsset_(asset::Audio* asset, const asset::data::AudioImportData& importdata, asset::data::AudioLoadData* data) override;
+			inline virtual void OnAsyncTaskCompleted(AsyncLoadTask* loadtask) override {
+				//This is a synchronous loader
+			}
 		};
 	}
 }

@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <string>
+#include <algorithm>
 
 namespace gbe {
 	namespace asset {
@@ -9,8 +10,29 @@ namespace gbe {
 			class BaseAsset_base;
 		}
 
+
+		class AssetLoader_base_base {
+		public:
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <returns>The count of remaining asynchronous load tasks.</returns>
+			int virtual CheckAsynchrounousTasks() = 0;
+		};
+
+		extern std::vector<AssetLoader_base_base*> all_asset_loaders;
+
 		template<class TAsset, class TAssetImportData, class TAssetLoadData>
-		class AssetLoader_base {
+		class AssetLoader_base : public AssetLoader_base_base {
+		public:
+			struct AsyncLoadTask {
+				bool isDone = false;
+				std::string id;
+				std::string path;
+				TAssetLoadData loaddata;
+			};
+		private:
+			std::vector<AsyncLoadTask*> async_tasks;
 		protected:
 			static AssetLoader_base* active_base_instance;
 
@@ -18,6 +40,7 @@ namespace gbe {
 
 			std::function<bool(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data)> load_func;
 			std::function<void(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data)> unload_func;
+
 		public:
 			static bool LoadAsset(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) {
 				if (active_base_instance == nullptr)
@@ -39,6 +62,36 @@ namespace gbe {
 
 				throw std::exception("Asset not found");
 			}
+
+			inline void RegisterAsyncTask(AsyncLoadTask* task) {
+				async_tasks.push_back(task);
+			}
+
+			inline virtual void OnAsyncTaskCompleted(AsyncLoadTask* task) = 0;
+
+			inline int virtual CheckAsynchrounousTasks() override {
+				std::vector<AsyncLoadTask*> checked;
+				
+				for (size_t i = 0; i < this->async_tasks.size(); i++)
+				{
+					auto& async_task = this->async_tasks[i];
+
+					if (async_task->isDone) {
+						OnAsyncTaskCompleted(async_task);
+						checked.push_back(async_task);
+						free(async_task);
+					}
+				}
+
+				for (const auto& checkedptr : checked)
+				{
+					std::erase_if(this->async_tasks, [checkedptr](AsyncLoadTask* x) {
+						return x == checkedptr;
+						});
+				}
+
+				return static_cast<int>(this->async_tasks.size());
+			}
 		};
 
 		template<class TAsset, class TAssetImportData, class TAssetLoadData>
@@ -53,6 +106,8 @@ namespace gbe {
 			virtual void UnLoadAsset_(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) = 0;
 		public:
 			virtual void AssignSelfAsLoader() {
+				all_asset_loaders.push_back(static_cast<AssetLoader_base_base*>(this));
+
 				this->active_instance = this;
 				this->active_base_instance = this;
 

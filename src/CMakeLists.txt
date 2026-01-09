@@ -12,9 +12,7 @@ add_subdirectory(Window)
 add_subdirectory(Audio)
 add_subdirectory(Engine)
 add_subdirectory(Editor)
-
-#EXTERNAL LIBRARIES (EXTENSIONS)
-add_subdirectory("Ext/AnitoBuilderWrapper")
+add_subdirectory(Extension)
 
 add_library(${CURRENT_CMAKE_LIB} INTERFACE)
 
@@ -26,16 +24,13 @@ target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_window)
 target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_audio)
 target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_editor)
 target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_engine)
-
-#EXTERNAL LIBARIES
-target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_ext_anitobuilder)
-
+target_link_libraries(${CURRENT_CMAKE_LIB} INTERFACE gbe_extension)
 
 get_target_property(LINKED_LIBS ${CURRENT_CMAKE_LIB} INTERFACE_LINK_LIBRARIES)
 #include directory for all libraries above
     foreach(lib ${LINKED_LIBS})
         string(APPEND LINKED_LIBS_STRING " | ${lib} ")
-        target_include_directories(${lib} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+        target_include_directories(${lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     endforeach()
 
 message("LINKED LIBRARIES IN GABENGINE INTERFACE: " ${LINKED_LIBS_STRING})

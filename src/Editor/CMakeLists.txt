@@ -19,7 +19,7 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Gui/ViewportWindow.cpp"
 	"Utility/CreateFunctions.cpp"
 	"Gui/LightExplorer.cpp"
-	"Ext_Gui/AnitoBuilderWindow.cpp"
+	"../../Ext/AnitoBuilder/gui/AnitoBuilderWindow.cpp"
 
 	"Utility/ModelExport.cpp"
 )

@@ -21,10 +21,16 @@ namespace gbe {
 				enum RenderViewId
 				{
 					VIEW_GBUFFER_PASS,
+					VIEW_GBUFFER_SELECTED_PASS,
 					VIEW_SSAO_PASS,
 					VIEW_BLUR0_PASS,
 					VIEW_BLUR1_PASS,
-					VIEW_MAIN_PASS = 100,
+					VIEW_OUTLINE_SELECTED_PASS,
+					VIEW_SHADOW_PASS,
+					VIEW_SHADOW_PASS_END = VIEW_SHADOW_PASS + 20,
+					VIEW_SCENE_PASS,
+					VIEW_SCREEN_PASS,
+					VIEW_MAIN_PASS,
 					VIEW_DEBUG_BLITTER
 				};
 
@@ -38,8 +44,10 @@ namespace gbe {
 				// BGFX: Render target handle for the main pass (the color buffer for the final scene)
 				ShaderData shadow_shader;
 				ShaderData ssao_shader;
+				ShaderData outline_shader;
 				ShaderData bilateralblur_shader;
 				ShaderData gbuffer_shader;
+				ShaderData bufferblend_shader;
 
 				//=============RUNTIME===============//
 				DrawCall* line_call;
@@ -59,9 +67,35 @@ namespace gbe {
 
 				//============DYNAMIC============//
 				// BGFX: Textures used as attachments for the Frame Buffers
-				bgfx::FrameBufferHandle m_gbufferFB = BGFX_INVALID_HANDLE;
-				TextureData m_gbufferNormal = BGFX_INVALID_HANDLE;
-				TextureData m_gbufferDepth = BGFX_INVALID_HANDLE;
+				struct GBuffer {
+					bgfx::FrameBufferHandle m_gbufferFB = BGFX_INVALID_HANDLE;
+					TextureData m_gbufferNormal = BGFX_INVALID_HANDLE;
+					TextureData m_gbufferDepth = BGFX_INVALID_HANDLE;
+					RenderViewId viewId;
+
+					inline GBuffer() {}
+
+					inline GBuffer(float w, float h, std::string id, RenderViewId _viewid) {
+						m_gbufferNormal = TextureData{
+							.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT)
+						};
+						TextureLoader::RegisterExternal("GBufferNormal_" + id, m_gbufferNormal);
+						m_gbufferDepth = TextureData{
+							.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24, BGFX_TEXTURE_RT)
+						};
+						TextureLoader::RegisterExternal("GBufferDepth_" + id, m_gbufferDepth);
+						bgfx::TextureHandle gbufferAttachments[] = { m_gbufferNormal.textureHandle, m_gbufferDepth.textureHandle };
+						m_gbufferFB = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAttachments), gbufferAttachments, false);
+
+						bgfx::setViewFrameBuffer(_viewid, m_gbufferFB);
+						bgfx::setViewRect(_viewid, 0, 0, w, h);
+
+						viewId = _viewid;
+					}
+				};
+				GBuffer gbuffer_all;
+				GBuffer gbuffer_selected;
+
 				TextureData m_ssaoTexture;
 
 				ShaderData curppshader;
@@ -73,7 +107,7 @@ namespace gbe {
 				inline void InitPP(ShaderData& ppshaderdata, RenderViewId viewid) {
 					curppview = viewid;
 					curppshader = ppshaderdata;
-					bgfx::setViewClear(viewid, BGFX_CLEAR_COLOR, 0xffffffff, 1.0f, 0);
+					bgfx::setViewClear(viewid, BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
 					bgfx::setViewTransform(viewid, nullptr, nullptr);
 				}
 				inline void SubmitPP() {
@@ -89,10 +123,41 @@ namespace gbe {
 					bgfx::setViewFrameBuffer(viewid, newfb);
 					bgfx::setViewRect(viewid, 0, 0, resolution.x, resolution.y);
 				}
+				inline void TransferPPtoTexture(RenderViewId from, TextureData dest) {
+					bgfx::blit(
+						VIEW_DEBUG_BLITTER,           // The view that performs the copy
+						dest.textureHandle, // Destination: Singular 2D texture
+						0, 0, 0, 0,               // Mip 0, X 0, Y 0, Z 0
+						m_pp_textures[from].textureHandle,     // Source: Your Texture Array
+						0, 0, 0, 0,               // Mip 0, X 0, Y 0, Layer 'i'
+						resolution.x,
+						resolution.y
+					);
+				}
 
-				bgfx::FrameBufferHandle m_mainPassFBO = BGFX_INVALID_HANDLE;
-				TextureData m_mainColorTexture = BGFX_INVALID_HANDLE;
-				TextureData m_mainDepthTexture = BGFX_INVALID_HANDLE;
+				struct ColorDepthBuffer {
+					bgfx::FrameBufferHandle m_mainPassFBO = BGFX_INVALID_HANDLE;
+					TextureData m_mainColorTexture = BGFX_INVALID_HANDLE;
+					TextureData m_mainDepthTexture = BGFX_INVALID_HANDLE;
+
+					inline ColorDepthBuffer(){}
+
+					inline ColorDepthBuffer(float w, float h, std::string id, RenderViewId _viewid) {
+						m_mainColorTexture = TextureData{
+							.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT)
+						};
+						m_mainDepthTexture = TextureData{
+							.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT_WRITE_ONLY)
+						};
+						TextureLoader::RegisterExternal("ColorDepth_" + id, m_mainColorTexture);
+						bgfx::TextureHandle mainAttachments[] = { m_mainColorTexture.textureHandle, m_mainDepthTexture.textureHandle };
+						m_mainPassFBO = bgfx::createFrameBuffer(BX_COUNTOF(mainAttachments), mainAttachments, false);
+						bgfx::setViewFrameBuffer(_viewid, m_mainPassFBO);
+						bgfx::setViewRect(_viewid, 0, 0, w, h);
+					}
+				};
+				ColorDepthBuffer mainscene_buffer;
+				TextureData finalcolor_texture = BGFX_INVALID_HANDLE;
 
 				std::vector<Vector4>  m_ssao_kernel_data;
 
@@ -115,16 +180,7 @@ namespace gbe {
 				void InitializeAssetRequests() override;
 
 				inline ~ForwardRenderer() {
-					// BGFX: Clean up created resources
-					if (bgfx::isValid(m_line_vbh)) {
-						bgfx::destroy(m_line_vbh);
-					}
-					
-					if (bgfx::isValid(m_mainPassFBO)) {
-						bgfx::destroy(m_mainPassFBO);
-						bgfx::destroy(m_mainColorTexture.textureHandle);
-						bgfx::destroy(m_mainDepthTexture.textureHandle);
-					}
+					// TODO: Clean up created resources
 				}
 			};
 		}

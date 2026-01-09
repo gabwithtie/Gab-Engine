@@ -58,8 +58,6 @@ target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_graphics)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_window)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_editor)
-
-#EXTERNALS
-target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_ext_anitobuilder)
+target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_extension)
 
 message("[GABENGINE] LOADED: " ${CMAKE_CURRENT_SOURCE_DIR})

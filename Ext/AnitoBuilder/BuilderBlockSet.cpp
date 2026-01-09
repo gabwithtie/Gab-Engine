@@ -48,12 +48,12 @@ namespace gbe::ext::AnitoBuilder {
 		Object::OnLocalTransformationChange(type);
 
 		//LAYER VARS
-		float height = this->Local().scale.Get().y * 2;
+		float height = handle_ro->Local().scale.Get().y * 2;
 		int layers_needed = ceil(height / root_block->wall_max_height);
 		float shrink_factor_y = height / ((float)layers_needed * root_block->wall_max_height);
 		float final_wall_height = shrink_factor_y * root_block->wall_max_height;
 		this->height_per_wall = final_wall_height;
-		float local_wall_scale_y = (final_wall_height / 2) / this->Local().scale.Get().y;
+		float local_wall_scale_y = (final_wall_height / 2) / handle_ro->Local().scale.Get().y;
 		
 		float start_pos_y = this->World().position.Get().y;
 		start_pos_y -= height / 2;
@@ -62,12 +62,12 @@ namespace gbe::ext::AnitoBuilder {
 		end_pos_y += final_wall_height * (float)layers_needed;
 		
 		//WALL VARS
-		float width = this->Local().scale.Get().x * 2;
+		float width = handle_ro->Local().scale.Get().x * 2;
 		int walls_needed = ceil(width / root_block->wall_max_width);
 		float shrink_factor_x = width / ((float)walls_needed * root_block->wall_max_width);
 		float final_wall_width = shrink_factor_x * root_block->wall_max_width;
 		this->width_per_wall = final_wall_width;
-		float local_wall_scale_x = (final_wall_width / 2) / this->Local().scale.Get().x;
+		float local_wall_scale_x = (final_wall_width / 2) / handle_ro->Local().scale.Get().x;
 		
 		Vector3 axis = this->Local().GetRight();
 		Vector3 start_pos_x = this->World().position.Get();

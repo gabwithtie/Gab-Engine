@@ -11,6 +11,16 @@
 			"varying": "postprocessing.def.sc"
 		},
 		{
+			"file": "bufferblend.sc",
+			"type": "fragment",
+			"varying": "postprocessing.def.sc"
+		},
+		{
+			"file": "outline.sc",
+			"type": "fragment",
+			"varying": "postprocessing.def.sc"
+		},
+		{
 			"file": "vs_pp.sc",
 			"type": "vertex",
 			"varying": "postprocessing.def.sc"

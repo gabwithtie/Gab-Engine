@@ -23,7 +23,7 @@ namespace gbe::ext::AnitoBuilder {
 	};
 
 	struct SetRoof {
-		std::array<gbe::Object*, 2> objs;
+		std::array<gbe::RenderObject*, 2> handle_renderers;
 		int parent_index;
 	};
 
@@ -74,8 +74,9 @@ namespace gbe::ext::AnitoBuilder {
 		gfx::DrawCall* ceiling_DC;
 
 		//Objects
-		Object* renderer_parent;
-		std::vector<RenderObject*> renderers;
+		Object* ceiling_parent;
+		std::vector<RenderObject*> editor_renderers;
+		std::vector<RenderObject*> display_renderers;
 
 		void SetModelShown(bool value);
 	protected:

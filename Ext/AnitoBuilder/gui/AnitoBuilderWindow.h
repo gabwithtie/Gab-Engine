@@ -1,6 +1,7 @@
 #pragma once
-#include "../Gui/GuiWindow.h"
-#include "../Gui/InspectorData.h"
+
+#include "Editor/Gui/InspectorData.h"
+#include "Editor/Gui/GuiWindow.h"
 
 #include "Engine/gbe_engine.h"
 

@@ -38,7 +38,9 @@ void gbe::PhysicsHandler::Update(double dt)
 
 	this->localpipeline->Tick(dt);
 
-	for (auto po : this->t_object_list) {
+	for (auto& pair : this->object_list) {
+
+		auto po = pair.second;
 
 		auto ro = dynamic_cast<RigidObject*>(po);
 
@@ -57,8 +59,10 @@ void gbe::PhysicsHandler::Update(double dt)
 		ro->World().position.Set(newpos);
 		ro->World().rotation.Set(newrot);
 
-		for (auto fv : this->forcevolume_handler.t_object_list)
+		for (auto& fvpair : this->forcevolume_handler.object_list)
 		{
+			auto fv = fvpair.second;
+
 			fv->TryApply(ro);
 		}
 	}

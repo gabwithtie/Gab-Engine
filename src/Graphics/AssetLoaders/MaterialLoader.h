@@ -13,6 +13,9 @@ namespace gbe {
 		protected:
 			MaterialData LoadAsset_(asset::Material* asset, const asset::data::MaterialImportData& importdata, asset::data::MaterialLoadData* data) override;
 			void UnLoadAsset_(asset::Material* asset, const asset::data::MaterialImportData& importdata, asset::data::MaterialLoadData* data) override;
+			inline virtual void OnAsyncTaskCompleted(AsyncLoadTask* loadtask) override {
+				//This is a synchronous loader
+			}
 		};
 	}
 }

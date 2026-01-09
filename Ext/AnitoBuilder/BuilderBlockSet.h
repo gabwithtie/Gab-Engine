@@ -25,6 +25,7 @@ namespace gbe::ext::AnitoBuilder {
 
 		std::vector<RenderObject*> renderObjects;
 
+
 		struct RendererSubpool {
 			BuilderBlockSet& owner;
 			DrawCall* drawcall;
@@ -69,6 +70,10 @@ namespace gbe::ext::AnitoBuilder {
 		int cur_width = 0;
 		int cur_height = 0;
 	public:
+		inline Object* Get_handle_parent() {
+			return handle_ro;
+		}
+
 		inline bool Get_allow_special_walls() {
 			return allow_special_walls;
 		}
@@ -126,21 +131,9 @@ namespace gbe::ext::AnitoBuilder {
 		}
 
 		void Set_visible(bool value) {
-			if (!value) {
-				for (const auto& renderer : renderObjects)
-				{
-					renderer->Set_enabled(false);
-				}
-			}
-			else
+			for (const auto& renderer : renderObjects)
 			{
-				for (const auto& renderer : renderObjects)
-				{
-					renderer->Destroy();
-				}
-				renderObjects.clear();
-
-				OnLocalTransformationChange(gbe::ALL);
+				renderer->Set_enabled(value);
 			}
 		}
 		BuilderBlockSet(BuilderBlock* root_block);
