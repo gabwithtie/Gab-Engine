@@ -210,6 +210,8 @@ namespace gbe::ext::AnitoBuilder {
 			{
 				renderer->Destroy();
 			}
+
+			display_renderers.clear();
 		}
 
 		if (model_shown) {

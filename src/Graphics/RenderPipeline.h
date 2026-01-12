@@ -112,6 +112,7 @@ namespace gbe {
 
 		static gbe::Matrix4* RegisterInstance(void* instance_id, DrawCall* drawcall, gbe::Matrix4 matrix, int rendergroup = 0);
 		static void RegisterAdditionalGroup(void* instance_id, int rendergroup = 0);
-		static void UnRegisterInstance(void* instance_id, int rendergroup = 0);
+		static void UnRegisterInstance(void* instance_id, int rendergroup);
+		static void UnRegisterInstanceAll(void* instance_id);
 	};
 }

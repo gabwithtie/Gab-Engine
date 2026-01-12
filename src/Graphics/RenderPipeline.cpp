@@ -226,3 +226,24 @@ void gbe::RenderPipeline::UnRegisterInstance(void* instance_id, int rendergroup)
 		Instance->currentrenderinfo.infomap.erase(instance_id);
 	}
 }
+
+void gbe::RenderPipeline::UnRegisterInstanceAll(void* instance_id)
+{
+	auto info_it = Instance->currentrenderinfo.infomap.find(instance_id);
+
+	if (info_it == Instance->currentrenderinfo.infomap.end())
+		return;
+
+	auto& renderinfo = info_it->second;
+
+
+	auto& callgroup = Instance->currentrenderinfo.callgroups[renderinfo.drawcall];
+
+	callgroup.erase(
+		std::remove(callgroup.begin(), callgroup.end(), instance_id),
+		callgroup.end()
+	);
+
+	Instance->currentrenderinfo.infomap.erase(instance_id);
+
+}

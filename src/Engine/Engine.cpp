@@ -132,8 +132,9 @@ namespace gbe {
 
 			instance->time.scale = 1;
 
-			auto objlist = instance->current_root->GetHandler<PhysicsObject>()->t_object_list;
-			for (const auto physicsobject : objlist) {
+			auto& objlist = instance->current_root->GetHandler<PhysicsObject>()->object_list;
+			for (const auto& pair : objlist) {
+				auto& physicsobject = pair.second;
 				if (!physicsobject->Get_enabled())
 					continue;
 				
@@ -326,7 +327,9 @@ namespace gbe {
 			auto teststate = this->window.GetKeyState(1) == true;
 			if (editor != nullptr && !editor->FocusedOnEditorUI())
 				mInputSystem->UpdateStates([=](std::string name, gbe::input::InputAction* action, bool changed) {
-				for (auto input_player : inputhandler->t_object_list) {
+				for (auto& pair : inputhandler->object_list) {
+					auto& input_player = pair.second;
+
 					if (!input_player->Get_enabled())
 						continue;
 					if (input_player->get_player_name() != name)
@@ -336,10 +339,13 @@ namespace gbe {
 					if (this->Get_state() != EngineState::Edit && input_player->GetEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE))
 						continue;
 
-					for (auto controller : input_player->controllers.t_object_list)
+					for (auto& pair : input_player->controllers.object_list) {
+						auto& controller = pair.second;
+
 						controller->ForEach_inputreceivers([action, changed](InputCustomer_base* input_customer) {
-						input_customer->TryReceive(action, changed);
+							input_customer->TryReceive(action, changed);
 							});
+					}
 				}
 					}, &this->window);
 
@@ -482,7 +488,6 @@ namespace gbe {
 			this->current_root->CallRecursively([&toDeleteRoots](Object* object) {
 				if (object->get_isDestroyed()) {
 					toDeleteRoots.push_back(object);
-					return;
 				}
 				}, false);
 

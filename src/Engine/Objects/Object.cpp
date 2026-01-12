@@ -152,12 +152,7 @@ void gbe::Object::InitializeInspectorData() {
 }
 
 gbe::Object::~Object(){
-	valid_objects.insert_or_assign(this->id, nullptr);
-
-	for (const auto& child : this->children)
-	{
-		delete child;
-	}
+	
 }
 
 gbe::Transform& gbe::Object::World()
@@ -259,6 +254,13 @@ gbe::editor::InspectorData* gbe::Object::GetInspectorData()
 void gbe::Object::Destroy()
 {
 	this->isDestroyQueued = true;
+
+	valid_objects.insert_or_assign(this->id, nullptr);
+
+	for (const auto& child : this->children)
+	{
+		child->Destroy();
+	}
 }
 
 bool gbe::Object::get_isDestroyed()

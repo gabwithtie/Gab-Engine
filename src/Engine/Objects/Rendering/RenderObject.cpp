@@ -52,7 +52,7 @@ gbe::RenderObject::RenderObject(PrimitiveType _ptype)
 gbe::RenderObject::~RenderObject()
 {
 	if (to_update != nullptr)
-		RenderPipeline::Get_Instance()->UnRegisterInstance(this);
+		RenderPipeline::Get_Instance()->UnRegisterInstanceAll(this);
 }
 
 void gbe::RenderObject::InvokeEarlyUpdate()
@@ -68,7 +68,7 @@ void gbe::RenderObject::On_Change_enabled(bool _to) {
 		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
 	}
 	else if(to_update != nullptr) {
-		RenderPipeline::Get_Instance()->UnRegisterInstance(this);
+		RenderPipeline::Get_Instance()->UnRegisterInstanceAll(this);
 		to_update = nullptr;
 	}
 }
