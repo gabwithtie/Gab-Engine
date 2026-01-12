@@ -114,5 +114,6 @@ namespace gbe {
 		static void RegisterAdditionalGroup(void* instance_id, int rendergroup = 0);
 		static void UnRegisterInstance(void* instance_id, int rendergroup);
 		static void UnRegisterInstanceAll(void* instance_id);
+		static void SetEnableInstance(void* instance_id, bool value);
 	};
 }

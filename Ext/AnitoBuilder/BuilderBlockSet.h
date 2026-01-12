@@ -131,6 +131,8 @@ namespace gbe::ext::AnitoBuilder {
 		}
 
 		void Set_visible(bool value) {
+			OnLocalTransformationChange(TransformChangeType::ALL);
+
 			for (const auto& renderer : renderObjects)
 			{
 				renderer->Set_enabled(value);

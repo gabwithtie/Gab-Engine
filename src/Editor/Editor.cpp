@@ -176,6 +176,14 @@ void gbe::Editor::SelectSingle(Object* other) {
 	if (!deselection) {
 		instance->selected.push_back(other);
 
+		UpdateSelection();
+	}
+}
+
+void gbe::Editor::UpdateSelection()
+{
+	for (const auto& other: instance->selected)
+	{
 		other->CallRecursively([&](Object* child) {
 			auto renderer_check = dynamic_cast<RenderObject*>(child);
 
@@ -309,10 +317,6 @@ void gbe::Editor::PrepareSceneChange() {
 	this->DeselectAll();
 }
 
-void gbe::Editor::UpdateSelectionGui(Object* newlyclicked) {
-	
-}
-
 void gbe::Editor::PrepareUpdate()
 {
 	//imgui new frame
@@ -328,10 +332,12 @@ void gbe::Editor::PrepareUpdate()
 	this->keyboard_inUi = ui_io.WantCaptureKeyboard;
 
 	//==============================EDITOR UPDATE==============================//
-	if (selected.size() == 1) {
-		auto current_camera = Engine::GetActiveCamera();
-		Vector3 camera_pos = current_camera->World().position.Get();
-		auto mousedir = current_camera->ScreenToRay(mwindow->GetMouseDecimalPos());
+	for (const auto& selected_obj: selected)
+	{
+		if (selected_obj->CheckState(Object::TREE_CHANGED, this)) {
+			this->UpdateSelection();
+			break;
+		}
 	}
 
 	//==============================IMGUI==============================//

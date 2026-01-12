@@ -75,12 +75,12 @@ namespace gbe {
 		~Editor();
 		static void OnDeselect(Object* other);
 		static void SelectSingle(Object* other);
+		static void UpdateSelection();
 		static void DeselectAll();
 		static void CommitAction(std::function<void()> redo, std::function<void()> undo);
 		static void Undo();
 		static void Redo();
 		void PrepareSceneChange();
-		void UpdateSelectionGui(Object* newlyclicked);
 		void PrepareUpdate();
 		void ProcessRawWindowEvent(void* rawwindowevent);
 		void RenderPass();

@@ -199,7 +199,7 @@ namespace gbe::ext::AnitoBuilder {
 		{
 			for (const auto& roofobj : roofset.handle_renderers)
 			{
-				roofobj->Set_enabled(!model_shown);
+				roofobj->Set_enabled(false);
 			}
 		}
 

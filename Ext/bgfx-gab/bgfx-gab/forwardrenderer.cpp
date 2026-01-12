@@ -102,6 +102,10 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		for (const auto& instanceid : passinfo.callgroups[drawcall])
 		{
 			const auto& info = passinfo.infomap[instanceid];
+
+			if(!info.enabled)
+				continue;
+
 			auto rendergroup_it = info.rendergroups.find(rendergroup);
 
 			if (rendergroup_it != info.rendergroups.end())

@@ -27,7 +27,8 @@ namespace gbe {
 		{
 			TRANSFORMED_LOCAL,
 			TRANSFORMED_USER,
-			TRANSFORMED_WORLD_NOT_LOCAL
+			TRANSFORMED_WORLD_NOT_LOCAL,
+			TREE_CHANGED
 		};
 		enum EditorFlags
 		{

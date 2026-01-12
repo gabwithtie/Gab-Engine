@@ -64,13 +64,7 @@ void gbe::RenderObject::InvokeEarlyUpdate()
 void gbe::RenderObject::On_Change_enabled(bool _to) {
 	Object::On_Change_enabled(_to);
 
-	if (to_update == nullptr && _to) {
-		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
-	}
-	else if(to_update != nullptr) {
-		RenderPipeline::Get_Instance()->UnRegisterInstanceAll(this);
-		to_update = nullptr;
-	}
+	RenderPipeline::Get_Instance()->SetEnableInstance(this, _to);
 }
 
 gbe::SerializedObject gbe::RenderObject::Serialize() {

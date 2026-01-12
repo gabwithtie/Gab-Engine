@@ -27,6 +27,7 @@ namespace gbe {
 				gbe::Matrix4 transform;
 				DrawCall* drawcall;
 				std::unordered_map<int, bool> rendergroups;
+				bool enabled = true;
 			};
 			std::unordered_map<void*, InstanceInfo> infomap;
 			std::unordered_map<DrawCall*, std::vector<void*>> callgroups;

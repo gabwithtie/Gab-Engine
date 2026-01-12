@@ -174,11 +174,13 @@ void gbe::Object::OnEnterHierarchy(Object* newChild)
 		current->OnEnterHierarchy(newChild);
 		current = current->parent;
 	}
+
+	this->PushState(TREE_CHANGED);
 }
 
 void gbe::Object::OnExitHierarchy(Object* newChild)
 {
-	
+	this->PushState(TREE_CHANGED);
 }
 
 gbe::Object* gbe::Object::GetParent()

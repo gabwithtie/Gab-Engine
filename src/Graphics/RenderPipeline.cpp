@@ -247,3 +247,14 @@ void gbe::RenderPipeline::UnRegisterInstanceAll(void* instance_id)
 	Instance->currentrenderinfo.infomap.erase(instance_id);
 
 }
+
+void gbe::RenderPipeline::SetEnableInstance(void* instance_id, bool value)
+{
+	auto info_it = Instance->currentrenderinfo.infomap.find(instance_id);
+
+	if (info_it == Instance->currentrenderinfo.infomap.end())
+		return;
+
+	auto& renderinfo = info_it->second;
+	renderinfo.enabled = value;
+}
