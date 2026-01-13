@@ -28,9 +28,9 @@ SAMPLER2D(tex_ao, 4);
 
 //Lights
 SAMPLER2DARRAY(light_map, 0);
-uniform mat4 light_pos[MAX_LIGHTS];
 uniform mat4 light_view[MAX_LIGHTS];
 uniform mat4 light_proj[MAX_LIGHTS];
+uniform vec4 light_pos[MAX_LIGHTS];
 uniform vec4 light_color[MAX_LIGHTS];
 uniform vec4 light_type[MAX_LIGHTS];
 uniform vec4 light_is_square[MAX_LIGHTS];
@@ -135,7 +135,7 @@ void main() {
         float attenuation = 1.0;
 
         // Calculate direction and attenuation based on light type
-        if (light_type[i].x == 0) { // Directional
+        if (abs(light_type[i].x) < 0.5) { // Directional
             // Assuming view matrix forward vector is the direction
             lightDir = normalize(light_view[i][2].xyz); 
         } 
@@ -149,7 +149,7 @@ void main() {
             attenuation = saturate(1.0 - (dist / light_range[i].x));
             attenuation *= attenuation;
 
-            if (light_type[i].x == 1) { // Spot Light
+            if (abs(light_type[i].x - 1) < 0.5) { // Spot Light
                 vec3 spotDir = normalize(light_view[i][2].xyz);
                 float cosAngle = dot(-lightDir, spotDir);
                 float inner = cos(light_cone_inner[i].x);
