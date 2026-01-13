@@ -6,6 +6,7 @@ using namespace gfx;
 MaterialData MaterialLoader::LoadAsset_(asset::Material* asset, const asset::data::MaterialImportData& importdata, asset::data::MaterialLoadData* data) {
 	data->shader = asset::Shader::GetAssetById(importdata.shader);
 	data->shadowcaster = importdata.shadowcaster != 0;
+	data->defaultrendergroup = importdata.defaultrendergroup;
 
 	//Default overrides
 	for (const auto& importedoverride : importdata.overrides)

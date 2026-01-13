@@ -364,14 +364,8 @@ namespace gbe {
 
 			//Lights colating
 			this->current_root->GetHandler<LightObject>()->DoOnEnabled([&](LightObject* light) {
-				PointLight* plight = nullptr;
-				plight = dynamic_cast<PointLight*>(light);
-
-				if (plight != nullptr)
-					plight->Resync_sublights();
-				else
-					frameinfo.lightdatas.push_back(light->GetData());
-			});
+				frameinfo.lightdatas.push_back(light->GetData());
+				});
 
 			Camera* current_camera = GetActiveCamera();
 			if (current_camera != nullptr) {

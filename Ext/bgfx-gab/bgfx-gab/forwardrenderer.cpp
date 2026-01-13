@@ -55,6 +55,7 @@ gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& p
 	light_view_arr.resize(max_lights);
 	light_proj_arr.resize(max_lights);
 	light_color_arr.resize(max_lights);
+	light_pos_arr.resize(max_lights);
 	light_type_arr.resize(max_lights);
 	light_is_square_arr.resize(max_lights);
 	light_nearclip_arr.resize(max_lights);
@@ -330,6 +331,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		light_color_arr[i] = Vector4(light->color, 1);
 		light_view_arr[i] = light->GetViewMatrix();
 		light_proj_arr[i] = light->GetProjectionMatrix();
+		light_pos_arr[i] = Vector4(light->position, 1);
 		light_type_arr[i] = light->type;
 		light_is_square_arr[i] = light->square_project;
 		light_nearclip_arr[i] = light->near_clip;
@@ -358,6 +360,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		drawcall->ApplyOverrideArray<Matrix4>(light_view_arr.data(), "light_view", max_lights);
 		drawcall->ApplyOverrideArray<Matrix4>(light_proj_arr.data(), "light_proj", max_lights);
 		drawcall->ApplyOverrideArray<Vector4>(light_color_arr.data(), "light_color", max_lights);
+		drawcall->ApplyOverrideArray<Vector4>(light_pos_arr.data(), "light_pos", max_lights);
 		drawcall->ApplyOverrideArray<int>(light_type_arr.data(), "light_type", max_lights);
 		drawcall->ApplyOverrideArray<int>(light_is_square_arr.data(), "light_is_square", max_lights);
 		drawcall->ApplyOverrideArray<float>(light_nearclip_arr.data(), "light_nearclip", max_lights);

@@ -1,6 +1,7 @@
 {
 	"shader": "lit",
 	"shadowcaster": 1,
+	"defaultrendergroup": 0,
 	"overrides": [
 		{
 			"id": "color",

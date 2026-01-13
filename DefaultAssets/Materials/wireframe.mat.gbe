@@ -1,3 +1,5 @@
 {
-	"shader": "wireframe"
+	"shader": "wireframe",
+	"defaultrendergroup": 1,
+	"shadowcaster": 0
 }

@@ -11,20 +11,13 @@
 
 #include <array>
 
-void gbe::PointLight::Resync_sublights()
+gbe::gfx::Light* gbe::PointLight::GetData()
 {
-    for (size_t i = 0; i < 6; i++)
-    {
-        conelights[i]->GetData()->color = this->mLight.color;
-        conelights[i]->GetData()->bias_min = this->mLight.bias_min;
-        conelights[i]->GetData()->bias_mult = this->mLight.bias_mult;
-        conelights[i]->GetData()->near_clip = this->mLight.near_clip;
-        conelights[i]->GetData()->range = this->mLight.range;
+    this->mLight.direction = this->World().GetForward();
+    this->mLight.type = Light::POINT;
+    this->mLight.position = this->World().position.Get();
 
-        conelights[i]->GetData()->angle_inner = 90;
-        conelights[i]->GetData()->angle_outer = 90;
-        conelights[i]->GetData()->square_project = true;
-    }
+    return &this->mLight;
 }
 
 void gbe::PointLight::InitializeInspectorData()
@@ -35,23 +28,6 @@ void gbe::PointLight::InitializeInspectorData()
 
     this->mLight.bias_min = 0.005;
     this->mLight.bias_mult = 0.05;
-
-    for (size_t i = 0; i < 6; i++)
-    {
-        auto newlight = new ConeLight();
-        newlight->SetParent(this);
-        newlight->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
-        newlight->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
-
-        conelights[i] = newlight;
-    }
-
-    conelights[0]->Local().rotation.Set(Quaternion::LookAtRotation(Vector3(0, 0, 1), Vector3(0, 1, 0)));
-    conelights[1]->Local().rotation.Set(Quaternion::LookAtRotation(Vector3(0, 0, -1), Vector3(0, 1, 0)));
-    conelights[2]->Local().rotation.Set(Quaternion::LookAtRotation(Vector3(1, 0, 0), Vector3(0, 1, 0)));
-    conelights[3]->Local().rotation.Set(Quaternion::LookAtRotation(Vector3(-1, 0, 0), Vector3(0, 1, 0)));
-    conelights[4]->Local().rotation.Set(Quaternion::LookAtRotation(Vector3(0, 1, 0), Vector3(0, 0, 1)));
-    conelights[5]->Local().rotation.Set(Quaternion::LookAtRotation(Vector3(0, -1, 0), Vector3(0, 0, 1)));
 
     if (Engine::Get_state() == Engine::EngineState::Edit) {
         auto light_ro = new RigidObject(true);
@@ -81,6 +57,4 @@ void gbe::PointLight::InitializeInspectorData()
     near_field->x = &this->mLight.near_clip;
 
     this->inspectorData->fields.push_back(near_field);
-
-    Resync_sublights();
 }

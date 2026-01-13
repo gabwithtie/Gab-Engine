@@ -43,11 +43,13 @@ namespace gbe {
 			struct MaterialImportData {
 				std::string shader;
 				int shadowcaster;
+				int defaultrendergroup;
 				std::vector<MaterialOverrideImport> overrides;
 			};
 			struct MaterialLoadData {
 				std::unordered_map<std::string, MaterialOverride> overrides;
 				bool shadowcaster;
+				int defaultrendergroup;
 				asset::Shader* shader = nullptr;
 			};
 		}

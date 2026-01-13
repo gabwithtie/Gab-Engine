@@ -164,7 +164,7 @@ DrawCall* gbe::RenderPipeline::GetDefaultDrawCall()
 	return Instance->default_drawcall;
 }
 
-gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix, int rendergroup)
+gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix)
 {
 	//COMMITTING
 	Instance->currentrenderinfo.infomap.insert_or_assign(
@@ -174,7 +174,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall*
 			.drawcall = drawcall,
 			.rendergroups = {
 				{
-					rendergroup, true
+					drawcall->get_material()->Get_load_data().defaultrendergroup, true
 				}
 			}
 		});
@@ -203,7 +203,7 @@ void gbe::RenderPipeline::RegisterAdditionalGroup(void* instance_id, int renderg
 	it->second.rendergroups.insert_or_assign(rendergroup, true);
 }
 
-void gbe::RenderPipeline::UnRegisterInstance(void* instance_id, int rendergroup)
+void gbe::RenderPipeline::UnRegisterInstanceGroup(void* instance_id, int rendergroup)
 {
 	auto info_it = Instance->currentrenderinfo.infomap.find(instance_id);
 
@@ -212,19 +212,10 @@ void gbe::RenderPipeline::UnRegisterInstance(void* instance_id, int rendergroup)
 
 	auto& renderinfo = info_it->second;
 
+	if (rendergroup == renderinfo.drawcall->get_material()->Get_load_data().defaultrendergroup)
+		return;
+
 	renderinfo.rendergroups.erase(rendergroup);
-
-	if (renderinfo.rendergroups.size() == 0)
-	{
-		auto& callgroup = Instance->currentrenderinfo.callgroups[renderinfo.drawcall];
-
-		callgroup.erase(
-			std::remove(callgroup.begin(), callgroup.end(), instance_id),
-			callgroup.end()
-		);
-
-		Instance->currentrenderinfo.infomap.erase(instance_id);
-	}
 }
 
 void gbe::RenderPipeline::UnRegisterInstanceAll(void* instance_id)

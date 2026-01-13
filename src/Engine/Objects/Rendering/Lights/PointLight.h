@@ -4,11 +4,8 @@
 #include "ConeLight.h"
 
 namespace gbe {
-	class PointLight : public LightObject {
-	private:
-		std::array<ConeLight*, 6> conelights;
+	class PointLight : public gbe::LightObject {
 	public:
-		void Resync_sublights();
 		inline PointLight() {
 			InitializeInspectorData();
 		}
@@ -16,9 +13,7 @@ namespace gbe {
 			InitializeInspectorData();
 		}
 		void InitializeInspectorData() override;
-
-		inline virtual gfx::Light* GetData() override {
-			return &mLight;
-		}
+		// Inherited via Light
+		virtual gfx::Light* GetData() override;
 	};
 }

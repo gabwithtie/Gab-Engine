@@ -28,6 +28,7 @@ SAMPLER2D(tex_ao, 4);
 
 //Lights
 SAMPLER2DARRAY(light_map, 0);
+uniform mat4 light_pos[MAX_LIGHTS];
 uniform mat4 light_view[MAX_LIGHTS];
 uniform mat4 light_proj[MAX_LIGHTS];
 uniform vec4 light_color[MAX_LIGHTS];
@@ -139,16 +140,16 @@ void main() {
             lightDir = normalize(light_view[i][2].xyz); 
         } 
         else { // Point or Spot
-            vec3 lightPos = -light_view[i][3].xyz; // Extract position from view matrix
+            vec3 lightPos = light_pos[i].xyz; // Extract position from view matrix
             vec3 disp = lightPos - v_pos;
             float dist = length(disp);
             lightDir = normalize(disp);
             
             // Basic inverse-square falloff with range clamp
             attenuation = saturate(1.0 - (dist / light_range[i].x));
-            attenuation *= attenuation; 
+            attenuation *= attenuation;
 
-            if (light_type[i].x == 2) { // Spot Light
+            if (light_type[i].x == 1) { // Spot Light
                 vec3 spotDir = normalize(light_view[i][2].xyz);
                 float cosAngle = dot(-lightDir, spotDir);
                 float inner = cos(light_cone_inner[i].x);
@@ -170,7 +171,7 @@ void main() {
         // Metallic colors the specular reflection with albedo
         vec3 specColor = lerp(vec3(0.04), albedo, _metallic);
         
-        finalDiffuse += light_color[i].xyz * diff * attenuation * shadow;
+        finalDiffuse += light_color[i].xyz * diff * attenuation;
         finalSpecular += light_color[i].xyz * spec * attenuation * shadow * specColor;
     }
 

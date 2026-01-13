@@ -56,6 +56,7 @@ namespace gbe {
 				std::vector<Matrix4> light_view_arr;
 				std::vector<Matrix4> light_proj_arr;
 				std::vector<Vector4> light_color_arr;
+				std::vector<Vector4> light_pos_arr;
 				std::vector<int> light_type_arr;
 				std::vector<int> light_is_square_arr;
 				std::vector<float> light_nearclip_arr;
