@@ -23,7 +23,7 @@ const std::unordered_map<gbe::RenderObject::PrimitiveType, std::string> gbe::Ren
 gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 {
 	this->mDrawCall = mDrawCall;
-	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
+	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
 }
 
 void gbe::RenderObject::SetUserCreated()
@@ -45,14 +45,14 @@ void gbe::RenderObject::SetUserCreated()
 gbe::RenderObject::RenderObject(PrimitiveType _ptype)
 {
 	this->mDrawCall = primitive_drawcalls[_ptype];
-	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
+	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
 	this->ptype = _ptype;
 }
 
 gbe::RenderObject::~RenderObject()
 {
 	if (to_update != nullptr)
-		RenderPipeline::Get_Instance()->UnRegisterInstanceAll(this);
+		RenderPipeline::Get_Instance()->UnRegisterInstanceAll(this->Get_id());
 }
 
 void gbe::RenderObject::InvokeEarlyUpdate()
@@ -64,7 +64,7 @@ void gbe::RenderObject::InvokeEarlyUpdate()
 void gbe::RenderObject::On_Change_enabled(bool _to) {
 	Object::On_Change_enabled(_to);
 
-	RenderPipeline::Get_Instance()->SetEnableInstance(this, _to);
+	RenderPipeline::Get_Instance()->SetEnableInstance(this->Get_id(), _to);
 }
 
 gbe::SerializedObject gbe::RenderObject::Serialize() {
@@ -89,7 +89,7 @@ gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
 		auto drawcall = RenderPipeline::RegisterDrawCall(input_mesh, input_mat);
 		
 		this->mDrawCall = drawcall;
-		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
+		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
 	}
 	else {
 		auto curptype = gbe::RenderObject::PrimitiveType::NONE;
@@ -101,7 +101,7 @@ gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
 		}
 
 		this->mDrawCall = primitive_drawcalls[curptype];
-		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this, mDrawCall, this->World().GetMatrix());
+		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
 		this->ptype = curptype;
 	}
 

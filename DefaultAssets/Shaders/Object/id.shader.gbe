@@ -1,0 +1,4 @@
+{
+  "vert": "vs_mesh.sc.bin",
+  "frag": "fs_mesh_id.sc.bin"
+}

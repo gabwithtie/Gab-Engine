@@ -141,7 +141,7 @@ void gbe::Editor::OnDeselect(Object* other)
 		auto renderer_check = dynamic_cast<RenderObject*>(child);
 
 		if (renderer_check != nullptr) {
-			RenderPipeline::UnRegisterInstanceGroup(renderer_check, 1);
+			RenderPipeline::UnRegisterInstanceGroup(renderer_check->Get_id(), 1);
 		}
 		});
 }
@@ -188,7 +188,7 @@ void gbe::Editor::UpdateSelection()
 			auto renderer_check = dynamic_cast<RenderObject*>(child);
 
 			if (renderer_check != nullptr) {
-				RenderPipeline::RegisterAdditionalGroup(renderer_check, 1);
+				RenderPipeline::RegisterAdditionalGroup(renderer_check->Get_id(), 1);
 			}
 			});
 	}

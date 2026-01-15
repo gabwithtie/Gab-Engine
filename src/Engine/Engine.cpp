@@ -361,6 +361,7 @@ namespace gbe {
 			editor->PrepareUpdate();
 
 			gfx::SceneRenderInfo frameinfo{};
+			frameinfo.pointer_pixelpos = this->window.GetMousePixelPos();
 
 			//Lights colating
 			this->current_root->GetHandler<LightObject>()->DoOnEnabled([&](LightObject* light) {

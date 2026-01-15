@@ -133,7 +133,7 @@ void gbe::RenderPipeline::RenderFrame(const SceneRenderInfo& frameinfo)
 	}
 
 	// BGFX: Present the frame
-	bgfx::frame();
+	this->currentrenderinfo.frame_id = bgfx::frame();
 }
 
 gbe::gfx::DrawCall* gbe::RenderPipeline::RegisterDrawCall(asset::Mesh* mesh, asset::Material* material)
@@ -164,7 +164,7 @@ DrawCall* gbe::RenderPipeline::GetDefaultDrawCall()
 	return Instance->default_drawcall;
 }
 
-gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall* drawcall, Matrix4 matrix)
+gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(uint32_t instance_id, DrawCall* drawcall, Matrix4 matrix)
 {
 	//COMMITTING
 	Instance->currentrenderinfo.infomap.insert_or_assign(
@@ -183,7 +183,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall*
 	if (drawcall_it == Instance->currentrenderinfo.callgroups.end()) {
 		Instance->currentrenderinfo.callgroups.insert_or_assign(
 			drawcall,
-			std::vector<void*>{ instance_id }
+			std::vector<uint32_t>{ instance_id }
 		);
 	}
 	else {
@@ -193,7 +193,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(void* instance_id, DrawCall*
 	return &Instance->currentrenderinfo.infomap[instance_id].transform;
 }
 
-void gbe::RenderPipeline::RegisterAdditionalGroup(void* instance_id, int rendergroup)
+void gbe::RenderPipeline::RegisterAdditionalGroup(uint32_t instance_id, int rendergroup)
 {
 	auto it = Instance->currentrenderinfo.infomap.find(instance_id);
 
@@ -203,7 +203,7 @@ void gbe::RenderPipeline::RegisterAdditionalGroup(void* instance_id, int renderg
 	it->second.rendergroups.insert_or_assign(rendergroup, true);
 }
 
-void gbe::RenderPipeline::UnRegisterInstanceGroup(void* instance_id, int rendergroup)
+void gbe::RenderPipeline::UnRegisterInstanceGroup(uint32_t instance_id, int rendergroup)
 {
 	auto info_it = Instance->currentrenderinfo.infomap.find(instance_id);
 
@@ -218,7 +218,7 @@ void gbe::RenderPipeline::UnRegisterInstanceGroup(void* instance_id, int renderg
 	renderinfo.rendergroups.erase(rendergroup);
 }
 
-void gbe::RenderPipeline::UnRegisterInstanceAll(void* instance_id)
+void gbe::RenderPipeline::UnRegisterInstanceAll(uint32_t instance_id)
 {
 	auto info_it = Instance->currentrenderinfo.infomap.find(instance_id);
 
@@ -239,7 +239,7 @@ void gbe::RenderPipeline::UnRegisterInstanceAll(void* instance_id)
 
 }
 
-void gbe::RenderPipeline::SetEnableInstance(void* instance_id, bool value)
+void gbe::RenderPipeline::SetEnableInstance(uint32_t instance_id, bool value)
 {
 	auto info_it = Instance->currentrenderinfo.infomap.find(instance_id);
 

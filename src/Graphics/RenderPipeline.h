@@ -110,10 +110,10 @@ namespace gbe {
 
 		void RenderFrame(const SceneRenderInfo& frameinfo);
 
-		static gbe::Matrix4* RegisterInstance(void* instance_id, DrawCall* drawcall, gbe::Matrix4 matrix);
-		static void RegisterAdditionalGroup(void* instance_id, int rendergroup = 0);
-		static void UnRegisterInstanceGroup(void* instance_id, int rendergroup);
-		static void UnRegisterInstanceAll(void* instance_id);
-		static void SetEnableInstance(void* instance_id, bool value);
+		static gbe::Matrix4* RegisterInstance(uint32_t instance_id, DrawCall* drawcall, gbe::Matrix4 matrix);
+		static void RegisterAdditionalGroup(uint32_t instance_id, int rendergroup = 0);
+		static void UnRegisterInstanceGroup(uint32_t instance_id, int rendergroup);
+		static void UnRegisterInstanceAll(uint32_t instance_id);
+		static void SetEnableInstance(uint32_t instance_id, bool value);
 	};
 }
