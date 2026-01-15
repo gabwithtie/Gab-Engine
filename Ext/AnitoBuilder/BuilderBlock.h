@@ -75,6 +75,8 @@ namespace gbe::ext::AnitoBuilder {
 
 		//Objects
 		Object* ceiling_parent;
+		RigidObject* ceiling_handle;
+		MeshCollider* ceiling_collider;
 		std::vector<RenderObject*> editor_renderers;
 		std::vector<RenderObject*> display_renderers;
 
@@ -99,6 +101,7 @@ namespace gbe::ext::AnitoBuilder {
 			return this->data.sets[s].segs[i];
 		}
 		bool CheckSetSegment(Vector3 p, Vector3 l, Vector3 r);
+		void ResetRoof(Object* roof, int s, int i);
 		void ResetHandle(int set, int index);
 		void ResetAllHandles();
 		inline void SetPosition(int index, Vector3& newpos) {

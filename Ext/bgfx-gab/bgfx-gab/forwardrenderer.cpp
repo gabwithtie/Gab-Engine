@@ -259,7 +259,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	bgfx::setViewTransform(VIEW_SCENE_PASS, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
 
 	//===============LINE PASS [VIEW_LINE_PASS]
-	if (passinfo.lines_this_frame.size() > 0 && false) {
+	if (passinfo.lines_this_frame.size() > 0) {
 
 		// BGFX: Update dynamic vertex buffer
 		bgfx::update(m_line_vbh, 0, bgfx::makeRef(passinfo.lines_this_frame.data(), (uint32_t)(passinfo.lines_this_frame.size() * sizeof(asset::data::Vertex))));

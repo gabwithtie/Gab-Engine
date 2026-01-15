@@ -36,6 +36,10 @@ namespace gbe {
 
 			TLoadData load_data;
 		public:
+			void SetLoadData(TLoadData newload_data) {
+				load_data = newload_data;
+			}
+
 			BaseAsset(std::filesystem::path asset_path) {
 				gbe::asset::serialization::gbeParser::PopulateClass(this->import_data, asset_path);
 				

@@ -21,6 +21,9 @@ void gbe::physics::ColliderData::UpdateLocalTransformation(Matrix4 mat) {
 }
 
 void gbe::physics::ColliderData::UpdateScale(PhysicsVector3 vec) {
+	if (this->GetShape() == nullptr)
+		return;
+
 	this->scale = vec;
 	this->GetShape()->setLocalScaling(vec);
 }

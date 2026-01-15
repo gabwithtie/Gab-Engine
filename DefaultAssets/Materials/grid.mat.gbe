@@ -1,29 +1,38 @@
 {
 	"shader": "lit",
+	"shadowcaster": 1,
+	"defaultrendergroup": 0,
 	"overrides": [
 		{
 			"id": "color",
+			"type": "vec3",
 			"value_vec3": [ 1, 1, 1 ]
 		},
 		{
 			"id": "metallic",
-			"value_single": 1
-		},
-		{
-			"id": "tint",
-			"value_vec3": [ 0.0, 0.0, 0.0 ]
-		},
-		{
-			"id": "color_tex",
-			"value_tex": "grid"
+			"type": "single",
+			"value_single": 0
 		},
 		{
 			"id": "has_color_tex",
+			"type": "single",
 			"value_single": 1
 		},
 		{
-			"id": "shadow_strength",
-			"value_single": 0.8
+			"id": "has_normal_tex",
+			"type": "single",
+			"value_single": 0
+		},
+		{
+			"id": "has_arm_tex",
+			"type": "single",
+			"value_single": 0
+		},
+		{
+			"id": "color_tex",
+			"type": "texture",
+			"value_tex": "grid",
+			"tex_stage": 1
 		}
 	]
 }

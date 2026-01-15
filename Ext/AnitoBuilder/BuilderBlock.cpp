@@ -10,6 +10,16 @@
 namespace gbe::ext::AnitoBuilder {
 	void BuilderBlock::LoadAssets()
 	{
+		//OBJECT SETUP
+		ceiling_parent = new Object();
+		ceiling_parent->SetParent(this);
+
+		ceiling_handle = new RigidObject(true);
+		ceiling_handle->SetParent(this);
+		ceiling_collider = new MeshCollider(nullptr);
+		ceiling_collider->SetParent(ceiling_handle);
+
+		//MATERIAL SETUP
 		auto material = asset::Material::GetAssetById("lit");
 
 		//Editor
@@ -79,8 +89,7 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::InitializeInspectorData()
 	{
-		ceiling_parent = new Object();
-		ceiling_parent->SetParent(this);
+		
 
 		Object::InitializeInspectorData();
 
@@ -199,7 +208,7 @@ namespace gbe::ext::AnitoBuilder {
 		{
 			for (const auto& roofobj : roofset.handle_renderers)
 			{
-				roofobj->Set_enabled(false);
+				roofobj->Set_enabled(!model_shown);
 			}
 		}
 
@@ -407,6 +416,33 @@ namespace gbe::ext::AnitoBuilder {
 					newrenderer->Local().SetMatrix(roof_obj->Local().GetMatrix());
 				}
 			}
+
+			//Rebuild ceiling handle mesh
+			auto inv_model = ceiling_handle->World().GetMatrix().Inverted();
+			auto verts = std::vector<std::vector<Vector3>>();
+
+			for (const auto& roof : this->roof_pool)
+			{
+				for (const auto& roof_obj : roof.handle_renderers)
+				{
+					auto world_mesh = roof_obj->GetWorldSpaceVertexes();
+					
+					for (auto& face : world_mesh)
+					{
+						std::vector<Vector3> newface;
+
+						for (auto& vert : face)
+						{
+							auto newvert = Vector3(inv_model * Vector4(vert, 1.0f));
+							newface.push_back(newvert);
+						}
+
+						verts.push_back(newface);
+					}
+				}
+			}
+
+			ceiling_collider->UpdateVertices(verts);
 		}
 
 	}
@@ -445,31 +481,11 @@ namespace gbe::ext::AnitoBuilder {
 				set_roof = &roof;
 		}
 
-		const auto ResetRoof = [=](Object* roof_obj, int basis_index) {
-			const auto right = data.GetPosition(this->GetHandle(s, basis_index).seg.second) + Vector3(0, height, 0);
-			const auto left = data.GetPosition(this->GetHandle(s, basis_index -1).seg.first) + Vector3(0, height, 0);
+		if (set_roof == nullptr)
+			return;
 
-			// Assuming you have your axis vectors and position vector
-			Vector3 position = data.GetPosition(this->GetHandle(s, basis_index).seg.first) + Vector3(0, height, 0);
-			Vector3 xAxis = right - position; // Example: local X-axis
-			Vector3 yAxis = Vector3(0.0f, 0.02f, 0.0f); // Example: local Y-axis
-			Vector3 zAxis = left - position; // Example: local Z-axis
-
-			// Create the glm::mat4
-			Matrix4 modelMatrix = Matrix4(1.0f); // Initialize with identity matrix
-
-			// Assign the axis vectors to the first three columns
-			modelMatrix[0] = Vector4(xAxis, 0.0f); // X-axis
-			modelMatrix[1] = Vector4(yAxis, 0.0f); // Y-axis
-			modelMatrix[2] = Vector4(zAxis, 0.0f); // Z-axis
-
-			// Assign the position vector to the fourth column (translation)
-			modelMatrix[3] = Vector4(position, 1.0f); // Translation
-
-			roof_obj->Local().SetMatrix(modelMatrix);
-			};
-		ResetRoof(set_roof->handle_renderers[0], 0);
-		ResetRoof(set_roof->handle_renderers[1], 2);
+		ResetRoof(set_roof->handle_renderers[0], s, 0);
+		ResetRoof(set_roof->handle_renderers[1], s, 2);
 
 		auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
 		auto handle_parent = handle->Get_handle_parent();
@@ -513,6 +529,31 @@ namespace gbe::ext::AnitoBuilder {
 			return false;
 
 		return true;
+	}
+
+	void BuilderBlock::ResetRoof(Object* roof, int s, int i)
+	{
+		const auto right = data.GetPosition(this->GetHandle(s, i).seg.second) + Vector3(0, height, 0);
+		const auto left = data.GetPosition(this->GetHandle(s, i - 1).seg.first) + Vector3(0, height, 0);
+
+		// Assuming you have your axis vectors and position vector
+		Vector3 position = data.GetPosition(this->GetHandle(s, i).seg.first) + Vector3(0, height, 0);
+		Vector3 xAxis = right - position; // Example: local X-axis
+		Vector3 yAxis = Vector3(0.0f, 0.02f, 0.0f); // Example: local Y-axis
+		Vector3 zAxis = left - position; // Example: local Z-axis
+
+		// Create the glm::mat4
+		Matrix4 modelMatrix = Matrix4(1.0f); // Initialize with identity matrix
+
+		// Assign the axis vectors to the first three columns
+		modelMatrix[0] = Vector4(xAxis, 0.0f); // X-axis
+		modelMatrix[1] = Vector4(yAxis, 0.0f); // Y-axis
+		modelMatrix[2] = Vector4(zAxis, 0.0f); // Z-axis
+
+		// Assign the position vector to the fourth column (translation)
+		modelMatrix[3] = Vector4(position, 1.0f); // Translation
+
+		roof->Local().SetMatrix(modelMatrix);
 	}
 
 	void BuilderBlock::InvokeUpdate(float deltatime) {
@@ -702,52 +743,17 @@ namespace gbe::ext::AnitoBuilder {
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_SCALE_Z);
 			handle->PushEditorFlag(Object::EditorFlags::IS_STATE_MANAGED);
 			
-			
 			newset.segs.push_back(
 				{
 					.seg = src_seg,
 					.handleindex = (int)(handle_pool.size() - 1)
 				});
-
-			Vector3 delta = data.GetPosition(src_seg.first) - data.GetPosition(src_seg.second);
-			float half_mag = delta.Magnitude() * 0.5f;
-
-			handle->Local().position.Set(Vector3::Mid(data.GetPosition(src_seg.first), data.GetPosition(src_seg.second)) + Vector3(0, height * 0.5f, 0));
-			handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
-			handle->Get_handle_parent()->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
 		}
 
 		//ROOF
 		const auto CreateRoof = [=](int basis_index) {
 			auto roof_renderer = new RenderObject(ceiling_editor_DC);
-			roof_renderer->SetParent(this);
-
-			int left_index = basis_index - 1;
-			if (left_index < 0)
-				left_index += 4;
-			int right_index = (basis_index + 1) % 4;
-
-			const auto right = data.GetPosition(corners[right_index]) + Vector3(0, height, 0);
-			const auto left = data.GetPosition(corners[left_index]) + Vector3(0, height, 0);
-
-			// Assuming you have your axis vectors and position vector
-			Vector3 position = data.GetPosition(corners[basis_index]) + Vector3(0, height, 0);
-			Vector3 xAxis = right - position; // Example: local X-axis
-			Vector3 yAxis = Vector3(0.0f, 0.02f, 0.0f); // Example: local Y-axis
-			Vector3 zAxis = left - position; // Example: local Z-axis
-
-			// Create the glm::mat4
-			Matrix4 modelMatrix = Matrix4(1.0f); // Initialize with identity matrix
-
-			// Assign the axis vectors to the first three columns
-			modelMatrix[0] = Vector4(xAxis, 0.0f); // X-axis
-			modelMatrix[1] = Vector4(yAxis, 0.0f); // Y-axis
-			modelMatrix[2] = Vector4(zAxis, 0.0f); // Z-axis
-
-			// Assign the position vector to the fourth column (translation)
-			modelMatrix[3] = Vector4(position, 1.0f); // Translation
-
-			roof_renderer->Local().SetMatrix(modelMatrix);
+			roof_renderer->SetParent(ceiling_parent);
 
 			return roof_renderer;
 			};
@@ -760,5 +766,7 @@ namespace gbe::ext::AnitoBuilder {
 		};
 
 		this->roof_pool.push_back(newset_roof);
+
+		ResetAllHandles();
 	}
 }

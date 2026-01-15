@@ -382,52 +382,6 @@ namespace gbe {
 				}
 				else
 					frameinfo.skip_main_pass = true;
-
-				//GRID
-				const int gridlines = 100;
-				const float stride = 2 * ceil(abs(frameinfo.camera_pos.y) / 10.0f);
-				const int line_length = gridlines * stride;
-				const int half_bounds = line_length / 2;
-				const auto align = [stride](float coord) {
-					coord /= stride;
-					coord = round(coord);
-					coord *= stride;
-					return coord;
-					};
-
-				float max_z = align(frameinfo.camera_pos.z + half_bounds);
-				float max_x = align(frameinfo.camera_pos.x + half_bounds);
-				float min_z = align(frameinfo.camera_pos.z - half_bounds);
-				float min_x = align(frameinfo.camera_pos.x - half_bounds);
-
-				const auto propagatelines = [=](float coef) {
-					Vector3 start_cor = Vector3(align(frameinfo.camera_pos.x), 0, align(frameinfo.camera_pos.z));
-					start_cor.y = 0;
-					Vector3 cur_x = start_cor;
-					Vector3 cur_z = start_cor;
-
-					for (size_t l_i = 0; l_i < gridlines / 2; l_i++)
-					{
-						Vector3 x_a = cur_x - Vector3(0, 0, half_bounds);
-						Vector3 x_b = cur_x + Vector3(0, 0, half_bounds);
-						//RenderPipeline::DrawLine(x_a, x_b);
-
-						Vector3 z_a = cur_z - Vector3(half_bounds, 0, 0);
-						Vector3 z_b = cur_z + Vector3(half_bounds, 0, 0);
-						//RenderPipeline::DrawLine(z_a, z_b);
-
-						auto dist = abs(frameinfo.camera_pos.z - cur_z.z);
-						auto skip_coef = abs(1.0f / (frameinfo.camera_pos.y / 16.0f)) * (dist / 90.0f);
-						auto stride_scale = 1 + floor(skip_coef);
-						auto final_step = stride_scale * stride;
-
-						cur_x += Vector3(final_step, 0, 0) * coef;
-						cur_z += Vector3(0, 0, final_step) * coef;
-					}
-				};
-
-				propagatelines(1);
-				propagatelines(-1);
 			}
 			else {
 

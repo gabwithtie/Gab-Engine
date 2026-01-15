@@ -165,6 +165,16 @@ gbe::Transform& gbe::Object::Local()
 	return this->local;
 }
 
+void gbe::Object::ReEnterHierarchy()
+{
+	auto og_parent = this->parent;
+
+	if (og_parent != nullptr) {
+		og_parent->OnExitHierarchy(this);
+		og_parent->OnEnterHierarchy(this);
+	}
+}
+
 void gbe::Object::OnEnterHierarchy(Object* newChild)
 {
 	Object* current = this->parent;

@@ -152,6 +152,7 @@ namespace gbe {
 		Transform& World();
 		Transform& Local();
 
+		void ReEnterHierarchy();
 		virtual void OnEnterHierarchy(Object* newChild);
 		virtual void OnExitHierarchy(Object* newChild);
 		Object* GetParent();

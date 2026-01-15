@@ -6,6 +6,11 @@
 			"varying": "mesh_varying.def.sc"
 		},
 		{
+			"file": "fs_mesh_color.sc",
+			"type": "fragment",
+			"varying": "mesh_varying.def.sc"
+		},
+		{
 			"file": "fs_gbuffer.sc",
 			"type": "fragment",
 			"varying": "mesh_varying.def.sc"

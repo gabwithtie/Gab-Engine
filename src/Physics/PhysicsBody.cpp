@@ -61,6 +61,9 @@ void gbe::physics::PhysicsBody::ForceWake() {
 
 void gbe::physics::PhysicsBody::AddCollider(ColliderData* col)
 {
+	if (col->GetShape() == nullptr)
+		return;
+
 	this->mMainShape->addChildShape(col->GetInternalTransform(), col->GetShape());
 }
 

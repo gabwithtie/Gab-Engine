@@ -46,6 +46,7 @@ namespace gbe {
 		RenderObject(SerializedObject* data);
 		RenderObject(gfx::DrawCall* mDrawCall);
 		RenderObject(PrimitiveType ptype);
+		std::vector<std::vector<Vector3>> GetWorldSpaceVertexes();
 		virtual ~RenderObject();
 
 		SerializedObject Serialize() override;

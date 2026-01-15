@@ -210,15 +210,19 @@ void gbe::gfx::MeshLoader::OnAsyncTaskCompleted(MeshLoader::AsyncLoadTask* loadt
         throw std::runtime_error("Failed to create bgfx Index Buffer");
     }
 
-    auto newdata = MeshData{
-        MeshLoadData{
+    auto newloaddata = MeshLoadData{
             .vertices = meshloadtask->out_vertices,
             .indices = meshloadtask->out_indices,
-			.faces = meshloadtask->out_faces
-        },
+            .faces = meshloadtask->out_faces
+    };
+
+    auto newdata = MeshData{
+        newloaddata,
         vertexBufferHandle, // Pass the bgfx handle
         indexBufferHandle   // Pass the bgfx handle
     };
+
+    this->lookup_map[loadtask->id]->SetLoadData(newloaddata);
 
 	RegisterExternal(meshloadtask->id, newdata);
 }

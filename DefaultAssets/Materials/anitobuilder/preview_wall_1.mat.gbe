@@ -1,5 +1,7 @@
 {
 	"shader": "lit",
+	"shadowcaster": 1,
+	"defaultrendergroup": 0,
 	"overrides": [
 		{
 			"id": "color",
@@ -15,6 +17,16 @@
 			"id": "has_color_tex",
 			"type": "single",
 			"value_single": 1
+		},
+		{
+			"id": "has_normal_tex",
+			"type": "single",
+			"value_single": 0
+		},
+		{
+			"id": "has_arm_tex",
+			"type": "single",
+			"value_single": 0
 		},
 		{
 			"id": "color_tex",

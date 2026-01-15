@@ -1,5 +1,5 @@
 {
   "vert": "vs_mesh.sc.bin",
-  "frag": "fs_mesh.sc.bin",
+  "frag": "fs_mesh_color.sc.bin",
   "line": "true"
 }

@@ -112,3 +112,26 @@ gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
 		this->SetUserCreated();
 	}
 }
+
+std::vector<std::vector<gbe::Vector3>> gbe::RenderObject::GetWorldSpaceVertexes()
+{
+	auto verts = std::vector<std::vector<Vector3>>();
+	auto& src_verts = this->Get_DrawCall()->get_mesh()->Get_load_data().vertices;
+
+	for (const auto& face : this->Get_DrawCall()->get_mesh()->Get_load_data().faces)
+	{
+		auto newface = std::vector<Vector3>();
+
+		for (const auto& vertindex : face)
+		{
+			auto pos = Vector4(src_verts[vertindex].pos, 1);
+			auto world_pos = Vector3(this->World().GetMatrix() * pos);
+
+			newface.push_back(world_pos);
+		}
+
+		verts.push_back(newface);
+	}
+
+	return verts;
+}

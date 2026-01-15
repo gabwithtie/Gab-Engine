@@ -11,7 +11,8 @@ $input v_pos, v_view, v_normal, v_color0, v_texcoord0, v_tangent, v_bitangent
 //Material stuff
 
 uniform vec4 color;
-uniform float metallic;
+uniform vec4 metallic;
+#define metallic metallic.x
 
 uniform vec4 has_color_tex;
 #define has_color_tex has_color_tex.x
@@ -171,7 +172,7 @@ void main() {
         // Metallic colors the specular reflection with albedo
         vec3 specColor = lerp(vec3(0.04), albedo, _metallic);
         
-        finalDiffuse += light_color[i].xyz * diff * attenuation;
+        finalDiffuse += light_color[i].xyz * diff * attenuation * shadow;
         finalSpecular += light_color[i].xyz * spec * attenuation * shadow * specColor;
     }
 

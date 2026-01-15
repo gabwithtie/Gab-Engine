@@ -20,6 +20,9 @@ void gbe::Collider::OnLocalTransformationChange(TransformChangeType type)
 {
 	Object::OnLocalTransformationChange(type);
 
+	if (this->GetColliderData()->GetShape() == nullptr)
+		return;
+
 	this->GetColliderData()->UpdateLocalTransformation(this->Local().GetMatrix());
 
 	if (type & TransformChangeType::SCALE)
@@ -34,6 +37,9 @@ void gbe::Collider::OnLocalTransformationChange(TransformChangeType type)
 void gbe::Collider::OnExternalTransformationChange(TransformChangeType type, Matrix4 newparentmat)
 {
 	Object::OnExternalTransformationChange(type, newparentmat);
+
+	if (this->GetColliderData()->GetShape() == nullptr)
+		return;
 
 	if (type & TransformChangeType::SCALE) {
 		this->GetColliderData()->UpdateScale(this->World().scale.Get());
