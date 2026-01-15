@@ -14,11 +14,6 @@ namespace gbe::ext::AnitoBuilder {
 		ceiling_parent = new Object();
 		ceiling_parent->SetParent(this);
 
-		ceiling_handle = new RigidObject(true);
-		ceiling_handle->SetParent(this);
-		ceiling_collider = new MeshCollider(nullptr);
-		ceiling_collider->SetParent(ceiling_handle);
-
 		//MATERIAL SETUP
 		auto material = asset::Material::GetAssetById("lit");
 
@@ -416,33 +411,6 @@ namespace gbe::ext::AnitoBuilder {
 					newrenderer->Local().SetMatrix(roof_obj->Local().GetMatrix());
 				}
 			}
-
-			//Rebuild ceiling handle mesh
-			auto inv_model = ceiling_handle->World().GetMatrix().Inverted();
-			auto verts = std::vector<std::vector<Vector3>>();
-
-			for (const auto& roof : this->roof_pool)
-			{
-				for (const auto& roof_obj : roof.handle_renderers)
-				{
-					auto world_mesh = roof_obj->GetWorldSpaceVertexes();
-					
-					for (auto& face : world_mesh)
-					{
-						std::vector<Vector3> newface;
-
-						for (auto& vert : face)
-						{
-							auto newvert = Vector3(inv_model * Vector4(vert, 1.0f));
-							newface.push_back(newvert);
-						}
-
-						verts.push_back(newface);
-					}
-				}
-			}
-
-			ceiling_collider->UpdateVertices(verts);
 		}
 
 	}
