@@ -231,33 +231,21 @@ namespace gbe {
 #pragma region scene helpers
 		//Spawn funcs
 		auto create_mesh = [&](gfx::DrawCall* drawcall, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
-			RigidObject* parent = new RigidObject(true);
-			parent->SetParent(this->current_root);
-			parent->Local().position.Set(pos);
-			parent->Local().rotation.Set(rotation);
-			parent->Local().scale.Set(scale);
-			MeshCollider* meshcollider = new MeshCollider(drawcall->get_mesh());
-			meshcollider->SetParent(parent);
-			meshcollider->Local().position.Set(Vector3(0, 0, 0));
-			RenderObject* platform_renderer = new RenderObject(drawcall);
-			platform_renderer->SetParent(parent);
-
-			return parent;
+			RenderObject* renderer = new RenderObject(drawcall);
+			renderer->SetParent(this->current_root);
+			renderer->Local().position.Set(pos);
+			renderer->Local().rotation.Set(rotation);
+			renderer->Local().scale.Set(scale);
+			return renderer;
 			};
 
-		auto create_primitive = [&](RenderObject::PrimitiveType ptype, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0)), bool _static = true) {
-			RigidObject* parent = new RigidObject(_static);
-			parent->SetParent(this->current_root);
-			parent->Local().position.Set(pos);
-			parent->Local().rotation.Set(rotation);
-			parent->Local().scale.Set(scale);
-			BoxCollider* meshcollider = new BoxCollider();
-			meshcollider->SetParent(parent);
-			meshcollider->Local().position.Set(Vector3(0, 0, 0));
-			RenderObject* platform_renderer = new RenderObject(ptype);
-			platform_renderer->SetParent(parent);
-
-			return parent;
+		auto create_primitive = [&](RenderObject::PrimitiveType ptype, Vector3 pos, Vector3 scale, Quaternion rotation = Quaternion::Euler(Vector3(0, 0, 0))) {
+			RenderObject* renderer = new RenderObject(ptype);
+			renderer->SetParent(this->current_root);
+			renderer->Local().position.Set(pos);
+			renderer->Local().rotation.Set(rotation);
+			renderer->Local().scale.Set(scale);
+			return renderer;
 			};
 #pragma endregion
 #pragma region Root Loaders

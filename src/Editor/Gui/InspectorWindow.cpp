@@ -53,7 +53,7 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 
 		//DRAW THE BUILT IN INSPECTORS PER OBJECT
 
-		if (!this->selected[0]->GetEditorFlag(Object::IS_STATE_MANAGED)) {
+		if (!this->selected[0]->GetEditorFlag(Object::NON_DIRECT_EDITABLE)) {
 			ImGui::SeparatorText("Quick Actions:");
 			bool _enabled = this->selected[0]->Get_enabled_self();
 			if (ImGui::Checkbox("Enabled", &_enabled)) {

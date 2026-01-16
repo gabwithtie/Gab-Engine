@@ -61,14 +61,14 @@ namespace gbe {
 				std::vector<Matrix4> light_proj_arr;
 				std::vector<Vector4> light_color_arr;
 				std::vector<Vector4> light_pos_arr;
-				std::vector<int> light_type_arr;
-				std::vector<int> light_is_square_arr;
-				std::vector<float> light_nearclip_arr;
-				std::vector<float> light_range_arr;
-				std::vector<float> light_bias_min_arr;
-				std::vector<float> light_bias_mult_arr;
-				std::vector<float> light_cone_inner_arr;
-				std::vector<float> light_cone_outer_arr;
+				std::vector<Vector4> light_type_arr;
+				std::vector<Vector4> light_is_square_arr;
+				std::vector<Vector4> light_nearclip_arr;
+				std::vector<Vector4> light_range_arr;
+				std::vector<Vector4> light_bias_min_arr;
+				std::vector<Vector4> light_bias_mult_arr;
+				std::vector<Vector4> light_cone_inner_arr;
+				std::vector<Vector4> light_cone_outer_arr;
 
 				//============DYNAMIC============//
 				// BGFX: Textures used as attachments for the Frame Buffers

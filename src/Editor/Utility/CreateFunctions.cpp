@@ -14,7 +14,6 @@ namespace gbe::editor {
 			object->World().position.Set(pos);
 			object->SetName("New Cube");
 			object->PushEditorFlag(Object::SERIALIZABLE);
-			object->SetUserCreated();
 
 			return object;
 			}
@@ -30,7 +29,6 @@ namespace gbe::editor {
 			object->World().position.Set(pos);
 			object->SetName("New Sphere");
 			object->PushEditorFlag(Object::SERIALIZABLE);
-			object->SetUserCreated();
 
 			return object;
 			}
@@ -46,7 +44,6 @@ namespace gbe::editor {
 			object->World().position.Set(pos);
 			object->SetName("New Plane");
 			object->PushEditorFlag(Object::SERIALIZABLE);
-			object->SetUserCreated();
 
 			return object;
 			}

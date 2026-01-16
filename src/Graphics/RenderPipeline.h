@@ -69,6 +69,7 @@ namespace gbe {
 	public:
 		RenderPipeline(gbe::Window&, Vector2Int);
 		~RenderPipeline(); // Must destroy bgfx handles
+		static uint32_t GetIdUnderPointer();
 		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* GetDefaultDrawCall();

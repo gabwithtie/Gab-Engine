@@ -86,7 +86,6 @@ void gbe::editor::MenuBar::DrawSelf()
 
 				auto newrenderer = new RenderObject(RenderPipeline::RegisterDrawCall(newmesh, material));
 				newrenderer->SetParent(Engine::GetCurrentRoot());
-				newrenderer->SetUserCreated();
 
 				auto pos = Engine::GetActiveCamera()->World().position.Get() + Engine::GetActiveCamera()->World().GetForward() * 5.0f;
 				newrenderer->World().position.Set(pos);

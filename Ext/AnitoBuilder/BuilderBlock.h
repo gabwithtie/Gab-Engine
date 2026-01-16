@@ -75,8 +75,6 @@ namespace gbe::ext::AnitoBuilder {
 
 		//Objects
 		Object* ceiling_parent;
-		RigidObject* ceiling_handle;
-		MeshCollider* ceiling_collider;
 		std::vector<RenderObject*> editor_renderers;
 		std::vector<RenderObject*> display_renderers;
 
@@ -94,7 +92,8 @@ namespace gbe::ext::AnitoBuilder {
 
 		void UpdateModelShown();
 		void UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r);
-
+		
+		void Refresh();
 		inline BlockSeg& GetHandle(int s, int i) {
 			i %= this->data.sets[s].segs.size();
 

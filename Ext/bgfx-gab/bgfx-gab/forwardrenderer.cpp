@@ -195,11 +195,16 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 			if (!info.enabled)
 				continue;
 
-			auto rendergroup_it = info.rendergroups.find(0);
+			const auto check_group = [=](int group) {
+				auto rendergroup_it = info.rendergroups.find(group);
+				if (rendergroup_it != info.rendergroups.end())
+					return rendergroup_it->second;
 
-			if (rendergroup_it != info.rendergroups.end())
-				if (rendergroup_it->second)
-					instances.push_back(instanceid);
+				return false;
+				};
+
+			if (check_group(0) || check_group(1))
+				instances.push_back(instanceid);
 		}
 
 		// 1. Get the number of instances
@@ -396,14 +401,14 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		light_view_arr[i] = light->GetViewMatrix();
 		light_proj_arr[i] = light->GetProjectionMatrix();
 		light_pos_arr[i] = Vector4(light->position, 1);
-		light_type_arr[i] = light->type;
-		light_is_square_arr[i] = light->square_project;
-		light_nearclip_arr[i] = light->near_clip;
-		light_range_arr[i] = light->range;
-		light_bias_min_arr[i] = light->bias_min;
-		light_bias_mult_arr[i] = light->bias_mult;
-		light_cone_inner_arr[i] = light->angle_inner;
-		light_cone_outer_arr[i] = light->angle_outer;
+		light_type_arr[i].x = light->type;
+		light_is_square_arr[i].x = light->square_project;
+		light_nearclip_arr[i].x = light->near_clip;
+		light_range_arr[i].x = light->range;
+		light_bias_min_arr[i].x = light->bias_min;
+		light_bias_mult_arr[i].x = light->bias_mult;
+		light_cone_inner_arr[i].x = light->angle_inner;
+		light_cone_outer_arr[i].x = light->angle_outer;
 	}
 
 	for (const auto& shaderset : passinfo.callgroups)
@@ -425,14 +430,14 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		drawcall->ApplyOverrideArray<Matrix4>(light_proj_arr.data(), "light_proj", max_lights);
 		drawcall->ApplyOverrideArray<Vector4>(light_color_arr.data(), "light_color", max_lights);
 		drawcall->ApplyOverrideArray<Vector4>(light_pos_arr.data(), "light_pos", max_lights);
-		drawcall->ApplyOverrideArray<int>(light_type_arr.data(), "light_type", max_lights);
-		drawcall->ApplyOverrideArray<int>(light_is_square_arr.data(), "light_is_square", max_lights);
-		drawcall->ApplyOverrideArray<float>(light_nearclip_arr.data(), "light_nearclip", max_lights);
-		drawcall->ApplyOverrideArray<float>(light_range_arr.data(), "light_range", max_lights);
-		drawcall->ApplyOverrideArray<float>(light_bias_min_arr.data(), "light_bias_min", max_lights);
-		drawcall->ApplyOverrideArray<float>(light_bias_mult_arr.data(), "light_bias_mult", max_lights);
-		drawcall->ApplyOverrideArray<float>(light_cone_inner_arr.data(), "light_cone_inner", max_lights);
-		drawcall->ApplyOverrideArray<float>(light_cone_outer_arr.data(), "light_cone_outer", max_lights);
+		drawcall->ApplyOverrideArray<Vector4>(light_type_arr.data(), "light_type", max_lights);
+		drawcall->ApplyOverrideArray<Vector4>(light_is_square_arr.data(), "light_is_square", max_lights);
+		drawcall->ApplyOverrideArray<Vector4>(light_nearclip_arr.data(), "light_nearclip", max_lights);
+		drawcall->ApplyOverrideArray<Vector4>(light_range_arr.data(), "light_range", max_lights);
+		drawcall->ApplyOverrideArray<Vector4>(light_bias_min_arr.data(), "light_bias_min", max_lights);
+		drawcall->ApplyOverrideArray<Vector4>(light_bias_mult_arr.data(), "light_bias_mult", max_lights);
+		drawcall->ApplyOverrideArray<Vector4>(light_cone_inner_arr.data(), "light_cone_inner", max_lights);
+		drawcall->ApplyOverrideArray<Vector4>(light_cone_outer_arr.data(), "light_cone_outer", max_lights);
 
 		drawbatch(shaderset.first, 0);
 
@@ -496,7 +501,6 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 			maxAmount = maxAmount > amount? maxAmount : amount;
 		}
 
-		uint32_t idKey = 0;
 		this->current_id_onpointer = UINT32_MAX;
 		if (maxAmount)
 		{
@@ -504,12 +508,10 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 			{
 				if (mapIter->second == maxAmount)
 				{
-					idKey = mapIter->first;
+					current_id_onpointer = mapIter->first;
 					break;
 				}
 			}
-
-			std::cout << "ID under pointer: " << idKey << std::endl;
 		}
 	}
 

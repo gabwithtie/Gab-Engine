@@ -42,7 +42,7 @@ namespace gbe {
 			STATIC_SCALE_Y = 1 << 7,
 			STATIC_SCALE_Z = 1 << 8,
 
-			IS_STATE_MANAGED = 1 << 9,
+			NON_DIRECT_EDITABLE = 1 << 9,
 			SELECT_PARENT_INSTEAD = 1 << 10,
 			EXCLUDE_FROM_OBJECT_TREE = 1 << 11,
 			SERIALIZABLE = 1 << 12
@@ -95,6 +95,8 @@ namespace gbe {
 		inline void SetName(std::string newname) {
 			this->name = newname;
 		}
+
+		inline static Object* GetObjectById(uint32_t _id) { return valid_objects[_id]; }
 
 		void PushState(ObjectStateName state);
 		bool CheckState(ObjectStateName state, void* checker);

@@ -21,7 +21,7 @@ namespace gbe::ext::AnitoBuilder {
 		float height_per_wall;
 
 		BuilderBlock* root_block = nullptr;
-		RigidObject* handle_ro = nullptr;
+		Object* handle_ro = nullptr;
 
 		std::vector<RenderObject*> renderObjects;
 

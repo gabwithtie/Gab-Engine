@@ -12,7 +12,13 @@ namespace gbe::ext::AnitoBuilder {
 	{
 		//OBJECT SETUP
 		ceiling_parent = new Object();
+		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_POS_X);
+		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_POS_Z);
+		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT_X);
+		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT_Y);
+		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT_Z);
 		ceiling_parent->SetParent(this);
+		ceiling_parent->Local().position.Set(Vector3(0, this->height, 0));
 
 		//MATERIAL SETUP
 		auto material = asset::Material::GetAssetById("lit");
@@ -56,12 +62,11 @@ namespace gbe::ext::AnitoBuilder {
 		: Object(), Update()
 	{
 		this->SetName("Anito Builder Block");
-		
+		this->height = height;
+
 		LoadAssets();
 
 		//OBJECTS
-		this->height = height;
-
 		for (size_t i = 0; i < 4; i++)
 		{
 			this->data.AddPosition(corners[i]);
@@ -84,8 +89,6 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::InitializeInspectorData()
 	{
-		
-
 		Object::InitializeInspectorData();
 
 		this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
@@ -149,11 +152,12 @@ namespace gbe::ext::AnitoBuilder {
 	BuilderBlock::BuilderBlock(SerializedObject* data) : Object(data)
 	{
 		this->SetName("Anito Builder Block");
+		BuilderBlockData newdata;
+		gbe::asset::serialization::gbeParser::PopulateClassStr(newdata, data->serialized_variables["data"]);
+		this->height = std::stof(data->serialized_variables["height"]);
 		
 		LoadAssets();
 
-		BuilderBlockData newdata;
-		gbe::asset::serialization::gbeParser::PopulateClassStr(newdata, data->serialized_variables["data"]);
 
 		for (const auto& pos : newdata.positions)
 		{
@@ -161,8 +165,6 @@ namespace gbe::ext::AnitoBuilder {
 		}
 
 		//OBJECTS
-		this->height = std::stof(data->serialized_variables["height"]);
-
 		for (const auto& set : newdata.sets)
 		{
 			int corner_ptrs[4] = {
@@ -329,6 +331,7 @@ namespace gbe::ext::AnitoBuilder {
 						}();
 
 					newrenderer->SetParent(handle);
+					newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
 					display_renderers.push_back(newrenderer);
 
 					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
@@ -387,6 +390,7 @@ namespace gbe::ext::AnitoBuilder {
 						}();
 
 					newrenderer->SetParent(handle);
+					newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
 					display_renderers.push_back(newrenderer);
 
 					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
@@ -407,6 +411,7 @@ namespace gbe::ext::AnitoBuilder {
 				{
 					RenderObject* newrenderer = new RenderObject(ceiling_DC);
 					newrenderer->SetParent(ceiling_parent);
+					newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
 					display_renderers.push_back(newrenderer);
 					newrenderer->Local().SetMatrix(roof_obj->Local().GetMatrix());
 				}
@@ -435,6 +440,13 @@ namespace gbe::ext::AnitoBuilder {
 
 		l = handle->Local().position.Get() - delta_right + delta_up;
 		r = handle->Local().position.Get() + delta_right + delta_up;
+	}
+
+	void BuilderBlock::Refresh()
+	{
+		SetModelShown(false);
+		ResetAllHandles();
+		SetModelShown(true);
 	}
 
 	void BuilderBlock::ResetHandle(int s, int i) {
@@ -501,11 +513,11 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::ResetRoof(Object* roof, int s, int i)
 	{
-		const auto right = data.GetPosition(this->GetHandle(s, i).seg.second) + Vector3(0, height, 0);
-		const auto left = data.GetPosition(this->GetHandle(s, i - 1).seg.first) + Vector3(0, height, 0);
+		const auto right = data.GetPosition(this->GetHandle(s, i).seg.second);
+		const auto left = data.GetPosition(this->GetHandle(s, i - 1).seg.first);
 
 		// Assuming you have your axis vectors and position vector
-		Vector3 position = data.GetPosition(this->GetHandle(s, i).seg.first) + Vector3(0, height, 0);
+		Vector3 position = data.GetPosition(this->GetHandle(s, i).seg.first);
 		Vector3 xAxis = right - position; // Example: local X-axis
 		Vector3 yAxis = Vector3(0.0f, 0.02f, 0.0f); // Example: local Y-axis
 		Vector3 zAxis = left - position; // Example: local Z-axis
@@ -525,6 +537,17 @@ namespace gbe::ext::AnitoBuilder {
 	}
 
 	void BuilderBlock::InvokeUpdate(float deltatime) {
+
+		//ROOF MOVING
+		bool roof_moved = this->ceiling_parent->CheckState(Object::ObjectStateName::TRANSFORMED_USER, this);
+		if (roof_moved) {
+			this->height = this->ceiling_parent->Local().position.Get().y;
+			SetModelShown(false);
+			ResetAllHandles();
+			return;
+		}
+
+		//SEGMENT MOVING
 		BuilderBlockSet* moved_obj = nullptr;
 		int moved_pos_l = -1;
 		int moved_pos_r = -1;
@@ -557,7 +580,7 @@ namespace gbe::ext::AnitoBuilder {
 				break;
 		}
 
-		if (moved_obj == nullptr) //toggle model back once nothing has moved
+		if (!roof_moved && moved_obj == nullptr) //toggle model back once nothing has moved
 		{
 			if (!model_shown)
 				SetModelShown(true);
@@ -629,6 +652,7 @@ namespace gbe::ext::AnitoBuilder {
 				ResetHandle(s, i);
 			}
 		}
+
 	}
 
 	void BuilderBlock::AddBlock(int root_handle) {
@@ -709,7 +733,7 @@ namespace gbe::ext::AnitoBuilder {
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_ROT_Z);
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_SCALE_Y);
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_SCALE_Z);
-			handle->PushEditorFlag(Object::EditorFlags::IS_STATE_MANAGED);
+			handle->PushEditorFlag(Object::EditorFlags::NON_DIRECT_EDITABLE);
 			
 			newset.segs.push_back(
 				{

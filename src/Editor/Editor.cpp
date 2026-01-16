@@ -257,51 +257,15 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 	if (sdlevent->type == SDL_MOUSEBUTTONDOWN) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT && !this->FocusedOnEditorUI()) {
 
-			//RAYCAST MECHANICS
-			auto current_camera = Engine::GetActiveCamera();
-			Vector3 camera_pos = current_camera->World().position.Get();
-			auto mousedir = current_camera->ScreenToRay(mwindow->GetMouseDecimalPos());
+			auto cur_id_oncursor = RenderPipeline::GetIdUnderPointer();
 
-			//OBJECT SELECTION
-			Vector3 ray_dir = mousedir * 10000.0f;
-			auto result = physics::RaycastAll(camera_pos, ray_dir);
-
-			if (!result.result) { //NOTHING WAS CLICKED
+			if (cur_id_oncursor == UINT32_MAX) { //NOTHING WAS CLICKED
 				if (!this->keyboard_shifting) { //NOT MULTISELECTING
 					DeselectAll();
 				}
 			}
 			else {
-				Object* closest_obj = nullptr;
-				float sqrdist_of_closest = INFINITY;
-				bool gizmo_in_ray = false;
-
-				const auto CheckClosest = [&](Object* obj) {
-					if (!Object::ValidateObject(obj))
-						return;
-					Vector3 toobj = obj->World().position.Get() - camera_pos;
-					float curdist = toobj.SqrMagnitude();
-					if (curdist < sqrdist_of_closest) {
-						sqrdist_of_closest = curdist;
-						closest_obj = obj;
-					}
-					};
-
-				//Look for gizmo, otherwise, just select closest valid object
-				for (size_t i = 0; i < result.others.size(); i++)
-				{
-					auto objinray = result.others[i];
-
-					if (!Object::ValidateObject(objinray))
-						continue;
-
-					CheckClosest(objinray);
-				}
-				
-				if (closest_obj == nullptr)
-					return;
-
-				SelectSingle(closest_obj);
+				SelectSingle(Object::GetObjectById(cur_id_oncursor));
 			}
 		}
 	}

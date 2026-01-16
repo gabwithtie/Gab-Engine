@@ -136,6 +136,11 @@ void gbe::RenderPipeline::RenderFrame(const SceneRenderInfo& frameinfo)
 	this->currentrenderinfo.frame_id = bgfx::frame();
 }
 
+uint32_t gbe::RenderPipeline::GetIdUnderPointer()
+{
+	return Instance->cur_renderer->GetCurrentIdOnPointer();
+}
+
 gbe::gfx::DrawCall* gbe::RenderPipeline::RegisterDrawCall(asset::Mesh* mesh, asset::Material* material)
 {
 	for (const auto& pair : Instance->currentrenderinfo.callgroups)

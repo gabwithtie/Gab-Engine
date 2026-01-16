@@ -134,11 +134,13 @@ void main() {
     for (int i = 0; i < MAX_LIGHTS; ++i) {
         vec3 lightDir;
         float attenuation = 1.0;
+        float shadow = 1.0;
 
         // Calculate direction and attenuation based on light type
         if (abs(light_type[i].x) < 0.5) { // Directional
             // Assuming view matrix forward vector is the direction
             lightDir = normalize(light_view[i][2].xyz); 
+            shadow = getShadow(i, v_pos, normal, lightDir, light_bias_min[i].x, light_bias_mult[i].x);
         } 
         else { // Point or Spot
             vec3 lightPos = light_pos[i].xyz; // Extract position from view matrix
@@ -152,10 +154,12 @@ void main() {
 
             if (abs(light_type[i].x - 1) < 0.5) { // Spot Light
                 vec3 spotDir = normalize(light_view[i][2].xyz);
-                float cosAngle = dot(-lightDir, spotDir);
+                float cosAngle = dot(lightDir, spotDir);
                 float inner = cos(light_cone_inner[i].x);
                 float outer = cos(light_cone_outer[i].x);
                 attenuation *= saturate((cosAngle - outer) / (inner - outer));
+
+                shadow = getShadow(i, v_pos, normal, lightDir, light_bias_min[i].x, light_bias_mult[i].x);
             }
         }
 
@@ -165,9 +169,7 @@ void main() {
         vec3 halfDir = normalize(lightDir + viewDir);
         float specPower = pow(8192.0, 1.0 - _roughness); // Map roughness to shininess
         float spec = pow(max(dot(normal, halfDir), 0.0), specPower);
-
-        // Shadow Calculation
-        float shadow = getShadow(i, v_pos, normal, lightDir, light_bias_min[i].x, light_bias_mult[i].x);
+        spec = 1;
 
         // Metallic colors the specular reflection with albedo
         vec3 specColor = lerp(vec3(0.04), albedo, _metallic);

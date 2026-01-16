@@ -30,18 +30,11 @@ void gbe::PointLight::InitializeInspectorData()
     this->mLight.bias_mult = 0.05;
 
     if (Engine::Get_state() == Engine::EngineState::Edit) {
-        auto light_ro = new RigidObject(true);
-        light_ro->SetParent(this);
-        light_ro->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
-        light_ro->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
-
-        auto light_col = new SphereCollider();
-        light_col->Local().scale.Set(Vector3(1.0f));
-        light_col->SetParent(light_ro);
-
         auto gui_drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("sphere"), asset::Material::GetAssetById("wireframe"));
         auto light_gizmo = new RenderObject(gui_drawcall);
-        light_gizmo->SetParent(light_ro);
+        light_gizmo->SetParent(this);
+        light_gizmo->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
+        light_gizmo->PushEditorFlag(Object::EXCLUDE_FROM_OBJECT_TREE);
     }
 
     //INSPECTOR

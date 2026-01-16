@@ -10,10 +10,8 @@ namespace gbe::ext::AnitoBuilder {
 		this->type1_renderers.drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("preview_wall_1"));
 		
 		//EDITOR OBJECTS
-		handle_ro = new RigidObject(true);
+		handle_ro = new Object();
 		handle_ro->SetParent(this);
-		auto collider = new BoxCollider();
-		collider->SetParent(handle_ro);
 		handle_ro->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
 
 		//INSPECTOR
