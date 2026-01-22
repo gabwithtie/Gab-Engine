@@ -8,7 +8,7 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Vector3.cpp"
 	"Vector4.cpp"
 	"Matrix4.cpp"
-	"Quaternion.cpp")
+	"Quaternion.cpp" "Constants.h")
 
 #COMPILE DEFINITIONS SETUP
 target_compile_definitions(${CURRENT_CMAKE_LIB} PUBLIC GLM_ENABLE_EXPERIMENTAL)

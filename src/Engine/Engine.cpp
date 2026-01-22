@@ -160,21 +160,6 @@ namespace gbe {
 	{
 #pragma region Asset Loading
 		asset::BatchLoader::LoadAssetsFromDirectory("DefaultAssets");
-		asset::BatchLoader::LoadAssetsFromDirectory("cache");
-
-		//Wait here for all async tasks to finish
-		bool batchload_done = false;
-		while (!batchload_done)
-		{
-			batchload_done = true;
-
-			for (const auto& loader : gbe::asset::all_asset_loaders)
-			{
-				if (loader->CheckAsynchrounousTasks() > 0) {
-					batchload_done = false;
-				}
-			}
-		}
 
 		//Init all that needs assets here
 		renderpipeline.InitializeAssetRequisites();

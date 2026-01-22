@@ -8,19 +8,16 @@
 
 #include "../Utility/FileDialogue.h"
 #include "../Utility/ModelExport.h"
+#include "../Utility/ProjectLoader.h"
 
 void gbe::editor::MenuBar::DrawSelf()
 {
 	if (ImGui::BeginMenu("File")) {
 		if (ImGui::MenuItem("Load")) {
-			std::string outPath = FileDialogue::GetFilePath(FileDialogue::OPEN);
+			std::string outPath = FileDialogue::GetFilePath(FileDialogue::OPEN, "root.gbe");
 
 			if (outPath.size() != 0) {
-				SerializedObject data;
-				gbe::asset::serialization::gbeParser::PopulateClass(data, outPath);
-				auto newroot = gbe::Engine::CreateBlankRoot(&data);
-
-				gbe::Engine::ChangeRoot(newroot);
+				ProjectLoader::Load(outPath);
 			}
 			else {
 				Console::Log("Cancelled File Selection.");

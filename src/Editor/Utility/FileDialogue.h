@@ -20,7 +20,7 @@ namespace gbe::editor {
 			FOLDER
 		};
 
-		inline static std::string GetFilePath(OpType optype) {
+		inline static std::string GetFilePath(OpType optype, std::string extension = "") {
 			nfdu8char_t* outPath;
 			std::string outPathStr = "";
 			
@@ -50,6 +50,10 @@ namespace gbe::editor {
 			{
 				outPathStr = std::string(outPath);
 				NFD_FreePathU8(outPath);
+
+				if(extension.size() > 0)
+				if (outPathStr.ends_with(extension) == false)
+					return "";
 			}
 			else if (result == NFD_CANCEL)
 			{

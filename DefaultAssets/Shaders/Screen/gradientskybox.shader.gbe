@@ -1,0 +1,4 @@
+{
+  "vert": "vs_skybox.sc.bin",
+  "frag": "gradientskybox.sc.bin"
+}

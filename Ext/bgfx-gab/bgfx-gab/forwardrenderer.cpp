@@ -3,6 +3,7 @@
 #include "Graphics/gbe_graphics.h"
 
 #include <random> // Added for SSAO kernel generation
+#include "Math/gbe_math.h"
 
 gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& passinfo) {
 	m_line_vbh = bgfx::createDynamicVertexBuffer(passinfo.max_lines, s_VERTEXLAYOUT, BGFX_BUFFER_NONE);
@@ -95,6 +96,8 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
 	bilateralblur_shader = ShaderLoader::GetAssetRuntimeData("bilateralblur");
 	bufferblend_shader = ShaderLoader::GetAssetRuntimeData("bufferblend");
 	id_shader = ShaderLoader::GetAssetRuntimeData("id");
+	skybox_shader = ShaderLoader::GetAssetRuntimeData("gradientskybox");
+	floorgrid_shader = ShaderLoader::GetAssetRuntimeData("floorgrid");
 }
 
 void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& frameinfo, GraphicsRenderInfo& passinfo)
@@ -357,30 +360,9 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	//=================END OF LINE PASS
 
 	//=================SKYBOX PASS [VIEW_SKYBOX_PASS]
-	if (false)
-	{
-		const auto& skyboxmesh = MeshLoader::GetAssetRuntimeData(this->skybox_call->get_mesh()->Get_assetId());
-		auto skyboxshaderasset = this->skybox_call->get_material()->Get_load_data().shader;
-		const auto& skyboxshader = ShaderLoader::GetAssetRuntimeData(skyboxshaderasset->Get_assetId());
-
-		// 2. Bind Mesh
-		bgfx::setIndexBuffer(skyboxmesh.index_vbh);
-		bgfx::setVertexBuffer(0, skyboxmesh.vertex_vbh);
-
-		// 3. Set Transform (Identity)
-		bgfx::setTransform(nullptr);
-
-		// 4. Set State (disable depth write, only depth test to pass if Z is 1.0)
-		bgfx::setState(0
-			| BGFX_STATE_WRITE_RGB
-			| BGFX_STATE_WRITE_A
-			| BGFX_STATE_DEPTH_TEST_LEQUAL // Less or Equal to draw skybox at max depth
-			| BGFX_STATE_CULL_CW
-		);
-
-		// 5. Submit
-		bgfx::submit(VIEW_SCENE_PASS, skyboxshader.programHandle);
-	}
+	skybox_shader.ApplyOverride(Vector4(frameinfo.camera_pos, 1.0f), "camera_pos");
+	RenderFullscreenPass(VIEW_SCENE_PASS, skybox_shader.programHandle, BGFX_STATE_DEPTH_TEST_LEQUAL);
+	RenderFullscreenPass(VIEW_SCENE_PASS, floorgrid_shader.programHandle, BGFX_STATE_DEPTH_TEST_LEQUAL | BGFX_STATE_BLEND_ALPHA);
 	//=================END OF SKYBOX PASS
 
 	for (size_t i = 0; i < max_lights; i++)
@@ -407,8 +389,8 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		light_range_arr[i].x = light->range;
 		light_bias_min_arr[i].x = light->bias_min;
 		light_bias_mult_arr[i].x = light->bias_mult;
-		light_cone_inner_arr[i].x = light->angle_inner;
-		light_cone_outer_arr[i].x = light->angle_outer;
+		light_cone_inner_arr[i].x = gbe::toRad(light->angle_inner_deg);
+		light_cone_outer_arr[i].x = gbe::toRad(light->angle_outer_deg);
 	}
 
 	for (const auto& shaderset : passinfo.callgroups)

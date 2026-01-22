@@ -4,25 +4,25 @@ set(CURRENT_CMAKE_LIB gbe_editor)
 add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Editor.cpp"
 
-	"Gui/InspectorWindow.cpp"
-	"Gui/CreditsWindow.cpp"
-	"Gui/GuiWindow.cpp"
+	"Gui/Windows/InspectorWindow.cpp"
+	"Gui/Windows/CreditsWindow.cpp"
+	"Gui/Windows/GuiWindow.cpp"
 	"Gui/GuiElement.cpp"
 	"Gui/MenuBar.cpp"
-	"Gui/HierarchyWindow.cpp"
-	"Gui/StateWindow.cpp"
-	"Gui/SpawnWindow.cpp"
-	"Gui/ConsoleWindow.cpp"
+	"Gui/Windows/HierarchyWindow.cpp"
+	"Gui/Windows/StateWindow.cpp"
+	"Gui/Windows/SpawnWindow.cpp"
+	"Gui/Windows/ConsoleWindow.cpp"
 	"Gui/GizmoLayer.cpp"
+	"Gui/ContextMenus.cpp"
 
-	"Gui/ImageDebugger.cpp"
-	"Gui/ViewportWindow.cpp"
+	"Gui/Windows/ImageDebugger.cpp"
+	"Gui/Windows/ViewportWindow.cpp"
 	"Utility/CreateFunctions.cpp"
-	"Gui/LightExplorer.cpp"
-	"../../Ext/AnitoBuilder/gui/AnitoBuilderWindow.cpp"
+	"Gui/Windows/LightExplorer.cpp"
 
 	"Utility/ModelExport.cpp"
-)
+ "Utility/ProjectLoader.h")
 
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_graphics)

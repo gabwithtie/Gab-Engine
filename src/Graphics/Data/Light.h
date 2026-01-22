@@ -27,8 +27,8 @@ namespace gbe::gfx {
         Vector3 frustrum_center;
 
         //Cone
-        float angle_inner = 50;
-        float angle_outer = 80;
+        float angle_inner_deg = 50;
+        float angle_outer_deg = 80;
         float near_clip = 1;
         float range = 15;
         bool square_project = false;
@@ -105,7 +105,7 @@ namespace gbe::gfx {
             switch (type) {
             case CONE: {
                 // Use a perspective projection for a spot light.
-                float fov = glm::radians(angle_outer); // Or based on your light's properties
+                float fov = gbe::toRad(angle_outer_deg) * 2; // Or based on your light's properties
                 float aspect = 1.0f; // Shadow map is typically square
                 float nearPlane = near_clip;
                 float farPlane = range; // Based on light's range

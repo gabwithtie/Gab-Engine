@@ -50,6 +50,8 @@ namespace gbe {
 				ShaderData gbuffer_shader;
 				ShaderData bufferblend_shader;
 				ShaderData id_shader;
+				ShaderData skybox_shader;
+				ShaderData floorgrid_shader;
 
 				//=============RUNTIME===============//
 				uint32_t frameid_readdone = UINT32_MAX;

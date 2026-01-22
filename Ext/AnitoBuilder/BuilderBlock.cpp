@@ -21,7 +21,7 @@ namespace gbe::ext::AnitoBuilder {
 		ceiling_parent->Local().position.Set(Vector3(0, this->height, 0));
 
 		//MATERIAL SETUP
-		auto material = asset::Material::GetAssetById("lit");
+		auto material = asset::Material::GetAssetById("plaster");
 
 		//Editor
 		ceiling_editor_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), asset::Material::GetAssetById("grid"));

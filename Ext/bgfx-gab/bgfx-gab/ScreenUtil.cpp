@@ -4,7 +4,7 @@ static bool initialized_screen = false;
 
 bgfx::VertexLayout gbe::gfx::bgfx_gab::ScreenVertex::ms_layout;
 
-void gbe::gfx::bgfx_gab::RenderFullscreenPass(bgfx::ViewId _view, bgfx::ProgramHandle _program)
+void gbe::gfx::bgfx_gab::RenderFullscreenPass(bgfx::ViewId _view, bgfx::ProgramHandle _program, uint64_t flag)
 {
     if (!initialized_screen) {
         // Initialize Screen Vertex Layout
@@ -28,7 +28,7 @@ void gbe::gfx::bgfx_gab::RenderFullscreenPass(bgfx::ViewId _view, bgfx::ProgramH
         vertex[2] = { -1.0f,  3.0f, 0.0f, 0.0f, -1.0f };
 
         bgfx::setVertexBuffer(0, &vb);
-        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_WRITE_A);
+        bgfx::setState(BGFX_STATE_WRITE_RGB | flag | BGFX_STATE_WRITE_A);
         bgfx::submit(_view, _program);
     }
 }

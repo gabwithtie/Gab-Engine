@@ -18,7 +18,7 @@ namespace gbe {
 				static bgfx::VertexLayout ms_layout;
 			};
 
-			extern void RenderFullscreenPass(bgfx::ViewId _view, bgfx::ProgramHandle _program);
+			extern void RenderFullscreenPass(bgfx::ViewId _view, bgfx::ProgramHandle _program, uint64_t flag = BGFX_STATE_DEPTH_TEST_ALWAYS);
 
 		}
 	}

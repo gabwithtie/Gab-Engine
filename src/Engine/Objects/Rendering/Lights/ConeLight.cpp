@@ -43,13 +43,13 @@ void gbe::ConeLight::InitializeInspectorData()
     //INSPECTOR
     auto angleinner_field = new gbe::editor::InspectorFloat();
     angleinner_field->name = "Inner Angle";
-    angleinner_field->x = &this->mLight.angle_inner;
+    angleinner_field->x = &this->mLight.angle_inner_deg;
 
     this->inspectorData->fields.push_back(angleinner_field);
 
     auto angleouter_field = new gbe::editor::InspectorFloat();
     angleouter_field->name = "Outer Angle";
-    angleouter_field->x = &this->mLight.angle_outer;
+    angleouter_field->x = &this->mLight.angle_outer_deg;
 
     this->inspectorData->fields.push_back(angleouter_field);
 

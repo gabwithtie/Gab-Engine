@@ -3,16 +3,17 @@
 #include "Engine/gbe_engine.h"
 
 #include "Gui/InspectorData.h"
-#include "Gui/CreditsWindow.h"
-#include "Gui/InspectorWindow.h"
-#include "Gui/SpawnWindow.h"
-#include "Gui/StateWindow.h"
-#include "Gui/HierarchyWindow.h"
-#include "Gui/ImageDebugger.h"
-#include "Gui/ConsoleWindow.h"
 #include "Gui/MenuBar.h"
-#include "Gui/ViewportWindow.h"
-#include "Gui/LightExplorer.h"
+#include "Gui/ContextMenus.h"
+#include "Gui/Windows/CreditsWindow.h"
+#include "Gui/Windows/InspectorWindow.h"
+#include "Gui/Windows/SpawnWindow.h"
+#include "Gui/Windows/StateWindow.h"
+#include "Gui/Windows/HierarchyWindow.h"
+#include "Gui/Windows/ImageDebugger.h"
+#include "Gui/Windows/ConsoleWindow.h"
+#include "Gui/Windows/ViewportWindow.h"
+#include "Gui/Windows/LightExplorer.h"
 
 namespace gbe {
 	class RenderPipeline;

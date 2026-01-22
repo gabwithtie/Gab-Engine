@@ -68,7 +68,13 @@ float getShadow(int _layer, vec3 _wpos, vec3 _normal, vec3 _lightDir, float _min
     vec3 shadowCoord = shadowProj.xyz / shadowProj.w;
     
     vec2 uv = shadowCoord.xy * 0.5 + 0.5;
-    
+    bool outside = any(greaterThan(uv.xy, vec2(1.0, 1.0))) 
+                || any(lessThan(uv.xy, vec2(0.0, 0.0)));
+
+    if (outside) {
+        return 1.0; // Return "No Shadow" (1.0 means fully lit)
+    }
+
     #if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV
         uv.y = 1.0 - uv.y;
     #endif
@@ -155,8 +161,8 @@ void main() {
             if (abs(light_type[i].x - 1) < 0.5) { // Spot Light
                 vec3 spotDir = normalize(light_view[i][2].xyz);
                 float cosAngle = dot(lightDir, spotDir);
-                float inner = cos(light_cone_inner[i].x);
-                float outer = cos(light_cone_outer[i].x);
+                float inner = cos(light_cone_inner[i].x / 2);
+                float outer = cos(light_cone_outer[i].x / 2);
                 attenuation *= saturate((cosAngle - outer) / (inner - outer));
 
                 shadow = getShadow(i, v_pos, normal, lightDir, light_bias_min[i].x, light_bias_mult[i].x);

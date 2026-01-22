@@ -1,0 +1,4 @@
+{
+  "vert": "vs_pp.sc.bin",
+  "frag": "ssao.sc.bin"
+}

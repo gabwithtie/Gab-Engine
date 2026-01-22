@@ -41,7 +41,7 @@ void gbe::editor::AnitoBuilderWindow::DrawSelf()
 
 	Object* created_object = nullptr;
 
-	if (ImGui::BeginPopupContextWindow("HierarchyContextMenu"))
+	if (ImGui::BeginPopupContextWindow("HierarchyContextMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
 	{
 		if (ImGui::BeginMenu("Create"))
 		{
@@ -81,6 +81,7 @@ void gbe::editor::AnitoBuilderWindow::DrawChildList(Object* parent, std::string 
 		if (ImGui::Selectable(label.c_str())) {
 			gbe::Editor::SelectSingle(parent);
 		}
+		ContextMenus::GenericObject(parent);
 
 		ImGui::PopID();
 	}

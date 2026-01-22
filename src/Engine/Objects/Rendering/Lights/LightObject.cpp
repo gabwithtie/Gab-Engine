@@ -19,8 +19,8 @@ SerializedObject gbe::LightObject::Serialize()
 	obj.serialized_variables.insert_or_assign("type", std::to_string(mLight.type));
 	obj.serialized_variables.insert_or_assign("override_dist", std::to_string(mLight.override_dist));
 	obj.serialized_variables.insert_or_assign("dir_backtrack_dist", std::to_string(mLight.dir_backtrack_dist));
-	obj.serialized_variables.insert_or_assign("angle_inner", std::to_string(mLight.angle_inner));
-	obj.serialized_variables.insert_or_assign("angle_outer", std::to_string(mLight.angle_outer));
+	obj.serialized_variables.insert_or_assign("angle_inner_deg", std::to_string(mLight.angle_inner_deg));
+	obj.serialized_variables.insert_or_assign("angle_outer_deg", std::to_string(mLight.angle_outer_deg));
 	obj.serialized_variables.insert_or_assign("near_clip", std::to_string(mLight.near_clip));
 	obj.serialized_variables.insert_or_assign("range", std::to_string(mLight.range));
 	obj.serialized_variables.insert_or_assign("bias_min", std::to_string(mLight.bias_min));
@@ -37,8 +37,8 @@ gbe::LightObject::LightObject(SerializedObject* data) : Object(data)
 	mLight.type = (gfx::Light::LightType)std::stoi(data->serialized_variables["type"]);
 	mLight.override_dist = std::stof(data->serialized_variables["override_dist"]);
 	mLight.dir_backtrack_dist = std::stof(data->serialized_variables["dir_backtrack_dist"]);
-	mLight.angle_inner = std::stof(data->serialized_variables["angle_inner"]);
-	mLight.angle_outer = std::stof(data->serialized_variables["angle_outer"]);
+	mLight.angle_inner_deg = std::stof(data->serialized_variables["angle_inner_deg"]);
+	mLight.angle_outer_deg = std::stof(data->serialized_variables["angle_outer_deg"]);
 	mLight.near_clip = std::stof(data->serialized_variables["near_clip"]);
 	mLight.range = std::stof(data->serialized_variables["range"]);
 	mLight.bias_min = std::stof(data->serialized_variables["bias_min"]);

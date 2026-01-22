@@ -50,7 +50,7 @@ namespace gbe {
                 return filename.compare(filename.length() - extension.length(), extension.length(), extension) == 0;
             }
 		public:
-			inline static void LoadAssetsFromDirectory(std::string directory) {
+			inline static void LoadAssetsFromDirectory(std::filesystem::path directory) {
 				std::vector<fs::path> filepaths;
                 get_all_filepaths(directory, filepaths);
 
@@ -87,6 +87,20 @@ namespace gbe {
                 {
                     std::cout << "[BATCHLOADER] Loading Material: \"" << fp_mat << "\"" << std::endl;
 					internal::BaseAsset_base* newasset = new Material(fp_mat);
+                }
+
+                //Wait here for all async tasks to finish
+                bool batchload_done = false;
+                while (!batchload_done)
+                {
+                    batchload_done = true;
+
+                    for (const auto& loader : gbe::asset::all_asset_loaders)
+                    {
+                        if (loader->CheckAsynchrounousTasks() > 0) {
+                            batchload_done = false;
+                        }
+                    }
                 }
 			}
 		};
