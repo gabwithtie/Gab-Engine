@@ -42,4 +42,13 @@ void main() {
     float finalAlpha = max(line1 * 0.5, line2) * opacity;
 
     gl_FragColor = vec4(color, finalAlpha);
+
+    // Project the world hit position back to screen space
+    vec4 screenPos = mul(u_viewProj, vec4(hitPos, 1.0));
+    
+    // Calculate the 0-1 depth value
+    float actualDepth = screenPos.z / screenPos.w;
+    
+    // Write it to the hardware depth buffer
+    gl_FragDepth = actualDepth;
 }
