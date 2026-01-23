@@ -100,6 +100,54 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
 	floorgrid_shader = ShaderLoader::GetAssetRuntimeData("floorgrid");
 }
 
+void gbe::gfx::bgfx_gab::ForwardRenderer::CleanUp()
+{
+	const auto DestroyTextureData = [](gbe::gfx::TextureData& _data) {
+		if (bgfx::isValid(_data.textureHandle)) {
+			bgfx::destroy(_data.textureHandle);
+			_data.textureHandle = BGFX_INVALID_HANDLE;
+		}
+		};
+
+	// 1. Destroy Post-Processing Framebuffers and Textures
+	for (auto fb : m_ppFBs) {
+		if (bgfx::isValid(fb)) bgfx::destroy(fb);
+	}
+	m_ppFBs.clear();
+
+	for (auto& pair : m_pp_textures) {
+		DestroyTextureData(pair.second);
+	}
+	m_pp_textures.clear();
+
+	// 2. Destroy G-Buffers
+	auto destroyGBuffer = [DestroyTextureData](GBuffer& _gb) {
+		if (bgfx::isValid(_gb.m_gbufferFB)) bgfx::destroy(_gb.m_gbufferFB);
+		DestroyTextureData(_gb.m_gbufferNormal);
+		DestroyTextureData(_gb.m_gbufferDepth);
+		_gb.m_gbufferFB = BGFX_INVALID_HANDLE;
+		};
+	destroyGBuffer(gbuffer_all);
+	destroyGBuffer(gbuffer_selected);
+
+	// 3. Destroy SSAO texture
+	DestroyTextureData(m_ssaoTexture);
+
+	// 4. Destroy Color/Depth Buffers
+	auto destroyCDBuffer = [DestroyTextureData](ColorDepthBuffer& _cdb) {
+		if (bgfx::isValid(_cdb.m_mainPassFBO)) bgfx::destroy(_cdb.m_mainPassFBO);
+		DestroyTextureData(_cdb.m_mainColorTexture);
+		DestroyTextureData(_cdb.m_mainDepthTexture);
+		_cdb.m_mainPassFBO = BGFX_INVALID_HANDLE;
+		};
+	destroyCDBuffer(mainscene_buffer);
+	destroyCDBuffer(id_buffer);
+
+	// 5. Destroy ID system CPU-readback texture
+	DestroyTextureData(localarea_id_texture_cpu);
+}
+
+
 void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& frameinfo, GraphicsRenderInfo& passinfo)
 {
 	//helper function for drawbatch
@@ -514,10 +562,9 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 
 gbe::gfx::TextureData gbe::gfx::bgfx_gab::ForwardRenderer::ReloadFrame(Vector2Int reso)
 {
+	CleanUp();
+
 	resolution = reso;
-
-	//TODO: Destroy previous buffers
-
 	uint16_t w = (uint16_t)reso.x;
 	uint16_t h = (uint16_t)reso.y;
 

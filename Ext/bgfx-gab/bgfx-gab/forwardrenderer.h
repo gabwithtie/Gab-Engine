@@ -209,8 +209,10 @@ namespace gbe {
 				TextureData ReloadFrame(Vector2Int reso) override;
 				void InitializeAssetRequests() override;
 
+				void CleanUp();
+
 				inline ~ForwardRenderer() {
-					// TODO: Clean up created resources
+					CleanUp();
 				}
 			};
 		}
