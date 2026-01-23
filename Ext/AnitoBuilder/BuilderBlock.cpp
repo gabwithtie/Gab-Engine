@@ -548,15 +548,11 @@ namespace gbe::ext::AnitoBuilder {
 		}
 
 		//SEGMENT MOVING
-		BuilderBlockSet* moved_obj = nullptr;
-		int moved_pos_l = -1;
-		int moved_pos_r = -1;
+		bool moved_any = false;
+		bool valid_move = true; //querry validity across all possible moved handles
 
-		Vector3 updated_l;
-		Vector3 updated_r;
-
-		int moved_s = -1;
-		int moved_i = -1;
+		std::vector<std::pair<int, int>> pos_resets; //queery ResetHandle calls
+		std::vector<std::pair<int, Vector3>> pos_commits; // querry SetPosition calls
 
 		for (size_t s = 0; s < data.sets.size(); s++) {
 			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
@@ -565,94 +561,104 @@ namespace gbe::ext::AnitoBuilder {
 
 				bool moved = this->handle_pool[l.handleindex]->CheckState(Object::ObjectStateName::TRANSFORMED_USER, this);
 
-				if (moved) {
-					moved_obj = this->handle_pool[l.handleindex];
-					UpdateHandleSegment(s, i, updated_l, updated_r);
-					moved_pos_l = l.seg.first;
-					moved_pos_r = l.seg.second;
-					moved_s = s;
-					moved_i = i;
+				if (!moved)
+					continue;
+
+				Vector3 updated_l;
+				Vector3 updated_r;
+
+				BuilderBlockSet* moved_obj = this->handle_pool[l.handleindex];
+				UpdateHandleSegment(s, i, updated_l, updated_r);
+				int moved_pos_l = l.seg.first;
+				int moved_pos_r = l.seg.second;
+				int moved_s = s;
+				int moved_i = i;
+				
+				for (size_t s = 0; s < data.sets.size(); s++) {
+					for (size_t i = 0; i < data.sets[moved_s].segs.size(); i++)
+					{
+						auto& handle = GetHandle(s, i);
+						
+						if (handle_pool[handle.handleindex] == moved_obj)
+							continue;
+
+						if (handle.seg.second == moved_pos_l) {
+							Vector3 other_vec = updated_r;
+
+							if (moved_s != s) {
+								other_vec = data.GetPosition(GetHandle(s, i + 1).seg.second);
+							}
+
+							valid_move = valid_move && CheckSetSegment(updated_l, other_vec, data.GetPosition(handle.seg.first));
+							valid_move = valid_move && CheckSetSegment(data.GetPosition(handle.seg.first), updated_l, data.GetPosition(GetHandle(s, i - 1).seg.first));
+						}
+						if (handle.seg.first == moved_pos_r) {
+							Vector3 other_vec = updated_l;
+
+							if (moved_s != s) {
+								other_vec = data.GetPosition(GetHandle(s, i - 1).seg.first);
+							}
+
+							valid_move = valid_move && CheckSetSegment(updated_r, other_vec, data.GetPosition(handle.seg.second));
+							valid_move = valid_move && CheckSetSegment(data.GetPosition(handle.seg.second), updated_r, data.GetPosition(GetHandle(s, i + 1).seg.second));
+						}
+					}
+				}
+
+				//Prevent flipping
+				auto opp_pos = handle_pool[GetHandle(moved_s, moved_i + 2).handleindex]->Local().position.Get(); //The handle opposite of the moved handle
+				Vector3 opp_dir = opp_pos - moved_obj->Local().position.Get();
+				auto opp_dot = opp_dir.Dot(moved_obj->Local().GetForward());
+				if (opp_dot < 0)
+					valid_move = false;
+
+				if (valid_move) {
+					moved_any = true;
+
+					pos_commits.push_back({ moved_pos_l, updated_l });
+					pos_commits.push_back({ moved_pos_r, updated_r });
+				}
+				else {
+					pos_resets.push_back({ moved_s, moved_i });
 					break;
 				}
 			}
-
-			if (moved_obj != nullptr)
-				break;
 		}
 
-		if (!roof_moved && moved_obj == nullptr) //toggle model back once nothing has moved
+		if (valid_move && moved_any) {
+			
+			if (model_shown) // toggle model off when a handle is moved
+				SetModelShown(false);
+
+			for (const auto& commit : pos_commits)
+			{
+				SetPosition(commit.first, commit.second);
+			}
+
+			//update graphical handles
+			for (size_t s = 0; s < data.sets.size(); s++) {
+				for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+				{
+					auto& l = GetHandle(s, i);
+					ResetHandle(s, i);
+				}
+			}
+		}
+
+		if(!valid_move) {
+			for (const auto& reset : pos_resets)
+			{
+				ResetHandle(reset.first, reset.second);
+			}
+		}
+
+		if (!roof_moved && !moved_any) //toggle model back once nothing has moved
 		{
 			if (!model_shown)
 				SetModelShown(true);
 
 			return; //nothing more to do
 		}
-
-		bool valid_move = true;
-
-		if (model_shown) // toggle model off when a handle is moved
-			SetModelShown(false);
-
-		for (size_t s = 0; s < data.sets.size(); s++) {
-			for (size_t i = 0; i < data.sets[moved_s].segs.size(); i++)
-			{
-				auto& l = GetHandle(s, i);
-
-				if (handle_pool[l.handleindex] == moved_obj)
-					continue;
-
-				if (l.seg.second == moved_pos_l) {
-					Vector3 other_vec = updated_r;
-
-					if (moved_s != s) {
-						other_vec = data.GetPosition(GetHandle(s, i + 1).seg.second);
-					}
-
-					valid_move = valid_move && CheckSetSegment(updated_l, other_vec, data.GetPosition(l.seg.first));
-					valid_move = valid_move && CheckSetSegment(data.GetPosition(l.seg.first), updated_l, data.GetPosition(GetHandle(s, i - 1).seg.first));
-				}
-				if (l.seg.first == moved_pos_r) {
-					Vector3 other_vec = updated_l;
-
-					if (moved_s != s) {
-						other_vec = data.GetPosition(GetHandle(s, i - 1).seg.first);
-					}
-
-					valid_move = valid_move && CheckSetSegment(updated_r, other_vec, data.GetPosition(l.seg.second));
-					valid_move = valid_move && CheckSetSegment(data.GetPosition(l.seg.second), updated_r, data.GetPosition(GetHandle(s, i + 1).seg.second));
-				}
-			}
-		}
-
-		//Prevent flipping
-		auto opp_pos = handle_pool[GetHandle(moved_s, moved_i + 2).handleindex]->Local().position.Get(); //The handle opposite of the moved handle
-		Vector3 opp_dir = opp_pos - moved_obj->Local().position.Get();
-		auto opp_dot = opp_dir.Dot(moved_obj->Local().GetForward());
-		if (opp_dot < 0)
-			valid_move = false;
-
-
-		if (valid_move) {
-			SetPosition(moved_pos_l, updated_l);
-			SetPosition(moved_pos_r, updated_r);
-		}
-		else {
-			ResetHandle(moved_s, moved_i);
-			return;
-		}
-
-		for (size_t s = 0; s < data.sets.size(); s++) {
-			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
-			{
-				auto& l = GetHandle(s, i);
-
-				if (handle_pool[l.handleindex] == moved_obj)
-					continue;
-
-				ResetHandle(s, i);
-			}
-		}
-
 	}
 
 	void BuilderBlock::AddBlock(int root_handle) {

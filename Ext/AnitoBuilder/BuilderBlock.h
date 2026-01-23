@@ -103,7 +103,7 @@ namespace gbe::ext::AnitoBuilder {
 		void ResetRoof(Object* roof, int s, int i);
 		void ResetHandle(int set, int index);
 		void ResetAllHandles();
-		inline void SetPosition(int index, Vector3& newpos) {
+		inline void SetPosition(int index, const Vector3& newpos) {
 			const Vector3& oldpos = data.GetPosition(index);
 
 			Vector3 delta = oldpos - newpos;

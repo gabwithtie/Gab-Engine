@@ -35,6 +35,9 @@ bool gbe::Object::CheckState(ObjectStateName state, void* checker)
 	
 	if (it != this->state_checkers.end())
 	{
+		if (checker == nullptr)
+			return true;
+
 		auto& checkers = it->second;
 
 		auto check_it = std::find(checkers.begin(), checkers.end(), (uint16_t)checker);
