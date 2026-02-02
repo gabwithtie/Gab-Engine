@@ -1,7 +1,7 @@
 # Blender 4.5.3 LTS
 # www.blender.org
-mtllib 1st Floor Wall Segment.mtl
-o Archway.099
+mtllib wallnorm1.mtl
+o Archway.147
 v 0.000000 1.428696 0.117841
 v 0.408510 1.101649 0.117841
 v 0.385358 1.219938 0.117841
