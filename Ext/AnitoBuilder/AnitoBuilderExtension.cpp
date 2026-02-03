@@ -5,6 +5,8 @@
 
 #include <typeinfo>
 
+bool gbe::ext::AnitoBuilder::AnitoBuilderExtension::floor_select = false;
+
 void gbe::ext::AnitoBuilder::AnitoBuilderExtension::OnEngineInitialize()
 {
 	this->extension_windows.push_back(new gbe::editor::AnitoBuilderWindow(this));

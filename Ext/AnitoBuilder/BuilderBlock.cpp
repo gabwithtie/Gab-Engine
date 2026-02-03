@@ -7,6 +7,8 @@
 #include "Asset/gbe_asset.h"
 #include "Math/gbe_math.h"
 
+#include "AnitoBuilderExtension.h"
+
 namespace gbe::ext::AnitoBuilder {
 	void BuilderBlock::LoadAssets()
 	{
@@ -14,9 +16,8 @@ namespace gbe::ext::AnitoBuilder {
 		ceiling_parent = new Object();
 		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_POS_X);
 		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_POS_Z);
-		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT_X);
-		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT_Y);
-		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT_Z);
+		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT);
+		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_SCALE);
 		ceiling_parent->SetParent(this);
 		ceiling_parent->Local().position.Set(Vector3(0, this->height, 0));
 
@@ -243,9 +244,34 @@ namespace gbe::ext::AnitoBuilder {
 					return center_based_x;
 				};
 
-				//MAIN SEGMENTS
+				// 1. Create a cache to store/lookup floor parents
+				std::map<int, Object*> floor_parents;
+
+				// MAIN SEGMENTS
 				for (const auto& obj : handle->Get_all_segs())
 				{
+					int floor_index = handle->Get_floor(obj);
+
+					// --- FLOOR GROUPING LOGIC ---
+					// Check if we already created a parent for this floor, if not, spawn one
+					if (floor_parents.find(floor_index) == floor_parents.end())
+					{
+						Object* floor_group = new Object();
+						floor_group->SetName("Floor_" + std::to_string(floor_index));
+						floor_group->SetParent(handle);
+
+						// Hide the dummy group from direct selection if desired
+						if(!AnitoBuilderExtension::floor_select)
+							floor_group->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
+
+						floor_group->PushEditorFlag(EditorFlags::STATIC_ALL);
+
+						floor_parents[floor_index] = floor_group;
+					}
+
+					Object* current_floor_parent = floor_parents[floor_index];
+					// ----------------------------
+
 					Vector3 pos = obj->World().position.Get();
 					pos -= Vector3(0, handle->Get_height_per_wall() / 2.0f, 0);
 
@@ -253,96 +279,64 @@ namespace gbe::ext::AnitoBuilder {
 					Quaternion flip_rot = Quaternion::Euler(Vector3(0, 180, 0));
 					rot *= flip_rot;
 
-					int floor_index = handle->Get_floor(obj);
 					int row_index = handle->Get_row(obj);
 					int center_based_x = get_center_x(obj);
 
 					RenderObject* newrenderer = [=]()
-					{
+						{
+							// ... [Inside of your lambda remains exactly the same] ...
 							if (handle->Get_allow_special_walls()) {
-								if (can_put_facade) //5x4 walls, minus 1 because the last layer can be pahabol
-								{
+								if (can_put_facade) {
 									int choice_x = center_based_x + 1;
-
-									if (choice_x >= 0 && choice_x < 3 && floor_index < 4)
-									{
-										if (handle->Get_is_backside())
-										{
-											if (floor_index == 0 || floor_index == 3)
-												return new RenderObject(windowwall_DC[0][0]);
-											else if (floor_index < 4)
-												return new RenderObject(windowwall_DC[0][1]);
+									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
+										if (handle->Get_is_backside()) {
+											if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
+											else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
 										}
-
 										return new RenderObject(wall3x4_DC[floor_index][choice_x]);
 									}
-
 									if (choice_x == -1 || choice_x == 3) {
-										if (floor_index == 0 || floor_index == 3)
-											return new RenderObject(windowwall_DC[0][0]);
-										else if (floor_index < 4)
-											return new RenderObject(windowwall_DC[0][1]);
+										if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
+										else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
 									}
 								}
-
-								if (handle->Get_cur_height() >= 3) { //2x3 walls
+								if (handle->Get_cur_height() >= 3) {
 									int choice_x = -1;
 									int interval_x = abs(center_based_x) % 4;
-
-									int interval_choice_0 = 1;
-									int interval_choice_1 = 2;
-
-									if (center_based_x > 0)
-									{
-										//LEFT
-										if (interval_x == interval_choice_0)
-											choice_x = 0;
-										if (interval_x == interval_choice_1)
-											choice_x = 1;
+									if (center_based_x > 0) {
+										if (interval_x == 1) choice_x = 0;
+										if (interval_x == 2) choice_x = 1;
 									}
-									else
-									{
-										//RIGHT
-										if (interval_x == interval_choice_0)
-											choice_x = 1;
-										if (interval_x == interval_choice_1)
-											choice_x = 0;
+									else {
+										if (interval_x == 1) choice_x = 1;
+										if (interval_x == 2) choice_x = 0;
 									}
-
-									if (interval_x == interval_choice_0 && abs(center_based_x) + 2 > (handle->Get_cur_width() / 2)) {
-										choice_x = -1;
-									}
-									if (interval_x == interval_choice_1 && abs(center_based_x) + 1 > (handle->Get_cur_width() / 2)) {
-										choice_x = -1;
-									}
-
-
-									if (choice_x >= 0 && floor_index < 3)
-										return new RenderObject(wall2x3_DC[floor_index][choice_x]);
+									if (interval_x == 1 && abs(center_based_x) + 2 > (handle->Get_cur_width() / 2)) choice_x = -1;
+									if (interval_x == 2 && abs(center_based_x) + 1 > (handle->Get_cur_width() / 2)) choice_x = -1;
+									if (choice_x >= 0 && floor_index < 3) return new RenderObject(wall2x3_DC[floor_index][choice_x]);
 								}
 							}
-
-							if (floor_index == 0)
-								return new RenderObject(wallnorm_DC[0]);
-							if (floor_index > 0)
-								return new RenderObject(wallnorm_DC[1]);
-							
+							if (floor_index == 0) return new RenderObject(wallnorm_DC[0]);
+							if (floor_index > 0) return new RenderObject(wallnorm_DC[1]);
 							return (RenderObject*)nullptr;
 						}();
 
-					newrenderer->SetParent(handle);
-					newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-					display_renderers.push_back(newrenderer);
+					if (newrenderer) {
+						// Parent to the floor group instead of the handle
+						newrenderer->SetParent(current_floor_parent);
+						newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
+						display_renderers.push_back(newrenderer);
 
-					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
-					Vector3 final_scale = Vector3(1);
-					final_scale.x = inv__import_scale.x * (handle->Get_width_per_wall() / 2.0f);
-					final_scale.y = inv__import_scale.y * (handle->Get_height_per_wall());
-					final_scale.z = thickness;
+						auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
+						Vector3 final_scale = Vector3(1);
+						final_scale.x = inv__import_scale.x * (handle->Get_width_per_wall() / 2.0f);
+						final_scale.y = inv__import_scale.y * (handle->Get_height_per_wall());
+						final_scale.z = thickness;
 
-					newrenderer->Local().scale.Set(final_scale);
-					newrenderer->World().position.Set(pos);
-					newrenderer->World().rotation.Set(rot);
+						newrenderer->Local().scale.Set(final_scale);
+						newrenderer->World().position.Set(pos);
+						newrenderer->World().rotation.Set(rot);
+					}
 				}
 
 				//PAHABOL SEGMENTS
