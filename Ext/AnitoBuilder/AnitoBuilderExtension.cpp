@@ -7,7 +7,7 @@
 
 void gbe::ext::AnitoBuilder::AnitoBuilderExtension::OnEngineInitialize()
 {
-	this->extension_windows.push_back(new gbe::editor::AnitoBuilderWindow());
+	this->extension_windows.push_back(new gbe::editor::AnitoBuilderWindow(this));
 
 	gbe::TypeSerializer::RegisterTypeCreator(typeid(gbe::ext::AnitoBuilder::BuilderBlock).name(), [](SerializedObject* data) {return new ext::AnitoBuilder::BuilderBlock(data); });
 }

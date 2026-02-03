@@ -38,14 +38,6 @@ namespace gbe {
 			void AssignSelfAsLoader() override;
 			static TextureData& GetDefaultImage();
 
-			// GetGuiHandle now returns the bgfx handle. The UI layer (e.g., ImGui's bgfx backend) uses this directly.
-			inline static bgfx::TextureHandle GetGuiHandle(TextureData* data) {
-				if (data->gui_initialized == false) {
-					// In a full implementation, you might register this handle with the UI system here.
-					data->gui_initialized = true;
-				}
-				return data->textureHandle;
-			}
 			inline virtual void OnAsyncTaskCompleted(AsyncLoadTask* loadtask) override {
 				//This is a synchronous loader
 			}

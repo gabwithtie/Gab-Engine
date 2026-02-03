@@ -5,6 +5,8 @@
 namespace gbe::ext::AnitoBuilder {
 	class AnitoBuilderExtension : public Extension {
 	public:
+		bool floor_select = false;
+
 		virtual void OnEngineInitialize() override;
 		virtual void OnEngineRunLoopStart() override;
 		virtual void OnEngineRunLoopEnd() override;

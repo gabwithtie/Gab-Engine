@@ -71,8 +71,10 @@ namespace gbe {
 			&lightWindow
 		};
 
+		std::vector<editor::GuiWindow*> external_windows;
+
 	public:
-		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionalwindows);
+		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionals);
 		~Editor();
 		static void OnDeselect(Object* other);
 		static void SelectSingle(Object* other);

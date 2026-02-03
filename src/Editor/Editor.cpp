@@ -20,7 +20,7 @@
 
 gbe::Editor* gbe::Editor::instance = nullptr;
 
-gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionalwindows):
+gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionals):
 	menubar(this->windows),
 
 	spawnWindow(this->selected),
@@ -35,9 +35,10 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	this->mrenderpipeline = renderpipeline;
 	this->mtime = _mtime;
 
-	for (const auto& addwindow : additionalwindows)
+	for (const auto& addwindow : additionals)
 	{
 		this->windows.push_back(addwindow);
+		this->external_windows.push_back(addwindow);
 	}
 
 	//===========================IMGUI=============================//
@@ -328,6 +329,12 @@ void gbe::Editor::PrepareUpdate()
 		ImGui::DockBuilderDockWindow(this->viewportWindow.GetWindowId().c_str(), l);
 		ImGui::DockBuilderDockWindow(this->inspectorwindow.GetWindowId().c_str(), r_u);
 		ImGui::DockBuilderDockWindow(this->lightWindow.GetWindowId().c_str(), r_d);
+
+		for (const auto& ext : this->external_windows)
+		{
+			ext->Set_is_open(true);
+			ImGui::DockBuilderDockWindow(ext->GetWindowId().c_str(), r_d);
+		}
 
 		ImGui::DockBuilderFinish(dockspace_id);
 	}

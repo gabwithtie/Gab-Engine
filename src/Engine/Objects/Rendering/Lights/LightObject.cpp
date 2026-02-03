@@ -88,3 +88,11 @@ void gbe::LightObject::OnExternalTransformationChange(TransformChangeType type, 
 
 	this->changed = true;
 }
+
+void gbe::LightObject::InvokeUpdate(float deltatime)
+{
+	if (Engine::Get_state() == Engine::EngineState::Edit) {
+		const auto& cam = Engine::GetActiveCamera();
+		editor::ViewportWindow::RenderIcon(TextureLoader::GetAssetRuntimeData("lights"), this->World().position.Get(), cam->GetViewMat(), cam->GetProjectionMat());
+	}
+}

@@ -2,7 +2,8 @@
 
 #include "../BuilderBlock.h"
 #include "Editor/Editor.h"
-
+#include "Editor/Gui/Utility/DrawIconSwitch.h"
+#include "../AnitoBuilderExtension.h"
 
 namespace gbe {
 	const std::unordered_map<std::string, std::function<Object* ()>> createfunctions_ext_anitobuilder = {
@@ -26,6 +27,9 @@ namespace gbe {
 
 void gbe::editor::AnitoBuilderWindow::DrawSelf()
 {
+	ImGui::SeparatorText("Selection");
+	DrawIconSwitch("Select Mode ", &this->ext->floor_select, &TextureLoader::GetAssetRuntimeData("face select"), &TextureLoader::GetAssetRuntimeData("floor select"), 30, 100, 1);
+
 	ImGui::SeparatorText("Block Explorer");
 	if (ImGui::BeginTable("BlockTable", 1, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable))
 	{
@@ -61,6 +65,11 @@ void gbe::editor::AnitoBuilderWindow::DrawSelf()
 	if (created_object != nullptr) {
 		created_object->SetParent(Engine::GetCurrentRoot());
 	}
+}
+
+gbe::editor::AnitoBuilderWindow::AnitoBuilderWindow(gbe::ext::AnitoBuilder::AnitoBuilderExtension* _ext)
+{
+	this->ext = _ext;
 }
 
 std::string gbe::editor::AnitoBuilderWindow::GetWindowId()
