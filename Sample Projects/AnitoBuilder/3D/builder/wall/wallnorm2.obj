@@ -1,7 +1,7 @@
 # Blender 4.5.3 LTS
 # www.blender.org
-mtllib 2nd Floor Wall Segment.mtl
-o 2nd_Floor_Wall_Segment.063
+mtllib wallnorm2.mtl
+o 2nd_Floor_Wall_Segment.145
 v 0.598721 0.000000 -1.113280
 v -0.001279 0.000000 -1.113280
 v 0.598721 0.000000 -1.263280
