@@ -50,6 +50,36 @@ namespace gbe {
                 return filename.compare(filename.length() - extension.length(), extension.length(), extension) == 0;
             }
 		public:
+            inline static void GenerateMetafiles(std::filesystem::path directory) {
+                std::vector<fs::path> filepaths;
+                get_all_filepaths(directory, filepaths);
+
+                for (size_t i = 0; i < filepaths.size(); i++)
+                {
+                    const auto& filepath = filepaths[i];
+                    const auto& directory = filepath.parent_path();
+                    const auto& filename_ext = filepath.filename().string();
+                    const auto& filename_only = filepath.stem().string();
+                    
+                    if (is_file_extension(filename_ext, ".obj")) {
+                        auto newdata = asset::data::MeshImportData{
+                            .path = filename_ext
+                        };
+                        const auto& meta_filename = filename_only + ".obj.gbe";
+
+                        asset::serialization::gbeParser::ExportClass(newdata, directory / meta_filename);
+                    }
+                    if (is_file_extension(filename_ext, ".png")) {
+                        auto newdata = asset::data::TextureImportData{
+                            .path = filename_ext
+                        };
+                        const auto& meta_filename = filename_only + ".img.gbe";
+
+                        asset::serialization::gbeParser::ExportClass(newdata, directory / meta_filename);
+                    }
+                }
+            }
+
 			inline static void LoadAssetsFromDirectory(std::filesystem::path directory) {
 				std::vector<fs::path> filepaths;
                 get_all_filepaths(directory, filepaths);

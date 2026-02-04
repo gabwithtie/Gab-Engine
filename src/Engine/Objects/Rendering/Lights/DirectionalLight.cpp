@@ -21,7 +21,7 @@ gfx::Light* gbe::DirectionalLight::GetData()
     return &this->mLight;
 }
 
-void gbe::DirectionalLight::InitializeInspectorData()
+void gbe::DirectionalLight::GeneralInit()
 {
 	this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
 
@@ -35,7 +35,7 @@ void gbe::DirectionalLight::InitializeInspectorData()
 		dirlight_gizmo->Local().scale.Set(Vector3(0.2, 0.2, -1.0f));
 	}
 
-	LightObject::InitializeInspectorData();
+	LightObject::GeneralInit();
 
 	//INSPECTOR
 	auto backtrack_field = new gbe::editor::InspectorFloat();

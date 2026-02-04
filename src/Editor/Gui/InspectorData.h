@@ -18,36 +18,12 @@ namespace gbe {
 				COLOR,
 				BOOLEAN,
 				FUNCTION,
-				ASSET
+				CHOICE
 			};
 			
+			std::function<void()> onchange;
 			std::string name;
 			FieldType fieldtype;
-		};
-
-		struct InspectorAsset_base : public InspectorField {
-			std::function<std::vector<gbe::asset::internal::BaseAsset_base*>()> _getter;
-			gbe::asset::internal::BaseAsset_base** choice;
-			std::string choice_label = "NULL";
-
-			std::vector<gbe::asset::internal::BaseAsset_base*> GetChoices() {
-				return _getter();
-			}
-
-			InspectorAsset_base() {
-				this->fieldtype = FieldType::ASSET;
-			}
-		};
-
-		template<class TAssetLoader, class TAsset>
-		struct InspectorAsset : public InspectorAsset_base {
-			TAssetLoader* loader;
-
-			InspectorAsset() {
-				this->_getter = [this]() {
-					return this->loader->GetAssetList();
-					};
-			}
 		};
 
 		struct InspectorVec3 : public InspectorField {
@@ -72,8 +48,7 @@ namespace gbe {
 
 		struct InspectorFloat : public InspectorField {
 			float* x = nullptr;
-			std::function<void()> onchange;
-
+			
 			InspectorFloat() {
 				this->fieldtype = FieldType::FLOAT;
 			}
@@ -100,6 +75,15 @@ namespace gbe {
 
 			InspectorButton() {
 				this->fieldtype = FieldType::FUNCTION;
+			}
+		};
+
+		struct InspectorChoice : public InspectorField {
+			int* index;
+			std::vector<std::string> *labels;
+
+			InspectorChoice() {
+				this->fieldtype = FieldType::CHOICE;
 			}
 		};
 

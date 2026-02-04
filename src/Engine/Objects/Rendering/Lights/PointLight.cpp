@@ -20,9 +20,9 @@ gbe::gfx::Light* gbe::PointLight::GetData()
     return &this->mLight;
 }
 
-void gbe::PointLight::InitializeInspectorData()
+void gbe::PointLight::GeneralInit()
 {
-    LightObject::InitializeInspectorData();
+    LightObject::GeneralInit();
 
     this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
 

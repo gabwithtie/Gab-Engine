@@ -27,7 +27,7 @@ namespace gbe {
 			mLight.cam_view = old_cam_view;
 			mLight.cam_proj = old_cam_proj;
 		}
-		void InitializeInspectorData() override;
+		void GeneralInit() override;
 		SerializedObject Serialize() override;
 
 		LightObject();

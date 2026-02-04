@@ -7,16 +7,16 @@ namespace gbe {
 	public:
 		inline DirectionalLight()
 		{
-			InitializeInspectorData();
+			GeneralInit();
 		}
 
 		inline DirectionalLight(SerializedObject* data) : LightObject(data)
 		{
-			InitializeInspectorData();
+			GeneralInit();
 		}
 		
 		// Inherited via Light
 		virtual gfx::Light* GetData() override;
-		void InitializeInspectorData() override;
+		void GeneralInit() override;
 	};
 }

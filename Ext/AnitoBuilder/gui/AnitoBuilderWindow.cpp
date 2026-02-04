@@ -28,7 +28,18 @@ namespace gbe {
 void gbe::editor::AnitoBuilderWindow::DrawSelf()
 {
 	ImGui::SeparatorText("Selection");
-	DrawIconSwitch("Select Mode ", &this->ext->floor_select, &TextureLoader::GetAssetRuntimeData("face select"), &TextureLoader::GetAssetRuntimeData("floor select"), 30, 100, 1);
+
+	if (DrawIconSwitch("Select Mode ", &this->ext->floor_select, &TextureLoader::GetAssetRuntimeData("face select"), &TextureLoader::GetAssetRuntimeData("floor select"), 30, 100, 1)) {
+		Engine::GetCurrentRoot()->CallRecursively([](Object* obj) {
+			ext::AnitoBuilder::BuilderBlock* blockobject = nullptr;
+			blockobject = dynamic_cast<ext::AnitoBuilder::BuilderBlock*>(obj);
+
+			if (blockobject == nullptr)
+				return;
+
+			blockobject->Refresh();
+			});
+	}
 
 	ImGui::SeparatorText("Block Explorer");
 	if (ImGui::BeginTable("BlockTable", 1, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable))

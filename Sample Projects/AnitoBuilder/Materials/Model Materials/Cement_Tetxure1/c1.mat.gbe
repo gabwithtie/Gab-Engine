@@ -31,19 +31,19 @@
 		{
 			"id": "color_tex",
 			"type": "texture",
-			"value_tex": "plaster_a",
+			"value_tex": "c1_a",
 			"tex_stage": 1
 		},
 		{
 			"id": "arm_tex",
 			"type": "texture",
-			"value_tex": "plaster_arm",
+			"value_tex": "Plaster_ARM",
 			"tex_stage": 3
 		},
 		{
 			"id": "normal_tex",
 			"type": "texture",
-			"value_tex": "plaster_n",
+			"value_tex": "Plaster_Normal",
 			"tex_stage": 2
 		}
 	]

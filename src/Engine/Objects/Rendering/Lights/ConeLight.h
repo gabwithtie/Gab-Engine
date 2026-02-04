@@ -6,12 +6,12 @@ namespace gbe {
 	class ConeLight : public gbe::LightObject {
 	public:
 		inline ConeLight() {
-			InitializeInspectorData();
+			GeneralInit();
 		}
 		inline ConeLight(SerializedObject* data) : LightObject(data) {
-			InitializeInspectorData();
+			GeneralInit();
 		}
-		void InitializeInspectorData() override;
+		void GeneralInit() override;
 		// Inherited via Light
 		virtual gfx::Light* GetData() override;
 	};

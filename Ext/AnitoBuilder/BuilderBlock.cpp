@@ -2,7 +2,8 @@
 
 #include <vector>
 
-#include "BuilderBlockSet.h"
+#include "BuilderBlockFace.h"
+#include "BuilderBlockRow.h"
 #include "Graphics/gbe_graphics.h"
 #include "Asset/gbe_asset.h"
 #include "Math/gbe_math.h"
@@ -82,34 +83,26 @@ namespace gbe::ext::AnitoBuilder {
 
 		AddBlock(corner_ptrs);
 
-		InitializeInspectorData();
+		GeneralInit();
 
 		this->SetModelShown(true);
 		this->UpdateModelShown();
 	}
 
-	void BuilderBlock::InitializeInspectorData()
+	void BuilderBlock::GeneralInit()
 	{
-		Object::InitializeInspectorData();
+		Object::GeneralInit();
 
 		this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
 
 		//INSPECTOR
 		{
 			auto field = new gbe::editor::InspectorFloat();
-			field->name = "Height";
-			field->x = &this->height;
-			field->onchange = [=]() {
-				if(!model_shown)
-					this->ResetAllHandles();
-				};
-
-			this->inspectorData->fields.push_back(field);
-		}
-		{
-			auto field = new gbe::editor::InspectorFloat();
 			field->name = "segment_max_width";
 			field->x = &this->wall_max_width;
+			field->onchange = [=]() {
+				Refresh();
+				};
 
 			this->inspectorData->fields.push_back(field);
 		}
@@ -117,6 +110,9 @@ namespace gbe::ext::AnitoBuilder {
 			auto field = new gbe::editor::InspectorFloat();
 			field->name = "segment_max_height";
 			field->x = &this->wall_max_height;
+			field->onchange = [=]() {
+				Refresh();
+				};
 
 			this->inspectorData->fields.push_back(field);
 		}
@@ -124,6 +120,9 @@ namespace gbe::ext::AnitoBuilder {
 			auto field = new gbe::editor::InspectorFloat();
 			field->name = "segment_depth";
 			field->x = &this->thickness;
+			field->onchange = [=]() {
+				Refresh();
+				};
 
 			this->inspectorData->fields.push_back(field);
 		}
@@ -188,7 +187,7 @@ namespace gbe::ext::AnitoBuilder {
 			}
 		}
 
-		InitializeInspectorData();
+		GeneralInit();
 		
 		this->SetModelShown(true);
 		this->UpdateModelShown();
@@ -222,7 +221,7 @@ namespace gbe::ext::AnitoBuilder {
 		}
 
 		if (model_shown) {
-			for (const auto& handle : this->handle_pool)
+			for (auto& handle : this->handle_pool)
 			{
 				if (!handle->Get_is_edge())
 					continue;
@@ -245,7 +244,7 @@ namespace gbe::ext::AnitoBuilder {
 				};
 
 				// 1. Create a cache to store/lookup floor parents
-				std::map<int, Object*> floor_parents;
+				std::map<int, BuilderBlockRow*> floor_parents;
 
 				// MAIN SEGMENTS
 				for (const auto& obj : handle->Get_all_segs())
@@ -256,7 +255,7 @@ namespace gbe::ext::AnitoBuilder {
 					// Check if we already created a parent for this floor, if not, spawn one
 					if (floor_parents.find(floor_index) == floor_parents.end())
 					{
-						Object* floor_group = new Object();
+						BuilderBlockRow* floor_group = new BuilderBlockRow(this, handle, floor_index);
 						floor_group->SetName("Floor_" + std::to_string(floor_index));
 						floor_group->SetParent(handle);
 
@@ -282,7 +281,7 @@ namespace gbe::ext::AnitoBuilder {
 					int row_index = handle->Get_row(obj);
 					int center_based_x = get_center_x(obj);
 
-					RenderObject* newrenderer = [=]()
+					RenderObject* newrenderer = [=, &floor_parents]()
 						{
 							// ... [Inside of your lambda remains exactly the same] ...
 							if (handle->Get_allow_special_walls()) {
@@ -317,7 +316,15 @@ namespace gbe::ext::AnitoBuilder {
 								}
 							}
 							if (floor_index == 0) return new RenderObject(wallnorm_DC[0]);
-							if (floor_index > 0) return new RenderObject(wallnorm_DC[1]);
+							if (floor_index > 0)
+							{
+								auto overrideDC = floor_parents[floor_index]->GetOverrideDrawCall();
+
+								if(overrideDC == nullptr)
+									return new RenderObject(wallnorm_DC[1]);
+								
+								return new RenderObject(overrideDC);
+							}
 							return (RenderObject*)nullptr;
 						}();
 
@@ -561,7 +568,7 @@ namespace gbe::ext::AnitoBuilder {
 				Vector3 updated_l;
 				Vector3 updated_r;
 
-				BuilderBlockSet* moved_obj = this->handle_pool[l.handleindex];
+				BuilderBlockFace* moved_obj = this->handle_pool[l.handleindex];
 				UpdateHandleSegment(s, i, updated_l, updated_r);
 				int moved_pos_l = l.seg.first;
 				int moved_pos_r = l.seg.second;
@@ -723,7 +730,7 @@ namespace gbe::ext::AnitoBuilder {
 		{
 			const auto& src_seg = src_segments[i];
 
-			auto handle = new BuilderBlockSet(this);
+			auto handle = new BuilderBlockFace(this);
 			
 			handle_pool.push_back(handle);
 			handle->SetParent(this);
@@ -759,6 +766,6 @@ namespace gbe::ext::AnitoBuilder {
 
 		this->roof_pool.push_back(newset_roof);
 
-		ResetAllHandles();
+		Refresh();
 	}
 }

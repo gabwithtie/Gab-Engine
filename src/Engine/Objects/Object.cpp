@@ -95,7 +95,7 @@ void gbe::Object::OnExternalTransformationChange(TransformChangeType changetype,
 	}
 }
 
-void gbe::Object::General_init()
+void gbe::Object::GeneralInit()
 {
 	//TRANSFORM
 	this->parent_matrix = Matrix4(1.0f);
@@ -136,7 +136,8 @@ void gbe::Object::General_init()
 		this->Local().rotation.Set(new_local_rot);
 		});
 
-	this->InitializeInspectorData();
+	//INSPECTOR
+	this->inspectorData = new editor::InspectorData();
 
 	this->id = next_avail_id;
 	next_avail_id++;
@@ -147,11 +148,7 @@ gbe::Object::Object():
 	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
 	world()
 {
-	General_init();
-}
-
-void gbe::Object::InitializeInspectorData() {
-	this->inspectorData = new editor::InspectorData();
+	GeneralInit();
 }
 
 gbe::Object::~Object(){
@@ -322,7 +319,7 @@ gbe::Object::Object(gbe::SerializedObject* data, bool load_children):
 	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
 	world([](TransformChangeType type) {}) 
 {
-	General_init();
+	GeneralInit();
 
 	this->local.position.Set(Vector3(data->local_position[0], data->local_position[1], data->local_position[2]));
 	this->local.scale.Set(Vector3(data->local_scale[0], data->local_scale[1], data->local_scale[2]));

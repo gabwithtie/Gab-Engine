@@ -18,7 +18,10 @@ static void imageReleaseCallback(void* _ptr, void* _userData) {
 }
 
 gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* loaddata) {
-    const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.filename;
+    if (importdata.path.size() == 0)
+        return {};
+    
+    const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.path;
     std::string path = pathstr.string();
 
     bimg::ImageContainer* imageContainer = imageLoad(pathstr.string().c_str(), bgfx::TextureFormat::Count);

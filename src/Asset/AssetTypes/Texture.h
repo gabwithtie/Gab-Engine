@@ -9,7 +9,7 @@ namespace gbe {
 		namespace data {
 			struct TextureImportData
 			{
-				std::string filename;
+				std::string path;
 				std::string type;
 			};
 			struct TextureLoadData {

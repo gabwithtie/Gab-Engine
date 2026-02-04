@@ -45,9 +45,9 @@ gbe::LightObject::LightObject(SerializedObject* data) : Object(data)
 	mLight.bias_mult = std::stof(data->serialized_variables["bias_mult"]);
 }
 
-void gbe::LightObject::InitializeInspectorData()
+void gbe::LightObject::GeneralInit()
 {
-	Object::InitializeInspectorData();
+	Object::GeneralInit();
 
 	auto lightcolor = new gbe::editor::InspectorColor();
 	lightcolor->name = "Color";

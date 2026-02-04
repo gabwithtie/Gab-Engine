@@ -1,0 +1,2061 @@
+# File produced by Open Asset Import Library (http://www.assimp.sf.net)
+# (assimp v5.4.0)
+
+newmtl Material_0
+illum 1
+
+newmtl Material_1
+illum 1
+
+newmtl Material_2
+illum 1
+
+newmtl Material_3
+illum 1
+
+newmtl Material_4
+illum 1
+
+newmtl Material_5
+illum 1
+
+newmtl Material_6
+illum 1
+
+newmtl Material_7
+illum 1
+
+newmtl Material_8
+illum 1
+
+newmtl Material_9
+illum 1
+
+newmtl Material_10
+illum 1
+
+newmtl Material_11
+illum 1
+
+newmtl Material_12
+illum 1
+
+newmtl Material_13
+illum 1
+
+newmtl Material_14
+illum 1
+
+newmtl Material_15
+illum 1
+
+newmtl Material_16
+illum 1
+
+newmtl Material_17
+illum 1
+
+newmtl Material_18
+illum 1
+
+newmtl Material_19
+illum 1
+
+newmtl Material_20
+illum 1
+
+newmtl Material_21
+illum 1
+
+newmtl Material_22
+illum 1
+
+newmtl Material_23
+illum 1
+
+newmtl Material_24
+illum 1
+
+newmtl Material_25
+illum 1
+
+newmtl Material_26
+illum 1
+
+newmtl Material_27
+illum 1
+
+newmtl Material_28
+illum 1
+
+newmtl Material_29
+illum 1
+
+newmtl Material_30
+illum 1
+
+newmtl Material_31
+illum 1
+
+newmtl Material_32
+illum 1
+
+newmtl Material_33
+illum 1
+
+newmtl Material_34
+illum 1
+
+newmtl Material_35
+illum 1
+
+newmtl Material_36
+illum 1
+
+newmtl Material_37
+illum 1
+
+newmtl Material_38
+illum 1
+
+newmtl Material_39
+illum 1
+
+newmtl Material_40
+illum 1
+
+newmtl Material_41
+illum 1
+
+newmtl Material_42
+illum 1
+
+newmtl Material_43
+illum 1
+
+newmtl Material_44
+illum 1
+
+newmtl Material_45
+illum 1
+
+newmtl Material_46
+illum 1
+
+newmtl Material_47
+illum 1
+
+newmtl Material_48
+illum 1
+
+newmtl Material_49
+illum 1
+
+newmtl Material_50
+illum 1
+
+newmtl Material_51
+illum 1
+
+newmtl Material_52
+illum 1
+
+newmtl Material_53
+illum 1
+
+newmtl Material_54
+illum 1
+
+newmtl Material_55
+illum 1
+
+newmtl Material_56
+illum 1
+
+newmtl Material_57
+illum 1
+
+newmtl Material_58
+illum 1
+
+newmtl Material_59
+illum 1
+
+newmtl Material_60
+illum 1
+
+newmtl Material_61
+illum 1
+
+newmtl Material_62
+illum 1
+
+newmtl Material_63
+illum 1
+
+newmtl Material_64
+illum 1
+
+newmtl Material_65
+illum 1
+
+newmtl Material_66
+illum 1
+
+newmtl Material_67
+illum 1
+
+newmtl Material_68
+illum 1
+
+newmtl Material_69
+illum 1
+
+newmtl Material_70
+illum 1
+
+newmtl Material_71
+illum 1
+
+newmtl Material_72
+illum 1
+
+newmtl Material_73
+illum 1
+
+newmtl Material_74
+illum 1
+
+newmtl Material_75
+illum 1
+
+newmtl Material_76
+illum 1
+
+newmtl Material_77
+illum 1
+
+newmtl Material_78
+illum 1
+
+newmtl Material_79
+illum 1
+
+newmtl Material_80
+illum 1
+
+newmtl Material_81
+illum 1
+
+newmtl Material_82
+illum 1
+
+newmtl Material_83
+illum 1
+
+newmtl Material_84
+illum 1
+
+newmtl Material_85
+illum 1
+
+newmtl Material_86
+illum 1
+
+newmtl Material_87
+illum 1
+
+newmtl Material_88
+illum 1
+
+newmtl Material_89
+illum 1
+
+newmtl Material_90
+illum 1
+
+newmtl Material_91
+illum 1
+
+newmtl Material_92
+illum 1
+
+newmtl Material_93
+illum 1
+
+newmtl Material_94
+illum 1
+
+newmtl Material_95
+illum 1
+
+newmtl Material_96
+illum 1
+
+newmtl Material_97
+illum 1
+
+newmtl Material_98
+illum 1
+
+newmtl Material_99
+illum 1
+
+newmtl Material_100
+illum 1
+
+newmtl Material_101
+illum 1
+
+newmtl Material_102
+illum 1
+
+newmtl Material_103
+illum 1
+
+newmtl Material_104
+illum 1
+
+newmtl Material_105
+illum 1
+
+newmtl Material_106
+illum 1
+
+newmtl Material_107
+illum 1
+
+newmtl Material_108
+illum 1
+
+newmtl Material_109
+illum 1
+
+newmtl Material_110
+illum 1
+
+newmtl Material_111
+illum 1
+
+newmtl Material_112
+illum 1
+
+newmtl Material_113
+illum 1
+
+newmtl Material_114
+illum 1
+
+newmtl Material_115
+illum 1
+
+newmtl Material_116
+illum 1
+
+newmtl Material_117
+illum 1
+
+newmtl Material_118
+illum 1
+
+newmtl Material_119
+illum 1
+
+newmtl Material_120
+illum 1
+
+newmtl Material_121
+illum 1
+
+newmtl Material_122
+illum 1
+
+newmtl Material_123
+illum 1
+
+newmtl Material_124
+illum 1
+
+newmtl Material_125
+illum 1
+
+newmtl Material_126
+illum 1
+
+newmtl Material_127
+illum 1
+
+newmtl Material_128
+illum 1
+
+newmtl Material_129
+illum 1
+
+newmtl Material_130
+illum 1
+
+newmtl Material_131
+illum 1
+
+newmtl Material_132
+illum 1
+
+newmtl Material_133
+illum 1
+
+newmtl Material_134
+illum 1
+
+newmtl Material_135
+illum 1
+
+newmtl Material_136
+illum 1
+
+newmtl Material_137
+illum 1
+
+newmtl Material_138
+illum 1
+
+newmtl Material_139
+illum 1
+
+newmtl Material_140
+illum 1
+
+newmtl Material_141
+illum 1
+
+newmtl Material_142
+illum 1
+
+newmtl Material_143
+illum 1
+
+newmtl Material_144
+illum 1
+
+newmtl Material_145
+illum 1
+
+newmtl Material_146
+illum 1
+
+newmtl Material_147
+illum 1
+
+newmtl Material_148
+illum 1
+
+newmtl Material_149
+illum 1
+
+newmtl Material_150
+illum 1
+
+newmtl Material_151
+illum 1
+
+newmtl Material_152
+illum 1
+
+newmtl Material_153
+illum 1
+
+newmtl Material_154
+illum 1
+
+newmtl Material_155
+illum 1
+
+newmtl Material_156
+illum 1
+
+newmtl Material_157
+illum 1
+
+newmtl Material_158
+illum 1
+
+newmtl Material_159
+illum 1
+
+newmtl Material_160
+illum 1
+
+newmtl Material_161
+illum 1
+
+newmtl Material_162
+illum 1
+
+newmtl Material_163
+illum 1
+
+newmtl Material_164
+illum 1
+
+newmtl Material_165
+illum 1
+
+newmtl Material_166
+illum 1
+
+newmtl Material_167
+illum 1
+
+newmtl Material_168
+illum 1
+
+newmtl Material_169
+illum 1
+
+newmtl Material_170
+illum 1
+
+newmtl Material_171
+illum 1
+
+newmtl Material_172
+illum 1
+
+newmtl Material_173
+illum 1
+
+newmtl Material_174
+illum 1
+
+newmtl Material_175
+illum 1
+
+newmtl Material_176
+illum 1
+
+newmtl Material_177
+illum 1
+
+newmtl Material_178
+illum 1
+
+newmtl Material_179
+illum 1
+
+newmtl Material_180
+illum 1
+
+newmtl Material_181
+illum 1
+
+newmtl Material_182
+illum 1
+
+newmtl Material_183
+illum 1
+
+newmtl Material_184
+illum 1
+
+newmtl Material_185
+illum 1
+
+newmtl Material_186
+illum 1
+
+newmtl Material_187
+illum 1
+
+newmtl Material_188
+illum 1
+
+newmtl Material_189
+illum 1
+
+newmtl Material_190
+illum 1
+
+newmtl Material_191
+illum 1
+
+newmtl Material_192
+illum 1
+
+newmtl Material_193
+illum 1
+
+newmtl Material_194
+illum 1
+
+newmtl Material_195
+illum 1
+
+newmtl Material_196
+illum 1
+
+newmtl Material_197
+illum 1
+
+newmtl Material_198
+illum 1
+
+newmtl Material_199
+illum 1
+
+newmtl Material_200
+illum 1
+
+newmtl Material_201
+illum 1
+
+newmtl Material_202
+illum 1
+
+newmtl Material_203
+illum 1
+
+newmtl Material_204
+illum 1
+
+newmtl Material_205
+illum 1
+
+newmtl Material_206
+illum 1
+
+newmtl Material_207
+illum 1
+
+newmtl Material_208
+illum 1
+
+newmtl Material_209
+illum 1
+
+newmtl Material_210
+illum 1
+
+newmtl Material_211
+illum 1
+
+newmtl Material_212
+illum 1
+
+newmtl Material_213
+illum 1
+
+newmtl Material_214
+illum 1
+
+newmtl Material_215
+illum 1
+
+newmtl Material_216
+illum 1
+
+newmtl Material_217
+illum 1
+
+newmtl Material_218
+illum 1
+
+newmtl Material_219
+illum 1
+
+newmtl Material_220
+illum 1
+
+newmtl Material_221
+illum 1
+
+newmtl Material_222
+illum 1
+
+newmtl Material_223
+illum 1
+
+newmtl Material_224
+illum 1
+
+newmtl Material_225
+illum 1
+
+newmtl Material_226
+illum 1
+
+newmtl Material_227
+illum 1
+
+newmtl Material_228
+illum 1
+
+newmtl Material_229
+illum 1
+
+newmtl Material_230
+illum 1
+
+newmtl Material_231
+illum 1
+
+newmtl Material_232
+illum 1
+
+newmtl Material_233
+illum 1
+
+newmtl Material_234
+illum 1
+
+newmtl Material_235
+illum 1
+
+newmtl Material_236
+illum 1
+
+newmtl Material_237
+illum 1
+
+newmtl Material_238
+illum 1
+
+newmtl Material_239
+illum 1
+
+newmtl Material_240
+illum 1
+
+newmtl Material_241
+illum 1
+
+newmtl Material_242
+illum 1
+
+newmtl Material_243
+illum 1
+
+newmtl Material_244
+illum 1
+
+newmtl Material_245
+illum 1
+
+newmtl Material_246
+illum 1
+
+newmtl Material_247
+illum 1
+
+newmtl Material_248
+illum 1
+
+newmtl Material_249
+illum 1
+
+newmtl Material_250
+illum 1
+
+newmtl Material_251
+illum 1
+
+newmtl Material_252
+illum 1
+
+newmtl Material_253
+illum 1
+
+newmtl Material_254
+illum 1
+
+newmtl Material_255
+illum 1
+
+newmtl Material_256
+illum 1
+
+newmtl Material_257
+illum 1
+
+newmtl Material_258
+illum 1
+
+newmtl Material_259
+illum 1
+
+newmtl Material_260
+illum 1
+
+newmtl Material_261
+illum 1
+
+newmtl Material_262
+illum 1
+
+newmtl Material_263
+illum 1
+
+newmtl Material_264
+illum 1
+
+newmtl Material_265
+illum 1
+
+newmtl Material_266
+illum 1
+
+newmtl Material_267
+illum 1
+
+newmtl Material_268
+illum 1
+
+newmtl Material_269
+illum 1
+
+newmtl Material_270
+illum 1
+
+newmtl Material_271
+illum 1
+
+newmtl Material_272
+illum 1
+
+newmtl Material_273
+illum 1
+
+newmtl Material_274
+illum 1
+
+newmtl Material_275
+illum 1
+
+newmtl Material_276
+illum 1
+
+newmtl Material_277
+illum 1
+
+newmtl Material_278
+illum 1
+
+newmtl Material_279
+illum 1
+
+newmtl Material_280
+illum 1
+
+newmtl Material_281
+illum 1
+
+newmtl Material_282
+illum 1
+
+newmtl Material_283
+illum 1
+
+newmtl Material_284
+illum 1
+
+newmtl Material_285
+illum 1
+
+newmtl Material_286
+illum 1
+
+newmtl Material_287
+illum 1
+
+newmtl Material_288
+illum 1
+
+newmtl Material_289
+illum 1
+
+newmtl Material_290
+illum 1
+
+newmtl Material_291
+illum 1
+
+newmtl Material_292
+illum 1
+
+newmtl Material_293
+illum 1
+
+newmtl Material_294
+illum 1
+
+newmtl Material_295
+illum 1
+
+newmtl Material_296
+illum 1
+
+newmtl Material_297
+illum 1
+
+newmtl Material_298
+illum 1
+
+newmtl Material_299
+illum 1
+
+newmtl Material_300
+illum 1
+
+newmtl Material_301
+illum 1
+
+newmtl Material_302
+illum 1
+
+newmtl Material_303
+illum 1
+
+newmtl Material_304
+illum 1
+
+newmtl Material_305
+illum 1
+
+newmtl Material_306
+illum 1
+
+newmtl Material_307
+illum 1
+
+newmtl Material_308
+illum 1
+
+newmtl Material_309
+illum 1
+
+newmtl Material_310
+illum 1
+
+newmtl Material_311
+illum 1
+
+newmtl Material_312
+illum 1
+
+newmtl Material_313
+illum 1
+
+newmtl Material_314
+illum 1
+
+newmtl Material_315
+illum 1
+
+newmtl Material_316
+illum 1
+
+newmtl Material_317
+illum 1
+
+newmtl Material_318
+illum 1
+
+newmtl Material_319
+illum 1
+
+newmtl Material_320
+illum 1
+
+newmtl Material_321
+illum 1
+
+newmtl Material_322
+illum 1
+
+newmtl Material_323
+illum 1
+
+newmtl Material_324
+illum 1
+
+newmtl Material_325
+illum 1
+
+newmtl Material_326
+illum 1
+
+newmtl Material_327
+illum 1
+
+newmtl Material_328
+illum 1
+
+newmtl Material_329
+illum 1
+
+newmtl Material_330
+illum 1
+
+newmtl Material_331
+illum 1
+
+newmtl Material_332
+illum 1
+
+newmtl Material_333
+illum 1
+
+newmtl Material_334
+illum 1
+
+newmtl Material_335
+illum 1
+
+newmtl Material_336
+illum 1
+
+newmtl Material_337
+illum 1
+
+newmtl Material_338
+illum 1
+
+newmtl Material_339
+illum 1
+
+newmtl Material_340
+illum 1
+
+newmtl Material_341
+illum 1
+
+newmtl Material_342
+illum 1
+
+newmtl Material_343
+illum 1
+
+newmtl Material_344
+illum 1
+
+newmtl Material_345
+illum 1
+
+newmtl Material_346
+illum 1
+
+newmtl Material_347
+illum 1
+
+newmtl Material_348
+illum 1
+
+newmtl Material_349
+illum 1
+
+newmtl Material_350
+illum 1
+
+newmtl Material_351
+illum 1
+
+newmtl Material_352
+illum 1
+
+newmtl Material_353
+illum 1
+
+newmtl Material_354
+illum 1
+
+newmtl Material_355
+illum 1
+
+newmtl Material_356
+illum 1
+
+newmtl Material_357
+illum 1
+
+newmtl Material_358
+illum 1
+
+newmtl Material_359
+illum 1
+
+newmtl Material_360
+illum 1
+
+newmtl Material_361
+illum 1
+
+newmtl Material_362
+illum 1
+
+newmtl Material_363
+illum 1
+
+newmtl Material_364
+illum 1
+
+newmtl Material_365
+illum 1
+
+newmtl Material_366
+illum 1
+
+newmtl Material_367
+illum 1
+
+newmtl Material_368
+illum 1
+
+newmtl Material_369
+illum 1
+
+newmtl Material_370
+illum 1
+
+newmtl Material_371
+illum 1
+
+newmtl Material_372
+illum 1
+
+newmtl Material_373
+illum 1
+
+newmtl Material_374
+illum 1
+
+newmtl Material_375
+illum 1
+
+newmtl Material_376
+illum 1
+
+newmtl Material_377
+illum 1
+
+newmtl Material_378
+illum 1
+
+newmtl Material_379
+illum 1
+
+newmtl Material_380
+illum 1
+
+newmtl Material_381
+illum 1
+
+newmtl Material_382
+illum 1
+
+newmtl Material_383
+illum 1
+
+newmtl Material_384
+illum 1
+
+newmtl Material_385
+illum 1
+
+newmtl Material_386
+illum 1
+
+newmtl Material_387
+illum 1
+
+newmtl Material_388
+illum 1
+
+newmtl Material_389
+illum 1
+
+newmtl Material_390
+illum 1
+
+newmtl Material_391
+illum 1
+
+newmtl Material_392
+illum 1
+
+newmtl Material_393
+illum 1
+
+newmtl Material_394
+illum 1
+
+newmtl Material_395
+illum 1
+
+newmtl Material_396
+illum 1
+
+newmtl Material_397
+illum 1
+
+newmtl Material_398
+illum 1
+
+newmtl Material_399
+illum 1
+
+newmtl Material_400
+illum 1
+
+newmtl Material_401
+illum 1
+
+newmtl Material_402
+illum 1
+
+newmtl Material_403
+illum 1
+
+newmtl Material_404
+illum 1
+
+newmtl Material_405
+illum 1
+
+newmtl Material_406
+illum 1
+
+newmtl Material_407
+illum 1
+
+newmtl Material_408
+illum 1
+
+newmtl Material_409
+illum 1
+
+newmtl Material_410
+illum 1
+
+newmtl Material_411
+illum 1
+
+newmtl Material_412
+illum 1
+
+newmtl Material_413
+illum 1
+
+newmtl Material_414
+illum 1
+
+newmtl Material_415
+illum 1
+
+newmtl Material_416
+illum 1
+
+newmtl Material_417
+illum 1
+
+newmtl Material_418
+illum 1
+
+newmtl Material_419
+illum 1
+
+newmtl Material_420
+illum 1
+
+newmtl Material_421
+illum 1
+
+newmtl Material_422
+illum 1
+
+newmtl Material_423
+illum 1
+
+newmtl Material_424
+illum 1
+
+newmtl Material_425
+illum 1
+
+newmtl Material_426
+illum 1
+
+newmtl Material_427
+illum 1
+
+newmtl Material_428
+illum 1
+
+newmtl Material_429
+illum 1
+
+newmtl Material_430
+illum 1
+
+newmtl Material_431
+illum 1
+
+newmtl Material_432
+illum 1
+
+newmtl Material_433
+illum 1
+
+newmtl Material_434
+illum 1
+
+newmtl Material_435
+illum 1
+
+newmtl Material_436
+illum 1
+
+newmtl Material_437
+illum 1
+
+newmtl Material_438
+illum 1
+
+newmtl Material_439
+illum 1
+
+newmtl Material_440
+illum 1
+
+newmtl Material_441
+illum 1
+
+newmtl Material_442
+illum 1
+
+newmtl Material_443
+illum 1
+
+newmtl Material_444
+illum 1
+
+newmtl Material_445
+illum 1
+
+newmtl Material_446
+illum 1
+
+newmtl Material_447
+illum 1
+
+newmtl Material_448
+illum 1
+
+newmtl Material_449
+illum 1
+
+newmtl Material_450
+illum 1
+
+newmtl Material_451
+illum 1
+
+newmtl Material_452
+illum 1
+
+newmtl Material_453
+illum 1
+
+newmtl Material_454
+illum 1
+
+newmtl Material_455
+illum 1
+
+newmtl Material_456
+illum 1
+
+newmtl Material_457
+illum 1
+
+newmtl Material_458
+illum 1
+
+newmtl Material_459
+illum 1
+
+newmtl Material_460
+illum 1
+
+newmtl Material_461
+illum 1
+
+newmtl Material_462
+illum 1
+
+newmtl Material_463
+illum 1
+
+newmtl Material_464
+illum 1
+
+newmtl Material_465
+illum 1
+
+newmtl Material_466
+illum 1
+
+newmtl Material_467
+illum 1
+
+newmtl Material_468
+illum 1
+
+newmtl Material_469
+illum 1
+
+newmtl Material_470
+illum 1
+
+newmtl Material_471
+illum 1
+
+newmtl Material_472
+illum 1
+
+newmtl Material_473
+illum 1
+
+newmtl Material_474
+illum 1
+
+newmtl Material_475
+illum 1
+
+newmtl Material_476
+illum 1
+
+newmtl Material_477
+illum 1
+
+newmtl Material_478
+illum 1
+
+newmtl Material_479
+illum 1
+
+newmtl Material_480
+illum 1
+
+newmtl Material_481
+illum 1
+
+newmtl Material_482
+illum 1
+
+newmtl Material_483
+illum 1
+
+newmtl Material_484
+illum 1
+
+newmtl Material_485
+illum 1
+
+newmtl Material_486
+illum 1
+
+newmtl Material_487
+illum 1
+
+newmtl Material_488
+illum 1
+
+newmtl Material_489
+illum 1
+
+newmtl Material_490
+illum 1
+
+newmtl Material_491
+illum 1
+
+newmtl Material_492
+illum 1
+
+newmtl Material_493
+illum 1
+
+newmtl Material_494
+illum 1
+
+newmtl Material_495
+illum 1
+
+newmtl Material_496
+illum 1
+
+newmtl Material_497
+illum 1
+
+newmtl Material_498
+illum 1
+
+newmtl Material_499
+illum 1
+
+newmtl Material_500
+illum 1
+
+newmtl Material_501
+illum 1
+
+newmtl Material_502
+illum 1
+
+newmtl Material_503
+illum 1
+
+newmtl Material_504
+illum 1
+
+newmtl Material_505
+illum 1
+
+newmtl Material_506
+illum 1
+
+newmtl Material_507
+illum 1
+
+newmtl Material_508
+illum 1
+
+newmtl Material_509
+illum 1
+
+newmtl Material_510
+illum 1
+
+newmtl Material_511
+illum 1
+
+newmtl Material_512
+illum 1
+
+newmtl Material_513
+illum 1
+
+newmtl Material_514
+illum 1
+
+newmtl Material_515
+illum 1
+
+newmtl Material_516
+illum 1
+
+newmtl Material_517
+illum 1
+
+newmtl Material_518
+illum 1
+
+newmtl Material_519
+illum 1
+
+newmtl Material_520
+illum 1
+
+newmtl Material_521
+illum 1
+
+newmtl Material_522
+illum 1
+
+newmtl Material_523
+illum 1
+
+newmtl Material_524
+illum 1
+
+newmtl Material_525
+illum 1
+
+newmtl Material_526
+illum 1
+
+newmtl Material_527
+illum 1
+
+newmtl Material_528
+illum 1
+
+newmtl Material_529
+illum 1
+
+newmtl Material_530
+illum 1
+
+newmtl Material_531
+illum 1
+
+newmtl Material_532
+illum 1
+
+newmtl Material_533
+illum 1
+
+newmtl Material_534
+illum 1
+
+newmtl Material_535
+illum 1
+
+newmtl Material_536
+illum 1
+
+newmtl Material_537
+illum 1
+
+newmtl Material_538
+illum 1
+
+newmtl Material_539
+illum 1
+
+newmtl Material_540
+illum 1
+
+newmtl Material_541
+illum 1
+
+newmtl Material_542
+illum 1
+
+newmtl Material_543
+illum 1
+
+newmtl Material_544
+illum 1
+
+newmtl Material_545
+illum 1
+
+newmtl Material_546
+illum 1
+
+newmtl Material_547
+illum 1
+
+newmtl Material_548
+illum 1
+
+newmtl Material_549
+illum 1
+
+newmtl Material_550
+illum 1
+
+newmtl Material_551
+illum 1
+
+newmtl Material_552
+illum 1
+
+newmtl Material_553
+illum 1
+
+newmtl Material_554
+illum 1
+
+newmtl Material_555
+illum 1
+
+newmtl Material_556
+illum 1
+
+newmtl Material_557
+illum 1
+
+newmtl Material_558
+illum 1
+
+newmtl Material_559
+illum 1
+
+newmtl Material_560
+illum 1
+
+newmtl Material_561
+illum 1
+
+newmtl Material_562
+illum 1
+
+newmtl Material_563
+illum 1
+
+newmtl Material_564
+illum 1
+
+newmtl Material_565
+illum 1
+
+newmtl Material_566
+illum 1
+
+newmtl Material_567
+illum 1
+
+newmtl Material_568
+illum 1
+
+newmtl Material_569
+illum 1
+
+newmtl Material_570
+illum 1
+
+newmtl Material_571
+illum 1
+
+newmtl Material_572
+illum 1
+
+newmtl Material_573
+illum 1
+
+newmtl Material_574
+illum 1
+
+newmtl Material_575
+illum 1
+
+newmtl Material_576
+illum 1
+
+newmtl Material_577
+illum 1
+
+newmtl Material_578
+illum 1
+
+newmtl Material_579
+illum 1
+
+newmtl Material_580
+illum 1
+
+newmtl Material_581
+illum 1
+
+newmtl Material_582
+illum 1
+
+newmtl Material_583
+illum 1
+
+newmtl Material_584
+illum 1
+
+newmtl Material_585
+illum 1
+
+newmtl Material_586
+illum 1
+
+newmtl Material_587
+illum 1
+
+newmtl Material_588
+illum 1
+
+newmtl Material_589
+illum 1
+
+newmtl Material_590
+illum 1
+
+newmtl Material_591
+illum 1
+
+newmtl Material_592
+illum 1
+
+newmtl Material_593
+illum 1
+
+newmtl Material_594
+illum 1
+
+newmtl Material_595
+illum 1
+
+newmtl Material_596
+illum 1
+
+newmtl Material_597
+illum 1
+
+newmtl Material_598
+illum 1
+
+newmtl Material_599
+illum 1
+
+newmtl Material_600
+illum 1
+
+newmtl Material_601
+illum 1
+
+newmtl Material_602
+illum 1
+
+newmtl Material_603
+illum 1
+
+newmtl Material_604
+illum 1
+
+newmtl Material_605
+illum 1
+
+newmtl Material_606
+illum 1
+
+newmtl Material_607
+illum 1
+
+newmtl Material_608
+illum 1
+
+newmtl Material_609
+illum 1
+
+newmtl Material_610
+illum 1
+
+newmtl Material_611
+illum 1
+
+newmtl Material_612
+illum 1
+
+newmtl Material_613
+illum 1
+
+newmtl Material_614
+illum 1
+
+newmtl Material_615
+illum 1
+
+newmtl Material_616
+illum 1
+
+newmtl Material_617
+illum 1
+
+newmtl Material_618
+illum 1
+
+newmtl Material_619
+illum 1
+
+newmtl Material_620
+illum 1
+
+newmtl Material_621
+illum 1
+
+newmtl Material_622
+illum 1
+
+newmtl Material_623
+illum 1
+
+newmtl Material_624
+illum 1
+
+newmtl Material_625
+illum 1
+
+newmtl Material_626
+illum 1
+
+newmtl Material_627
+illum 1
+
+newmtl Material_628
+illum 1
+
+newmtl Material_629
+illum 1
+
+newmtl Material_630
+illum 1
+
+newmtl Material_631
+illum 1
+
+newmtl Material_632
+illum 1
+
+newmtl Material_633
+illum 1
+
+newmtl Material_634
+illum 1
+
+newmtl Material_635
+illum 1
+
+newmtl Material_636
+illum 1
+
+newmtl Material_637
+illum 1
+
+newmtl Material_638
+illum 1
+
+newmtl Material_639
+illum 1
+
+newmtl Material_640
+illum 1
+
+newmtl Material_641
+illum 1
+
+newmtl Material_642
+illum 1
+
+newmtl Material_643
+illum 1
+
+newmtl Material_644
+illum 1
+
+newmtl Material_645
+illum 1
+
+newmtl Material_646
+illum 1
+
+newmtl Material_647
+illum 1
+
+newmtl Material_648
+illum 1
+
+newmtl Material_649
+illum 1
+
+newmtl Material_650
+illum 1
+
+newmtl Material_651
+illum 1
+
+newmtl Material_652
+illum 1
+
+newmtl Material_653
+illum 1
+
+newmtl Material_654
+illum 1
+
+newmtl Material_655
+illum 1
+
+newmtl Material_656
+illum 1
+
+newmtl Material_657
+illum 1
+
+newmtl Material_658
+illum 1
+
+newmtl Material_659
+illum 1
+
+newmtl Material_660
+illum 1
+
+newmtl Material_661
+illum 1
+
+newmtl Material_662
+illum 1
+
+newmtl Material_663
+illum 1
+
+newmtl Material_664
+illum 1
+
+newmtl Material_665
+illum 1
+
+newmtl Material_666
+illum 1
+
+newmtl Material_667
+illum 1
+
+newmtl Material_668
+illum 1
+
+newmtl Material_669
+illum 1
+
+newmtl Material_670
+illum 1
+
+newmtl Material_671
+illum 1
+
+newmtl Material_672
+illum 1
+
+newmtl Material_673
+illum 1
+
+newmtl Material_674
+illum 1
+
+newmtl Material_675
+illum 1
+
+newmtl Material_676
+illum 1
+
+newmtl Material_677
+illum 1
+
+newmtl Material_678
+illum 1
+
+newmtl Material_679
+illum 1
+
+newmtl Material_680
+illum 1
+
+newmtl Material_681
+illum 1
+
+newmtl Material_682
+illum 1
+
+newmtl Material_683
+illum 1
+
+newmtl Material_684
+illum 1
+
+newmtl Material_685
+illum 1
+

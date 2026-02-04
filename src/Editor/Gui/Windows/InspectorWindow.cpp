@@ -135,67 +135,72 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 			for (auto& field : inspectordata->fields)
 			{
 				if (field->fieldtype == editor::InspectorField::BOOLEAN) {
-					auto boolfield = static_cast<editor::InspectorBool*>(field);
-					bool proxy_bool = *boolfield->x;
+					auto f = static_cast<editor::InspectorBool*>(field);
+					bool proxy_f = *f->x;
 
-					ImGui::PushID(boolfield->name.c_str());
+					ImGui::PushID(f->name.c_str());
 
-					DrawFieldLabel(boolfield->name);
-					std::string field_id = "##" + boolfield->name;
-					bool changed = ImGui::Checkbox(field_id.c_str(), &proxy_bool);
+					DrawFieldLabel(f->name);
+					std::string field_id = "##" + f->name;
 
-					if (changed)
+					if (ImGui::Checkbox(field_id.c_str(), &proxy_f))
 					{
-						*boolfield->x = proxy_bool;
+						*f->x = proxy_f;
+						if (f->onchange)
+							f->onchange();
 					}
 
 					ImGui::PopID();
 				}
 
 				if (field->fieldtype == editor::InspectorField::FLOAT) {
-					auto floatfield = static_cast<editor::InspectorFloat*>(field);
-					float proxy_float = *floatfield->x;
+					auto f = static_cast<editor::InspectorFloat*>(field);
+					float proxy_f = *f->x;
 
-					ImGui::PushID(floatfield->name.c_str());
+					ImGui::PushID(f->name.c_str());
 
-					DrawFieldLabel(floatfield->name);
-					std::string field_id = "##" + floatfield->name;
-					bool changed = ImGui::InputFloat(field_id.c_str(), &proxy_float, 0, 0, "%.6f");
+					DrawFieldLabel(f->name);
+					std::string field_id = "##" + f->name;
 
-					if (changed)
+					if (ImGui::InputFloat(field_id.c_str(), &proxy_f, 0, 0, "%.6f"))
 					{
-						*floatfield->x = proxy_float;
+						*f->x = proxy_f;
 
-						if (floatfield->onchange) {
-							floatfield->onchange();
-						}
+						if (f->onchange)
+							f->onchange();
 					}
 
 					ImGui::PopID();
 				}
 
 				if (field->fieldtype == editor::InspectorField::VECTOR3) {
-					auto vec3field = static_cast<editor::InspectorColor*>(field);
-					Vector3 proxy_vec = { *vec3field->r, *vec3field->g, *vec3field->b };
+					auto f = static_cast<editor::InspectorColor*>(field);
+					Vector3 proxy_f = { *f->r, *f->g, *f->b };
 
-					this->DrawVector3Field(vec3field->name.c_str(), &proxy_vec);
+					if (this->DrawVector3Field(f->name.c_str(), &proxy_f)) {
+						if (f->onchange)
+							f->onchange();
+					}
 
-					*vec3field->r = proxy_vec.x;
-					*vec3field->g = proxy_vec.y;
-					*vec3field->b = proxy_vec.z;
+					*f->r = proxy_f.x;
+					*f->g = proxy_f.y;
+					*f->b = proxy_f.z;
 				}
 
 				if (field->fieldtype == editor::InspectorField::COLOR) {
-					auto vec3field = static_cast<editor::InspectorVec3*>(field);
-					Vector3 proxy_vec = { *vec3field->x, *vec3field->y, *vec3field->z };
+					auto f = static_cast<editor::InspectorVec3*>(field);
+					Vector3 proxy_f = { *f->x, *f->y, *f->z };
 
-					DrawFieldLabel(vec3field->name);
-					std::string field_id = "##" + vec3field->name;
-					ImGui::ColorEdit3(field_id.c_str(), &proxy_vec.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+					DrawFieldLabel(f->name);
+					std::string field_id = "##" + f->name;
+					if (ImGui::ColorEdit3(field_id.c_str(), &proxy_f.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
+						if (f->onchange)
+							f->onchange();
+					}
 
-					*vec3field->x = proxy_vec.x;
-					*vec3field->y = proxy_vec.y;
-					*vec3field->z = proxy_vec.z;
+					*f->x = proxy_f.x;
+					*f->y = proxy_f.y;
+					*f->z = proxy_f.z;
 				}
 
 				if (field->fieldtype == editor::InspectorField::FUNCTION) {
@@ -205,24 +210,24 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 					}
 				}
 
-				if (field->fieldtype == editor::InspectorField::ASSET) {
-					auto assetfield = static_cast<editor::InspectorAsset_base*>(field);
-					auto assetlist = assetfield->GetChoices();
+				if (field->fieldtype == editor::InspectorField::CHOICE) {
+					auto f = static_cast<editor::InspectorChoice*>(field);
+					int proxy_f = *f->index;
 
-					if (ImGui::BeginCombo(assetfield->name.c_str(), assetfield->choice_label.c_str()))
+					if (ImGui::BeginCombo(f->name.c_str(), (*f->labels)[proxy_f].c_str()))
 					{
-						for (size_t n = 0; n < assetlist.size(); n++)
+						for (size_t n = 0; n < f->labels->size(); n++)
 						{
-							auto cur = assetlist[n]->Get_asset_filepath();
+							auto& cur = (*f->labels)[n];
 
-							const bool is_selected = (cur == assetfield->choice_label.c_str());
-							if (ImGui::Selectable(cur.string().c_str(), is_selected))
+							const bool is_selected = proxy_f == n;
+							if (ImGui::Selectable(cur.c_str(), is_selected))
 							{
-								*assetfield->choice = assetlist[n];
-								assetfield->choice_label = cur.string();
+								*f->index = n;
+
+								f->onchange();
 							}
 
-							// Set the initial focus when opening the combo (scrolling to the item if needed)
 							if (is_selected)
 							{
 								ImGui::SetItemDefaultFocus();

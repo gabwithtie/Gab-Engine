@@ -6,7 +6,7 @@
 #include <array>
 
 namespace gbe::ext::AnitoBuilder {
-	class BuilderBlockSet;
+	class BuilderBlockFace;
 
 	typedef std::pair<int, int> SetSeg;
 
@@ -79,21 +79,21 @@ namespace gbe::ext::AnitoBuilder {
 		std::vector<RenderObject*> display_renderers;
 
 		void SetModelShown(bool value);
+		void Refresh();
 	protected:
-		void InitializeInspectorData() override;
+		void GeneralInit() override;
 	private:
 		//WORKING DATA
 		bool model_shown = true;
 
 		BuilderBlockData data;
 
-		std::vector<BuilderBlockSet*> handle_pool;
+		std::vector<BuilderBlockFace*> handle_pool;
 		std::vector<SetRoof> roof_pool;
 
 		void UpdateModelShown();
 		void UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r);
 		
-		void Refresh();
 		inline BlockSeg& GetHandle(int s, int i) {
 			i %= this->data.sets[s].segs.size();
 
@@ -118,10 +118,12 @@ namespace gbe::ext::AnitoBuilder {
 		}
 		void LoadAssets();
 	public:
+		inline bool Get_ModelShown() { return model_shown; }
+
 		BuilderBlock(gbe::Vector3 corners[4], float height);
 		BuilderBlock(SerializedObject* data);
 		void InvokeUpdate(float deltatime) override;
-		inline void AddBlock(BuilderBlockSet* root_handle) {
+		inline void AddBlock(BuilderBlockFace* root_handle) {
 			for (size_t i = 0; i < handle_pool.size(); i++)
 			{
 				if(handle_pool[i] == root_handle) {

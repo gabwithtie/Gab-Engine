@@ -9,11 +9,14 @@
 namespace gbe::ext::AnitoBuilder {
 	class BuilderBlock;
 
-	class BuilderBlockSet : public Object {
+	class BuilderBlockFace : public Object {
 	private:
 		bool is_edge = true;
 
 		//user
+		std::unordered_map<int, int> floor_mesh_overrides;
+		std::unordered_map<int, int> floor_texture_overrides;
+		
 		bool allow_special_walls = true;
 		bool is_backside = false;
 
@@ -27,13 +30,13 @@ namespace gbe::ext::AnitoBuilder {
 
 
 		struct RendererSubpool {
-			BuilderBlockSet& owner;
+			BuilderBlockFace& owner;
 			DrawCall* drawcall;
 
 			std::vector<RenderObject*> renderers;
 			int get_index = 0;
 
-			inline RendererSubpool(BuilderBlockSet& _owner) : owner(_owner) {
+			inline RendererSubpool(BuilderBlockFace& _owner) : owner(_owner) {
 
 			}
 
@@ -70,6 +73,32 @@ namespace gbe::ext::AnitoBuilder {
 		int cur_width = 0;
 		int cur_height = 0;
 	public:
+		inline int GetMeshOverride(int floor) {
+			auto it = floor_mesh_overrides.find(floor);
+
+			if(it != floor_mesh_overrides.end())
+				return floor_mesh_overrides[floor];
+
+			return 0;
+		}
+
+		inline void SetMeshOverride(int floor, int mo) {
+			floor_mesh_overrides.insert_or_assign(floor, mo);
+		}
+
+		inline int GetTexOverride(int floor) {
+			auto it = floor_texture_overrides.find(floor);
+
+			if (it != floor_texture_overrides.end())
+				return floor_texture_overrides[floor];
+
+			return 0;
+		}
+
+		inline void SetTexOverride(int floor, int mo) {
+			floor_texture_overrides.insert_or_assign(floor, mo);
+		}
+
 		inline Object* Get_handle_parent() {
 			return handle_ro;
 		}
@@ -138,7 +167,7 @@ namespace gbe::ext::AnitoBuilder {
 				renderer->Set_enabled(value);
 			}
 		}
-		BuilderBlockSet(BuilderBlock* root_block);
+		BuilderBlockFace(BuilderBlock* root_block);
 		void OnLocalTransformationChange(TransformChangeType type) override;
 	};
 }

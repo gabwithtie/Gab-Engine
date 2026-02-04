@@ -54,7 +54,7 @@ namespace gbe::editor {
         ImVec2 handleMin = ImVec2(currentHandleX, pos.y + hPadding);
         ImVec2 handleMax = ImVec2(currentHandleX + handleW - hPadding * 2, pos.y + trackH - hPadding);
 
-        ImU32 col_handle = ImGui::GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
+        ImU32 col_handle = ImGui::GetColorU32(ImGuiCol_ButtonActive);
         draw_list->AddRectFilled(handleMin, handleMax, col_handle, radius - hPadding);
 
         // 3. Draw Overlay Icons (Centered in their respective halves)

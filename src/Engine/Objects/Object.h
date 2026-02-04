@@ -76,8 +76,8 @@ namespace gbe {
 		
 		Matrix4 parent_matrix = Matrix4(1.0f);
 
-		void General_init();
 	protected:
+		virtual void GeneralInit();
 		Root* root = nullptr;
 		Object* parent = nullptr;
 		virtual void OnLocalTransformationChange(TransformChangeType changetype);
@@ -87,8 +87,6 @@ namespace gbe {
 		}
 
 		editor::InspectorData* inspectorData = nullptr;
-
-		virtual void InitializeInspectorData();
 	public:
 
 		Object();

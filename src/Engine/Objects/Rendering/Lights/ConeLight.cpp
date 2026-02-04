@@ -21,9 +21,9 @@ gfx::Light* gbe::ConeLight::GetData()
     return &this->mLight;
 }
 
-void gbe::ConeLight::InitializeInspectorData()
+void gbe::ConeLight::GeneralInit()
 {
-	LightObject::InitializeInspectorData();
+	LightObject::GeneralInit();
 
     this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
 

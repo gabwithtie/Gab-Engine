@@ -1,8 +1,8 @@
-#include "BuilderBlockSet.h"
+#include "BuilderBlockFace.h"
 #include "BuilderBlock.h"
 
 namespace gbe::ext::AnitoBuilder {
-	BuilderBlockSet::BuilderBlockSet(BuilderBlock* root_block):
+	BuilderBlockFace::BuilderBlockFace(BuilderBlock* root_block):
 		type1_renderers(*this)
 	{
 		this->root_block = root_block;
@@ -21,6 +21,9 @@ namespace gbe::ext::AnitoBuilder {
 			auto field = new gbe::editor::InspectorBool();
 			field->name = "allow special walls";
 			field->x = &this->allow_special_walls;
+			field->onchange = [=]() {
+				root_block->Refresh();
+				};
 
 			this->inspectorData->fields.push_back(field);
 		}
@@ -28,6 +31,9 @@ namespace gbe::ext::AnitoBuilder {
 			auto field = new gbe::editor::InspectorBool();
 			field->name = "is backside";
 			field->x = &this->is_backside;
+			field->onchange = [=]() {
+				root_block->Refresh();
+				};
 
 			this->inspectorData->fields.push_back(field);
 		}
@@ -42,7 +48,7 @@ namespace gbe::ext::AnitoBuilder {
 		this->inspectorData->fields.push_back(add_block_button);
 	}
 
-	void BuilderBlockSet::OnLocalTransformationChange(TransformChangeType type) {
+	void BuilderBlockFace::OnLocalTransformationChange(TransformChangeType type) {
 		Object::OnLocalTransformationChange(type);
 
 		//LAYER VARS

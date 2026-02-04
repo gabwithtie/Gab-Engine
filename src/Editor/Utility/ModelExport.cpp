@@ -11,6 +11,11 @@
 #include <iostream>
 #include <string> // For std::to_string
 
+#include <omp.h>
+#include <mutex>
+#include <atomic>
+#include <iomanip>
+
 namespace gbe {
     namespace editor {
 
@@ -52,162 +57,125 @@ namespace gbe {
 
         void ModelExport::Export(std::filesystem::path path)
         {
+            // --- Stage 1: Discovery ---
+            std::cout << "[1/3] Gathering Renderers..." << std::endl;
             std::vector<export_subobject> export_subobjects;
             std::vector<RenderObject*> renderers;
 
-            // 1. Gather all unique RenderObject components
-            for (const auto& root_object : this->selected)
-            {
+            for (const auto& root_object : this->selected) {
                 root_object->CallRecursively([&](Object* obj) {
                     RenderObject* target = dynamic_cast<RenderObject*>(obj);
-
-                    if (target != nullptr && target->Get_enabled()) {
-                        auto it = std::find(renderers.begin(), renderers.end(), target);
-
-                        // Check if the value was found
-                        if (it == renderers.end()) {
+                    if (target && target->Get_enabled()) {
+                        if (std::find(renderers.begin(), renderers.end(), target) == renderers.end()) {
                             renderers.push_back(target);
                         }
                     }
                     });
             }
 
-            // 2. Map renderers to export sub-objects with their world transforms
-            for (const auto& renderer : renderers)
-            {
+            for (const auto& renderer : renderers) {
                 export_subobject new_subobject;
-                asset::Mesh* mesh = renderer->Get_DrawCall()->get_mesh();
-
-                new_subobject.source_mesh = &mesh->Get_load_data();
-                new_subobject.transform = renderer->World().GetMatrix(); // Store the world matrix
-
+                new_subobject.source_mesh = &renderer->Get_DrawCall()->get_mesh()->Get_load_data();
+                new_subobject.transform = renderer->World().GetMatrix();
                 export_subobjects.push_back(new_subobject);
             }
 
-            // 3. Assimp Multi-Mesh Export Logic
-            if (export_subobjects.empty()) {
-                std::cerr << "ModelExport Error: No renderable objects found to export." << std::endl;
-                return;
-            }
+            if (export_subobjects.empty()) return;
+
+            // --- Stage 2: Parallel Processing ---
+            std::cout << "[2/3] Processing " << export_subobjects.size() << " meshes on "
+                << omp_get_max_threads() << " threads..." << std::endl;
 
             Assimp::Exporter exporter;
             aiScene scene;
-
-            // Allocate space for all meshes and materials (one of each per sub-object for simplicity)
             scene.mNumMeshes = static_cast<unsigned int>(export_subobjects.size());
-            scene.mMeshes = new aiMesh * [scene.mNumMeshes];
+            scene.mMeshes = new aiMesh * [scene.mNumMeshes]();
             scene.mNumMaterials = scene.mNumMeshes;
-            scene.mMaterials = new aiMaterial * [scene.mNumMaterials];
-
-            // Create the root node
+            scene.mMaterials = new aiMaterial * [scene.mNumMaterials]();
             scene.mRootNode = new aiNode("SceneRoot");
 
-            for (size_t i = 0; i < export_subobjects.size(); ++i) {
-                const auto& subobject = export_subobjects[i];
+            std::mutex scene_mutex;
+            std::atomic<int> completed_meshes{ 0 };
+            int total_meshes = static_cast<int>(export_subobjects.size());
 
-                // Fetch the mesh data (assuming asset::Mesh has a Get_LoadData method)
+#pragma omp parallel for schedule(dynamic)
+            for (int i = 0; i < total_meshes; ++i) {
+                const auto& subobject = export_subobjects[i];
                 const auto& mesh_data = subobject.source_mesh;
 
                 if (mesh_data->vertices.empty()) {
-                    std::cerr << "Warning: Skipping empty mesh in sub-object " << i << std::endl;
+                    completed_meshes++;
                     continue;
                 }
 
-                std::string mesh_name = "Mesh_" + std::to_string(i);
-
-                // --- A. Create and Populate aiMesh (Untransformed - local space) ---
                 aiMesh* local_mesh = new aiMesh();
-                local_mesh->mName = mesh_name;
+                local_mesh->mName = "Mesh_" + std::to_string(i);
                 local_mesh->mPrimitiveTypes = aiPrimitiveType_TRIANGLE;
 
-                const size_t num_vertices = mesh_data->vertices.size();
-                local_mesh->mNumVertices = static_cast<unsigned int>(num_vertices);
-
-                // Allocate memory
-                local_mesh->mVertices = new aiVector3D[num_vertices];
-                local_mesh->mNormals = new aiVector3D[num_vertices];
-                local_mesh->mTangents = new aiVector3D[num_vertices];
-                local_mesh->mTextureCoords[0] = new aiVector3D[num_vertices];
+                size_t v_count = mesh_data->vertices.size();
+                local_mesh->mNumVertices = static_cast<unsigned int>(v_count);
+                local_mesh->mVertices = new aiVector3D[v_count];
+                local_mesh->mNormals = new aiVector3D[v_count];
+                local_mesh->mTextureCoords[0] = new aiVector3D[v_count];
                 local_mesh->mNumUVComponents[0] = 2;
-                local_mesh->mColors[0] = new aiColor4D[num_vertices];
+                local_mesh->mColors[0] = new aiColor4D[v_count];
 
-                // Copy UNTRANSFORMED Vertex Data
-                for (size_t v = 0; v < num_vertices; ++v) {
+                // Silent high-speed vertex copy
+                for (size_t v = 0; v < v_count; ++v) {
                     const auto& vtx = mesh_data->vertices[v];
                     local_mesh->mVertices[v] = ToAiVector3D(vtx.pos);
                     local_mesh->mNormals[v] = ToAiVector3D(vtx.normal);
                     local_mesh->mTextureCoords[0][v] = aiVector3D(vtx.texCoord.x, vtx.texCoord.y, 0.0f);
                     local_mesh->mColors[0][v] = aiColor4D(vtx.color.x, vtx.color.y, vtx.color.z, 1.0f);
-					std::cout << "Copying vertex (" << std::to_string(v) << "/" << std::to_string(num_vertices) << ")\r";
                 }
 
-                // Copy Face/Index Data
-                const size_t num_faces = mesh_data->indices.size() / 3;
-                local_mesh->mNumFaces = static_cast<unsigned int>(num_faces);
-                local_mesh->mFaces = new aiFace[num_faces];
-                local_mesh->mMaterialIndex = static_cast<unsigned int>(i); // Link to the new material
-
-                for (size_t f = 0; f < num_faces; ++f) {
+                size_t f_count = mesh_data->indices.size() / 3;
+                local_mesh->mNumFaces = static_cast<unsigned int>(f_count);
+                local_mesh->mFaces = new aiFace[f_count];
+                for (size_t f = 0; f < f_count; ++f) {
                     aiFace& face = local_mesh->mFaces[f];
                     face.mNumIndices = 3;
-                    face.mIndices = new unsigned int[3];
-                    face.mIndices[0] = mesh_data->indices[f * 3 + 0];
-                    face.mIndices[1] = mesh_data->indices[f * 3 + 1];
-                    face.mIndices[2] = mesh_data->indices[f * 3 + 2];
-                    std::cout << "Copying face (" << std::to_string(f) << "/" << std::to_string(num_faces) << ")\r";
+                    face.mIndices = new unsigned int[3] { mesh_data->indices[f * 3], mesh_data->indices[f * 3 + 1], mesh_data->indices[f * 3 + 2] };
                 }
 
-                // --- B. Create aiNode and Link to aiMesh/aiMaterial ---
+                {
+                    std::lock_guard<std::mutex> lock(scene_mutex);
+                    scene.mMeshes[i] = local_mesh;
+                    aiNode* node = new aiNode(local_mesh->mName.C_Str());
+                    node->mTransformation = ToAiMatrix4x4(subobject.transform);
+                    node->mNumMeshes = 1;
+                    node->mMeshes = new unsigned int[1] { (unsigned int)i };
+                    scene.mRootNode->addChildren(1, &node);
 
-                scene.mMeshes[i] = local_mesh; // Add mesh to scene array
+                    aiMaterial* material = new aiMaterial();
+                    aiString mat_name("Material_" + std::to_string(i));
+                    material->AddProperty(&mat_name, AI_MATKEY_NAME);
+                    scene.mMaterials[i] = material;
+                }
 
-                aiNode* node = new aiNode(mesh_name);
-
-                // Set the node's transformation matrix (The object's World transform)
-                node->mTransformation = ToAiMatrix4x4(subobject.transform);
-
-                // Link the mesh to the node
-                node->mNumMeshes = 1;
-                node->mMeshes = new unsigned int[1];
-                node->mMeshes[0] = static_cast<unsigned int>(i); // Link to the scene's mesh array index
-
-                // Attach the node to the root node
-                scene.mRootNode->addChildren(1, &node);
-
-                // --- C. Create aiMaterial (A simple default for each sub-object) ---
-
-                aiMaterial* material = new aiMaterial();
-                aiString mat_name("DefaultMaterial_" + std::to_string(i));
-                material->AddProperty(&mat_name, AI_MATKEY_NAME);
-
-                scene.mMaterials[i] = material; // Add material to scene array
+                // Smart Progress Logging: Only one thread prints, and only occasionally
+                int current_count = ++completed_meshes;
+                if (current_count % 5 == 0 || current_count == total_meshes) {
+#pragma omp critical(logging)
+                    {
+                        float pct = (float)current_count / total_meshes * 100.0f;
+                        std::cout << "\r> Progress: " << std::fixed << std::setprecision(1)
+                            << pct << "% (" << current_count << "/" << total_meshes << " meshes)" << std::flush;
+                    }
+                }
             }
+            std::cout << std::endl;
 
-            // 4. Perform the export
-            std::cout << "Performing Mesh Export." << std::endl;
+            // --- Stage 3: File Writing ---
+            std::cout << "[3/3] Writing file to disk..." << std::endl;
+            std::string ext = path.extension().string();
+            if (ext.length() > 1) ext = ext.substr(1);
 
-
-            // Determine the format ID from the file extension
-            std::string format_id = path.extension().string();
-            if (format_id.empty() || format_id.length() < 2) {
-                std::cerr << "ModelExport Error: File path has no valid extension. Cannot determine export format." << std::endl;
-                return;
-            }
-            format_id = format_id.substr(1); // Remove the leading dot
-
-            aiReturn result = exporter.Export(
-                &scene,
-                format_id.c_str(),
-                path.string().c_str()
-            );
-
-            // The aiScene destructor handles the cleanup of all created aiMesh, aiNode, and aiMaterial pointers.
-
-            if (result != AI_SUCCESS) {
-                std::cerr << "Assimp Export FAILED for format '" << format_id << "': " << exporter.GetErrorString() << std::endl;
+            if (exporter.Export(&scene, ext.c_str(), path.string().c_str()) == AI_SUCCESS) {
+                std::cout << ">> Export Complete: " << path.filename() << std::endl;
             }
             else {
-                std::cout << "Assimp Export SUCCESS to: " << path << " using format: " << format_id << std::endl;
+                std::cerr << ">> Export Failed: " << exporter.GetErrorString() << std::endl;
             }
         }
     } // namespace editor
