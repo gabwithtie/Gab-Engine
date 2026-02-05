@@ -2,7 +2,7 @@
 #include "BuilderBlock.h"
 
 namespace gbe::ext::AnitoBuilder {
-	BuilderBlockFace::BuilderBlockFace(BuilderBlock* root_block):
+	BuilderBlockFace::BuilderBlockFace(BuilderBlock* root_block, int index):
 		type1_renderers(*this)
 	{
 		this->root_block = root_block;
@@ -17,10 +17,14 @@ namespace gbe::ext::AnitoBuilder {
 		//INSPECTOR
 		this->SetName("Anito Builder Block Set");
 
+		if (this->root_block->GetSeg(index)->allow_multiseg) {
+			auto s = 0;
+		}
+
 		{
 			auto field = new gbe::editor::InspectorBool();
 			field->name = "allow special walls";
-			field->x = &this->allow_special_walls;
+			field->x = &this->root_block->GetSeg(index)->allow_multiseg;
 			field->onchange = [=]() {
 				root_block->Refresh();
 				};
@@ -30,7 +34,7 @@ namespace gbe::ext::AnitoBuilder {
 		{
 			auto field = new gbe::editor::InspectorBool();
 			field->name = "is backside";
-			field->x = &this->is_backside;
+			field->x = &this->root_block->GetSeg(index)->is_backside;
 			field->onchange = [=]() {
 				root_block->Refresh();
 				};
@@ -46,6 +50,36 @@ namespace gbe::ext::AnitoBuilder {
 			};
 
 		this->inspectorData->fields.push_back(add_block_button);
+	}
+
+	int BuilderBlockFace::GetMeshOverride(int floor)
+	{
+		auto it = root_block->GetSeg(this)->mesh_overrides.find(floor);
+
+		if (it != root_block->GetSeg(this)->mesh_overrides.end())
+			return root_block->GetSeg(this)->mesh_overrides[floor];
+
+		return 0;
+	}
+
+	void BuilderBlockFace::SetMeshOverride(int floor, int mo)
+	{
+		root_block->GetSeg(this)->mesh_overrides.insert_or_assign(floor, mo);
+	}
+
+	int BuilderBlockFace::GetTexOverride(int floor)
+	{
+		auto it = root_block->GetSeg(this)->tex_overrides.find(floor);
+
+		if (it != root_block->GetSeg(this)->tex_overrides.end())
+			return root_block->GetSeg(this)->tex_overrides[floor];
+
+		return 0;
+	}
+
+	void BuilderBlockFace::SetTexOverride(int floor, int mo)
+	{
+		root_block->GetSeg(this)->tex_overrides.insert_or_assign(floor, mo);
 	}
 
 	void BuilderBlockFace::OnLocalTransformationChange(TransformChangeType type) {
