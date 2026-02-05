@@ -13,7 +13,7 @@
 void gbe::editor::MenuBar::DrawSelf()
 {
 	if (ImGui::BeginMenu("File")) {
-		if (ImGui::MenuItem("Load")) {
+		if (ImGui::MenuItem("Load Project")) {
 			std::string outPath = FileDialogue::GetFilePath(FileDialogue::OPEN, "root.gbe");
 
 			if (outPath.size() != 0) {
@@ -23,7 +23,7 @@ void gbe::editor::MenuBar::DrawSelf()
 				Console::Log("Cancelled File Selection.");
 			}
 		}
-		if (ImGui::MenuItem("Save")) {
+		if (ImGui::MenuItem("Save Scene")) {
 			std::string outPath = FileDialogue::GetFilePath(FileDialogue::SAVE);
 
 			if (outPath.size() != 0) {

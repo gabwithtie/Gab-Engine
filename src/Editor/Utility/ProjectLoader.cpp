@@ -1,6 +1,7 @@
 #include "ProjectLoader.h"
 
 #include "Engine/gbe_engine.h"
+#include "../Gui/Windows/ProjectBrowser.h"
 
 std::filesystem::path gbe::editor::ProjectLoader::currentproject_dir;
 
@@ -23,4 +24,6 @@ void gbe::editor::ProjectLoader::Load(std::filesystem::path path)
 	auto newroot = gbe::Engine::CreateBlankRoot(&data);
 
 	gbe::Engine::ChangeRoot(newroot);
+
+	ProjectBrowser::SetProjectDirectory(tolocal);
 }

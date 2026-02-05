@@ -22,7 +22,7 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"Gui/Windows/LightExplorer.cpp"
 
 	"Utility/ModelExport.cpp"
- "Utility/ProjectLoader.h" "Utility/ProjectLoader.cpp")
+ "Utility/ProjectLoader.h" "Utility/ProjectLoader.cpp" "Gui/Windows/ProjectBrowser.cpp")
 
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_graphics)

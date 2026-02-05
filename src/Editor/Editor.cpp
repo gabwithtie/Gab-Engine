@@ -318,15 +318,21 @@ void gbe::Editor::PrepareUpdate()
 
 		ImGuiID r = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.25f, nullptr, &dockspace_id);
 		ImGuiID l = dockspace_id;
+
+		ImGuiID l_d = ImGui::DockBuilderSplitNode(l, ImGuiDir_Down, 0.25f, nullptr, &l);
+		ImGuiID l_u = l;
+
 		ImGuiID r_d = ImGui::DockBuilderSplitNode(r, ImGuiDir_Down, 0.5f, nullptr, &r);
 		ImGuiID r_u = r;
 
 		// Dock windows into the new nodes
 		this->viewportWindow.Set_is_open(true);
+		this->projectWindow.Set_is_open(true);
 		this->inspectorwindow.Set_is_open(true);
 		this->lightWindow.Set_is_open(true);
 
-		ImGui::DockBuilderDockWindow(this->viewportWindow.GetWindowId().c_str(), l);
+		ImGui::DockBuilderDockWindow(this->viewportWindow.GetWindowId().c_str(), l_u);
+		ImGui::DockBuilderDockWindow(this->projectWindow.GetWindowId().c_str(), l_d);
 		ImGui::DockBuilderDockWindow(this->inspectorwindow.GetWindowId().c_str(), r_u);
 		ImGui::DockBuilderDockWindow(this->lightWindow.GetWindowId().c_str(), r_d);
 

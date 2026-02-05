@@ -14,6 +14,7 @@
 #include "Gui/Windows/ConsoleWindow.h"
 #include "Gui/Windows/ViewportWindow.h"
 #include "Gui/Windows/LightExplorer.h"
+#include "Gui/Windows/ProjectBrowser.h"
 
 namespace gbe {
 	class RenderPipeline;
@@ -59,6 +60,7 @@ namespace gbe {
 		editor::ImageDebugger imageDebuggerWindow;
 		editor::ViewportWindow viewportWindow;
 		editor::LightExplorer lightWindow;
+		editor::ProjectBrowser projectWindow;
 
 		std::vector<editor::GuiWindow*> windows = {
 			&hierarchyWindow,
@@ -68,7 +70,8 @@ namespace gbe {
 			&consoleWindow,
 			&imageDebuggerWindow,
 			&viewportWindow,
-			&lightWindow
+			&lightWindow,
+			&projectWindow
 		};
 
 		std::vector<editor::GuiWindow*> external_windows;
