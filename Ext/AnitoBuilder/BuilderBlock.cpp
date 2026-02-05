@@ -84,9 +84,8 @@ namespace gbe::ext::AnitoBuilder {
 		AddBlock(corner_ptrs);
 
 		GeneralInit();
-
-		this->SetModelShown(true);
-		this->UpdateModelShown();
+		
+		Refresh();
 	}
 
 	void BuilderBlock::GeneralInit()
@@ -136,9 +135,6 @@ namespace gbe::ext::AnitoBuilder {
 			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
 			{
 				auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
-
-				this->data.sets[s].segs[i].allow_multiseg = handle->Get_allow_special_walls();
-				this->data.sets[s].segs[i].is_backside = handle->Get_is_backside();
 			}
 		}
 
@@ -164,7 +160,7 @@ namespace gbe::ext::AnitoBuilder {
 			this->data.AddPosition({ pos[0], pos[1] , pos[2] });
 		}
 
-		//OBJECTS
+		//ADDING
 		for (const auto& set : newdata.sets)
 		{
 			int corner_ptrs[4] = {
@@ -177,20 +173,12 @@ namespace gbe::ext::AnitoBuilder {
 			this->AddBlock(corner_ptrs);
 		}
 
-		for (size_t s = 0; s < newdata.sets.size(); s++) {
-			for (size_t i = 0; i < newdata.sets[s].segs.size(); i++)
-			{
-				auto handle = this->handle_pool[newdata.sets[s].segs[i].handleindex];
-
-				handle->Set_allow_special_walls(newdata.sets[s].segs[i].allow_multiseg);
-				handle->Set_is_backside(newdata.sets[s].segs[i].is_backside);
-			}
-		}
+		//OVERRWRITING
+		this->data = newdata;
 
 		GeneralInit();
 		
-		this->SetModelShown(true);
-		this->UpdateModelShown();
+		Refresh();
 	}
 
 	void BuilderBlock::UpdateModelShown()
@@ -225,6 +213,8 @@ namespace gbe::ext::AnitoBuilder {
 			{
 				if (!handle->Get_is_edge())
 					continue;
+
+				auto handle_data = GetSeg(handle);
 
 				bool odd = handle->Get_cur_width() % 2 == 1;
 				bool can_put_facade = handle->Get_cur_height() >= 3 && handle->Get_cur_width() >= 5 && odd;
@@ -282,13 +272,12 @@ namespace gbe::ext::AnitoBuilder {
 					int center_based_x = get_center_x(obj);
 
 					RenderObject* newrenderer = [=, &floor_parents]()
-						{
-							// ... [Inside of your lambda remains exactly the same] ...
-							if (handle->Get_allow_special_walls()) {
+						{// ... [Inside of your lambda remains exactly the same] ...
+							if (handle_data->allow_multiseg) {
 								if (can_put_facade) {
 									int choice_x = center_based_x + 1;
 									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
-										if (handle->Get_is_backside()) {
+										if (handle_data->is_backside) {
 											if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
 											else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
 										}
@@ -369,13 +358,13 @@ namespace gbe::ext::AnitoBuilder {
 
 					RenderObject* newrenderer = [=]()
 						{
-							if (handle->Get_allow_special_walls()) {
+							if (handle_data->allow_multiseg) {
 								if (can_put_facade && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
 								{
 									int choice_x = center_based_x + 1;
 
 									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
-										if (handle->Get_is_backside())
+										if (handle_data->is_backside)
 											return new RenderObject(windowwall_DC[0][1]);
 										else
 											return new RenderObject(wall3x4_DC[3][choice_x]);
@@ -662,6 +651,42 @@ namespace gbe::ext::AnitoBuilder {
 		}
 	}
 
+	BlockSeg* BuilderBlock::GetSeg(int handle_i)
+	{
+		if (handle_i >= 0) {
+			for (size_t set_i = 0; set_i < this->data.sets.size(); set_i++)
+			{
+				const auto& set = this->data.sets[set_i];
+
+				for (size_t seg_i = 0; seg_i < set.segs.size(); seg_i++)
+				{
+					const auto& seg = set.segs[seg_i];
+
+					if (seg.handleindex == handle_i) {
+						return &this->data.sets[set_i].segs[seg_i];
+					}
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	BlockSeg* BuilderBlock::GetSeg(BuilderBlockFace* face)
+	{
+		auto handle_i = -1;
+
+		for (size_t i = 0; i < this->handle_pool.size(); i++)
+		{
+			if (handle_pool[i] == face) {
+				handle_i = i;
+				break;
+			}
+		}
+
+		return GetSeg(handle_i);
+	}
+
 	void BuilderBlock::AddBlock(int root_handle) {
 
 		if (!handle_pool[root_handle]->Get_is_edge())
@@ -726,12 +751,24 @@ namespace gbe::ext::AnitoBuilder {
 				}
 			}
 
+		int incr = 0;
 		for (size_t i = starting_index; i < src_segments.size(); i++)
 		{
 			const auto& src_seg = src_segments[i];
 
-			auto handle = new BuilderBlockFace(this);
-			
+			newset.segs.push_back(
+				{
+					.seg = src_seg,
+					.handleindex = (int)handle_pool.size() + incr
+				});
+
+			incr++;
+		}
+		this->data.sets.push_back(newset);
+		for (size_t i = starting_index; i < src_segments.size(); i++)
+		{
+			auto handle = new BuilderBlockFace(this, handle_pool.size());
+
 			handle_pool.push_back(handle);
 			handle->SetParent(this);
 
@@ -741,12 +778,6 @@ namespace gbe::ext::AnitoBuilder {
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_SCALE_Y);
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_SCALE_Z);
 			handle->PushEditorFlag(Object::EditorFlags::NON_DIRECT_EDITABLE);
-			
-			newset.segs.push_back(
-				{
-					.seg = src_seg,
-					.handleindex = (int)(handle_pool.size() - 1)
-				});
 		}
 
 		//ROOF
@@ -757,7 +788,6 @@ namespace gbe::ext::AnitoBuilder {
 			return roof_renderer;
 			};
 
-		this->data.sets.push_back(newset);
 
 		SetRoof newset_roof = {
 			.handle_renderers = {CreateRoof(0), CreateRoof(2)},

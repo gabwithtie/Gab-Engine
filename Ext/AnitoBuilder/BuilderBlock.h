@@ -16,6 +16,9 @@ namespace gbe::ext::AnitoBuilder {
 
 		bool allow_multiseg;
 		bool is_backside;
+
+		std::unordered_map<int, int> mesh_overrides;
+		std::unordered_map<int, int> tex_overrides;
 	};
 
 	struct BlockSet {
@@ -132,6 +135,8 @@ namespace gbe::ext::AnitoBuilder {
 				}
 			}
 		}
+		BlockSeg* GetSeg(int face_i);
+		BlockSeg* GetSeg(BuilderBlockFace* face);
 		void AddBlock(int root_handle);
 		void AddBlock(int corners[4]);
 
