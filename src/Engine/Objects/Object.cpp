@@ -139,6 +139,35 @@ void gbe::Object::GeneralInit()
 	//INSPECTOR
 	this->inspectorData = new editor::InspectorData();
 
+	{
+		auto field = new editor::InspectorBool();
+		field->name = "Enabled";
+		field->getter = [=]() {return this->Get_enabled(); };
+		field->setter = [=](bool val) {this->Set_enabled(val); };
+		this->inspectorData->fields.push_back(field);
+	}
+	{
+		auto field = new editor::InspectorString();
+		field->name = "Name";
+		field->getter = [=]() {return this->GetName(); };
+		field->setter = [=](std::string val) {this->SetName(val); };
+		this->inspectorData->fields.push_back(field);
+	}
+	{
+		auto field = new editor::InspectorVec3();
+		field->name = "Position";
+		field->getter = [=]() {return this->Local().position.Get(); };
+		field->setter = [=](Vector3 val) {this->Local().position.Set(val); };
+		this->inspectorData->fields.push_back(field);
+	}
+	{
+		auto field = new editor::InspectorVec3();
+		field->name = "Rotation";
+		field->getter = [=]() {return this->Local().rotation.Get().ToEuler(); };
+		field->setter = [=](Vector3 val) {this->Local().rotation.Set(Quaternion::Euler(val)); };
+		this->inspectorData->fields.push_back(field);
+	}
+
 	this->id = next_avail_id;
 	next_avail_id++;
 	valid_objects.insert_or_assign(this->id, this);

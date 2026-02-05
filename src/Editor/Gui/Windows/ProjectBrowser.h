@@ -24,10 +24,16 @@ namespace gbe {
 
             std::string GetWindowId() override { return "Project Browser"; }
 
+            inline void SetOnSelectCallback(std::function<void(std::filesystem::path)> callback) {
+                on_select_callback = callback;
+            }
+
         protected:
             void DrawSelf() override;
 
         private:
+            std::function<void(std::filesystem::path)> on_select_callback = nullptr;
+
             static ProjectBrowser* s_instance;
             static std::map<std::string, FileOpenerFunc> s_openers;
 

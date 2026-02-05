@@ -46,7 +46,7 @@ namespace gbe {
 				}
 
 				template<class TExportData>
-				static void ExportClass(TExportData& target, std::filesystem::path asset_path) {
+				static void ExportClass(const TExportData& target, std::filesystem::path asset_path) {
 					FileUtil::ValidateDirectory(asset_path);
 					std::ofstream file(asset_path);
 

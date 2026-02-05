@@ -40,7 +40,8 @@ void gbe::DirectionalLight::GeneralInit()
 	//INSPECTOR
 	auto backtrack_field = new gbe::editor::InspectorFloat();
 	backtrack_field->name = "Shadowmap backtrack";
-	backtrack_field->x = &this->mLight.dir_backtrack_dist;
+	backtrack_field->getter = [=]() {return this->mLight.dir_backtrack_dist; };
+	backtrack_field->setter = [=](float val) {this->mLight.dir_backtrack_dist = val; };
 
 	this->inspectorData->fields.push_back(backtrack_field);
 }

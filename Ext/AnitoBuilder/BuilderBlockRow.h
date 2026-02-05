@@ -16,9 +16,6 @@ namespace gbe::ext::AnitoBuilder {
 		std::vector<std::string> tex_labels;
 		int rownum = 0;
 
-		int proxy_choice_m = 0;
-		int proxy_choice_t = 0;
-
 		BuilderBlock* root;
 		BuilderBlockFace* from;
 	public:

@@ -3,13 +3,19 @@
 #include <functional>
 #include <string>
 #include <algorithm>
+#include <filesystem>
 
 namespace gbe {
+	namespace editor {
+		struct InspectorData;
+	}
+
 	namespace asset {
 		namespace internal {
 			class BaseAsset_base;
 		}
 
+		extern editor::InspectorData* GetInspectorData(std::filesystem::path path);
 
 		class AssetLoader_base_base {
 		public:
@@ -18,6 +24,7 @@ namespace gbe {
 			/// </summary>
 			/// <returns>The count of remaining asynchronous load tasks.</returns>
 			int virtual CheckAsynchrounousTasks() = 0;
+			virtual internal::BaseAsset_base* GetBaseAssetData(std::filesystem::path path) = 0;
 		};
 
 		extern std::vector<AssetLoader_base_base*> all_asset_loaders;
@@ -60,7 +67,22 @@ namespace gbe {
 					return it->second;
 				}
 
-				throw std::exception("Asset not found");
+				return nullptr;
+			}
+
+			internal::BaseAsset_base* GetBaseAssetData(std::filesystem::path asset_path) override {
+				for (const auto& pair : active_base_instance->lookup_map)
+				{
+					internal::BaseAsset_base* baseasset = dynamic_cast<internal::BaseAsset_base*>(pair.second);
+
+					if (baseasset == nullptr)
+						continue;
+
+					if (baseasset->Get_asset_filepath() == asset_path)
+						return pair.second;
+				}
+
+				return nullptr;
 			}
 
 			inline void RegisterAsyncTask(AsyncLoadTask* task) {

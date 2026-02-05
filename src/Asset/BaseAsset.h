@@ -10,6 +10,11 @@
 namespace fs = std::filesystem;
 
 namespace gbe {
+
+	namespace editor {
+		struct InspectorData;
+	}
+
 	namespace asset {
 		struct BaseImportData {
 			std::string asset_type;
@@ -22,7 +27,14 @@ namespace gbe {
 				std::filesystem::path asset_filepath;
 				bool destroy_queued;
 				BaseImportData base_import_data;
+				editor::InspectorData* inspector_data = nullptr;
 			public:
+				inline void SetInspectorData(editor::InspectorData* new_inspector_data) {
+					this->inspector_data = new_inspector_data;
+				}
+				inline editor::InspectorData* GetInspectorData() {
+					return inspector_data;
+				}
 				inline std::filesystem::path Get_asset_filepath() {
 					return asset_filepath;
 				}
@@ -33,7 +45,6 @@ namespace gbe {
 		class BaseAsset : public internal::BaseAsset_base {
 		protected:
 			TImportData import_data;
-
 			TLoadData load_data;
 		public:
 			void SetLoadData(TLoadData newload_data) {
@@ -62,6 +73,9 @@ namespace gbe {
 			}
 			const TLoadData& Get_load_data() {
 				return this->load_data;
+			}
+			TImportData& Get_import_data() {
+				return this->import_data;
 			}
 			inline static TFinal* GetAssetById(std::string id) {
 				return AssetLoader_base<TFinal, TImportData, TLoadData>::GetAsset(id);

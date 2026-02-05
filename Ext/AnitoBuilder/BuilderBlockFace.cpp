@@ -24,8 +24,9 @@ namespace gbe::ext::AnitoBuilder {
 		{
 			auto field = new gbe::editor::InspectorBool();
 			field->name = "allow special walls";
-			field->x = &this->root_block->GetSeg(index)->allow_multiseg;
-			field->onchange = [=]() {
+			field->getter = [=]() {return this->root_block->GetSeg(index)->allow_multiseg; };
+			field->setter = [=](bool val) {
+				this->root_block->GetSeg(index)->allow_multiseg = val;
 				root_block->Refresh();
 				};
 
@@ -34,8 +35,9 @@ namespace gbe::ext::AnitoBuilder {
 		{
 			auto field = new gbe::editor::InspectorBool();
 			field->name = "is backside";
-			field->x = &this->root_block->GetSeg(index)->is_backside;
-			field->onchange = [=]() {
+			field->getter = [=]() {return this->root_block->GetSeg(index)->is_backside; };
+			field->setter = [=](bool val) {
+				this->root_block->GetSeg(index)->is_backside = val;
 				root_block->Refresh();
 				};
 

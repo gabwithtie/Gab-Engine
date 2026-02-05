@@ -15,14 +15,10 @@ namespace gbe {
 			bool DrawVector3Field(std::string label, Vector3* field, bool x_interactable = true, bool y_interactable = true, bool z_interactable = true);
 			void DrawFieldLabel(std::string label);
 
-			std::vector<gbe::Object*>& selected;
+			std::vector<InspectorData*> data;
 		public:
 			std::string GetWindowId() override;
-			inline InspectorWindow(std::vector<gbe::Object*>& _selected):
-				selected(_selected)
-			{
-
-			}
+			void SetInspectorData(std::vector<InspectorData*> _data);
 		};
 	}
 }

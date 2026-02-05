@@ -22,9 +22,7 @@ gbe::Editor* gbe::Editor::instance = nullptr;
 
 gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionals):
 	menubar(this->windows),
-
 	spawnWindow(this->selected),
-	inspectorwindow(this->selected),
 	viewportWindow(this->selected)
 {
 	std::cout << "[EDITOR] Initializing..." << std::endl;
@@ -40,6 +38,15 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 		this->windows.push_back(addwindow);
 		this->external_windows.push_back(addwindow);
 	}
+
+	this->projectWindow.SetOnSelectCallback([=](std::filesystem::path _path) {
+		auto _inspectordata = asset::GetInspectorData(_path);
+		
+		if (_inspectordata == nullptr)
+			return;
+
+		inspectorwindow.SetInspectorData({ _inspectordata });
+		});
 
 	//===========================IMGUI=============================//
 	SDL_Window* implemented_window = static_cast<SDL_Window*>(window->Get_implemented_window());
@@ -148,18 +155,15 @@ void gbe::Editor::OnDeselect(Object* other)
 }
 
 void gbe::Editor::SelectSingle(Object* other) {
-	if(other->GetEditorFlag(Object::SELECT_PARENT_INSTEAD)) {
-		if (other->GetParent() != nullptr) {
-			SelectSingle(other->GetParent());
-			return;
+	if(other != nullptr)
+		if (other->GetEditorFlag(Object::SELECT_PARENT_INSTEAD)) {
+			if (other->GetParent() != nullptr) {
+				SelectSingle(other->GetParent());
+				return;
+			}
+			else
+				throw std::runtime_error("Object has SELECT_PARENT_INSTEAD flag but no parent.");
 		}
-		else
-			throw std::runtime_error("Object has SELECT_PARENT_INSTEAD flag but no parent.");
-	}
-
-	auto newlyclicked = other;
-	
-	bool deselection = false;
 
 	if (instance->keyboard_shifting) {
 		auto it = std::find(instance->selected.begin(), instance->selected.end(), other);
@@ -169,30 +173,39 @@ void gbe::Editor::SelectSingle(Object* other) {
 			OnDeselect(other);
 			instance->selected.erase(it);
 		}
+		else if(other != nullptr) {
+			instance->selected.push_back(other);
+		}
 	}
-	else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
+	else { //CLEAR SELECTION ALWAYS IF NOT MULTISELECTING
 		instance->DeselectAll();
+
+		if (other != nullptr) {
+			instance->selected.push_back(other);
+		}
 	}
 
-	if (!deselection) {
-		instance->selected.push_back(other);
-
-		UpdateSelection();
-	}
+	UpdateSelection();
 }
 
 void gbe::Editor::UpdateSelection()
 {
+	std::vector<editor::InspectorData*> datas;
+
 	for (const auto& other: instance->selected)
 	{
+		datas.push_back(other->GetInspectorData());
+
 		other->CallRecursively([&](Object* child) {
 			auto renderer_check = dynamic_cast<RenderObject*>(child);
 
 			if (renderer_check != nullptr) {
 				RenderPipeline::RegisterAdditionalGroup(renderer_check->Get_id(), 1);
 			}
-			});
+		});
 	}
+
+	instance->inspectorwindow.SetInspectorData(datas);
 }
 
 void gbe::Editor::DeselectAll() {
@@ -261,9 +274,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 			auto cur_id_oncursor = RenderPipeline::GetIdUnderPointer();
 
 			if (cur_id_oncursor == UINT32_MAX) { //NOTHING WAS CLICKED
-				if (!this->keyboard_shifting) { //NOT MULTISELECTING
-					DeselectAll();
-				}
+				SelectSingle(nullptr);
 			}
 			else {
 				SelectSingle(Object::GetObjectById(cur_id_oncursor));
@@ -319,7 +330,7 @@ void gbe::Editor::PrepareUpdate()
 		ImGuiID r = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.25f, nullptr, &dockspace_id);
 		ImGuiID l = dockspace_id;
 
-		ImGuiID l_d = ImGui::DockBuilderSplitNode(l, ImGuiDir_Down, 0.25f, nullptr, &l);
+		ImGuiID l_d = ImGui::DockBuilderSplitNode(l, ImGuiDir_Down, 0.35f, nullptr, &l);
 		ImGuiID l_u = l;
 
 		ImGuiID r_d = ImGui::DockBuilderSplitNode(r, ImGuiDir_Down, 0.5f, nullptr, &r);

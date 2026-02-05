@@ -1,6 +1,5 @@
 #include "ProjectBrowser.h"
 #include <iostream>
-#include <iomanip>
 
 namespace gbe {
     namespace editor {
@@ -45,7 +44,6 @@ namespace gbe {
 
             ImGui::BeginChild("ContentSide", ImVec2(0, 0), true);
 
-            // Background Context Menu
             if (ImGui::BeginPopupContextWindow("ContentContext", ImGuiMouseButton_Right)) {
                 if (ImGui::MenuItem("New Folder")) CreateFolder(current_path);
                 if (ImGui::MenuItem("Paste", "Ctrl+V", false, !clipboard_path.empty())) Paste(current_path);
@@ -80,14 +78,18 @@ namespace gbe {
                     ImGui::PushID(filename.c_str());
                     bool is_dir = entry.is_directory();
 
-                    // --- 1. The Icon (Double click to open) ---
+                    // --- 1. Icon Button ---
                     if (is_dir) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.45f, 0.7f, 1.0f));
                     ImGui::Button("##item", ImVec2(thumbnail_size, thumbnail_size));
 
-                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-                        if (is_dir) {
-                            current_path = path;
-                        }
+                    // Single Click / Select Callback
+                    if (ImGui::IsItemClicked(0) && on_select_callback) {
+                        on_select_callback(path);
+                    }
+
+                    // Double Click to Open
+                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+                        if (is_dir) current_path = path;
                         else {
                             std::string ext = path.extension().string();
                             if (s_openers.count(ext)) s_openers[ext](path);
@@ -95,7 +97,7 @@ namespace gbe {
                     }
                     if (is_dir) ImGui::PopStyleColor();
 
-                    // Item Context Menu
+                    // Context Menu
                     if (ImGui::BeginPopupContextItem()) {
                         if (ImGui::MenuItem("Rename")) {
                             renaming_path = path;
@@ -109,16 +111,12 @@ namespace gbe {
                         ImGui::EndPopup();
                     }
 
-                    // --- 2. The Label (Double click to rename) ---
+                    // --- 2. Label / Rename Logic ---
                     if (renaming_path == path) {
-                        if (set_focus_next_frame) {
-                            ImGui::SetKeyboardFocusHere();
-                            set_focus_next_frame = false;
-                        }
-
+                        if (set_focus_next_frame) { ImGui::SetKeyboardFocusHere(); set_focus_next_frame = false; }
                         ImGui::SetNextItemWidth(thumbnail_size);
-                        bool is_empty = (strlen(rename_buffer) == 0);
 
+                        bool is_empty = (strlen(rename_buffer) == 0);
                         if (is_empty) ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.4f, 0.1f, 0.1f, 1.0f));
 
                         if (ImGui::InputText("##renamebox", rename_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
@@ -127,15 +125,19 @@ namespace gbe {
                                 renaming_path.clear();
                             }
                         }
-
                         if (is_empty) ImGui::PopStyleColor();
-
-                        // Cancel if click away
                         if (!ImGui::IsItemActive() && ImGui::IsMouseClicked(0)) renaming_path.clear();
                     }
                     else {
                         ImGui::TextWrapped(filename.c_str());
-                        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+
+                        // Select on Label Click
+                        if (ImGui::IsItemClicked(0) && on_select_callback) {
+                            on_select_callback(path);
+                        }
+
+                        // Rename on Label Double Click
+                        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
                             renaming_path = path;
                             strncpy(rename_buffer, filename.c_str(), 256);
                             set_focus_next_frame = true;
@@ -157,14 +159,21 @@ namespace gbe {
                 parts.push_back(p);
 
             for (auto it = parts.rbegin(); it != parts.rend(); ++it) {
-                if (ImGui::Button(it->filename().string().c_str())) current_path = *it;
+                if (ImGui::Button(it->filename().string().c_str())) {
+                    current_path = *it;
+                    if (on_select_callback) on_select_callback(*it);
+                }
                 if (std::next(it) != parts.rend()) {
                     ImGui::SameLine(); ImGui::TextDisabled(">"); ImGui::SameLine();
                 }
             }
-            ImGui::SameLine(ImGui::GetWindowWidth() - 180);
-            ImGui::SetNextItemWidth(-1.0f);
+
+            // Fixed width search bar at the right
+            float search_width = 150.0f;
+            ImGui::SameLine(ImGui::GetWindowWidth() - (search_width + 25.0f));
+            ImGui::SetNextItemWidth(search_width);
             ImGui::InputTextWithHint("##Search", "Search...", search_filter, 128);
+
             ImGui::PopStyleVar();
         }
 
@@ -181,7 +190,11 @@ namespace gbe {
             if (!has_subdirs) flags |= ImGuiTreeNodeFlags_Leaf;
 
             bool open = ImGui::TreeNodeEx(path.filename().string().c_str(), flags);
-            if (ImGui::IsItemClicked()) current_path = path;
+
+            if (ImGui::IsItemClicked()) {
+                current_path = path;
+                if (on_select_callback) on_select_callback(path);
+            }
 
             if (open) {
                 try {

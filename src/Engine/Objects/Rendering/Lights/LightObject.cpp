@@ -49,25 +49,31 @@ void gbe::LightObject::GeneralInit()
 {
 	Object::GeneralInit();
 
-	auto lightcolor = new gbe::editor::InspectorColor();
-	lightcolor->name = "Color";
-	lightcolor->r = &this->mLight.color.x;
-	lightcolor->g = &this->mLight.color.y;
-	lightcolor->b = &this->mLight.color.z;
+	{
+		auto field = new gbe::editor::InspectorColor();
+		field->name = "Color";
+		field->getter = [=]() {return this->mLight.color; };
+		field->setter = [=](Vector3 val) {this->mLight.color = val; };
 
-	this->inspectorData->fields.push_back(lightcolor);
+		this->inspectorData->fields.push_back(field);
+	}
 
-	auto bias_min = new gbe::editor::InspectorFloat();
-	bias_min->name = "Bias min";
-	bias_min->x = &this->mLight.bias_min;
+	{
+		auto field = new gbe::editor::InspectorFloat();
+		field->name = "Bias min";
+		field->getter = [=]() {return this->mLight.bias_min; };
+		field->setter = [=](float val) {this->mLight.bias_min = val; };
 
-	this->inspectorData->fields.push_back(bias_min);
+		this->inspectorData->fields.push_back(field);
+	}
+	{
+		auto field = new gbe::editor::InspectorFloat();
+		field->name = "Bias mult";
+		field->getter = [=]() {return this->mLight.bias_mult; };
+		field->setter = [=](float val) {this->mLight.bias_mult = val; };
 
-	auto bias_mult = new gbe::editor::InspectorFloat();
-	bias_mult->name = "Bias mult";
-	bias_mult->x = &this->mLight.bias_mult;
-
-	this->inspectorData->fields.push_back(bias_mult);
+		this->inspectorData->fields.push_back(field);
+	}
 }
 
 void LightObject::Set_Color(Vector3 color) {

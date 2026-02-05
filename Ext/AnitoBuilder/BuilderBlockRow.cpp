@@ -14,9 +14,6 @@ gbe::ext::AnitoBuilder::BuilderBlockRow::BuilderBlockRow(BuilderBlock* _root, Bu
 	this->from = _from;
 	this->rownum = _rownum;
 
-	this->proxy_choice_m = from->GetMeshOverride(rownum);
-	this->proxy_choice_t = from->GetTexOverride(rownum);
-
 	std::vector<asset::Material*> materials;
 	materials.push_back(asset::Material::GetAssetById("plaster"));
 	materials.push_back(asset::Material::GetAssetById("c1"));
@@ -53,11 +50,10 @@ void gbe::ext::AnitoBuilder::BuilderBlockRow::GeneralInit()
 	{
 		auto field = new gbe::editor::InspectorChoice();
 		field->name = "Override Wall";
-		field->index = &this->proxy_choice_m;
 		field->labels = &this->mesh_labels;
-
-		field->onchange = [=]() {
-			from->SetMeshOverride(this->rownum, this->proxy_choice_m);
+		field->getter = [=]() {return from->GetMeshOverride(rownum); };
+		field->setter = [=](int val) {
+			from->SetMeshOverride(this->rownum, val);
 			root->Refresh();
 			};
 
@@ -67,11 +63,10 @@ void gbe::ext::AnitoBuilder::BuilderBlockRow::GeneralInit()
 	{
 		auto field = new gbe::editor::InspectorChoice();
 		field->name = "Override Texture";
-		field->index = &this->proxy_choice_t;
 		field->labels = &this->tex_labels;
-
-		field->onchange = [=]() {
-			from->SetTexOverride(this->rownum, this->proxy_choice_t);
+		field->getter = [=]() {return from->GetTexOverride(rownum); };
+		field->setter = [=](int val) {
+			from->SetTexOverride(this->rownum, val);
 			root->Refresh();
 			};
 

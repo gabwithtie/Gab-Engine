@@ -98,29 +98,34 @@ namespace gbe::ext::AnitoBuilder {
 		{
 			auto field = new gbe::editor::InspectorFloat();
 			field->name = "segment_max_width";
-			field->x = &this->wall_max_width;
-			field->onchange = [=]() {
-				Refresh();
+			field->getter = [=]() { return this->wall_max_width; };
+			field->setter = [=](float val) {
+				this->wall_max_width = val;
+				this->Refresh();
 				};
 
 			this->inspectorData->fields.push_back(field);
 		}
+
 		{
 			auto field = new gbe::editor::InspectorFloat();
 			field->name = "segment_max_height";
-			field->x = &this->wall_max_height;
-			field->onchange = [=]() {
-				Refresh();
+			field->getter = [=]() { return this->wall_max_height; };
+			field->setter = [=](float val) {
+				this->wall_max_height = val;
+				this->Refresh();
 				};
 
 			this->inspectorData->fields.push_back(field);
 		}
+
 		{
 			auto field = new gbe::editor::InspectorFloat();
 			field->name = "segment_depth";
-			field->x = &this->thickness;
-			field->onchange = [=]() {
-				Refresh();
+			field->getter = [=]() { return this->thickness; };
+			field->setter = [=](float val) {
+				this->thickness = val;
+				this->Refresh();
 				};
 
 			this->inspectorData->fields.push_back(field);
