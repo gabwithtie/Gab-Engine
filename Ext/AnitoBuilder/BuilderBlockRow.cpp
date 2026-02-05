@@ -20,6 +20,7 @@ gbe::ext::AnitoBuilder::BuilderBlockRow::BuilderBlockRow(BuilderBlock* _root, Bu
 	std::vector<asset::Material*> materials;
 	materials.push_back(asset::Material::GetAssetById("plaster"));
 	materials.push_back(asset::Material::GetAssetById("c1"));
+	materials.push_back(asset::Material::GetAssetById("c3"));
 
 	for (const auto& mat : materials)
 	{
