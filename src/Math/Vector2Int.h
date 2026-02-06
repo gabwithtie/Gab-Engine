@@ -5,6 +5,7 @@
 
 #include <glm/vec2.hpp>
 #include "Vector2.h"
+#include <string>
 
 namespace gbe {
 	struct Vector2Int : public glm::ivec2 {
@@ -27,5 +28,9 @@ namespace gbe {
 		}
 
 		static const Vector2Int zero;
+
+		std::string Hash() {
+			return std::to_string(this->x) + "," + std::to_string(this->y);
+		}
 	};
 }

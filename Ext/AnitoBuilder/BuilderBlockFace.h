@@ -44,6 +44,7 @@ namespace gbe::ext::AnitoBuilder {
 				if (renderers.size() <= get_index) {
 					auto newrenderer = new RenderObject(drawcall);
 					newrenderer->SetParent(&owner);
+					newrenderer->PushEditorFlag(SELECT_PARENT_INSTEAD);
 					owner.renderObjects.push_back(newrenderer);
 
 					renderers.push_back(newrenderer);

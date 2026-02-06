@@ -230,13 +230,13 @@ namespace gbe::ext::AnitoBuilder {
 					int center_based_x = 0;
 
 					if (handle->Get_cur_width() % 2 == 1)
-						center_based_x = - (row_index - (handle->Get_cur_width() / 2));
+						center_based_x = -(row_index - (handle->Get_cur_width() / 2));
 					else {
-						center_based_x = - (row_index - (handle->Get_cur_width() / 2));
+						center_based_x = -(row_index - (handle->Get_cur_width() / 2));
 					}
 
 					return -center_based_x;
-				};
+					};
 
 
 				// MAIN SEGMENTS
@@ -272,11 +272,11 @@ namespace gbe::ext::AnitoBuilder {
 
 					process_renderobject([&]()
 						{// ... [Inside of your lambda remains exactly the same] ...
-							if (handle_data->allow_multiseg) {
+							if (handle_data->center_facade_type >= 0) {
 								if (can_put_facade) {
 									int choice_x = center_based_x + 1;
 									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
-										if (handle_data->is_backside) {
+										if (handle_data->center_facade_type == 1) {
 											if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
 											else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
 										}
@@ -317,16 +317,16 @@ namespace gbe::ext::AnitoBuilder {
 					}
 
 					pos += Vector3(0, handle->Get_height_per_wall(), 0); // add 1 more floor worth of height
-					
+
 					process_renderobject([&]()
 						{
-							if (handle_data->allow_multiseg) {
+							if (handle_data->center_facade_type >= 0) {
 								if (can_put_facade && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
 								{
 									int choice_x = center_based_x + 1;
 
 									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
-										if (handle_data->is_backside)
+										if (handle_data->center_facade_type == 1)
 											return new RenderObject(windowwall_DC[0][1]);
 										else
 											return new RenderObject(wall3x4_DC[3][choice_x]);
@@ -354,15 +354,244 @@ namespace gbe::ext::AnitoBuilder {
 					newrenderer->Local().SetMatrix(roof_obj->Local().GetMatrix());
 				}
 			}
-		}
 
-	}
+			float inset_distance = 2.0f;
+			float roofheight = 2.5;
+			float roof_overshoot = 1.5;
 
-	void BuilderBlock::SetModelShown(bool value)
-	{
-		if (model_shown != value) {
-			model_shown = value;
-			this->UpdateModelShown();
+			const auto GetQuadInsetPoints = [=](BlockSet& targetSet)
+				{
+					std::vector<std::pair<Vector3, Vector3>> allInsetSegments;
+					int numCorners = targetSet.segs.size();
+
+					enum VertexType
+					{
+						BISECTOR,
+						L_EDGE,
+						R_EDGE
+					};
+
+					auto CalculatePointInset = [&](int i, VertexType returntype) -> Vector3
+						{
+							int idxPrev = (i + numCorners - 1) % numCorners;
+							int idxNext = i;
+
+							bool prevIsEdge = handle_pool[targetSet.segs[idxPrev].handleindex]->Get_is_edge();
+							bool nextIsEdge = handle_pool[targetSet.segs[idxNext].handleindex]->Get_is_edge();
+
+							Vector3 pMid = data.GetPosition(targetSet.segs[i].seg.first);
+							Vector3 pPrev = data.GetPosition(targetSet.segs[idxPrev].seg.first);
+							Vector3 pNext = data.GetPosition(targetSet.segs[idxNext].seg.second);
+
+							Vector3 dPrev = ((Vector3)(pPrev - pMid)).Normalize();
+							Vector3 dNext = ((Vector3)(pNext - pMid)).Normalize();
+
+							// CASE 1: True Exterior Corner (Inward Bisector)
+							if (returntype == BISECTOR) {
+								Vector3 bisector = ((Vector3)(dPrev + dNext)).Normalize();
+								float dot = std::clamp(dPrev.Dot(dNext), -1.0f, 1.0f);
+								float angle = acos(dot);
+								float len = inset_distance / sin(angle * 0.5f);
+								if (dNext.Cross(dPrev).y < 0) bisector = -bisector;
+								return pMid + (bisector * len);
+							}
+							else {
+								float dot = std::clamp(dPrev.Dot(dNext), -1.0f, 1.0f);
+								float angle = acos(dot);
+								float slideLen = inset_distance / sin(angle);
+
+								// We slide away from the junction point toward the edge
+								return (returntype == L_EDGE) ? pMid + (dPrev * slideLen) : pMid + (dNext * slideLen);
+							}
+
+							return pMid;
+						};
+
+					for (int i = 0; i < numCorners; i++)
+					{
+						bool currentIsEdge = handle_pool[targetSet.segs[i].handleindex]->Get_is_edge();
+
+						Vector3 L_bisector = CalculatePointInset(i, BISECTOR);
+						Vector3 L_edge = CalculatePointInset(i, R_EDGE);
+						Vector3 R_bisector = CalculatePointInset((i + 1) % numCorners, BISECTOR);
+						Vector3 R_edge = CalculatePointInset((i + 1) % numCorners, L_EDGE);
+
+						if (currentIsEdge) {
+							// Normal Edge: These close inwards as usual
+							allInsetSegments.push_back({ L_bisector, R_bisector });
+						}
+						else {
+							allInsetSegments.push_back({ L_bisector, L_edge });
+							allInsetSegments.push_back({ R_edge, R_bisector });
+						}
+					}
+
+					return allInsetSegments;
+				};
+
+			std::vector<std::pair<Vector3, Vector3>> insetpolygon;
+
+			for (auto& set : this->data.sets)
+			{
+				auto insetpoints = GetQuadInsetPoints(set);
+
+				for (const auto& i_pair : insetpoints)
+				{
+					insetpolygon.push_back(i_pair);
+
+					auto handle = new BuilderBlockFace(this, 0);
+					handle->SetParent(this);
+					display_renderers.push_back(handle);
+
+					auto a = i_pair.first;
+					auto b = i_pair.second;
+
+					a.y = height;
+					b.y = height + roofheight;
+					handle->SetPositions(a, b);
+				}
+			}
+
+			const auto IsPointInPolygon = [](Vector3 point, const std::vector<std::pair<Vector3, Vector3>>& poly) {
+				int count = 0;
+				for (const auto& edge : poly) {
+					Vector3 a = edge.first;
+					Vector3 b = edge.second;
+					// Check if the ray (horizontal) crosses the edge
+					if (((a.z <= point.z && point.z < b.z) || (b.z <= point.z && point.z < a.z)) &&
+						(point.x < (b.x - a.x) * (point.z - a.z) / (b.z - a.z) + a.x)) {
+						count++;
+					}
+				}
+				return (count % 2 != 0);
+				};
+
+			// --- REVISED NAN-SAFE & DIRECTION-SAFE BISECTORS ---
+			std::vector<Vector3> bisectors(insetpolygon.size());
+			for (int i = 0; i < insetpolygon.size(); i++) {
+				int prev = (i + insetpolygon.size() - 1) % insetpolygon.size();
+
+				Vector3 pMid = insetpolygon[i].first;
+				Vector3 pPrev = insetpolygon[prev].first;
+				Vector3 pNext = insetpolygon[i].second;
+
+				Vector3 dPrev = Vector3(pPrev - pMid).Normalize();
+				Vector3 dNext = Vector3(pNext - pMid).Normalize();
+
+				// 1. Basic Bisector
+				Vector3 bisect = Vector3(dPrev + dNext).Normalize();
+
+				// 2. Handle straight lines (Collinear)
+				if (dPrev.Dot(dNext) < -0.999f) {
+					bisect = Vector3(dNext.z, 0, -dNext.x);
+				}
+
+				// 3. THE FIX: Direction Validation
+				// Take a tiny step along the bisector
+				Vector3 testPoint = pMid + (bisect * 0.1f);
+
+				// Use a simple parity check or your building's bounds check
+				// If the test point is OUTSIDE, flip the bisector
+				if (!IsPointInPolygon(testPoint, insetpolygon)) {
+					bisect = -bisect;
+				}
+
+				// 4. Length Multiplier
+				float dot = std::clamp(dPrev.Dot(dNext), -1.0f, 1.0f);
+				float sinHalf = sin(acos(dot) * 0.5f);
+				float lenMult = (sinHalf > 0.001f) ? (1.0f / sinHalf) : 1.0f;
+
+				bisectors[i] = bisect * std::min(lenMult, 5.0f);
+			}
+			// --- DEBUGGING THE CENTRAL SPINE ---
+			for (int i = 0; i < insetpolygon.size(); i++)
+			{
+				const auto GetMid = [=](Vector3 from) {
+					Vector3 dir = bisectors[i].Normalize(); // Use the direction only for the ray
+
+					// 1. Find the distance to the "opposite" wall
+					float closest_hit = 1000.0f; // Large number
+					bool hit_found = false;
+
+					for (int j = 0; j < insetpolygon.size(); j++) {
+						// Skip current and adjacent segments
+						if (j == i || j == (i + insetpolygon.size() - 1) % insetpolygon.size()) continue;
+
+						Vector3 p1 = insetpolygon[j].first;
+						Vector3 p2 = insetpolygon[j].second;
+
+						// 2D Ray-Segment Intersection (XZ Plane)
+						float x1 = from.x, z1 = from.z;
+						float x2 = from.x + dir.x, z2 = from.z + dir.z;
+						float x3 = p1.x, z3 = p1.z;
+						float x4 = p2.x, z4 = p2.z;
+
+						float den = (x1 - x2) * (z3 - z4) - (z1 - z2) * (x3 - x4);
+						if (std::abs(den) < 0.0001f) continue;
+
+						float t = ((x1 - x3) * (z3 - z4) - (z1 - z3) * (x3 - x4)) / den;
+						float u = -((x1 - x2) * (z1 - z3) - (z1 - z2) * (x1 - x3)) / den;
+
+						if (t > 0 && u >= 0 && u <= 1) {
+							if (t < closest_hit) {
+								closest_hit = t;
+								hit_found = true;
+							}
+						}
+					}
+
+					// 2. Position the debug cube at the halfway point
+					if (hit_found) {
+						// Ridge point is at half the width (closest_hit / 2)
+						// Note: we use the normalized 'dir' here to avoid scaling issues
+						Vector3 ridge_point = from + (dir * (closest_hit * 0.5f));
+
+						return ridge_point;
+					}
+
+					return from;
+				};
+
+				
+				auto base_1 = insetpolygon[i].first;
+				base_1 += height + roofheight;
+				auto base_2 = insetpolygon[i].second;
+				base_2 += height + roofheight;
+				auto mid_1 = GetMid(insetpolygon[i].first);
+				mid_1.y += height + roofheight + roofheight;
+				auto mid_2 = GetMid(insetpolygon[i].second);
+				mid_2.y += height + roofheight + roofheight;
+
+				const auto CalculateSkewMatrix = [](Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float thickness) {
+					// 1. Calculate the Center of the base
+					Vector3 center = (p0 + p1 + p2 + p3) * 0.25f;
+
+					// 2. Define the Basis Vectors
+					// X Basis: The direction along the wall
+					Vector3 basisX = p1 - p0;
+
+					// Z Basis: The direction from the wall to the ridge (The slope)
+					Vector3 basisZ = p2 - p1;
+
+					// Y Basis: The "Up" or thickness vector (Perpendicular to X and Z)
+					Vector3 basisY = basisX.Cross(basisZ).Normalize() * thickness;
+
+					// 3. Construct the Matrix columns
+					// Matrix format: [BasisX, BasisY, BasisZ, Translation]
+					Matrix4 mat;
+					mat[0] = Vector4(basisX.x, basisX.y, basisX.z, 0);
+					mat[1] = Vector4(basisY.x, basisY.y, basisY.z, 0);
+					mat[2] = Vector4(basisZ.x, basisZ.y, basisZ.z, 0);
+					mat[3] = Vector4(center.x, center.y, center.z, 1);
+
+					return mat;
+				};
+
+				RenderObject* debug_spine = new RenderObject(RenderObject::cube);
+				debug_spine->SetParent(this);
+				display_renderers.push_back(debug_spine);
+				debug_spine->Local().SetMatrix(CalculateSkewMatrix(base_1, base_2, mid_2, mid_1, 0.3f));
+			}
 		}
 	}
 
@@ -637,7 +866,7 @@ namespace gbe::ext::AnitoBuilder {
 
 		handle_pool[root_handle]->Set_is_edge(false);
 
-		SetSeg src_seg;
+		PosPair src_seg;
 
 		for (size_t s = 0; s < data.sets.size(); s++)
 			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
@@ -666,7 +895,7 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::AddBlock(int corners[4]) {
 
-		std::vector<SetSeg> src_segments = {
+		std::vector<PosPair> src_segments = {
 			{corners[0], corners[1]},
 			{corners[1], corners[2]},
 			{corners[2], corners[3]},

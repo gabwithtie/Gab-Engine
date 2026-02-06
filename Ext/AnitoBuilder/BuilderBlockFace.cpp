@@ -12,33 +12,6 @@ namespace gbe::ext::AnitoBuilder {
 		//INSPECTOR
 		this->SetName("Anito Builder Block Set");
 
-		if (this->root_block->GetSeg(index)->allow_multiseg) {
-			auto s = 0;
-		}
-
-		{
-			auto field = new gbe::editor::InspectorBool();
-			field->name = "allow special walls";
-			field->getter = [=]() {return this->root_block->GetSeg(index)->allow_multiseg; };
-			field->setter = [=](bool val) {
-				this->root_block->GetSeg(index)->allow_multiseg = val;
-				root_block->Refresh();
-				};
-
-			this->inspectorData->fields.push_back(field);
-		}
-		{
-			auto field = new gbe::editor::InspectorBool();
-			field->name = "is backside";
-			field->getter = [=]() {return this->root_block->GetSeg(index)->is_backside; };
-			field->setter = [=](bool val) {
-				this->root_block->GetSeg(index)->is_backside = val;
-				root_block->Refresh();
-				};
-
-			this->inspectorData->fields.push_back(field);
-		}
-
 		auto add_block_button = new gbe::editor::InspectorButton();
 		add_block_button->name = "Append Block";
 		add_block_button->onpress = [=]() {
@@ -47,36 +20,6 @@ namespace gbe::ext::AnitoBuilder {
 			};
 
 		this->inspectorData->fields.push_back(add_block_button);
-	}
-
-	int BuilderBlockFace::GetMeshOverride(int floor)
-	{
-		auto it = root_block->GetSeg(this)->mesh_overrides.find(floor);
-
-		if (it != root_block->GetSeg(this)->mesh_overrides.end())
-			return root_block->GetSeg(this)->mesh_overrides[floor];
-
-		return 0;
-	}
-
-	void BuilderBlockFace::SetMeshOverride(int floor, int mo)
-	{
-		root_block->GetSeg(this)->mesh_overrides.insert_or_assign(floor, mo);
-	}
-
-	int BuilderBlockFace::GetTexOverride(int floor)
-	{
-		auto it = root_block->GetSeg(this)->tex_overrides.find(floor);
-
-		if (it != root_block->GetSeg(this)->tex_overrides.end())
-			return root_block->GetSeg(this)->tex_overrides[floor];
-
-		return 0;
-	}
-
-	void BuilderBlockFace::SetTexOverride(int floor, int mo)
-	{
-		root_block->GetSeg(this)->tex_overrides.insert_or_assign(floor, mo);
 	}
 
 	void BuilderBlockFace::SetPositions(Vector3 local_a, Vector3 local_b)

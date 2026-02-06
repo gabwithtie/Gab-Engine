@@ -8,17 +8,14 @@
 namespace gbe::ext::AnitoBuilder {
 	class BuilderBlockFace;
 
-	typedef std::pair<int, int> SetSeg;
+	typedef std::pair<int, int> PosPair;
 
 	struct BlockSeg {
-		SetSeg seg;
+		PosPair seg;
 		int handleindex;
 
-		bool allow_multiseg;
-		bool is_backside;
-
-		std::unordered_map<int, int> mesh_overrides;
-		std::unordered_map<int, int> tex_overrides;
+		int center_facade_type = -1;
+		int edge_designs_interval = -1;
 	};
 
 	struct BlockSet {
@@ -43,7 +40,7 @@ namespace gbe::ext::AnitoBuilder {
 			if (index < 0 || index >= positions.size())
 				return;
 			positions[index][0] = data.x;
-			positions[index][1] = data.y;
+			positions[index][1] = 0;
 			positions[index][2] = data.z;
 		}
 		void AddPosition(Vector3 data) {
@@ -79,9 +76,15 @@ namespace gbe::ext::AnitoBuilder {
 		//Objects
 		Object* ceiling_parent;
 		std::vector<RenderObject*> editor_renderers;
-		std::vector<RenderObject*> display_renderers;
+		std::vector<Object*> display_renderers;
 
-		void SetModelShown(bool value);
+		inline void SetModelShown(bool value) {
+			if (model_shown == value)
+				return;
+
+			model_shown = value;
+			UpdateModelShown();
+		}
 		void Refresh();
 	protected:
 		void GeneralInit() override;
