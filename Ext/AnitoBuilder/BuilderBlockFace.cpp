@@ -9,11 +9,6 @@ namespace gbe::ext::AnitoBuilder {
 
 		this->type1_renderers.drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("cube"), asset::Material::GetAssetById("preview_wall_1"));
 		
-		//EDITOR OBJECTS
-		handle_ro = new Object();
-		handle_ro->SetParent(this);
-		handle_ro->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-
 		//INSPECTOR
 		this->SetName("Anito Builder Block Set");
 
@@ -84,75 +79,87 @@ namespace gbe::ext::AnitoBuilder {
 		root_block->GetSeg(this)->tex_overrides.insert_or_assign(floor, mo);
 	}
 
+	void BuilderBlockFace::SetPositions(Vector3 local_a, Vector3 local_b)
+	{
+		Vector3 delta = local_b - local_a;
+		delta.y = 0;
+
+		float half_mag = delta.Magnitude() * 0.5f;
+
+		auto pos = Vector3::Mid(local_a, local_b);
+		pos.y = local_a.y;
+
+		this->Local().position.Set(pos);
+		this->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
+		this->Local().scale.Set(Vector3(half_mag, local_b.y - local_a.y, 1.0f));
+	}
+
 	void BuilderBlockFace::OnLocalTransformationChange(TransformChangeType type) {
 		Object::OnLocalTransformationChange(type);
 
-		//LAYER VARS
-		float height = handle_ro->Local().scale.Get().y * 2;
+		// --- LAYER VARS (Local Y: 0 to 1) ---
+		float height = this->Local().scale.Get().y;
 		int layers_needed = ceil(height / root_block->wall_max_height);
-		float shrink_factor_y = height / ((float)layers_needed * root_block->wall_max_height);
-		float final_wall_height = shrink_factor_y * root_block->wall_max_height;
-		this->height_per_wall = final_wall_height;
-		float local_wall_scale_y = (final_wall_height / 2) / handle_ro->Local().scale.Get().y;
-		
-		float start_pos_y = this->World().position.Get().y;
-		start_pos_y -= height / 2;
-		start_pos_y += final_wall_height / 2;
-		float end_pos_y = start_pos_y;
-		end_pos_y += final_wall_height * (float)layers_needed;
-		
-		//WALL VARS
-		float width = handle_ro->Local().scale.Get().x * 2;
+		this->height_per_wall = height / (float)layers_needed; // Actual height in world units
+
+		// Scale relative to parent (1.0 / layers_needed if pivot is at base)
+		float local_wall_scale_y = 1.0f / (float)layers_needed;
+
+		// Local Y range
+		float local_start_y = 0.0f + (local_wall_scale_y * 0.5f); // Half-offset to center the segment
+		float local_end_y = 1.0f - (local_wall_scale_y * 0.5f);
+
+		// --- WALL VARS (Local X: -1 to 1) ---
+		float width = this->Local().scale.Get().x * 2;
 		int walls_needed = ceil(width / root_block->wall_max_width);
-		float shrink_factor_x = width / ((float)walls_needed * root_block->wall_max_width);
-		float final_wall_width = shrink_factor_x * root_block->wall_max_width;
-		this->width_per_wall = final_wall_width;
-		float local_wall_scale_x = (final_wall_width / 2) / handle_ro->Local().scale.Get().x;
-		
-		Vector3 axis = this->Local().GetRight();
-		Vector3 start_pos_x = this->World().position.Get();
-		start_pos_x -= axis * (width / 2);
-		start_pos_x += axis * (final_wall_width / 2);
-		Vector3 end_pos_x = start_pos_x;
-		end_pos_x += axis * final_wall_width * (float)walls_needed;
+		this->width_per_wall = width / (float)walls_needed;
+
+		// Scale relative to parent (-1 to 1 is a range of 2.0)
+		float local_wall_scale_x = 2.0f / (float)walls_needed;
+
+		// Local X range
+		float local_start_x = -1.0f + (local_wall_scale_x * 0.5f);
+		float local_end_x = 1.0f - (local_wall_scale_x * 0.5f);
 
 		int total_segs_needed = walls_needed * layers_needed;
 
+		// --- POOLING & CLEANUP ---
 		if (total_segs_needed != this->renderObjects.size()) {
-			int seg_count = this->renderObjects.size();
-			for (size_t i = 0; i < seg_count; i++)
-			{
-				this->renderObjects[i]->Destroy();
-			}
+			for (auto& obj : this->renderObjects) obj->Destroy();
 			this->renderObjects.clear();
-
 			type1_renderers.ResetPool();
 		}
 
-		int seg_count = this->renderObjects.size();
-		
 		type1_renderers.ResetGetIndex();
-		for (size_t i = 0; i < total_segs_needed; i++)
+
+		// --- PLACEMENT LOOP ---
+		for (int i = 0; i < total_segs_needed; i++)
 		{
 			int x = i % walls_needed;
-			int y = floor(i / walls_needed);
+			int y = i / walls_needed;
 
-			float t_x = (float)x / (float)walls_needed;
-			Vector3 pos = Vector3::Lerp(start_pos_x, end_pos_x, t_x);
+			// Calculate Local Position
+			float t_x = (walls_needed > 1) ? (float)x / (float)(walls_needed - 1) : 0.5f;
+			float t_y = (layers_needed > 1) ? (float)y / (float)(layers_needed - 1) : 0.5f;
 
-			float t_y = (float)y / (float)layers_needed;
-			float pos_y = glm::mix(start_pos_y, end_pos_y, t_y);
+			// If there's only 1 segment, t will be 0/0 (NaN), handled by the ternary above
+			float local_pos_x = (walls_needed > 1) ? glm::mix(local_start_x, local_end_x, t_x) : 0.0f;
+			float local_pos_y = (layers_needed > 1) ? glm::mix(local_start_y, local_end_y, t_y) : 0.5f;
 
-			pos.y = pos_y;
-
-			//Create or get here
 			RenderObject* renderertomove = type1_renderers.Get();
 
-			this->renderObjects[i]->World().position.Set(pos);
-			this->renderObjects[i]->Local().scale.Set(Vector3(local_wall_scale_x, local_wall_scale_y, 1));
+			// Use Local() instead of World() for positions
+			// We assume these renderers are parented to 'this'
+			renderertomove->Local().position.Set(Vector3(local_pos_x, local_pos_y, 0.0f));
 
-			object_floors[this->renderObjects[i]] = y;
-			object_rows[this->renderObjects[i]] = x;
+			// Scale is also local relative to the [-1, 1] x [0, 1] parent space
+			// Note: z scale should probably be thickness/handle_scale.z if you want absolute thickness
+			renderertomove->Local().scale.Set(Vector3(local_wall_scale_x, local_wall_scale_y, 1.0f));
+
+			// Cache indices for the facade/special wall logic
+			this->renderObjects[i] = renderertomove;
+			object_floors[renderertomove] = y;
+			object_rows[renderertomove] = x;
 		}
 
 		this->cur_width = walls_needed;

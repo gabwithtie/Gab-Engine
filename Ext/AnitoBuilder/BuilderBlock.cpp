@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "BuilderBlockFace.h"
-#include "BuilderBlockRow.h"
 #include "Graphics/gbe_graphics.h"
 #include "Asset/gbe_asset.h"
 #include "Math/gbe_math.h"
@@ -87,6 +86,7 @@ namespace gbe::ext::AnitoBuilder {
 		
 		Refresh();
 	}
+
 
 	void BuilderBlock::GeneralInit()
 	{
@@ -235,48 +235,42 @@ namespace gbe::ext::AnitoBuilder {
 						center_based_x = - (row_index - (handle->Get_cur_width() / 2));
 					}
 
-					return center_based_x;
+					return -center_based_x;
 				};
 
-				// 1. Create a cache to store/lookup floor parents
-				std::map<int, BuilderBlockRow*> floor_parents;
 
 				// MAIN SEGMENTS
 				for (const auto& obj : handle->Get_all_segs())
 				{
 					int floor_index = handle->Get_floor(obj);
 
-					// --- FLOOR GROUPING LOGIC ---
-					// Check if we already created a parent for this floor, if not, spawn one
-					if (floor_parents.find(floor_index) == floor_parents.end())
-					{
-						BuilderBlockRow* floor_group = new BuilderBlockRow(this, handle, floor_index);
-						floor_group->SetName("Floor_" + std::to_string(floor_index));
-						floor_group->SetParent(handle);
-
-						// Hide the dummy group from direct selection if desired
-						if(!AnitoBuilderExtension::floor_select)
-							floor_group->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-
-						floor_group->PushEditorFlag(EditorFlags::STATIC_ALL);
-
-						floor_parents[floor_index] = floor_group;
-					}
-
-					Object* current_floor_parent = floor_parents[floor_index];
-					// ----------------------------
-
 					Vector3 pos = obj->World().position.Get();
 					pos -= Vector3(0, handle->Get_height_per_wall() / 2.0f, 0);
 
-					Quaternion rot = obj->World().rotation.Get();
-					Quaternion flip_rot = Quaternion::Euler(Vector3(0, 180, 0));
-					rot *= flip_rot;
+					// ----------------------------
+
+					const auto process_renderobject = [&](RenderObject* newrenderer) {
+						newrenderer->SetParent(handle);
+						newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
+						display_renderers.push_back(newrenderer);
+
+						auto inv__import_scale = Vector3(1.0 / wall_import_width, 1.0f / wall_import_height_from_zero, 1);
+						Vector3 final_scale = Vector3(1);
+						auto target_local_scale = obj->Local().scale.Get();
+						final_scale.x = (inv__import_scale.x * target_local_scale.x);
+						final_scale.y = (inv__import_scale.y * target_local_scale.y);
+						final_scale.z = thickness;
+
+						newrenderer->Local().scale.Set(final_scale);
+						newrenderer->World().position.Set(pos);
+
+						return newrenderer;
+						};
 
 					int row_index = handle->Get_row(obj);
 					int center_based_x = get_center_x(obj);
 
-					RenderObject* newrenderer = [=, &floor_parents]()
+					process_renderobject([&]()
 						{// ... [Inside of your lambda remains exactly the same] ...
 							if (handle_data->allow_multiseg) {
 								if (can_put_facade) {
@@ -312,56 +306,19 @@ namespace gbe::ext::AnitoBuilder {
 							if (floor_index == 0) return new RenderObject(wallnorm_DC[0]);
 							if (floor_index > 0)
 							{
-								auto overrideDC = floor_parents[floor_index]->GetOverrideDrawCall();
-
-								if(overrideDC == nullptr)
-									return new RenderObject(wallnorm_DC[1]);
-								
-								return new RenderObject(overrideDC);
+								return new RenderObject(wallnorm_DC[1]);
 							}
 							return (RenderObject*)nullptr;
-						}();
-
-					if (newrenderer) {
-						// Parent to the floor group instead of the handle
-						newrenderer->SetParent(current_floor_parent);
-						newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-						display_renderers.push_back(newrenderer);
-
-						auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
-						Vector3 final_scale = Vector3(1);
-						final_scale.x = inv__import_scale.x * (handle->Get_width_per_wall() / 2.0f);
-						final_scale.y = inv__import_scale.y * (handle->Get_height_per_wall());
-						final_scale.z = thickness;
-
-						newrenderer->Local().scale.Set(final_scale);
-						newrenderer->World().position.Set(pos);
-						newrenderer->World().rotation.Set(rot);
-					}
-				}
-
-				//PAHABOL SEGMENTS
-				for (const auto& obj : handle->Get_all_segs())
-				{
-					int floor_index = handle->Get_floor(obj);
-					int row_index = handle->Get_row(obj);
+						}());
 
 					//iterate only the last floor
 					if (handle->Get_cur_height() - 1 != floor_index) {
 						continue;
 					}
 
-					Vector3 pos = obj->World().position.Get();
-					pos -= Vector3(0, handle->Get_height_per_wall() / 2.0f, 0);
 					pos += Vector3(0, handle->Get_height_per_wall(), 0); // add 1 more floor worth of height
-
-					Quaternion rot = obj->World().rotation.Get();
-					Quaternion flip_rot = Quaternion::Euler(Vector3(0, 180, 0));
-					rot *= flip_rot;
-
-					int center_based_x = get_center_x(obj);
-
-					RenderObject* newrenderer = [=]()
+					
+					process_renderobject([&]()
 						{
 							if (handle_data->allow_multiseg) {
 								if (can_put_facade && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
@@ -382,21 +339,7 @@ namespace gbe::ext::AnitoBuilder {
 							}
 
 							return new RenderObject(roof_DC);
-						}();
-
-					newrenderer->SetParent(handle);
-					newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-					display_renderers.push_back(newrenderer);
-
-					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
-					Vector3 final_scale = Vector3(1);
-					final_scale.x = inv__import_scale.x * (handle->Get_width_per_wall() / 2.0f);
-					final_scale.y = inv__import_scale.y * (handle->Get_height_per_wall());
-					final_scale.z = thickness;
-
-					newrenderer->Local().scale.Set(final_scale);
-					newrenderer->World().position.Set(pos);
-					newrenderer->World().rotation.Set(rot);
+						}());
 				}
 			}
 
@@ -430,11 +373,10 @@ namespace gbe::ext::AnitoBuilder {
 		auto& seg = this->data.sets[s].segs[i].seg;
 		auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
 
-		auto delta_right = handle->Local().GetRight() * (handle->Get_handle_parent()->Local().scale.Get().x);
-		auto delta_up = -Vector3(0, height * 0.5f, 0);
+		auto delta_right = handle->Local().GetRight() * (handle->Local().scale.Get().x);
 
-		l = handle->Local().position.Get() - delta_right + delta_up;
-		r = handle->Local().position.Get() + delta_right + delta_up;
+		l = handle->Local().position.Get() + delta_right;
+		r = handle->Local().position.Get() - delta_right;
 	}
 
 	void BuilderBlock::Refresh()
@@ -463,14 +405,10 @@ namespace gbe::ext::AnitoBuilder {
 		ResetRoof(set_roof->handle_renderers[1], s, 2);
 
 		auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
-		auto handle_parent = handle->Get_handle_parent();
-
-		Vector3 delta = data.GetPosition(seg.first) - data.GetPosition(seg.second);
-		float half_mag = delta.Magnitude() * 0.5f;
-
-		handle->Local().position.Set(Vector3::Mid(data.GetPosition(seg.first), data.GetPosition(seg.second)) + Vector3(0, height * 0.5f, 0));
-		handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
-		handle_parent->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
+	
+		auto second = data.GetPosition(seg.second);
+		second.y += height;
+		handle->SetPositions(data.GetPosition(seg.first), second);
 	}
 
 	void BuilderBlock::ResetAllHandles()
@@ -603,7 +541,7 @@ namespace gbe::ext::AnitoBuilder {
 				//Prevent flipping
 				auto opp_pos = handle_pool[GetHandle(moved_s, moved_i + 2).handleindex]->Local().position.Get(); //The handle opposite of the moved handle
 				Vector3 opp_dir = opp_pos - moved_obj->Local().position.Get();
-				auto opp_dot = opp_dir.Dot(moved_obj->Local().GetForward());
+				auto opp_dot = opp_dir.Dot(-moved_obj->Local().GetForward());
 				if (opp_dot < 0)
 					valid_move = false;
 

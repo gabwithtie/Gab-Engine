@@ -1,7 +1,7 @@
 set(LIB_NAME "gbe_anitobuilder")
 message("[GBE EXTERNAL] Building Library "${LIB_NAME})
 
-add_library(${LIB_NAME} "BuilderBlock.cpp" "BuilderBlockFace.cpp" "gui/AnitoBuilderWindow.cpp" "AnitoBuilderExtension.cpp" "BuilderBlockRow.cpp")
+add_library(${LIB_NAME} "BuilderBlock.cpp" "BuilderBlockFace.cpp" "gui/AnitoBuilderWindow.cpp" "AnitoBuilderExtension.cpp")
 
 message("[GBE EXTERNAL] Including directory: "${GABENGINE_INCLUDE_DIRECTORY})
 

@@ -60,7 +60,7 @@ namespace gbe::ext::AnitoBuilder {
 		float wall_max_height = 4;
 		
 		float height;
-		float thickness = 1.3;
+		float thickness = 1;
 
 		//IMPORT PARAMS
 		float wall_import_height_from_zero = 1.85f;

@@ -18,10 +18,8 @@ namespace gbe::ext::AnitoBuilder {
 		float height_per_wall;
 
 		BuilderBlock* root_block = nullptr;
-		Object* handle_ro = nullptr;
 
 		std::vector<RenderObject*> renderObjects;
-
 
 		struct RendererSubpool {
 			BuilderBlockFace& owner;
@@ -45,7 +43,7 @@ namespace gbe::ext::AnitoBuilder {
 			inline RenderObject* Get() {
 				if (renderers.size() <= get_index) {
 					auto newrenderer = new RenderObject(drawcall);
-					newrenderer->SetParent(owner.handle_ro);
+					newrenderer->SetParent(&owner);
 					owner.renderObjects.push_back(newrenderer);
 
 					renderers.push_back(newrenderer);
@@ -75,9 +73,7 @@ namespace gbe::ext::AnitoBuilder {
 
 		void SetTexOverride(int floor, int mo);
 
-		inline Object* Get_handle_parent() {
-			return handle_ro;
-		}
+		void SetPositions(Vector3 local_a, Vector3 local_b);
 
 		inline float Get_width_per_wall() {
 			return width_per_wall;
