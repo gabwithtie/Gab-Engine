@@ -29,6 +29,7 @@ namespace gbe::ext::AnitoBuilder {
 		
 		//Main - normal
 		ceiling_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), material);
+		ceiling_1_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("axisroof"), material);
 		
 		roof_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof_1"), material);
 		
@@ -214,147 +215,8 @@ namespace gbe::ext::AnitoBuilder {
 		}
 
 		if (model_shown) {
-			for (auto& handle : this->handle_pool)
-			{
-				if (!handle->Get_is_edge())
-					continue;
-
-				auto handle_data = GetSeg(handle);
-
-				bool odd = handle->Get_cur_width() % 2 == 1;
-				bool can_put_facade = handle->Get_cur_height() >= 3 && handle->Get_cur_width() >= 5 && odd;
-
-				const auto get_center_x = [=](RenderObject* obj) {
-					int row_index = handle->Get_row(obj);
-
-					int center_based_x = 0;
-
-					if (handle->Get_cur_width() % 2 == 1)
-						center_based_x = -(row_index - (handle->Get_cur_width() / 2));
-					else {
-						center_based_x = -(row_index - (handle->Get_cur_width() / 2));
-					}
-
-					return -center_based_x;
-					};
-
-
-				// MAIN SEGMENTS
-				for (const auto& obj : handle->Get_all_segs())
-				{
-					int floor_index = handle->Get_floor(obj);
-
-					Vector3 pos = obj->World().position.Get();
-					pos -= Vector3(0, handle->Get_height_per_wall() / 2.0f, 0);
-
-					// ----------------------------
-
-					const auto process_renderobject = [&](RenderObject* newrenderer) {
-						newrenderer->SetParent(handle);
-						newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-						display_renderers.push_back(newrenderer);
-
-						auto inv__import_scale = Vector3(1.0 / wall_import_width, 1.0f / wall_import_height_from_zero, 1);
-						Vector3 final_scale = Vector3(1);
-						auto target_local_scale = obj->Local().scale.Get();
-						final_scale.x = (inv__import_scale.x * target_local_scale.x);
-						final_scale.y = (inv__import_scale.y * target_local_scale.y);
-						final_scale.z = thickness;
-
-						newrenderer->Local().scale.Set(final_scale);
-						newrenderer->World().position.Set(pos);
-
-						return newrenderer;
-						};
-
-					int row_index = handle->Get_row(obj);
-					int center_based_x = get_center_x(obj);
-
-					process_renderobject([&]()
-						{// ... [Inside of your lambda remains exactly the same] ...
-							if (handle_data->center_facade_type >= 0) {
-								if (can_put_facade) {
-									int choice_x = center_based_x + 1;
-									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
-										if (handle_data->center_facade_type == 1) {
-											if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
-											else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
-										}
-										return new RenderObject(wall3x4_DC[floor_index][choice_x]);
-									}
-									if (choice_x == -1 || choice_x == 3) {
-										if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
-										else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
-									}
-								}
-								if (handle->Get_cur_height() >= 3) {
-									int choice_x = -1;
-									int interval_x = abs(center_based_x) % 4;
-									if (center_based_x > 0) {
-										if (interval_x == 1) choice_x = 0;
-										if (interval_x == 2) choice_x = 1;
-									}
-									else {
-										if (interval_x == 1) choice_x = 1;
-										if (interval_x == 2) choice_x = 0;
-									}
-									if (interval_x == 1 && abs(center_based_x) + 2 > (handle->Get_cur_width() / 2)) choice_x = -1;
-									if (interval_x == 2 && abs(center_based_x) + 1 > (handle->Get_cur_width() / 2)) choice_x = -1;
-									if (choice_x >= 0 && floor_index < 3) return new RenderObject(wall2x3_DC[floor_index][choice_x]);
-								}
-							}
-							if (floor_index == 0) return new RenderObject(wallnorm_DC[0]);
-							if (floor_index > 0)
-							{
-								return new RenderObject(wallnorm_DC[1]);
-							}
-							return (RenderObject*)nullptr;
-						}());
-
-					//iterate only the last floor
-					if (handle->Get_cur_height() - 1 != floor_index) {
-						continue;
-					}
-
-					pos += Vector3(0, handle->Get_height_per_wall(), 0); // add 1 more floor worth of height
-
-					process_renderobject([&]()
-						{
-							if (handle_data->center_facade_type >= 0) {
-								if (can_put_facade && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
-								{
-									int choice_x = center_based_x + 1;
-
-									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
-										if (handle_data->center_facade_type == 1)
-											return new RenderObject(windowwall_DC[0][1]);
-										else
-											return new RenderObject(wall3x4_DC[3][choice_x]);
-									}
-
-									if (choice_x == -1 || choice_x == 3) {
-										return new RenderObject(windowwall_DC[0][0]);
-									}
-								}
-							}
-
-							return new RenderObject(roof_DC);
-						}());
-				}
-			}
-
-			for (const auto& roof : this->roof_pool)
-			{
-				for (const auto& roof_obj : roof.handle_renderers)
-				{
-					RenderObject* newrenderer = new RenderObject(ceiling_DC);
-					newrenderer->SetParent(ceiling_parent);
-					newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-					display_renderers.push_back(newrenderer);
-					newrenderer->Local().SetMatrix(roof_obj->Local().GetMatrix());
-				}
-			}
-
+			auto temppool = std::vector<BuilderBlockFace*>(this->handle_pool);
+			
 			float inset_distance = 2.0f;
 			float roofheight = 2.5;
 			float roof_overshoot = 1.5;
@@ -443,6 +305,10 @@ namespace gbe::ext::AnitoBuilder {
 					handle->SetParent(this);
 					display_renderers.push_back(handle);
 
+					handle->Set_visible(false);
+
+					temppool.push_back(handle);
+
 					auto a = i_pair.first;
 					auto b = i_pair.second;
 
@@ -452,145 +318,156 @@ namespace gbe::ext::AnitoBuilder {
 				}
 			}
 
-			const auto IsPointInPolygon = [](Vector3 point, const std::vector<std::pair<Vector3, Vector3>>& poly) {
-				int count = 0;
-				for (const auto& edge : poly) {
-					Vector3 a = edge.first;
-					Vector3 b = edge.second;
-					// Check if the ray (horizontal) crosses the edge
-					if (((a.z <= point.z && point.z < b.z) || (b.z <= point.z && point.z < a.z)) &&
-						(point.x < (b.x - a.x) * (point.z - a.z) / (b.z - a.z) + a.x)) {
-						count++;
-					}
-				}
-				return (count % 2 != 0);
-				};
-
-			// --- REVISED NAN-SAFE & DIRECTION-SAFE BISECTORS ---
-			std::vector<Vector3> bisectors(insetpolygon.size());
-			for (int i = 0; i < insetpolygon.size(); i++) {
-				int prev = (i + insetpolygon.size() - 1) % insetpolygon.size();
-
-				Vector3 pMid = insetpolygon[i].first;
-				Vector3 pPrev = insetpolygon[prev].first;
-				Vector3 pNext = insetpolygon[i].second;
-
-				Vector3 dPrev = Vector3(pPrev - pMid).Normalize();
-				Vector3 dNext = Vector3(pNext - pMid).Normalize();
-
-				// 1. Basic Bisector
-				Vector3 bisect = Vector3(dPrev + dNext).Normalize();
-
-				// 2. Handle straight lines (Collinear)
-				if (dPrev.Dot(dNext) < -0.999f) {
-					bisect = Vector3(dNext.z, 0, -dNext.x);
-				}
-
-				// 3. THE FIX: Direction Validation
-				// Take a tiny step along the bisector
-				Vector3 testPoint = pMid + (bisect * 0.1f);
-
-				// Use a simple parity check or your building's bounds check
-				// If the test point is OUTSIDE, flip the bisector
-				if (!IsPointInPolygon(testPoint, insetpolygon)) {
-					bisect = -bisect;
-				}
-
-				// 4. Length Multiplier
-				float dot = std::clamp(dPrev.Dot(dNext), -1.0f, 1.0f);
-				float sinHalf = sin(acos(dot) * 0.5f);
-				float lenMult = (sinHalf > 0.001f) ? (1.0f / sinHalf) : 1.0f;
-
-				bisectors[i] = bisect * std::min(lenMult, 5.0f);
-			}
-			// --- DEBUGGING THE CENTRAL SPINE ---
-			for (int i = 0; i < insetpolygon.size(); i++)
+			for (auto& handle : temppool)
 			{
-				const auto GetMid = [=](Vector3 from) {
-					Vector3 dir = bisectors[i].Normalize(); // Use the direction only for the ray
+				if (!handle->Get_is_edge())
+					continue;
 
-					// 1. Find the distance to the "opposite" wall
-					float closest_hit = 1000.0f; // Large number
-					bool hit_found = false;
+				auto handle_data = GetSeg(handle);
 
-					for (int j = 0; j < insetpolygon.size(); j++) {
-						// Skip current and adjacent segments
-						if (j == i || j == (i + insetpolygon.size() - 1) % insetpolygon.size()) continue;
+				bool odd = handle->Get_cur_width() % 2 == 1;
+				bool can_put_facade = handle->Get_cur_height() >= 3 && handle->Get_cur_width() >= 5 && odd;
 
-						Vector3 p1 = insetpolygon[j].first;
-						Vector3 p2 = insetpolygon[j].second;
+				const auto get_center_x = [=](RenderObject* obj) {
+					int row_index = handle->Get_row(obj);
 
-						// 2D Ray-Segment Intersection (XZ Plane)
-						float x1 = from.x, z1 = from.z;
-						float x2 = from.x + dir.x, z2 = from.z + dir.z;
-						float x3 = p1.x, z3 = p1.z;
-						float x4 = p2.x, z4 = p2.z;
+					int center_based_x = 0;
 
-						float den = (x1 - x2) * (z3 - z4) - (z1 - z2) * (x3 - x4);
-						if (std::abs(den) < 0.0001f) continue;
+					if (handle->Get_cur_width() % 2 == 1)
+						center_based_x = -(row_index - (handle->Get_cur_width() / 2));
+					else {
+						center_based_x = -(row_index - (handle->Get_cur_width() / 2));
+					}
 
-						float t = ((x1 - x3) * (z3 - z4) - (z1 - z3) * (x3 - x4)) / den;
-						float u = -((x1 - x2) * (z1 - z3) - (z1 - z2) * (x1 - x3)) / den;
+					return -center_based_x;
+					};
 
-						if (t > 0 && u >= 0 && u <= 1) {
-							if (t < closest_hit) {
-								closest_hit = t;
-								hit_found = true;
+
+				// MAIN SEGMENTS
+				for (const auto& obj : handle->Get_all_segs())
+				{
+					int floor_index = handle->Get_floor(obj);
+
+					Vector3 pos = obj->World().position.Get();
+					pos -= Vector3(0, handle->Get_height_per_wall() / 2.0f, 0);
+
+					// ----------------------------
+
+					const auto process_renderobject = [&](RenderObject* newrenderer) {
+						newrenderer->SetParent(handle);
+						newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
+						display_renderers.push_back(newrenderer);
+
+						auto inv__import_scale = Vector3(1.0 / wall_import_width, 1.0f / wall_import_height_from_zero, 1);
+						Vector3 final_scale = Vector3(1);
+						auto target_local_scale = obj->Local().scale.Get();
+						final_scale.x = (inv__import_scale.x * target_local_scale.x);
+						final_scale.y = (inv__import_scale.y * target_local_scale.y);
+						final_scale.z = thickness;
+
+						newrenderer->Local().scale.Set(final_scale);
+						newrenderer->World().position.Set(pos);
+
+						return newrenderer;
+						};
+
+					int row_index = handle->Get_row(obj);
+					int center_based_x = get_center_x(obj);
+
+					process_renderobject([&]()
+						{
+							if (handle_data != nullptr) {
+								if (handle_data->center_facade_type > 0) {
+									if (can_put_facade) {
+										int choice_x = center_based_x + 1;
+										if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
+											if (handle_data->center_facade_type == 2) {
+												if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
+												else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
+											}
+											return new RenderObject(wall3x4_DC[floor_index][choice_x]);
+										}
+										if (choice_x == -1 || choice_x == 3) {
+											if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
+											else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
+										}
+									}
+									if (handle_data->edge_designs_interval > 0)
+										if (handle->Get_cur_height() >= 3) {
+											int choice_x = -1;
+											int interval_x = abs(center_based_x) % 4;
+											if (center_based_x > 0) {
+												if (interval_x == 1) choice_x = 0;
+												if (interval_x == 2) choice_x = 1;
+											}
+											else {
+												if (interval_x == 1) choice_x = 1;
+												if (interval_x == 2) choice_x = 0;
+											}
+											if (interval_x == 1 && abs(center_based_x) + 2 > (handle->Get_cur_width() / 2)) choice_x = -1;
+											if (interval_x == 2 && abs(center_based_x) + 1 > (handle->Get_cur_width() / 2)) choice_x = -1;
+											if (choice_x >= 0 && floor_index < 3) return new RenderObject(wall2x3_DC[floor_index][choice_x]);
+										}
+								}
+								if (floor_index == 0) return new RenderObject(wallnorm_DC[0]);
+								if (floor_index > 0)
+								{
+									return new RenderObject(wallnorm_DC[1]);
+								}
 							}
-						}
+
+							return new RenderObject(wallnorm_DC[1]);
+						}());
+
+					//iterate only the last floor
+					if (handle->Get_cur_height() - 1 != floor_index) {
+						continue;
 					}
 
-					// 2. Position the debug cube at the halfway point
-					if (hit_found) {
-						// Ridge point is at half the width (closest_hit / 2)
-						// Note: we use the normalized 'dir' here to avoid scaling issues
-						Vector3 ridge_point = from + (dir * (closest_hit * 0.5f));
+					pos += Vector3(0, handle->Get_height_per_wall(), 0); // add 1 more floor worth of height
 
-						return ridge_point;
+					if (handle_data != nullptr) {
+						process_renderobject([&]()
+							{
+								if (handle_data->center_facade_type > 0) {
+									if (can_put_facade && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
+									{
+										int choice_x = center_based_x + 1;
+
+										if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
+											if (handle_data->center_facade_type == 2)
+												return new RenderObject(windowwall_DC[0][1]);
+											else
+												return new RenderObject(wall3x4_DC[3][choice_x]);
+										}
+
+										if (choice_x == -1 || choice_x == 3) {
+											return new RenderObject(windowwall_DC[0][0]);
+										}
+									}
+								}
+
+								return new RenderObject(roof_DC);
+							}());
 					}
+				}
+			}
 
-					return from;
-				};
+			for (const auto& roof : this->roof_pool)
+			{
+				const auto createroofobj = [=](DrawCall* dc, int index, float height, float offset, float inset) {
+					RenderObject* base_ceiling = new RenderObject(dc);
+					base_ceiling->SetParent(ceiling_parent);
+					base_ceiling->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
+					display_renderers.push_back(base_ceiling);
 
-				
-				auto base_1 = insetpolygon[i].first;
-				base_1 += height + roofheight;
-				auto base_2 = insetpolygon[i].second;
-				base_2 += height + roofheight;
-				auto mid_1 = GetMid(insetpolygon[i].first);
-				mid_1.y += height + roofheight + roofheight;
-				auto mid_2 = GetMid(insetpolygon[i].second);
-				mid_2.y += height + roofheight + roofheight;
+					ResetRoof(base_ceiling, roof.parent_index, index, height, inset, offset);
+					};
 
-				const auto CalculateSkewMatrix = [](Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float thickness) {
-					// 1. Calculate the Center of the base
-					Vector3 center = (p0 + p1 + p2 + p3) * 0.25f;
-
-					// 2. Define the Basis Vectors
-					// X Basis: The direction along the wall
-					Vector3 basisX = p1 - p0;
-
-					// Z Basis: The direction from the wall to the ridge (The slope)
-					Vector3 basisZ = p2 - p1;
-
-					// Y Basis: The "Up" or thickness vector (Perpendicular to X and Z)
-					Vector3 basisY = basisX.Cross(basisZ).Normalize() * thickness;
-
-					// 3. Construct the Matrix columns
-					// Matrix format: [BasisX, BasisY, BasisZ, Translation]
-					Matrix4 mat;
-					mat[0] = Vector4(basisX.x, basisX.y, basisX.z, 0);
-					mat[1] = Vector4(basisY.x, basisY.y, basisY.z, 0);
-					mat[2] = Vector4(basisZ.x, basisZ.y, basisZ.z, 0);
-					mat[3] = Vector4(center.x, center.y, center.z, 1);
-
-					return mat;
-				};
-
-				RenderObject* debug_spine = new RenderObject(RenderObject::cube);
-				debug_spine->SetParent(this);
-				display_renderers.push_back(debug_spine);
-				debug_spine->Local().SetMatrix(CalculateSkewMatrix(base_1, base_2, mid_2, mid_1, 0.3f));
+				createroofobj(ceiling_DC, 0, 0.02f, 0, 0);
+				createroofobj(ceiling_DC, 2, 0.02f, 0, 0);
+				createroofobj(ceiling_1_DC, 0, 0.5f, roofheight, inset_distance - 0.5f);
+				createroofobj(ceiling_1_DC, 2, 0.5f, roofheight, inset_distance - 0.5f);
 			}
 		}
 	}
@@ -673,16 +550,24 @@ namespace gbe::ext::AnitoBuilder {
 		return true;
 	}
 
-	void BuilderBlock::ResetRoof(Object* roof, int s, int i)
+	void BuilderBlock::ResetRoof(Object* roof, int s, int i, float _height, float _inset, float _y)
 	{
-		const auto right = data.GetPosition(this->GetHandle(s, i).seg.second);
-		const auto left = data.GetPosition(this->GetHandle(s, i - 1).seg.first);
+		auto right = data.GetPosition(this->GetHandle(s, i).seg.second) + Vector3(0, _y, 0);
+		auto left = data.GetPosition(this->GetHandle(s, i - 1).seg.first) + Vector3(0, _y, 0);
 
 		// Assuming you have your axis vectors and position vector
-		Vector3 position = data.GetPosition(this->GetHandle(s, i).seg.first);
+		Vector3 position = data.GetPosition(this->GetHandle(s, i).seg.first) + Vector3(0, _y, 0);
+
 		Vector3 xAxis = right - position; // Example: local X-axis
-		Vector3 yAxis = Vector3(0.0f, 0.02f, 0.0f); // Example: local Y-axis
+		Vector3 yAxis = Vector3(0.0f, _height, 0.0f); // Example: local Y-axis
 		Vector3 zAxis = left - position; // Example: local Z-axis
+
+		auto r_norm = xAxis.Normalize();
+		auto l_norm = zAxis.Normalize();
+
+		position += (r_norm + l_norm) * _inset;
+		xAxis -= r_norm * 2.0f * _inset;
+		zAxis -= l_norm * 2.0f * _inset;
 
 		// Create the glm::mat4
 		Matrix4 modelMatrix = Matrix4(1.0f); // Initialize with identity matrix

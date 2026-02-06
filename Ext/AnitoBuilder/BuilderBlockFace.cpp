@@ -12,6 +12,31 @@ namespace gbe::ext::AnitoBuilder {
 		//INSPECTOR
 		this->SetName("Anito Builder Block Set");
 
+		{
+			static std::vector<std::string> labels = { "none", "front", "back" };
+
+			auto field = new gbe::editor::InspectorChoice();
+			field->labels = &labels;
+			field->getter = [=]() {
+				auto segdata = this->root_block->GetSeg(this);
+
+				if (segdata != nullptr)
+					return segdata->center_facade_type;
+
+				return 0;
+				};
+			field->setter = [=](int val) {
+				auto segdata = this->root_block->GetSeg(this);
+				if (segdata != nullptr)
+					segdata->center_facade_type = val;
+
+				this->root_block->Refresh();
+				};
+			field->name = "center_facade_type";
+
+			this->inspectorData->fields.push_back(field);
+		}
+
 		auto add_block_button = new gbe::editor::InspectorButton();
 		add_block_button->name = "Append Block";
 		add_block_button->onpress = [=]() {

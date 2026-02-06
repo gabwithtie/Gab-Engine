@@ -14,8 +14,8 @@ namespace gbe::ext::AnitoBuilder {
 		PosPair seg;
 		int handleindex;
 
-		int center_facade_type = -1;
-		int edge_designs_interval = -1;
+		int center_facade_type = 0;
+		int edge_designs_interval = 0;
 	};
 
 	struct BlockSet {
@@ -72,6 +72,7 @@ namespace gbe::ext::AnitoBuilder {
 		std::array<std::array<gfx::DrawCall*, 2>, 3> wall2x3_DC;
 		gfx::DrawCall* roof_DC;
 		gfx::DrawCall* ceiling_DC;
+		gfx::DrawCall* ceiling_1_DC;
 
 		//Objects
 		Object* ceiling_parent;
@@ -106,7 +107,7 @@ namespace gbe::ext::AnitoBuilder {
 			return this->data.sets[s].segs[i];
 		}
 		bool CheckSetSegment(Vector3 p, Vector3 l, Vector3 r);
-		void ResetRoof(Object* roof, int s, int i);
+		void ResetRoof(Object* roof, int s, int i, float height = 0.02f, float _inset = 0.0f, float _y = 0.0f);
 		void ResetHandle(int set, int index);
 		void ResetAllHandles();
 		inline void SetPosition(int index, const Vector3& newpos) {
