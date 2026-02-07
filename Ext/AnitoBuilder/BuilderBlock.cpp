@@ -278,14 +278,7 @@ namespace gbe::ext::AnitoBuilder {
 						Vector3 R_bisector = CalculatePointInset((i + 1) % numCorners, BISECTOR);
 						Vector3 R_edge = CalculatePointInset((i + 1) % numCorners, L_EDGE);
 
-						if (currentIsEdge) {
-							// Normal Edge: These close inwards as usual
-							allInsetSegments.push_back({ L_bisector, R_bisector });
-						}
-						else {
-							allInsetSegments.push_back({ L_bisector, L_edge });
-							allInsetSegments.push_back({ R_edge, R_bisector });
-						}
+						allInsetSegments.push_back({ L_bisector, R_bisector });
 					}
 
 					return allInsetSegments;
@@ -305,8 +298,6 @@ namespace gbe::ext::AnitoBuilder {
 					handle->SetParent(this);
 					display_renderers.push_back(handle);
 
-					handle->Set_visible(false);
-
 					temppool.push_back(handle);
 
 					auto a = i_pair.first;
@@ -315,6 +306,8 @@ namespace gbe::ext::AnitoBuilder {
 					a.y = height;
 					b.y = height + roofheight;
 					handle->SetPositions(a, b);
+
+					handle->Set_visible(false);
 				}
 			}
 
@@ -552,30 +545,36 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::ResetRoof(Object* roof, int s, int i, float _height, float _inset, float _y)
 	{
-		auto right = data.GetPosition(this->GetHandle(s, i).seg.second) + Vector3(0, _y, 0);
-		auto left = data.GetPosition(this->GetHandle(s, i - 1).seg.first) + Vector3(0, _y, 0);
+		Vector3 right = data.GetPosition(this->GetHandle(s, i).seg.second) + Vector3(0, _y, 0);
+		Vector3 left = data.GetPosition(this->GetHandle(s, i - 1).seg.first) + Vector3(0, _y, 0);
+
+		Vector3 opp = data.GetPosition(this->GetHandle(s, i + 2).seg.first) + Vector3(0, _y, 0);
 
 		// Assuming you have your axis vectors and position vector
 		Vector3 position = data.GetPosition(this->GetHandle(s, i).seg.first) + Vector3(0, _y, 0);
 
-		Vector3 xAxis = right - position; // Example: local X-axis
+		Vector3 i_xAxis = right - position; // Example: local X-axis
+		Vector3 i_zAxis = left - position; // Example: local Z-axis
+		Vector3 o_xAxis = right - opp; // Example: local X-axis
+		Vector3 o_zAxis = left - opp; // Example: local Z-axis
 		Vector3 yAxis = Vector3(0.0f, _height, 0.0f); // Example: local Y-axis
-		Vector3 zAxis = left - position; // Example: local Z-axis
 
-		auto r_norm = xAxis.Normalize();
-		auto l_norm = zAxis.Normalize();
+		auto r_norm = i_xAxis.Normalize();
+		auto l_norm = i_zAxis.Normalize();
+		auto opp_r_norm = o_xAxis.Normalize();
+		auto opp_l_norm = o_zAxis.Normalize();
 
-		position += (r_norm + l_norm) * _inset;
-		xAxis -= r_norm * 2.0f * _inset;
-		zAxis -= l_norm * 2.0f * _inset;
+		position += (i_xAxis.Normalize() + i_zAxis.Normalize()) * _inset;
+		Vector3 target_l = right - ((i_xAxis.Normalize() + o_xAxis.Normalize()) * _inset);
+		Vector3 target_r = left - ((i_zAxis.Normalize() + o_zAxis.Normalize()) * _inset);
 
 		// Create the glm::mat4
 		Matrix4 modelMatrix = Matrix4(1.0f); // Initialize with identity matrix
 
 		// Assign the axis vectors to the first three columns
-		modelMatrix[0] = Vector4(xAxis, 0.0f); // X-axis
+		modelMatrix[0] = Vector4(target_l - position, 0.0f); // X-axis
 		modelMatrix[1] = Vector4(yAxis, 0.0f); // Y-axis
-		modelMatrix[2] = Vector4(zAxis, 0.0f); // Z-axis
+		modelMatrix[2] = Vector4(target_r - position, 0.0f); // Z-axis
 
 		// Assign the position vector to the fourth column (translation)
 		modelMatrix[3] = Vector4(position, 1.0f); // Translation
