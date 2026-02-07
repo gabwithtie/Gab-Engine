@@ -40,14 +40,52 @@ namespace gbe {
 		};
 
 		class Renderer {
-		protected:
-			uint32_t current_id_onpointer;
 		public:
+			enum CPU_PASS_MODE {
+				PASS_ID,
+				PASS_UV
+			};
+
+			struct BRGA_t {
+				uint8_t b;
+				uint8_t g;
+				uint8_t r;
+				uint8_t a;
+
+				BRGA_t() : b(0), g(0), r(0), a(0) {}
+				uint32_t hashed() const {
+					return (uint32_t(b) << 0) | (uint32_t(g) << 8) | (uint32_t(r) << 16);
+				}
+				BRGA_t(uint32_t hash) {
+					b = (hash >> 0) & 0xFF;
+					g = (hash >> 8) & 0xFF;
+					r = (hash >> 16) & 0xFF;
+				}
+				Vector4 ToVector4() const {
+					return Vector4(float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f, float(a) / 255.0f);
+				}
+			};
+		protected:
+			std::vector<BRGA_t> localarea_cpu_data;
+			std::vector<BRGA_t> localarea_cpu_data_final;
+			uint32_t current_id_onpointer;
+			CPU_PASS_MODE cpu_pass_mode = PASS_ID;
+		public:
+			inline std::vector<BRGA_t>& Get_localarea_cpu_data() {
+				return localarea_cpu_data_final;
+			}
 			inline Renderer() {
 
 			}
 			inline uint32_t GetCurrentIdOnPointer() {
 				return current_id_onpointer;
+			}
+			inline void SetCpuPassMode(CPU_PASS_MODE mode) {
+				if (mode == cpu_pass_mode)
+					return;
+
+				localarea_cpu_data_final.clear();
+				cpu_pass_mode = mode;
 			}
 
 			virtual TextureData ReloadFrame(Vector2Int reso) = 0;

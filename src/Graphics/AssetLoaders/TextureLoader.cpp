@@ -20,48 +20,52 @@ static void imageReleaseCallback(void* _ptr, void* _userData) {
 gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* loaddata) {
     if (importdata.path.size() == 0)
         return {};
-    
-    const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.path;
-    std::string path = pathstr.string();
 
+    const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.path;
     bimg::ImageContainer* imageContainer = imageLoad(pathstr.string().c_str(), bgfx::TextureFormat::Count);
 
     if (imageContainer == nullptr) {
-        throw std::runtime_error("Failed to decode texture: " + path);
+        throw std::runtime_error("Failed to decode texture: " + pathstr.string());
     }
 
     loaddata->dimensions = Vector2Int(imageContainer->m_width, imageContainer->m_height);
 
-    // 3. Create bgfx Texture
-    uint64_t flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
+    // 1. Correct Flags for a Mutable Texture
+    // BGFX_TEXTURE_NONE is the base. 
+    // BGFX_TEXTURE_BLIT_DST allows it to be a destination for blits/updates.
+    uint64_t flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_TEXTURE_BLIT_DST;
 
-    // Use makeRef with a callback so we don't have to copy the decoded memory again.
-    // bgfx will call imageReleaseCallback when it no longer needs the pointer.
-    const bgfx::Memory* mem = bgfx::makeRef(
-        imageContainer->m_data,
-        imageContainer->m_size,
-        imageReleaseCallback,
-        imageContainer
-    );
-
+    // 2. Create the Texture WITHOUT initial data (pass nullptr)
+    // This creates a dynamic resource that can be updated later.
     bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
         (uint16_t)imageContainer->m_width,
         (uint16_t)imageContainer->m_height,
         false, 1,
         (bgfx::TextureFormat::Enum)imageContainer->m_format,
         flags,
-        mem
+        nullptr // Pass nullptr here to make it mutable
     );
 
-    // Always check if the handle is valid
     if (!bgfx::isValid(textureHandle)) {
-        throw std::runtime_error("bgfx failed to create texture: Invalid parameters or unsupported format.");
+        bimg::imageFree(imageContainer);
+        throw std::runtime_error("bgfx failed to create texture.");
     }
+
+    // 3. Upload the initial image data immediately using updateTexture2D
+    // We use bgfx::copy here because imageLoad's memory is managed by imageContainer
+    bgfx::updateTexture2D(
+        textureHandle,
+        0, 0,
+        0, 0,
+        (uint16_t)imageContainer->m_width,
+        (uint16_t)imageContainer->m_height,
+        bgfx::makeRef(imageContainer->m_data, imageContainer->m_size, imageReleaseCallback, imageContainer)
+    );
 
     return TextureData{
         .textureHandle = textureHandle,
-        .width = (uint16_t)imageContainer->m_width,
-        .height = (uint16_t)imageContainer->m_height
+        .width = (uint32_t)imageContainer->m_width,
+        .height = (uint32_t)imageContainer->m_height
     };
 }
 

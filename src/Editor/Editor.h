@@ -38,6 +38,7 @@ namespace gbe {
 		std::vector<EditorAction> action_stack;
 		unsigned int cur_action_index = 0;
 
+		bool pointer_held = false;
 		bool pointer_inUi;
 		bool keyboard_inUi;
 		bool keyboard_shifting = false;

@@ -67,6 +67,10 @@ namespace gbe {
 		void ReloadFrame(); // BGFX function to create frame buffers/textures
 
 	public:
+		inline Renderer* GetRenderer() {
+			return cur_renderer;
+		}
+
 		RenderPipeline(gbe::Window&, Vector2Int);
 		~RenderPipeline(); // Must destroy bgfx handles
 		static uint32_t GetIdUnderPointer();
@@ -78,6 +82,7 @@ namespace gbe {
 		inline void InitializeAssetRequisites() {
 			this->cur_renderer->InitializeAssetRequests();
 		}
+
 
 		inline static RenderPipeline* Get_Instance() {
 			return Instance;

@@ -5,6 +5,8 @@
 #include <random> // Added for SSAO kernel generation
 #include "Math/gbe_math.h"
 
+#include "util/TexturePainter.h"
+
 gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& passinfo) {
 	m_line_vbh = bgfx::createDynamicVertexBuffer(passinfo.max_lines, s_VERTEXLAYOUT, BGFX_BUFFER_NONE);
 
@@ -66,7 +68,7 @@ gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& p
 	light_cone_inner_arr.resize(max_lights);
 	light_cone_outer_arr.resize(max_lights);
 
-	localarea_id_data.resize(id_texture_size * id_texture_size);
+	localarea_cpu_data.resize(id_texture_size * id_texture_size);
 
 	// Generate 64 random samples in a hemisphere
 	m_ssao_kernel_data.resize(64);
@@ -96,6 +98,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
 	bilateralblur_shader = ShaderLoader::GetAssetRuntimeData("bilateralblur");
 	bufferblend_shader = ShaderLoader::GetAssetRuntimeData("bufferblend");
 	id_shader = ShaderLoader::GetAssetRuntimeData("id");
+	uv_shader = ShaderLoader::GetAssetRuntimeData("uv");
 	skybox_shader = ShaderLoader::GetAssetRuntimeData("gradientskybox");
 	floorgrid_shader = ShaderLoader::GetAssetRuntimeData("floorgrid");
 }
@@ -144,7 +147,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::CleanUp()
 	destroyCDBuffer(id_buffer);
 
 	// 5. Destroy ID system CPU-readback texture
-	DestroyTextureData(localarea_id_texture_cpu);
+	DestroyTextureData(localarea_texture_cpu);
 }
 
 
@@ -233,8 +236,8 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	drawgbuffer(gbuffer_all, 0);
 	drawgbuffer(gbuffer_selected, 1); // outline pass for gbuffer
 	//================== ID PASS ========================//
-	bgfx::setViewClear(VIEW_ID_PASS, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
-	bgfx::setViewTransform(VIEW_ID_PASS, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
+	bgfx::setViewClear(VIEW_CPU_PASS, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
+	bgfx::setViewTransform(VIEW_CPU_PASS, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
 	for (const auto& shaderset : passinfo.callgroups) {
 		auto drawcall = shaderset.first;
 		std::vector<uint32_t> instances;
@@ -287,10 +290,15 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 			bgfx::setVertexBuffer(0, curmesh.vertex_vbh);
 			bgfx::setInstanceDataBuffer(&idb); // This replaces setTransform!
 
-			id_shader.ApplyOverride(BRGA_t(call_ptr).ToVector4(), "id");
-
 			bgfx::setState(BGFX_STATE_DEFAULT);
-			bgfx::submit(VIEW_ID_PASS, id_shader.programHandle);
+
+			if (cpu_pass_mode == gfx::Renderer::CPU_PASS_MODE::PASS_ID) {
+				id_shader.ApplyOverride(BRGA_t(call_ptr).ToVector4(), "id");
+				bgfx::submit(VIEW_CPU_PASS, id_shader.programHandle);
+			}
+			else if (cpu_pass_mode == gfx::Renderer::CPU_PASS_MODE::PASS_UV) {
+				bgfx::submit(VIEW_CPU_PASS, uv_shader.programHandle);
+			}
 		}
 	}
 	
@@ -494,7 +502,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 
 	bgfx::blit(
 		VIEW_DEBUG_BLITTER,
-		localarea_id_texture_cpu.textureHandle, // Destination: Singular 2D texture
+		localarea_texture_cpu.textureHandle, // Destination: Singular 2D texture
 		0, 0, 0, 0,               // Mip 0, X 0, Y 0, Z 0
 		id_buffer.m_mainColorTexture.textureHandle,     // Source: Your Texture Array
 		0, from.x, from.y, 0,               // Mip 0, X 0, Y 0, Layer 'i'
@@ -503,7 +511,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	);
 
 	if (read_done) {
-		this->frameid_readdone = bgfx::readTexture(localarea_id_texture_cpu.textureHandle, localarea_id_data.data());
+		this->frameid_readdone = bgfx::readTexture(localarea_texture_cpu.textureHandle, localarea_cpu_data.data());
 		read_done = false;
 	}
 
@@ -511,35 +519,42 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	{
 		read_done = true;
 
-		std::map<uint32_t, uint32_t> ids;  // This contains all the IDs found in the buffer
-		uint32_t maxAmount = 0;
-		for (auto& pixel : localarea_id_data)
-		{
-			if (0 == (pixel.r | pixel.g | pixel.b)) // Skip background
-			{
-				continue;
-			}
+		localarea_cpu_data_final = std::vector<BRGA_t>(localarea_cpu_data);
 
-			std::map<uint32_t, uint32_t>::iterator mapIter = ids.find(pixel.hashed());
-			uint32_t amount = 1;
-			if (mapIter != ids.end())
-			{
-				amount = mapIter->second + 1;
-			}
+		if (cpu_pass_mode == gfx::Renderer::CPU_PASS_MODE::PASS_UV)
+			TexturePainter::Commit();
 
-			ids[pixel.hashed()] = amount; // Amount of times this ID (color) has been clicked on in buffer
-			maxAmount = maxAmount > amount? maxAmount : amount;
-		}
-
-		this->current_id_onpointer = UINT32_MAX;
-		if (maxAmount)
-		{
-			for (std::map<uint32_t, uint32_t>::iterator mapIter = ids.begin(); mapIter != ids.end(); mapIter++)
+		if (cpu_pass_mode == gfx::Renderer::CPU_PASS_MODE::PASS_ID) {
+			std::map<uint32_t, uint32_t> ids;  // This contains all the IDs found in the buffer
+			uint32_t maxAmount = 0;
+			for (auto& pixel : localarea_cpu_data)
 			{
-				if (mapIter->second == maxAmount)
+				if (0 == (pixel.r | pixel.g | pixel.b)) // Skip background
 				{
-					current_id_onpointer = mapIter->first;
-					break;
+					continue;
+				}
+
+				std::map<uint32_t, uint32_t>::iterator mapIter = ids.find(pixel.hashed());
+				uint32_t amount = 1;
+				if (mapIter != ids.end())
+				{
+					amount = mapIter->second + 1;
+				}
+
+				ids[pixel.hashed()] = amount; // Amount of times this ID (color) has been clicked on in buffer
+				maxAmount = maxAmount > amount ? maxAmount : amount;
+			}
+
+			this->current_id_onpointer = UINT32_MAX;
+			if (maxAmount)
+			{
+				for (std::map<uint32_t, uint32_t>::iterator mapIter = ids.begin(); mapIter != ids.end(); mapIter++)
+				{
+					if (mapIter->second == maxAmount)
+					{
+						current_id_onpointer = mapIter->first;
+						break;
+					}
 				}
 			}
 		}
@@ -590,11 +605,11 @@ gbe::gfx::TextureData gbe::gfx::bgfx_gab::ForwardRenderer::ReloadFrame(Vector2In
 	mainscene_buffer = ColorDepthBuffer(w, h, "MAINPASS", VIEW_SCENE_PASS);
 
 	//ID PASS
-	id_buffer = ColorDepthBuffer(w, h, "IDPASS", VIEW_ID_PASS);
-	localarea_id_texture_cpu = TextureData{
+	id_buffer = ColorDepthBuffer(w, h, "IDPASS", VIEW_CPU_PASS);
+	localarea_texture_cpu = TextureData{
 		.textureHandle = bgfx::createTexture2D(id_texture_size, id_texture_size, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_BLIT_DST | BGFX_TEXTURE_READ_BACK)
 	};
-	TextureLoader::RegisterExternal("localarea_id_texture", localarea_id_texture_cpu);
+	TextureLoader::RegisterExternal("localarea_id_texture", localarea_texture_cpu);
 
 	return m_pp_textures[VIEW_SCREEN_PASS];
 }

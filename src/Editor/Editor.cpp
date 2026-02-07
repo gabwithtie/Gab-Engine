@@ -18,6 +18,8 @@
 #include "Engine/gbe_engine.h"
 #include "Physics/gbe_physics.h"
 
+#include "bgfx-gab/util/TexturePainter.h"
+
 gbe::Editor* gbe::Editor::instance = nullptr;
 
 gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionals):
@@ -271,6 +273,8 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 	if (sdlevent->type == SDL_MOUSEBUTTONDOWN) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT && !this->FocusedOnEditorUI()) {
 
+			pointer_held = true;
+
 			auto cur_id_oncursor = RenderPipeline::GetIdUnderPointer();
 
 			if (cur_id_oncursor == UINT32_MAX) { //NOTHING WAS CLICKED
@@ -285,6 +289,7 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT) {
 			//COMMIT HELD GIZMO ACTION
 			
+			pointer_held = false;
 		}
 	}
 }
@@ -315,6 +320,13 @@ void gbe::Editor::PrepareUpdate()
 			break;
 		}
 	}
+
+	if (pointer_held) {
+		bgfx_gab::TexturePainter::Initialize(mrenderpipeline->GetRenderer());
+		bgfx_gab::TexturePainter::SetTargetTexture(&TextureLoader::GetAssetRuntimeData("Plaster_Albedo"));
+		bgfx_gab::TexturePainter::Draw();
+	}
+
 
 	//==============================IMGUI==============================//
 	ImGuiID dockspace_id = ImGui::GetID("maindockspace");

@@ -22,7 +22,7 @@ namespace gbe {
 				{
 					VIEW_GBUFFER_PASS,
 					VIEW_GBUFFER_SELECTED_PASS,
-					VIEW_ID_PASS,
+					VIEW_CPU_PASS,
 					VIEW_SSAO_PASS,
 					VIEW_BLUR0_PASS,
 					VIEW_BLUR1_PASS,
@@ -50,6 +50,7 @@ namespace gbe {
 				ShaderData gbuffer_shader;
 				ShaderData bufferblend_shader;
 				ShaderData id_shader;
+				ShaderData uv_shader;
 				ShaderData skybox_shader;
 				ShaderData floorgrid_shader;
 
@@ -166,28 +167,8 @@ namespace gbe {
 				ColorDepthBuffer mainscene_buffer;
 				
 				ColorDepthBuffer id_buffer;
-				TextureData localarea_id_texture_cpu;
+				TextureData localarea_texture_cpu;
 				int id_texture_size = 5;
-				struct BRGA_t {
-					uint8_t b;
-					uint8_t g;
-					uint8_t r;
-					uint8_t a;
-
-					BRGA_t() : b(0), g(0), r(0), a(0) {}
-					uint32_t hashed() const {
-						return (uint32_t(b) << 0) | (uint32_t(g) << 8) | (uint32_t(r) << 16);
-					}
-					BRGA_t(uint32_t hash) {
-						b = (hash >> 0) & 0xFF;
-						g = (hash >> 8) & 0xFF;
-						r = (hash >> 16) & 0xFF;
-					}
-					Vector4 ToVector4() const {
-						return Vector4(float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f, float(a) / 255.0f);
-					}
-				};
-				std::vector<BRGA_t> localarea_id_data; // Read blit into this
 
 				std::vector<Vector4>  m_ssao_kernel_data;
 
