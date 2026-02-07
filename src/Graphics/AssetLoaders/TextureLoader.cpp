@@ -5,6 +5,7 @@
 #include <bx/file.h>
 #include <bimg/decode.h>
 #include <stdexcept>
+#include <bimg/bimg.h>
 
 #include <bgfx_utils.h>
 
@@ -37,11 +38,13 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
 
     // 2. Create the Texture WITHOUT initial data (pass nullptr)
     // This creates a dynamic resource that can be updated later.
+    auto import_format = (bgfx::TextureFormat::Enum)imageContainer->m_format;
+
     bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
         (uint16_t)imageContainer->m_width,
         (uint16_t)imageContainer->m_height,
         false, 1,
-        (bgfx::TextureFormat::Enum)imageContainer->m_format,
+        import_format,
         flags,
         nullptr // Pass nullptr here to make it mutable
     );
@@ -64,8 +67,10 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
 
     return TextureData{
         .textureHandle = textureHandle,
+		.format = import_format,
+        .bitsPerPixel = bimg::getBitsPerPixel((bimg::TextureFormat::Enum)import_format),
         .width = (uint32_t)imageContainer->m_width,
-        .height = (uint32_t)imageContainer->m_height
+        .height = (uint32_t)imageContainer->m_height,
     };
 }
 

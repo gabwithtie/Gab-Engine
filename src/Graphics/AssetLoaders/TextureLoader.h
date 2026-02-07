@@ -11,6 +11,8 @@ namespace gbe {
 		struct TextureData {
 			// Replaced Vulkan objects with bgfx handle
 			bgfx::TextureHandle textureHandle = BGFX_INVALID_HANDLE;
+			bgfx::TextureFormat::Enum format; // <--- Add this
+			uint32_t bitsPerPixel;
 
 			// Vulkan objects removed:
 			// vulkan::ImageView* textureImageView;
