@@ -21,6 +21,7 @@
 #include "bgfx-gab/util/TexturePainter.h"
 
 gbe::Editor* gbe::Editor::instance = nullptr;
+std::vector<std::function<void(gbe::Vector2Int)>> gbe::Editor::on_mouse_hold;
 
 gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionals):
 	menubar(this->windows),
@@ -322,9 +323,10 @@ void gbe::Editor::PrepareUpdate()
 	}
 
 	if (pointer_held) {
-		bgfx_gab::TexturePainter::Initialize(mrenderpipeline->GetRenderer());
-		bgfx_gab::TexturePainter::SetTargetTexture(&TextureLoader::GetAssetRuntimeData("Plaster_Albedo"));
-		bgfx_gab::TexturePainter::Draw();
+		for (const auto& func : this->on_mouse_hold)
+		{
+			func(RenderPipeline::GetWindow()->GetMousePixelPos());
+		}
 	}
 
 
@@ -352,11 +354,16 @@ void gbe::Editor::PrepareUpdate()
 		this->viewportWindow.Set_is_open(true);
 		this->projectWindow.Set_is_open(true);
 		this->inspectorwindow.Set_is_open(true);
+		this->texturePainterWindow.Set_is_open(true);
 		this->lightWindow.Set_is_open(true);
 
 		ImGui::DockBuilderDockWindow(this->viewportWindow.GetWindowId().c_str(), l_u);
+		
 		ImGui::DockBuilderDockWindow(this->projectWindow.GetWindowId().c_str(), l_d);
+		ImGui::DockBuilderDockWindow(this->texturePainterWindow.GetWindowId().c_str(), l_d);
+
 		ImGui::DockBuilderDockWindow(this->inspectorwindow.GetWindowId().c_str(), r_u);
+		
 		ImGui::DockBuilderDockWindow(this->lightWindow.GetWindowId().c_str(), r_d);
 
 		for (const auto& ext : this->external_windows)
@@ -379,7 +386,15 @@ void gbe::Editor::PrepareUpdate()
 	ImGui::Render();
 }
 
+void gbe::Editor::Register_on_mouse_hold(std::function<void(Vector2Int)> event)
+{
+	on_mouse_hold.push_back(event);
+}
+
 void gbe::Editor::RenderPass()
 {
+	if (instance == nullptr)
+		return;
+
 	ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 }

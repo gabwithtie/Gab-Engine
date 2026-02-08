@@ -128,9 +128,7 @@ void gbe::RenderPipeline::RenderFrame(const SceneRenderInfo& frameinfo)
 
 	//EDITOR/GUI PASS [VIEW_EDITOR_PASS]
 	// The editor/GUI is rendered last to the screen.
-	if (editor != nullptr) {
-		this->editor->RenderPass();
-	}
+	Editor::RenderPass();
 
 	// BGFX: Present the frame
 	this->currentrenderinfo.frame_id = bgfx::frame();

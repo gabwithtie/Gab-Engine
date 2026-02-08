@@ -8,6 +8,8 @@
 #include "util/TexturePainter.h"
 
 gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& passinfo) {
+	TexturePainter_bgfx::Init(); // Ensure the TexturePainter is initialized
+	
 	m_line_vbh = bgfx::createDynamicVertexBuffer(passinfo.max_lines, s_VERTEXLAYOUT, BGFX_BUFFER_NONE);
 
 	// 1. Create a single Texture Array (10 layers)

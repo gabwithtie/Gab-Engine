@@ -6,6 +6,7 @@
 #include "Gui/MenuBar.h"
 #include "Gui/ContextMenus.h"
 #include "Gui/Windows/CreditsWindow.h"
+#include "Gui/Windows/TexturePainterWindow.h"
 #include "Gui/Windows/InspectorWindow.h"
 #include "Gui/Windows/SpawnWindow.h"
 #include "Gui/Windows/StateWindow.h"
@@ -62,6 +63,7 @@ namespace gbe {
 		editor::ViewportWindow viewportWindow;
 		editor::LightExplorer lightWindow;
 		editor::ProjectBrowser projectWindow;
+		editor::TexturePainterWindow texturePainterWindow;
 
 		std::vector<editor::GuiWindow*> windows = {
 			&hierarchyWindow,
@@ -72,10 +74,13 @@ namespace gbe {
 			&imageDebuggerWindow,
 			&viewportWindow,
 			&lightWindow,
-			&projectWindow
+			&projectWindow,
+			&texturePainterWindow
 		};
 
 		std::vector<editor::GuiWindow*> external_windows;
+
+		static std::vector<std::function<void(Vector2Int)>> on_mouse_hold;
 
 	public:
 		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionals);
@@ -90,10 +95,12 @@ namespace gbe {
 		void PrepareSceneChange();
 		void PrepareUpdate();
 		void ProcessRawWindowEvent(void* rawwindowevent);
-		void RenderPass();
+		static void RenderPass();
 		inline bool FocusedOnEditorUI() {
 			bool pointer_really_inUi = pointer_inUi && !viewportWindow.Get_pointer_here();
 			return pointer_really_inUi || keyboard_inUi;
 		}
+
+		static void Register_on_mouse_hold(std::function<void(Vector2Int)> event);
 	};
 }

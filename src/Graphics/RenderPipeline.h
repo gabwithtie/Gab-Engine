@@ -36,15 +36,12 @@
 namespace gbe {
 
 	using namespace gfx;
-	class Editor;
-
 
 	class RenderPipeline {
 	private:
 		static RenderPipeline* Instance;
 		
 		Window& window;
-		Editor* editor;
 		Vector2Int screen_resolution;
 		Vector2Int viewport_resolution;
 
@@ -67,12 +64,15 @@ namespace gbe {
 		void ReloadFrame(); // BGFX function to create frame buffers/textures
 
 	public:
-		inline Renderer* GetRenderer() {
-			return cur_renderer;
+		static inline Renderer* GetRenderer() {
+			return Instance->cur_renderer;
 		}
 
 		RenderPipeline(gbe::Window&, Vector2Int);
 		~RenderPipeline(); // Must destroy bgfx handles
+		inline static Window* GetWindow() {
+			return &Instance->window;
+		}
 		static uint32_t GetIdUnderPointer();
 		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
@@ -86,9 +86,6 @@ namespace gbe {
 
 		inline static RenderPipeline* Get_Instance() {
 			return Instance;
-		}
-		inline void AssignEditor(Editor* editor) {
-			this->editor = editor;
 		}
 
 		// BGFX: The resolution change logic is adapted for bgfx::reset() and re-creating FBOs

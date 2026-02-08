@@ -5,7 +5,7 @@
 #include "Graphics/gbe_graphics.h"
 
 namespace gbe::editor {
-    static inline bool DrawIconSwitch(const char* label, bool* v, gfx::TextureData* iconOff, gfx::TextureData* iconOn,
+    static inline bool DrawIconSwitch(const char* label, bool* v, gfx::TextureData* iconOff = nullptr, gfx::TextureData* iconOn = nullptr,
         float trackH = 32.0f,
         float trackW = 80.0f,
         float iconPadding = 6.0f)
@@ -62,15 +62,19 @@ namespace gbe::editor {
         float centerY = pos.y + (trackH * 0.5f);
         float slotWidth = trackW * 0.5f;
 
-        // Off Icon Position (Left Half)
-        ImVec2 offMin = ImVec2(pos.x + (slotWidth * 0.5f) - (iconSize * 0.5f), centerY - (iconSize * 0.5f));
-        draw_list->AddImage((ImTextureID)iconOff->textureHandle.idx, offMin, ImVec2(offMin.x + iconSize, offMin.y + iconSize),
-            { 0,0 }, { 1,1 }, *v ? IM_COL32(255, 255, 255, 128) : IM_COL32_WHITE);
+        if (iconOff) {
+            // Off Icon Position (Left Half)
+            ImVec2 offMin = ImVec2(pos.x + (slotWidth * 0.5f) - (iconSize * 0.5f), centerY - (iconSize * 0.5f));
+            draw_list->AddImage((ImTextureID)iconOff->textureHandle.idx, offMin, ImVec2(offMin.x + iconSize, offMin.y + iconSize),
+                { 0,0 }, { 1,1 }, *v ? IM_COL32(255, 255, 255, 128) : IM_COL32_WHITE);
+        }
 
-        // On Icon Position (Right Half)
-        ImVec2 onMin = ImVec2(pos.x + slotWidth + (slotWidth * 0.5f) - (iconSize * 0.5f), centerY - (iconSize * 0.5f));
-        draw_list->AddImage((ImTextureID)iconOn->textureHandle.idx, onMin, ImVec2(onMin.x + iconSize, onMin.y + iconSize),
-            { 0,0 }, { 1,1 }, *v ? IM_COL32_WHITE : IM_COL32(255, 255, 255, 128));
+        if (iconOn) {
+            // On Icon Position (Right Half)
+            ImVec2 onMin = ImVec2(pos.x + slotWidth + (slotWidth * 0.5f) - (iconSize * 0.5f), centerY - (iconSize * 0.5f));
+            draw_list->AddImage((ImTextureID)iconOn->textureHandle.idx, onMin, ImVec2(onMin.x + iconSize, onMin.y + iconSize),
+                { 0,0 }, { 1,1 }, *v ? IM_COL32_WHITE : IM_COL32(255, 255, 255, 128));
+        }
 
         // 4. Render Label Text
         if (label_size.x > 0)
