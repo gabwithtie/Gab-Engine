@@ -14,7 +14,7 @@ using namespace gbe::asset::data;
 
 struct MikkUserData {
     aiMesh* mesh;
-    std::vector<gbe::asset::data::Vertex>& outVertices;
+    std::vector<gbe::gfx::Vertex>& outVertices;
 };
 
 // --- MikkTSpace Callbacks ---
@@ -123,7 +123,7 @@ static void ProcessMeshAsync(gbe::MeshLoader::AsyncMeshTask* task)
     }
 
     aiMesh* mesh = scene->mMeshes[0];
-    std::vector<Vertex> flat_vertices(mesh->mNumFaces * 3);
+    std::vector<gbe::gfx::Vertex> flat_vertices(mesh->mNumFaces * 3);
 
     // 1. Flatten Vertices
     for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
@@ -134,7 +134,7 @@ static void ProcessMeshAsync(gbe::MeshLoader::AsyncMeshTask* task)
 
         for (unsigned int j = 0; j < 3; j++) {
             unsigned int assimp_idx = face.mIndices[j];
-            Vertex& v = flat_vertices[i * 3 + j];
+            gbe::gfx::Vertex& v = flat_vertices[i * 3 + j];
             v.pos = { mesh->mVertices[assimp_idx].x, mesh->mVertices[assimp_idx].y, mesh->mVertices[assimp_idx].z };
             v.normal = { mesh->mNormals[assimp_idx].x, mesh->mNormals[assimp_idx].y, mesh->mNormals[assimp_idx].z };
             if (mesh->HasTextureCoords(0))
@@ -160,11 +160,11 @@ static void ProcessMeshAsync(gbe::MeshLoader::AsyncMeshTask* task)
     genTangSpaceDefault(&context);
 
     // 3. Deduplication
-    std::map<Vertex, uint16_t> unique_vertices;
+    std::map<gbe::gfx::Vertex, uint16_t> unique_vertices;
     for (size_t i = 0; i < flat_vertices.size(); i += 3) {
         std::vector<uint16_t> face_indices;
         for (size_t j = 0; j < 3; ++j) {
-            const Vertex& v = flat_vertices[i + j];
+            const gbe::gfx::Vertex& v = flat_vertices[i + j];
             if (unique_vertices.find(v) == unique_vertices.end()) {
                 unique_vertices[v] = static_cast<uint16_t>(task->out_vertices.size());
                 task->out_vertices.push_back(v);
@@ -210,24 +210,18 @@ void gbe::gfx::MeshLoader::OnAsyncTaskCompleted(MeshLoader::AsyncLoadTask* loadt
         throw std::runtime_error("Failed to create bgfx Index Buffer");
     }
 
-    auto newloaddata = MeshLoadData{
-            .vertices = meshloadtask->out_vertices,
-            .indices = meshloadtask->out_indices,
-            .faces = meshloadtask->out_faces
-    };
-
     auto newdata = MeshData{
-        newloaddata,
-        vertexBufferHandle, // Pass the bgfx handle
-        indexBufferHandle   // Pass the bgfx handle
+        .vertex_vbh = vertexBufferHandle, // Pass the bgfx handle
+        .index_vbh = indexBufferHandle,   // Pass the bgfx handle
+        .vertices = meshloadtask->out_vertices,
+        .indices = meshloadtask->out_indices,
+        .faces = meshloadtask->out_faces,
     };
 
-    this->lookup_map[loadtask->id]->SetLoadData(newloaddata);
-
-	RegisterExternal(meshloadtask->id, newdata);
+	Register(meshloadtask->id, newdata);
 }
 
-gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* loaddata)
+void gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, MeshData* loaddata)
 {
     auto meshpath = asset->Get_asset_filepath().parent_path() / importdata.path;
 
@@ -252,18 +246,13 @@ gbe::gfx::MeshData gbe::gfx::MeshLoader::LoadAsset_(asset::Mesh* asset, const as
     // In a production environment, use a ThreadPool instead of raw std::thread
     std::thread worker(&ProcessMeshAsync, task);
     worker.detach();
-
-    // Return empty mesh data immediately
-    return MeshData{};
 }
 
 // NOTE: You must implement a function called every frame on the Main Thread
 // to check 'task->isDone', create BGFX buffers, and set asset->SetIsLoading(false).
 
-void gbe::gfx::MeshLoader::UnLoadAsset_(asset::Mesh* asset, const asset::data::MeshImportData& importdata, asset::data::MeshLoadData* data)
+void gbe::gfx::MeshLoader::UnLoadAsset_(MeshData* data)
 {
-    const auto& meshdata = this->GetAssetRuntimeData(asset->Get_assetId());
-
-    if (bgfx::isValid(meshdata.vertex_vbh)) bgfx::destroy(meshdata.vertex_vbh);
-    if (bgfx::isValid(meshdata.index_vbh)) bgfx::destroy(meshdata.index_vbh);
+    if (bgfx::isValid(data->vertex_vbh)) bgfx::destroy(data->vertex_vbh);
+    if (bgfx::isValid(data->index_vbh)) bgfx::destroy(data->index_vbh);
 }

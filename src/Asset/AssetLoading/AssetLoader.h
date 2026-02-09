@@ -29,49 +29,38 @@ namespace gbe {
 
 		extern std::vector<AssetLoader_base_base*> all_asset_loaders;
 
-		template<class TAsset, class TAssetImportData, class TAssetLoadData>
+		template<class TAsset, class TAssetImportData>
 		class AssetLoader_base : public AssetLoader_base_base {
-		public:
-			struct AsyncLoadTask {
-				bool isDone = false;
-				std::string id;
-				std::string path;
-				TAssetLoadData loaddata;
-			};
-		private:
-			std::vector<AsyncLoadTask*> async_tasks;
 		protected:
 			static AssetLoader_base* active_base_instance;
+			std::unordered_map<std::string, TAsset*> fileasset_dictionary;
 
-			std::unordered_map<std::string, TAsset*> lookup_map;
-
-			std::function<bool(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data)> load_func;
-			std::function<void(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data)> unload_func;
-
+			std::function<bool(TAsset* asset, const TAssetImportData& import_data)> load_func;
 		public:
-			static bool LoadAsset(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) {
+			static bool LoadFileAsset(TAsset* asset, const TAssetImportData& import_data) {
 				if (active_base_instance == nullptr)
 					throw "asset loader for this particular type is not assigned!";
 
-				return active_base_instance->load_func(asset, import_data, load_data);
+				return active_base_instance->load_func(asset, import_data);
 			}
-			static void UnLoadAsset(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) {
-				if (active_base_instance == nullptr)
-					throw "asset loader for this particular type is not assigned!";
-
-				return active_base_instance->unload_func(asset, import_data, load_data);
-			}
-			static TAsset* GetAsset(std::string asset_id) {
-				auto it = active_base_instance->lookup_map.find(asset_id);
-				if (it != active_base_instance->lookup_map.end()) {
+			static TAsset* GetAssetById(std::string asset_id) {
+				auto it = active_base_instance->fileasset_dictionary.find(asset_id);
+				if (it != active_base_instance->fileasset_dictionary.end()) {
 					return it->second;
 				}
 
 				return nullptr;
 			}
+			static std::vector<std::string> GetAllAssetIds() {
+				std::vector<std::string> ids;
+				for (const auto& pair : active_base_instance->fileasset_dictionary) {
+					ids.push_back(pair.first);
+				}
+				return ids;
+			}
 
 			internal::BaseAsset_base* GetBaseAssetData(std::filesystem::path asset_path) override {
-				for (const auto& pair : active_base_instance->lookup_map)
+				for (const auto& pair : active_base_instance->fileasset_dictionary)
 				{
 					internal::BaseAsset_base* baseasset = dynamic_cast<internal::BaseAsset_base*>(pair.second);
 
@@ -84,6 +73,30 @@ namespace gbe {
 
 				return nullptr;
 			}
+		};
+
+		template<class TAsset, class TAssetImportData>
+		AssetLoader_base<TAsset, TAssetImportData>* AssetLoader_base<TAsset, TAssetImportData>::active_base_instance = nullptr;
+
+		template<class TAsset, class TAssetImportData, class TAssetLoadData>
+		class AssetLoader : public AssetLoader_base<TAsset, TAssetImportData> {
+		public:
+			struct AsyncLoadTask {
+				bool isDone = false;
+				std::string id;
+				std::string path;
+				TAssetLoadData loaddata;
+			};
+		private:
+			std::vector<AsyncLoadTask*> async_tasks;
+		protected:
+			static AssetLoader* active_instance;
+
+			std::unordered_map<std::string, TAssetLoadData> loaded_assets;
+			virtual void LoadAsset_(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) = 0;
+			virtual void UnLoadAsset_(TAssetLoadData* load_data) = 0;
+
+		public:
 
 			inline void RegisterAsyncTask(AsyncLoadTask* task) {
 				async_tasks.push_back(task);
@@ -114,63 +127,42 @@ namespace gbe {
 
 				return static_cast<int>(this->async_tasks.size());
 			}
-		};
 
-		template<class TAsset, class TAssetImportData, class TAssetLoadData>
-		AssetLoader_base<TAsset, TAssetImportData, TAssetLoadData>* AssetLoader_base<TAsset, TAssetImportData, TAssetLoadData>::active_base_instance = nullptr;
-
-		template<class TAsset, class TAssetImportData, class TAssetLoadData, class TAssetRuntimeData>
-		class AssetLoader : public AssetLoader_base<TAsset, TAssetImportData, TAssetLoadData> {
-		protected:
-			static AssetLoader* active_instance;
-			std::unordered_map<std::string, TAssetRuntimeData> loaded_assets;
-			virtual TAssetRuntimeData LoadAsset_(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) = 0;
-			virtual void UnLoadAsset_(TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) = 0;
-		public:
 			virtual void AssignSelfAsLoader() {
 				all_asset_loaders.push_back(static_cast<AssetLoader_base_base*>(this));
 
-				this->active_instance = this;
 				this->active_base_instance = this;
+				this->active_instance = this;
 
-				this->load_func = [](TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) {
-					auto newdata = active_instance->LoadAsset_(asset, import_data, load_data);
-					active_instance->loaded_assets.insert_or_assign(asset->Get_assetId(), newdata);
+				this->load_func = [](TAsset* asset, const TAssetImportData& import_data) {
+					TAssetLoadData load_data = {};
+					active_instance->loaded_assets.insert_or_assign(asset->Get_assetId(), load_data);
+					active_instance->LoadAsset_(asset, import_data, &active_instance->loaded_assets[asset->Get_assetId()]);
 
-					auto it = active_instance->lookup_map.find(asset->Get_assetId());
-					if (it != active_instance->lookup_map.end()) {
+					auto it = active_instance->fileasset_dictionary.find(asset->Get_assetId());
+					if (it != active_instance->fileasset_dictionary.end()) {
 						//implement deloading logic for old asset
 					}
-					
+
 					//Always override
-					active_instance->lookup_map.insert_or_assign(asset->Get_assetId(), asset);
-					
+					active_instance->fileasset_dictionary.insert_or_assign(asset->Get_assetId(), asset);
 
 					return true;
 					};
-
-				this->unload_func = [](TAsset* asset, const TAssetImportData& import_data, TAssetLoadData* load_data) {
-					auto it = active_instance->loaded_assets.find(asset->Get_assetId());
-					if (it != active_instance->loaded_assets.end()) {
-						active_instance->UnLoadAsset_(asset, import_data, load_data);
-						active_instance->loaded_assets.erase(it);
-						active_instance->lookup_map.erase(asset->Get_assetId());
-					}
-					};
 			}
 
-			static std::unordered_map<std::string, TAssetRuntimeData>& GetDataMap() {
+			static std::unordered_map<std::string, TAssetLoadData>& GetDataMap() {
 				return active_instance->loaded_assets;
 			}
 
-			static void RegisterExternal(std::string id, TAssetRuntimeData assetdata) {
+			static void Register(std::string id, TAssetLoadData assetdata) {
 				active_instance->loaded_assets.insert_or_assign(id, assetdata);
 			}
 
-			static TAssetRuntimeData& GetAssetRuntimeData(std::string assetid) {
+			static TAssetLoadData* GetAssetRuntimeData(std::string assetid) {
 				auto it = active_instance->loaded_assets.find(assetid);
 				if (it != active_instance->loaded_assets.end()) {
-					return it->second;
+					return &it->second;
 				}
 				else {
 					throw std::exception("Asset not found");
@@ -178,7 +170,7 @@ namespace gbe {
 			}
 
 			static TAsset* GetAssetByPath(std::string asset_path) {
-				for (const auto& pair : active_instance->lookup_map) {
+				for (const auto& pair : active_instance->fileasset_dictionary) {
 					if (pair.second->Get_asset_filepath() == asset_path) {
 						return pair.second;
 					}
@@ -189,7 +181,7 @@ namespace gbe {
 			static std::vector<internal::BaseAsset_base*> GetAssetList() {
 				std::vector<internal::BaseAsset_base*> list;
 
-				for (const auto& pair : active_instance->lookup_map)
+				for (const auto& pair : active_instance->fileasset_dictionary)
 				{
 					list.push_back(pair.second);
 				}
@@ -198,7 +190,7 @@ namespace gbe {
 			}
 		};
 
-		template<class TAsset, class TAssetImportData, class TAssetLoadData, class TAssetRuntimeData>
-		AssetLoader<TAsset, TAssetImportData, TAssetLoadData, TAssetRuntimeData>* AssetLoader<TAsset, TAssetImportData, TAssetLoadData, TAssetRuntimeData>::active_instance = nullptr;
+		template<class TAsset, class TAssetImportData, class TAssetLoadData>
+		AssetLoader<TAsset, TAssetImportData, TAssetLoadData>* AssetLoader<TAsset, TAssetImportData, TAssetLoadData>::active_instance = nullptr;
 	}
 }

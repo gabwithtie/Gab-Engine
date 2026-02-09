@@ -18,35 +18,106 @@ static void imageReleaseCallback(void* _ptr, void* _userData) {
     bimg::imageFree(imageContainer);
 }
 
-gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* loaddata) {
-    if (importdata.path.size() == 0)
-        return {};
+void gbe::gfx::TextureLoader::ReSave(asset::Texture* asset)
+{
+	auto data = GetAssetRuntimeData(asset->Get_assetId());
+
+    if (data->data.empty()) return;
+
+    // 1. Open a file writer using bx (bgfx's companion library)
+    bx::FileWriter writer;
+    bx::Error err;
+
+	auto folderpath = asset->Get_asset_filepath().parent_path();
+	auto fullpath = folderpath / asset->Get_import_data().path;
+
+    if (bx::open(&writer, fullpath.string().c_str())) {
+        
+        uint32_t bpp = data->bitsPerPixel / 8;
+        uint32_t srcPitch = data->dimensions.x * bpp;
+
+        // 4. Call imageWritePng
+        bimg::imageWritePng(
+            &writer,            // _writer: The open bx::FileWriter
+            data->dimensions.x,       // _width
+            data->dimensions.y,      // _height
+            srcPitch,           // _srcPitch: Row size in bytes
+            data->data.data(), // _src: Pointer to your raw CPU buffer
+            bimg::TextureFormat::RGBA8, // _format: The format of your CPU buffer
+            false,              // _yflip: Set true if the image comes out upside down
+            &err                // _err: Pointer to error object
+        );
+
+        if (!err.isOk()) {
+            // Handle encoding error (e.g., out of memory, disk full)
+            printf("PNG Encoding Error: %s\n", err.getMessage().getCPtr());
+        }
+
+        bx::close(&writer);
+    }
+}
+
+void gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* target, const asset::data::TextureImportData& importdata, TextureData* loaddata) {
+    if (importdata.path.size() == 0) return;
 
     const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.path;
+    // Load with Count to get the native format first
     bimg::ImageContainer* imageContainer = imageLoad(pathstr.string().c_str(), bgfx::TextureFormat::Count);
 
     if (imageContainer == nullptr) {
         throw std::runtime_error("Failed to decode texture: " + pathstr.string());
     }
 
-    loaddata->dimensions = Vector2Int(imageContainer->m_width, imageContainer->m_height);
+    // Prepare metadata
+    uint32_t width = imageContainer->m_width;
+    uint32_t height = imageContainer->m_height;
+    loaddata->dimensions = Vector2Int(width, height);
 
-    // 1. Correct Flags for a Mutable Texture
-    // BGFX_TEXTURE_NONE is the base. 
-    // BGFX_TEXTURE_BLIT_DST allows it to be a destination for blits/updates.
+    bgfx::TextureFormat::Enum targetFormat = (bgfx::TextureFormat::Enum)imageContainer->m_format;
+    std::vector<uint8_t> finalData;
+
+    // Handle RGBA16 specifically
+    if (targetFormat == bgfx::TextureFormat::RGBA16) {
+        targetFormat = bgfx::TextureFormat::RGBA8; // Force downsample target
+
+        // Size = Width * Height * 4 channels * 1 byte per channel
+        uint32_t targetSize = width * height * 4;
+        finalData.resize(targetSize);
+
+        const uint16_t* src16 = reinterpret_cast<const uint16_t*>(imageContainer->m_data);
+        uint8_t* dst8 = finalData.data();
+
+        // Mapping 16-bit to 8-bit
+        for (size_t i = 0; i < (size_t)width * height * 4; ++i) {
+            // Shifting 8 bits right effectively takes the most significant byte
+            dst8[i] = static_cast<uint8_t>(src16[i] >> 8);
+        }
+    }
+    else {
+        // For other formats, use your signature of imageGetSize
+        // We pass a dummy TextureInfo if the function requires it for internal math
+        bimg::TextureInfo dummyInfo;
+        uint32_t size = bimg::imageGetSize(
+            &dummyInfo,
+            (uint16_t)width,
+            (uint16_t)height,
+            1,      // depth
+            false,  // cubeMap
+            false,  // hasMips
+            1,      // numLayers
+            (bimg::TextureFormat::Enum)targetFormat
+        );
+
+        finalData.assign((uint8_t*)imageContainer->m_data, (uint8_t*)imageContainer->m_data + size);
+    }
+    // --- DOWNSAMPLE LOGIC END ---
+
     uint64_t flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_TEXTURE_BLIT_DST;
 
-    // 2. Create the Texture WITHOUT initial data (pass nullptr)
-    // This creates a dynamic resource that can be updated later.
-    auto import_format = (bgfx::TextureFormat::Enum)imageContainer->m_format;
-
+    // Create handle using the TARGET format (RGBA8)
     bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
-        (uint16_t)imageContainer->m_width,
-        (uint16_t)imageContainer->m_height,
-        false, 1,
-        import_format,
-        flags,
-        nullptr // Pass nullptr here to make it mutable
+        (uint16_t)width, (uint16_t)height, false, 1,
+        targetFormat, flags, nullptr
     );
 
     if (!bgfx::isValid(textureHandle)) {
@@ -54,31 +125,24 @@ gbe::gfx::TextureData gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* t
         throw std::runtime_error("bgfx failed to create texture.");
     }
 
-    // 3. Upload the initial image data immediately using updateTexture2D
-    // We use bgfx::copy here because imageLoad's memory is managed by imageContainer
+    // Upload the processed data
     bgfx::updateTexture2D(
-        textureHandle,
-        0, 0,
-        0, 0,
-        (uint16_t)imageContainer->m_width,
-        (uint16_t)imageContainer->m_height,
-        bgfx::makeRef(imageContainer->m_data, imageContainer->m_size, imageReleaseCallback, imageContainer)
+        textureHandle, 0, 0, 0, 0, (uint16_t)width, (uint16_t)height,
+        bgfx::copy(finalData.data(), finalData.size())
     );
 
-    return TextureData{
-        .textureHandle = textureHandle,
-		.format = import_format,
-        .bitsPerPixel = bimg::getBitsPerPixel((bimg::TextureFormat::Enum)import_format),
-        .width = (uint32_t)imageContainer->m_width,
-        .height = (uint32_t)imageContainer->m_height,
-    };
+    loaddata->textureHandle = textureHandle;
+    loaddata->format = targetFormat;
+    loaddata->data = std::move(finalData); // Store the processed 8-bit data
+    loaddata->bitsPerPixel = 32; // RGBA8 is always 32
+
+    bimg::imageFree(imageContainer);
 }
 
-void gbe::gfx::TextureLoader::UnLoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data)
+void gbe::gfx::TextureLoader::UnLoadAsset_(TextureData* data)
 {
-    const auto& texturedata = this->GetAssetRuntimeData(asset->Get_assetId());
-    if (bgfx::isValid(texturedata.textureHandle)) {
-        bgfx::destroy(texturedata.textureHandle);
+    if (bgfx::isValid(data->textureHandle)) {
+        bgfx::destroy(data->textureHandle);
     }
 }
 
@@ -104,11 +168,10 @@ void gbe::gfx::TextureLoader::AssignSelfAsLoader()
 
     defaultImage = TextureData{
         .textureHandle = textureHandle,
-        .width = width,
-        .height = height
+		.dimensions = Vector2Int(width, height)
     };
 }
 
 gbe::gfx::TextureData& gbe::gfx::TextureLoader::GetDefaultImage() {
-    return static_cast<gbe::gfx::TextureLoader*>(active_base_instance)->defaultImage;
+    return static_cast<gbe::gfx::TextureLoader*>(active_instance)->defaultImage;
 }

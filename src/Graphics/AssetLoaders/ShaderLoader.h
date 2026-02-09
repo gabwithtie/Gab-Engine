@@ -152,7 +152,7 @@ namespace gbe {
 				throw new std::runtime_error("Use ApplyTextureOverride instead.");
 			}
 			// BGFX: ApplyOverride specialization for TextureData
-			inline bool ApplyTextureOverride(const TextureData& valueref, std::string target, int stage) {
+			inline bool ApplyTextureOverride(TextureData* valueref, std::string target, int stage) {
 
 				bgfx::UniformHandle handle;
 
@@ -161,7 +161,7 @@ namespace gbe {
 
 				this->GetUniform(handle, target);
 
-				bgfx::setTexture(stage, handle, valueref.textureHandle);
+				bgfx::setTexture(stage, handle, valueref->textureHandle);
 
 				return true;
 			}
@@ -182,10 +182,10 @@ namespace gbe {
 			}
 		};
 
-		class ShaderLoader : public asset::AssetLoader<asset::Shader, asset::data::ShaderImportData, asset::data::ShaderLoadData, ShaderData> {
+		class ShaderLoader : public asset::AssetLoader<asset::Shader, asset::data::ShaderImportData, ShaderData> {
 		protected:
-			ShaderData LoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, asset::data::ShaderLoadData* data) override;
-			void UnLoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, asset::data::ShaderLoadData* data) override;
+			void LoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, ShaderData* data) override;
+			void UnLoadAsset_(ShaderData* data) override;
 
 			// REMOVED TryCompileShader as bgfx shaders are typically pre-compiled
 		public:

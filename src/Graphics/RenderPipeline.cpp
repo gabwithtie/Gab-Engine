@@ -78,7 +78,7 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions) 
 	this->textureloader.AssignSelfAsLoader();
 
 	auto layout_stride = s_VERTEXLAYOUT.getStride();
-	auto vertexstruct_size = sizeof(asset::data::Vertex);
+	auto vertexstruct_size = sizeof(gbe::gfx::Vertex);
 	assert(layout_stride == vertexstruct_size && "BGFX Layout stride must match Vertex struct size!");
 	
 	//SETUP RENDERER
@@ -98,7 +98,7 @@ gbe::RenderPipeline::~RenderPipeline()
 void gbe::RenderPipeline::ReloadFrame()
 {
 	auto mainpass_tex = this->cur_renderer->ReloadFrame(this->viewport_resolution);
-	TextureLoader::RegisterExternal("mainpass", mainpass_tex);
+	TextureLoader::Register("mainpass", mainpass_tex);
 }
 
 void gbe::RenderPipeline::DrawLine(Vector3 a, Vector3 b)
@@ -134,23 +134,18 @@ void gbe::RenderPipeline::RenderFrame(const SceneRenderInfo& frameinfo)
 	this->currentrenderinfo.frame_id = bgfx::frame();
 }
 
-uint32_t gbe::RenderPipeline::GetIdUnderPointer()
-{
-	return Instance->cur_renderer->GetCurrentIdOnPointer();
-}
-
 gbe::gfx::DrawCall* gbe::RenderPipeline::RegisterDrawCall(asset::Mesh* mesh, asset::Material* material)
 {
 	for (const auto& pair : Instance->currentrenderinfo.callgroups)
 	{
 		const auto& drawcall = pair.first;
 
-		if (drawcall->get_mesh() == mesh && drawcall->get_material() == material) {
+		if (drawcall->get_meshasset() == mesh && drawcall->get_materialasset() == material) {
 			return drawcall;
 		}
 	}
 
-	auto newdrawcall = new DrawCall(mesh, material, &Instance->shaderloader.GetAssetRuntimeData(material->Get_load_data().shader->Get_assetId()));
+	auto newdrawcall = new DrawCall(mesh, material);
 
 	return newdrawcall;
 }
@@ -177,7 +172,7 @@ gbe::Matrix4* gbe::RenderPipeline::RegisterInstance(uint32_t instance_id, DrawCa
 			.drawcall = drawcall,
 			.rendergroups = {
 				{
-					drawcall->get_material()->Get_load_data().defaultrendergroup, true
+					drawcall->get_materialdata()->defaultrendergroup, true
 				}
 			}
 		});
@@ -215,7 +210,7 @@ void gbe::RenderPipeline::UnRegisterInstanceGroup(uint32_t instance_id, int rend
 
 	auto& renderinfo = info_it->second;
 
-	if (rendergroup == renderinfo.drawcall->get_material()->Get_load_data().defaultrendergroup)
+	if (rendergroup == renderinfo.drawcall->get_materialdata()->defaultrendergroup)
 		return;
 
 	renderinfo.rendergroups.erase(rendergroup);

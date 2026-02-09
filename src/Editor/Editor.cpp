@@ -18,10 +18,7 @@
 #include "Engine/gbe_engine.h"
 #include "Physics/gbe_physics.h"
 
-#include "bgfx-gab/util/TexturePainter.h"
-
 gbe::Editor* gbe::Editor::instance = nullptr;
-std::vector<std::function<void(gbe::Vector2Int)>> gbe::Editor::on_mouse_hold;
 
 gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionals):
 	menubar(this->windows),
@@ -33,7 +30,6 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	instance = this;
 
 	this->mwindow = window;
-	this->mrenderpipeline = renderpipeline;
 	this->mtime = _mtime;
 
 	for (const auto& addwindow : additionals)
@@ -274,23 +270,28 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 	if (sdlevent->type == SDL_MOUSEBUTTONDOWN) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT && !this->FocusedOnEditorUI()) {
 
-			pointer_held = true;
+			pointer_state = POINTER_DOWN;
 
-			auto cur_id_oncursor = RenderPipeline::GetIdUnderPointer();
-
-			if (cur_id_oncursor == UINT32_MAX) { //NOTHING WAS CLICKED
-				SelectSingle(nullptr);
+			if (hijack_info.hijacker != nullptr) {
+				hijack_info.callback(RenderPipeline::GetWindow()->GetMousePixelPos(), pointer_state);
 			}
 			else {
-				SelectSingle(Object::GetObjectById(cur_id_oncursor));
+				if (cur_id_oncursor == UINT32_MAX) { //NOTHING WAS CLICKED
+					SelectSingle(nullptr);
+				}
+				else {
+					SelectSingle(Object::GetObjectById(cur_id_oncursor));
+				}
 			}
 		}
 	}
 	if (sdlevent->type == SDL_MOUSEBUTTONUP) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT) {
-			//COMMIT HELD GIZMO ACTION
-			
-			pointer_held = false;
+			pointer_state = POINTER_NONE;
+
+			if (hijack_info.hijacker != nullptr) {
+				hijack_info.callback(RenderPipeline::GetWindow()->GetMousePixelPos(), pointer_state);
+			}
 		}
 	}
 }
@@ -322,10 +323,53 @@ void gbe::Editor::PrepareUpdate()
 		}
 	}
 
-	if (pointer_held) {
-		for (const auto& func : this->on_mouse_hold)
-		{
-			func(RenderPipeline::GetWindow()->GetMousePixelPos());
+	if (hijack_info.hijacker == nullptr)
+		RenderPipeline::GetRenderer()->SubmitCpuDataRequest({
+			.override_id = "id_cursor",
+			.cpu_pass_mode = Renderer::CPU_PASS_MODE::PASS_ID,
+			.cursor_pixel_pos = RenderPipeline::GetWindow()->GetMousePixelPos(),
+			.rect_size = 2,
+			.callback = [&](Renderer::CpuDataResponse& response) {
+				std::map<uint32_t, uint32_t> ids;  // This contains all the IDs found in the buffer
+				uint32_t maxAmount = 0;
+				for (auto& pixel : response.cpu_data)
+				{
+					if (0 == (pixel.r | pixel.g | pixel.b)) // Skip background
+					{
+						continue;
+					}
+
+					std::map<uint32_t, uint32_t>::iterator mapIter = ids.find(pixel.hashed());
+					uint32_t amount = 1;
+					if (mapIter != ids.end())
+					{
+						amount = mapIter->second + 1;
+					}
+
+					ids[pixel.hashed()] = amount; // Amount of times this ID (color) has been clicked on in buffer
+					maxAmount = maxAmount > amount ? maxAmount : amount;
+				}
+				this->cur_id_oncursor = UINT32_MAX;
+				if (maxAmount)
+				{
+					for (std::map<uint32_t, uint32_t>::iterator mapIter = ids.begin(); mapIter != ids.end(); mapIter++)
+					{
+						if (mapIter->second == maxAmount)
+						{
+							this->cur_id_oncursor = mapIter->first;
+							break;
+						}
+					}
+				}
+			}
+			});
+
+	if (pointer_state == POINTER_DOWN)
+		pointer_state = POINTER_HOLD;
+
+	if (pointer_state == POINTER_HOLD) {
+		if (hijack_info.hijacker != nullptr) {
+			hijack_info.callback(RenderPipeline::GetWindow()->GetMousePixelPos(), pointer_state);
 		}
 	}
 
@@ -360,9 +404,9 @@ void gbe::Editor::PrepareUpdate()
 		ImGui::DockBuilderDockWindow(this->viewportWindow.GetWindowId().c_str(), l_u);
 		
 		ImGui::DockBuilderDockWindow(this->projectWindow.GetWindowId().c_str(), l_d);
-		ImGui::DockBuilderDockWindow(this->texturePainterWindow.GetWindowId().c_str(), l_d);
 
 		ImGui::DockBuilderDockWindow(this->inspectorwindow.GetWindowId().c_str(), r_u);
+		ImGui::DockBuilderDockWindow(this->texturePainterWindow.GetWindowId().c_str(), r_u);
 		
 		ImGui::DockBuilderDockWindow(this->lightWindow.GetWindowId().c_str(), r_d);
 
@@ -384,11 +428,6 @@ void gbe::Editor::PrepareUpdate()
 	}
 
 	ImGui::Render();
-}
-
-void gbe::Editor::Register_on_mouse_hold(std::function<void(Vector2Int)> event)
-{
-	on_mouse_hold.push_back(event);
 }
 
 void gbe::Editor::RenderPass()

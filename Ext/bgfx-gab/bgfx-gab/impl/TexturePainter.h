@@ -9,9 +9,8 @@ namespace gbe {
 		namespace bgfx_gab {
 			class TexturePainter_bgfx : public TexturePainter {
 			private:
-				static TexturePainter_bgfx implemented_instance;
+				bgfx::TextureInfo m_info;
 			public:
-				static void Init();
 				TexturePainter_bgfx();
 			};
 		}

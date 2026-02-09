@@ -13,7 +13,7 @@ namespace gbe {
     namespace editor {
         // Data structure to store icon calls
         struct IconCommand {
-            gfx::TextureData tex;
+            gfx::TextureData* tex;
             Vector3 position;
             Matrix4 view;
             Matrix4 proj;
@@ -41,7 +41,7 @@ namespace gbe {
             ViewportWindow(std::vector<gbe::Object*>& _selected);
 
             // This now just adds to the queue
-            static void RenderIcon(gfx::TextureData& tex, const Vector3& position, const Matrix4& camera_view, const Matrix4& camera_proj);
+            static void RenderIcon(gfx::TextureData* tex, const Vector3& position, const Matrix4& camera_view, const Matrix4& camera_proj);
         };
     }
 }

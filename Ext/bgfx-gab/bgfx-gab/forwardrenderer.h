@@ -16,23 +16,31 @@ namespace gbe {
 		namespace bgfx_gab {
 
 			class ForwardRenderer : public Renderer {
-
+			public:
 				// BGFX: Define the View IDs for each rendering pass
 				enum RenderViewId
 				{
+					//GBuffer
 					VIEW_GBUFFER_PASS,
 					VIEW_GBUFFER_SELECTED_PASS,
-					VIEW_CPU_PASS,
+					//CPU Passes
+					VIEW_ID_PASS,
+					VIEW_UV_PASS,
+					//Post processing Passes
 					VIEW_SSAO_PASS,
 					VIEW_BLUR0_PASS,
 					VIEW_BLUR1_PASS,
 					VIEW_OUTLINE_SELECTED_PASS,
+					//Shadow Passes
 					VIEW_SHADOW_PASS,
 					VIEW_SHADOW_PASS_END = VIEW_SHADOW_PASS + 20,
+					//Main Passes
 					VIEW_SCENE_PASS,
 					VIEW_SCREEN_PASS,
 					VIEW_MAIN_PASS,
-					VIEW_DEBUG_BLITTER
+					//Debug Passes
+					VIEW_DEBUG_BLITTER,
+					VIEW_BLENDER
 				};
 
 			private:
@@ -43,20 +51,18 @@ namespace gbe {
 
 				//============BGFX=======================//
 				// BGFX: Render target handle for the main pass (the color buffer for the final scene)
-				ShaderData shadow_shader;
-				ShaderData ssao_shader;
-				ShaderData outline_shader;
-				ShaderData bilateralblur_shader;
-				ShaderData gbuffer_shader;
-				ShaderData bufferblend_shader;
-				ShaderData id_shader;
-				ShaderData uv_shader;
-				ShaderData skybox_shader;
-				ShaderData floorgrid_shader;
+				ShaderData* shadow_shader;
+				ShaderData* ssao_shader;
+				ShaderData* outline_shader;
+				ShaderData* bilateralblur_shader;
+				ShaderData* gbuffer_shader;
+				ShaderData* bufferblend_shader;
+				ShaderData* id_shader;
+				ShaderData* uv_shader;
+				ShaderData* skybox_shader;
+				ShaderData* floorgrid_shader;
 
 				//=============RUNTIME===============//
-				uint32_t frameid_readdone = UINT32_MAX;
-				bool read_done = true;
 				DrawCall* line_call;
 				DrawCall* skybox_call;
 
@@ -87,11 +93,11 @@ namespace gbe {
 						m_gbufferNormal = TextureData{
 							.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_RT)
 						};
-						TextureLoader::RegisterExternal("GBufferNormal_" + id, m_gbufferNormal);
+						TextureLoader::Register("GBufferNormal_" + id, m_gbufferNormal);
 						m_gbufferDepth = TextureData{
 							.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24, BGFX_TEXTURE_RT)
 						};
-						TextureLoader::RegisterExternal("GBufferDepth_" + id, m_gbufferDepth);
+						TextureLoader::Register("GBufferDepth_" + id, m_gbufferDepth);
 						bgfx::TextureHandle gbufferAttachments[] = { m_gbufferNormal.textureHandle, m_gbufferDepth.textureHandle };
 						m_gbufferFB = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAttachments), gbufferAttachments, false);
 
@@ -106,22 +112,22 @@ namespace gbe {
 
 				TextureData m_ssaoTexture;
 
-				ShaderData curppshader;
+				ShaderData* curppshader;
 				RenderViewId curppview;
 
 				std::vector<bgfx::FrameBufferHandle> m_ppFBs;
 				std::unordered_map<RenderViewId, TextureData> m_pp_textures;
 
-				inline void InitPP(ShaderData& ppshaderdata, RenderViewId viewid) {
+				inline void InitPP(ShaderData* ppshaderdata, RenderViewId viewid) {
 					curppview = viewid;
 					curppshader = ppshaderdata;
 					bgfx::setViewClear(viewid, BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
 					bgfx::setViewTransform(viewid, nullptr, nullptr);
 				}
 				inline void SubmitPP() {
-					RenderFullscreenPass(curppview, curppshader.programHandle);
+					RenderFullscreenPass(curppview, curppshader->programHandle);
 				}
-				inline void RegisterPPFramebuffer(RenderViewId viewid, bgfx::TextureFormat::Enum tformat = bgfx::TextureFormat::R8) {
+				inline void RegisterFramebuffer(RenderViewId viewid, bgfx::TextureFormat::Enum tformat = bgfx::TextureFormat::R8) {
 					auto newtexdata = TextureData{
 						.textureHandle = bgfx::createTexture2D(resolution.x, resolution.y, false, 1, tformat, BGFX_TEXTURE_RT)
 					};
@@ -157,7 +163,7 @@ namespace gbe {
 						m_mainDepthTexture = TextureData{
 							.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT_WRITE_ONLY)
 						};
-						TextureLoader::RegisterExternal("ColorDepth_" + id, m_mainColorTexture);
+						TextureLoader::Register("ColorDepth_" + id, m_mainColorTexture);
 						bgfx::TextureHandle mainAttachments[] = { m_mainColorTexture.textureHandle, m_mainDepthTexture.textureHandle };
 						m_mainPassFBO = bgfx::createFrameBuffer(BX_COUNTOF(mainAttachments), mainAttachments, false);
 						bgfx::setViewFrameBuffer(_viewid, m_mainPassFBO);
@@ -167,8 +173,7 @@ namespace gbe {
 				ColorDepthBuffer mainscene_buffer;
 				
 				ColorDepthBuffer id_buffer;
-				TextureData localarea_texture_cpu;
-				int id_texture_size = 5;
+				ColorDepthBuffer uv_buffer;
 
 				std::vector<Vector4>  m_ssao_kernel_data;
 
@@ -195,7 +200,10 @@ namespace gbe {
 				inline ~ForwardRenderer() {
 					CleanUp();
 				}
-			};
+
+				// Inherited via Renderer
+				CpuDataResponse PreprocessCpuRequest(CpuDataRequest request) override;
+};
 		}
 	}
 }

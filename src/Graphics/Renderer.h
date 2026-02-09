@@ -6,6 +6,8 @@
 #include "Data/Light.h"
 #include "Data/DrawCall.h"
 
+#include <queue>
+
 namespace gbe {
 	namespace gfx {
 		struct SceneRenderInfo {
@@ -36,7 +38,7 @@ namespace gbe {
 			//LINES
 			uint32_t frame_id = 0;
 			const size_t max_lines = 1000;
-			std::vector<asset::data::Vertex> lines_this_frame;
+			std::vector<gbe::gfx::Vertex> lines_this_frame;
 		};
 
 		class Renderer {
@@ -65,29 +67,47 @@ namespace gbe {
 					return Vector4(float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f, float(a) / 255.0f);
 				}
 			};
+
+			struct CpuDataResponse;
+
+			struct CpuDataRequest {
+				std::string override_id = "";
+				CPU_PASS_MODE cpu_pass_mode;
+				Vector2Int cursor_pixel_pos;
+				int rect_size = 2;
+				std::function<void(CpuDataResponse&)> callback;
+			};
+			struct CpuDataResponse {
+				CpuDataRequest request = {};
+
+				std::vector<BRGA_t> cpu_data;
+				TextureData render_target;
+
+				uint32_t frame_done = UINT32_MAX;
+				bool passed = false;
+				bool received = false;
+			};
+
 		protected:
-			std::vector<BRGA_t> localarea_cpu_data;
-			std::vector<BRGA_t> localarea_cpu_data_final;
-			uint32_t current_id_onpointer;
-			CPU_PASS_MODE cpu_pass_mode = PASS_ID;
+			std::vector<CpuDataResponse> cpu_data_responses;
 		public:
-			inline std::vector<BRGA_t>& Get_localarea_cpu_data() {
-				return localarea_cpu_data_final;
+			inline void SubmitCpuDataRequest(CpuDataRequest request) {
+				if(request.override_id.size() > 0)
+					for (const auto& req : cpu_data_responses)
+					{
+						if (req.request.override_id == request.override_id) {
+							return;
+						}
+					}
+
+				cpu_data_responses.push_back(PreprocessCpuRequest(request));
 			}
+
 			inline Renderer() {
 
 			}
-			inline uint32_t GetCurrentIdOnPointer() {
-				return current_id_onpointer;
-			}
-			inline void SetCpuPassMode(CPU_PASS_MODE mode) {
-				if (mode == cpu_pass_mode)
-					return;
 
-				localarea_cpu_data_final.clear();
-				cpu_pass_mode = mode;
-			}
-
+			virtual CpuDataResponse PreprocessCpuRequest(CpuDataRequest request) = 0;
 			virtual TextureData ReloadFrame(Vector2Int reso) = 0;
 			virtual void RenderFrame(const SceneRenderInfo& frameinfo, GraphicsRenderInfo& passinfo) = 0;
 			virtual void InitializeAssetRequests() = 0;

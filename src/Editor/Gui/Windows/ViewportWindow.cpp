@@ -42,7 +42,7 @@ void gbe::editor::ViewportWindow::DrawSelf()
         float screenX = viewportScreenPos.x + (ndc.x + 1.0f) * 0.5f * viewportSize.x;
         float screenY = viewportScreenPos.y + (1.0f - ndc.y) * 0.5f * viewportSize.y;
 
-        ImTextureID iconID = (ImTextureID)cmd.tex.textureHandle.idx;
+        ImTextureID iconID = (ImTextureID)cmd.tex->textureHandle.idx;
         ImVec2 p_min = { screenX - iconSize * 0.5f, screenY - iconSize * 0.5f };
         ImVec2 p_max = { screenX + iconSize * 0.5f, screenY + iconSize * 0.5f };
 
@@ -59,7 +59,7 @@ void gbe::editor::ViewportWindow::DrawSelf()
         this->pointer_here = false;
 }
 
-void gbe::editor::ViewportWindow::RenderIcon(gfx::TextureData& tex, const Vector3& position, const Matrix4& camera_view, const Matrix4& camera_proj)
+void gbe::editor::ViewportWindow::RenderIcon(gfx::TextureData* tex, const Vector3& position, const Matrix4& camera_view, const Matrix4& camera_proj)
 {
     // Simply push to the queue to be processed during DrawSelf
     iconQueue.push_back({ tex, position, camera_view, camera_proj });

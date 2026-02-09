@@ -73,7 +73,6 @@ namespace gbe {
 		inline static Window* GetWindow() {
 			return &Instance->window;
 		}
-		static uint32_t GetIdUnderPointer();
 		static DrawCall* RegisterDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* RegisterDefaultDrawCall(asset::Mesh* mesh, asset::Material* material);
 		static DrawCall* GetDefaultDrawCall();

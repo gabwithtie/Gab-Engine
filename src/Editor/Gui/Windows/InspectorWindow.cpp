@@ -3,6 +3,8 @@
 #include "../../Utility/ModelExport.h"
 #include "../../Editor.h"
 
+#include "../Utility/AssetPickerPopup.h"
+
 #include "Asset/gbe_asset.h"
 
 void gbe::editor::InspectorWindow::SetInspectorData(std::vector<InspectorData*> _data)
@@ -113,6 +115,24 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 				if (ImGui::ColorEdit3(field_id.c_str(), &proxy_f.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
 					f->setter(proxy_f);
 				}
+			}
+
+			if (field->fieldtype == editor::TEXTURE) {
+				auto f = static_cast<editor::InspectorTexture*>(field);
+				auto proxy_f = f->getter();
+
+				TextureAssetPicker(
+					f->name.c_str(),
+					ImVec2(64, 64),
+					[=]() {
+						auto asset = gbe::asset::Texture::GetAssetById(proxy_f);
+						return asset;
+					},
+					[=](std::string new_asset_id) {
+						f->setter(new_asset_id);
+					},
+					TextureLoader::GetAllAssetIds()
+				);
 			}
 
 			if (field->fieldtype == editor::FUNCTION) {

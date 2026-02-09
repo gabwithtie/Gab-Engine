@@ -55,8 +55,8 @@ gbe::SerializedObject gbe::RenderObject::Serialize() {
 	auto data = gbe::Object::Serialize();
 
 	data.serialized_variables.insert_or_assign("primitive", PrimitiveTypeStr(this->ptype));
-	data.serialized_variables.insert_or_assign("mesh", this->mDrawCall->get_mesh()->Get_assetId());
-	data.serialized_variables.insert_or_assign("mat", this->mDrawCall->get_material()->Get_assetId());
+	data.serialized_variables.insert_or_assign("mesh", this->mDrawCall->get_meshasset()->Get_assetId());
+	data.serialized_variables.insert_or_assign("mat", this->mDrawCall->get_materialasset()->Get_assetId());
 
 	return data;
 }
@@ -91,9 +91,9 @@ gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
 std::vector<std::vector<gbe::Vector3>> gbe::RenderObject::GetWorldSpaceVertexes()
 {
 	auto verts = std::vector<std::vector<Vector3>>();
-	auto& src_verts = this->Get_DrawCall()->get_mesh()->Get_load_data().vertices;
+	auto& src_verts = this->Get_DrawCall()->get_meshdata()->vertices;
 
-	for (const auto& face : this->Get_DrawCall()->get_mesh()->Get_load_data().faces)
+	for (const auto& face : this->Get_DrawCall()->get_meshdata()->faces)
 	{
 		auto newface = std::vector<Vector3>();
 

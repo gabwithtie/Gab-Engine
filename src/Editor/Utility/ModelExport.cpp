@@ -75,7 +75,7 @@ namespace gbe {
 
             for (const auto& renderer : renderers) {
                 export_subobject new_subobject;
-                new_subobject.source_mesh = &renderer->Get_DrawCall()->get_mesh()->Get_load_data();
+                new_subobject.source_mesh = renderer->Get_DrawCall()->get_meshdata();
                 new_subobject.transform = renderer->World().GetMatrix();
                 export_subobjects.push_back(new_subobject);
             }

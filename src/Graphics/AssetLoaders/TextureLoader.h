@@ -18,27 +18,29 @@ namespace gbe {
 			// vulkan::ImageView* textureImageView;
 			// vulkan::Image* textureImage;
 			// vulkan::Sampler* textureSampler;
-
-			unsigned int width;
-			unsigned int height;
+			std::vector<uint8_t> data;
 
 			//UI
 			bool gui_initialized = false;
 			// VkDescriptorSet DS; // REMOVED
+
+			Vector2Int dimensions;
+			int colorchannels;
 		};
 
 		// typedef std::function<VkDescriptorSet(gbe::vulkan::Sampler*, gbe::vulkan::ImageView*)> GbeUiCallbackFunction; // REMOVED
 
-		class TextureLoader : public asset::AssetLoader<asset::Texture, asset::data::TextureImportData, asset::data::TextureLoadData, TextureData> {
+		class TextureLoader : public asset::AssetLoader<asset::Texture, asset::data::TextureImportData, TextureData> {
 		private:
 			TextureData defaultImage;
 			// static GbeUiCallbackFunction Ui_Callback; // REMOVED
 		protected:
-			TextureData LoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) override;
-			void UnLoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) override;
+			void LoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, TextureData* data) override;
+			void UnLoadAsset_(TextureData* data) override;
 		public:
 			void AssignSelfAsLoader() override;
 			static TextureData& GetDefaultImage();
+			static void ReSave(asset::Texture* asset);
 
 			inline virtual void OnAsyncTaskCompleted(AsyncLoadTask* loadtask) override {
 				//This is a synchronous loader

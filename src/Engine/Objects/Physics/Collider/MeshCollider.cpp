@@ -1,20 +1,24 @@
 #include "MeshCollider.h"
 
+#include "Graphics/AssetLoaders/MeshLoader.h"
+
 gbe::MeshCollider::MeshCollider(asset::Mesh* mesh):
 	mData(this)
 {
 	UpdateMesh(mesh);
 }
 
-void gbe::MeshCollider::UpdateMesh(asset::Mesh* mesh)
+void gbe::MeshCollider::UpdateMesh(asset::Mesh* meshasset)
 {
-	if (mesh == nullptr)
+	if (meshasset == nullptr)
 		return;
 
-	auto newtris = std::vector<std::vector<Vector3>>();
-	auto& verts = mesh->Get_load_data().vertices;
+	auto* mesh = gfx::MeshLoader::GetAssetRuntimeData(meshasset->Get_assetId());
 
-	for (const auto& tri : mesh->Get_load_data().faces)
+	auto newtris = std::vector<std::vector<Vector3>>();
+	auto& verts = mesh->vertices;
+
+	for (const auto& tri : mesh->faces)
 	{
 		if (tri.size() < 3)
 			continue;
