@@ -19,7 +19,8 @@ namespace gbe {
 			BOOLEAN,
 			FUNCTION,
 			CHOICE,
-			TEXTURE
+			TEXTURE,
+			DICTIONARY
 		};
 
 		struct InspectorField_base {
@@ -49,6 +50,16 @@ namespace gbe {
 		struct InspectorFloat : public InspectorField<float> {
 			InspectorFloat() {
 				this->fieldtype = FieldType::FLOAT;
+			}
+		};
+
+		struct InspectorAssetDictionary : public InspectorField<int> {
+			std::function<asset::internal::BaseAsset_base*(std::string)> a_getter;
+			std::function<void(std::string, asset::internal::BaseAsset_base*)> a_setter;
+			std::vector<std::string> *fieldList;
+			std::vector<std::string> *assetList;
+			InspectorAssetDictionary() {
+				this->fieldtype = FieldType::DICTIONARY;
 			}
 		};
 

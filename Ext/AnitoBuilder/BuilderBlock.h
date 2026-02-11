@@ -30,6 +30,7 @@ namespace gbe::ext::AnitoBuilder {
 	struct BuilderBlockData {
 		std::vector<std::array<float, 3>> positions;
 		std::vector<BlockSet> sets;
+		std::unordered_map<std::string, std::string> material_overrides;
 
 		Vector3 GetPosition(int index) {
 			if (index < 0 || index >= positions.size())
@@ -70,9 +71,12 @@ namespace gbe::ext::AnitoBuilder {
 		std::array<std::array<gfx::DrawCall*, 3>, 4> wall3x4_DC;
 		std::array<std::array<gfx::DrawCall*, 2>, 1> windowwall_DC;
 		std::array<std::array<gfx::DrawCall*, 2>, 3> wall2x3_DC;
-		gfx::DrawCall* roof_DC;
+		gfx::DrawCall* ledge_dc;
 		gfx::DrawCall* ceiling_DC;
-		gfx::DrawCall* ceiling_1_DC;
+		gfx::DrawCall* top_roof_DC;
+
+		std::unordered_map<std::string, gfx::DrawCall**> drawcall_dict;
+		std::vector<std::string> drawcall_list;
 
 		//Objects
 		Object* ceiling_parent;

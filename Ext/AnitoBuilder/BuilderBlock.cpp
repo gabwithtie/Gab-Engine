@@ -22,42 +22,86 @@ namespace gbe::ext::AnitoBuilder {
 		ceiling_parent->Local().position.Set(Vector3(0, this->height, 0));
 
 		//MATERIAL SETUP
-		auto material = asset::Material::GetAssetById("plaster");
+		auto def_material = asset::Material::GetAssetById("plaster");
 
 		//Editor
 		ceiling_editor_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), asset::Material::GetAssetById("grid"));
-		
+
 		//Main - normal
-		ceiling_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), material);
-		ceiling_1_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("axisroof"), material);
-		
-		roof_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof_1"), material);
-		
-		wallnorm_DC[0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wallnorm1"), material);
-		wallnorm_DC[1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wallnorm2"), material);
+		ceiling_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), def_material);
+		top_roof_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("axisroof"), def_material);
 
-		wall3x4_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-1"), material);
-		wall3x4_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-2"), material);
-		wall3x4_DC[0][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-3"), material);
-		wall3x4_DC[1][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-1"), material);
-		wall3x4_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-2"), material);
-		wall3x4_DC[1][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-3"), material);
-		wall3x4_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-1"), material);
-		wall3x4_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-2"), material);
-		wall3x4_DC[2][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-3"), material);
-		wall3x4_DC[3][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-1"), material);
-		wall3x4_DC[3][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-2"), material);
-		wall3x4_DC[3][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-3"), material);
+		ledge_dc = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof_1"), def_material);
+		wallnorm_DC[0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wallnorm1"), def_material);
+		wallnorm_DC[1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wallnorm2"), def_material);
+		wall3x4_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-1"), def_material);
+		wall3x4_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-2"), def_material);
+		wall3x4_DC[0][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-3"), def_material);
+		wall3x4_DC[1][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-1"), def_material);
+		wall3x4_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-2"), def_material);
+		wall3x4_DC[1][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-3"), def_material);
+		wall3x4_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-1"), def_material);
+		wall3x4_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-2"), def_material);
+		wall3x4_DC[2][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-3"), def_material);
+		wall3x4_DC[3][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-1"), def_material);
+		wall3x4_DC[3][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-2"), def_material);
+		wall3x4_DC[3][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-3"), def_material);
+		wall2x3_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_1-1"), def_material);
+		wall2x3_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_1-2"), def_material);
+		wall2x3_DC[1][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-1"), def_material);
+		wall2x3_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-2"), def_material);
+		wall2x3_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-1"), def_material);
+		wall2x3_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-2"), def_material);
+		windowwall_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("windowwall_1-1"), def_material);
+		windowwall_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("windowwall_1-2"), def_material);
 
-		wall2x3_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_1-1"), material);
-		wall2x3_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_1-2"), material);
-		wall2x3_DC[1][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-1"), material);
-		wall2x3_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-2"), material);
-		wall2x3_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-1"), material);
-		wall2x3_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-2"), material);
+		drawcall_dict.insert_or_assign("roof_1", &ledge_dc);
+		drawcall_dict.insert_or_assign("wallnorm1", &wallnorm_DC[0]);
+		drawcall_dict.insert_or_assign("wallnorm2", &wallnorm_DC[1]);
+		drawcall_dict.insert_or_assign("3x4wall_1-1", &wall3x4_DC[0][0]);
+		drawcall_dict.insert_or_assign("3x4wall_1-2", &wall3x4_DC[0][1]);
+		drawcall_dict.insert_or_assign("3x4wall_1-3", &wall3x4_DC[0][2]);
+		drawcall_dict.insert_or_assign("3x4wall_2-1", &wall3x4_DC[1][0]);
+		drawcall_dict.insert_or_assign("3x4wall_2-2", &wall3x4_DC[1][1]);
+		drawcall_dict.insert_or_assign("3x4wall_2-3", &wall3x4_DC[1][2]);
+		drawcall_dict.insert_or_assign("3x4wall_3-1", &wall3x4_DC[2][0]);
+		drawcall_dict.insert_or_assign("3x4wall_3-2", &wall3x4_DC[2][1]);
+		drawcall_dict.insert_or_assign("3x4wall_3-3", &wall3x4_DC[2][2]);
+		drawcall_dict.insert_or_assign("3x4wall_4-1", &wall3x4_DC[3][0]);
+		drawcall_dict.insert_or_assign("3x4wall_4-2", &wall3x4_DC[3][1]);
+		drawcall_dict.insert_or_assign("3x4wall_4-3", &wall3x4_DC[3][2]);
+		drawcall_dict.insert_or_assign("2x3wall_1-1", &wall2x3_DC[0][0]);
+		drawcall_dict.insert_or_assign("2x3wall_1-2", &wall2x3_DC[0][1]);
+		drawcall_dict.insert_or_assign("2x3wall_2-1", &wall2x3_DC[1][0]);
+		drawcall_dict.insert_or_assign("2x3wall_2-2", &wall2x3_DC[1][1]);
+		drawcall_dict.insert_or_assign("2x3wall_3-1", &wall2x3_DC[2][0]);
+		drawcall_dict.insert_or_assign("2x3wall_3-2", &wall2x3_DC[2][1]);
+		drawcall_dict.insert_or_assign("windowwall_1-1", &windowwall_DC[0][0]);
+		drawcall_dict.insert_or_assign("windowwall_1-2", &windowwall_DC[0][1]);
 
-		windowwall_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("windowwall_1-1"), material);
-		windowwall_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("windowwall_1-2"), material);
+		drawcall_list.push_back("roof_1");
+		drawcall_list.push_back("wallnorm1");
+		drawcall_list.push_back("wallnorm2");
+		drawcall_list.push_back("3x4wall_1-1");
+		drawcall_list.push_back("3x4wall_1-2");
+		drawcall_list.push_back("3x4wall_1-3");
+		drawcall_list.push_back("3x4wall_2-1");
+		drawcall_list.push_back("3x4wall_2-2");
+		drawcall_list.push_back("3x4wall_2-3");
+		drawcall_list.push_back("3x4wall_3-1");
+		drawcall_list.push_back("3x4wall_3-2");
+		drawcall_list.push_back("3x4wall_3-3");
+		drawcall_list.push_back("3x4wall_4-1");
+		drawcall_list.push_back("3x4wall_4-2");
+		drawcall_list.push_back("3x4wall_4-3");
+		drawcall_list.push_back("2x3wall_1-1");
+		drawcall_list.push_back("2x3wall_1-2");
+		drawcall_list.push_back("2x3wall_2-1");
+		drawcall_list.push_back("2x3wall_2-2");
+		drawcall_list.push_back("2x3wall_3-1");
+		drawcall_list.push_back("2x3wall_3-2");
+		drawcall_list.push_back("windowwall_1-1");
+		drawcall_list.push_back("windowwall_1-2");
 	}
 
 	BuilderBlock::BuilderBlock(gbe::Vector3 corners[4], float height)
@@ -95,6 +139,18 @@ namespace gbe::ext::AnitoBuilder {
 
 		this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
 
+		for (const auto& drawcall_id : this->drawcall_list)
+		{
+			asset::Material* mat = nullptr;
+
+			if (this->data.material_overrides.find(drawcall_id) == this->data.material_overrides.end())
+				continue;
+			else
+				mat = asset::Material::GetAssetById(this->data.material_overrides[drawcall_id]);
+
+			*drawcall_dict[drawcall_id] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById(drawcall_id), mat);
+		}
+
 		//INSPECTOR
 		{
 			auto field = new gbe::editor::InspectorFloat();
@@ -126,6 +182,30 @@ namespace gbe::ext::AnitoBuilder {
 			field->getter = [=]() { return this->thickness; };
 			field->setter = [=](float val) {
 				this->thickness = val;
+				this->Refresh();
+				};
+
+			this->inspectorData->fields.push_back(field);
+		}
+
+		{
+			auto field = new gbe::editor::InspectorAssetDictionary();
+			field->name = "Materials";
+			field->fieldList = &this->drawcall_list;
+			field->a_getter = [=](std::string key) -> asset::internal::BaseAsset_base* {
+				if (this->data.material_overrides.find(key) == this->data.material_overrides.end())
+					return nullptr;
+				std::string matid = this->data.material_overrides[key];
+				return asset::Material::GetAssetById(matid);
+				};
+			field->a_setter = [=](std::string key, asset::internal::BaseAsset_base* asset) {
+				if (asset == nullptr) {
+					this->data.material_overrides.erase(key);
+				}
+				else {
+					std::string matid = asset->Get_assetId();
+					this->data.material_overrides[key] = matid;
+				}
 				this->Refresh();
 				};
 
@@ -440,7 +520,7 @@ namespace gbe::ext::AnitoBuilder {
 									}
 								}
 
-								return new RenderObject(roof_DC);
+								return new RenderObject(ledge_dc);
 							}());
 					}
 				}
@@ -459,8 +539,8 @@ namespace gbe::ext::AnitoBuilder {
 
 				createroofobj(ceiling_DC, 0, 0.02f, 0, 0);
 				createroofobj(ceiling_DC, 2, 0.02f, 0, 0);
-				createroofobj(ceiling_1_DC, 0, 0.5f, roofheight, inset_distance - 0.5f);
-				createroofobj(ceiling_1_DC, 2, 0.5f, roofheight, inset_distance - 0.5f);
+				createroofobj(top_roof_DC, 0, 0.5f, roofheight, inset_distance - 0.5f);
+				createroofobj(top_roof_DC, 2, 0.5f, roofheight, inset_distance - 0.5f);
 			}
 		}
 	}
