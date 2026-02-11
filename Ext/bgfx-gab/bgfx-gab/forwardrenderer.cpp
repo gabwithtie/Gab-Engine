@@ -510,6 +510,12 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	for (auto& cpu_req : this->cpu_data_responses)
 	{
 		if (!cpu_req.passed) {
+			if (!bgfx::isValid(cpu_req.render_target.textureHandle))
+			{
+				cpu_req.passed = true;
+				continue;
+			}
+
 			Vector2Int from = cpu_req.request.cursor_pixel_pos;
 			from -= Vector2Int(cpu_req.request.rect_size / 2, cpu_req.request.rect_size / 2);
 			from.x = std::max(0, std::min(from.x, (int)resolution.x - cpu_req.request.rect_size));
