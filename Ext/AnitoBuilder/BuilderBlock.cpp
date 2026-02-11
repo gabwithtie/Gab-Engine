@@ -286,29 +286,49 @@ namespace gbe::ext::AnitoBuilder {
 
 			std::vector<std::pair<Vector3, Vector3>> insetpolygon;
 
+			//Roof handles
+
 			for (auto& set : this->data.sets)
 			{
+				bool put_roof = true;
 				auto insetpoints = GetQuadInsetPoints(set);
 
 				for (const auto& i_pair : insetpoints)
 				{
-					insetpolygon.push_back(i_pair);
-
-					auto handle = new BuilderBlockFace(this, 0);
-					handle->SetParent(this);
-					display_renderers.push_back(handle);
-
-					temppool.push_back(handle);
-
 					auto a = i_pair.first;
 					auto b = i_pair.second;
 
-					a.y = height;
-					b.y = height + roofheight;
-					handle->SetPositions(a, b);
+					a.y = 0;
+					b.y = 0;
 
-					handle->Set_visible(false);
+					if (Vector3(a - b).SqrMagnitude() < wall_max_width * wall_max_width) {
+						put_roof = false;
+						break;
+					}
 				}
+
+				if (put_roof)
+					for (const auto& i_pair : insetpoints)
+					{
+						auto a = i_pair.first;
+						auto b = i_pair.second;
+
+						a.y = 0;
+						b.y = roofheight;
+
+						insetpolygon.push_back(i_pair);
+
+						auto handle = new BuilderBlockFace(this, 0);
+						handle->SetParent(ceiling_parent);
+						handle->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
+						display_renderers.push_back(handle);
+
+						temppool.push_back(handle);
+
+						handle->SetPositions(a, b);
+
+						handle->Set_visible(false);
+					}
 			}
 
 			for (auto& handle : temppool)
@@ -571,10 +591,13 @@ namespace gbe::ext::AnitoBuilder {
 		// Create the glm::mat4
 		Matrix4 modelMatrix = Matrix4(1.0f); // Initialize with identity matrix
 
+		Vector3 final_l = target_l - position;
+		Vector3 final_r = target_r - position;
+
 		// Assign the axis vectors to the first three columns
-		modelMatrix[0] = Vector4(target_l - position, 0.0f); // X-axis
+		modelMatrix[0] = Vector4(final_l, 0.0f); // X-axis
 		modelMatrix[1] = Vector4(yAxis, 0.0f); // Y-axis
-		modelMatrix[2] = Vector4(target_r - position, 0.0f); // Z-axis
+		modelMatrix[2] = Vector4(final_r, 0.0f); // Z-axis
 
 		// Assign the position vector to the fourth column (translation)
 		modelMatrix[3] = Vector4(position, 1.0f); // Translation

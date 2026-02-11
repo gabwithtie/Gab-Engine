@@ -96,6 +96,9 @@ void MaterialLoader::LoadAsset_(asset::Material* asset, const asset::data::Mater
         }
     }
 
+    {
+        //Create duplication/makeunique button here
+    }
 
     asset->SetInspectorData(newinspectordata);
 }
