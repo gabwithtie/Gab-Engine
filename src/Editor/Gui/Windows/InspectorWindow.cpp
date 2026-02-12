@@ -5,6 +5,8 @@
 
 #include "../Utility/AssetPickerPopup.h"
 
+#include "../Utility/DragDrop.h"
+
 #include "Asset/gbe_asset.h"
 
 void gbe::editor::InspectorWindow::SetInspectorData(std::vector<InspectorData*> _data)
@@ -95,6 +97,39 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 				}
 
 				ImGui::PopID();
+			}
+
+			if (field->fieldtype == editor::ASSET) {
+				auto f = static_cast<editor::InspectorAsset*>(field);
+				std::string proxy_f = f->getter();
+				
+				DraggableTarget(asset::MATERIAL,
+					[=](const DragData& data) { f->setter(data.id); },
+					[=]() {
+						// 1. Draw the row label (the key/field name)
+						DrawFieldLabel(f->name);
+
+						// 2. Resolve current asset ID for the button label
+						auto currentAsset = f->getter();
+						std::string displayId = currentAsset.size() > 0 ? currentAsset : "None";
+						std::string popupId = "Popup_" + f->name;
+
+						// 3. Render the Picker Button
+						// DrawFieldLabel already handled the SameLine offset and width
+						if (ImGui::Button((displayId + "##btn").c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+							ImGui::OpenPopup(popupId.c_str());
+						}
+
+						if (AssetPickerPopup(
+							f->name.c_str(),
+							[=]() {
+								return asset::all_asset_loaders[f->assettype]->FindAssetById(f->getter());
+							}, f->setter, asset::all_asset_loaders[f->assettype]->GetAllAssetIds()
+								)) {
+
+						}
+					}
+					);
 			}
 
 			if (field->fieldtype == editor::VECTOR3) {
@@ -194,7 +229,6 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 						// 4. Implement the Popup Logic
 						AssetPickerPopup(
 							popupId.c_str(),
-							f->assettype,
 							[f, key]() { return f->a_getter(key); }, // Getter for current asset
 							[f, key](std::string selectedId) {
 								// Iterate all loaders to find the pointer corresponding to the selected ID

@@ -61,7 +61,7 @@ namespace gbe {
                     const auto& filename_ext = filepath.filename().string();
                     const auto& filename_only = filepath.stem().string();
                     
-                    if (is_file_extension(filename_ext, ".obj")) {
+                    if (is_file_extension(filename_ext, ".obj") || is_file_extension(filename_ext, ".fbx")) {
                         auto newdata = asset::data::MeshImportData{
                             .path = filename_ext
                         };

@@ -2,6 +2,8 @@
 #include "Graphics/gbe_graphics.h"
 #include "Engine/gbe_engine.h"
 
+#include "../Utility/DragDrop.h"
+
 std::vector<gbe::editor::IconCommand> gbe::editor::ViewportWindow::iconQueue;
 
 gbe::editor::ViewportWindow::ViewportWindow(std::vector<gbe::Object*>& _selected) :
@@ -23,7 +25,16 @@ void gbe::editor::ViewportWindow::DrawSelf()
     }
 
     // 2. Render Background Viewport
-    ImGui::Image((ImTextureID)this->selected_data->textureHandle.idx, viewportSize, { 0, 0 }, { 1, 1 });
+
+    DraggableTarget(asset::AssetType::MESH,
+        [&](const DragData& data) {
+            auto drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById(data.id), asset::Material::GetAssetById("lit"));
+			auto newrenderer = new RenderObject(drawcall);
+            newrenderer->SetParent(Engine::GetCurrentRoot());
+        },
+        [&]() {
+            ImGui::Image((ImTextureID)this->selected_data->textureHandle.idx, viewportSize, { 0, 0 }, { 1, 1 });
+        });
 
     // 3. Execute Cached Icon Commands
     ImDrawList* drawList = ImGui::GetWindowDrawList();

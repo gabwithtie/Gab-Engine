@@ -20,7 +20,8 @@ namespace gbe {
 			FUNCTION,
 			CHOICE,
 			TEXTURE,
-			DICTIONARY
+			DICTIONARY,
+			ASSET
 		};
 
 		struct InspectorField_base {
@@ -60,6 +61,13 @@ namespace gbe {
 			asset::AssetType assettype;
 			InspectorAssetDictionary() {
 				this->fieldtype = FieldType::DICTIONARY;
+			}
+		};
+
+		struct InspectorAsset : public InspectorField<std::string> {
+			asset::AssetType assettype;
+			InspectorAsset() {
+				this->fieldtype = FieldType::ASSET;
 			}
 		};
 
