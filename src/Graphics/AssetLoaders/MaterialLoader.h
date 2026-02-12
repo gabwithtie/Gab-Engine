@@ -106,6 +106,11 @@ namespace gbe {
 			inline virtual void OnAsyncTaskCompleted(AsyncLoadTask* loadtask) override {
 				//This is a synchronous loader
 			}
+		public:
+			inline virtual void AssignSelfAsLoader() override {
+				AssetLoader::AssignSelfAsLoader();
+				asset::all_asset_loaders.insert_or_assign(asset::MATERIAL, this);
+			}
 		};
 	}
 }

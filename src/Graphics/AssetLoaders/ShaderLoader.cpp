@@ -89,4 +89,5 @@ void gbe::gfx::ShaderLoader::UnLoadAsset_(ShaderData* data)
 void gbe::gfx::ShaderLoader::AssignSelfAsLoader()
 {
     AssetLoader::AssignSelfAsLoader();
+    asset::all_asset_loaders.insert_or_assign(asset::SHADER, this);
 }

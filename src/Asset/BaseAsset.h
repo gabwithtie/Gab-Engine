@@ -6,6 +6,7 @@
 
 #include "Asset/AssetLoading/AssetLoader.h"
 #include "Asset/File/gbeParser.h"
+#include "AssetTypes/Types.h"
 
 namespace fs = std::filesystem;
 
@@ -24,6 +25,7 @@ namespace gbe {
 		namespace internal {
 			class BaseAsset_base {
 			protected:
+				AssetType assettype;
 				std::filesystem::path asset_filepath;
 				bool destroy_queued;
 				BaseImportData base_import_data;
@@ -31,6 +33,9 @@ namespace gbe {
 			public:
 				inline std::string Get_assetId() {
 					return this->base_import_data.asset_id;
+				}
+				inline AssetType Get_assettype() {
+					return this->assettype;
 				}
 				inline void SetInspectorData(editor::InspectorData* new_inspector_data) {
 					this->inspector_data = new_inspector_data;

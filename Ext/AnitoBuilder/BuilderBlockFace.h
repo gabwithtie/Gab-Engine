@@ -61,7 +61,7 @@ namespace gbe::ext::AnitoBuilder {
 		RendererSubpool type1_renderers;
 
 		std::unordered_map<RenderObject*, int> object_floors;
-		std::unordered_map<RenderObject*, int> object_rows;
+		std::unordered_map<RenderObject*, int> object_cols;
 
 		int cur_width = 0;
 		int cur_height = 0;
@@ -89,9 +89,9 @@ namespace gbe::ext::AnitoBuilder {
 			return object_floors[obj];
 		}
 
-		inline int Get_row(RenderObject* obj)
+		inline int Get_x(RenderObject* obj)
 		{
-			return object_rows[obj];
+			return object_cols[obj];
 		}
 
 		inline int Get_cur_width()

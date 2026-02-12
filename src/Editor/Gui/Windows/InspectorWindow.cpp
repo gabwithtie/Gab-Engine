@@ -131,7 +131,7 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 					[=](std::string new_asset_id) {
 						f->setter(new_asset_id);
 					},
-					TextureLoader::GetAllAssetIds()
+					asset::all_asset_loaders[asset::TEXTURE]->GetAllAssetIds()
 				);
 			}
 
@@ -164,6 +164,50 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 						}
 					}
 					ImGui::EndCombo();
+				}
+			}
+
+			if (field->fieldtype == editor::DICTIONARY) {
+				auto f = static_cast<editor::InspectorAssetDictionary*>(field);
+
+				// Create a collapsible group for the dictionary
+				if (ImGui::TreeNodeEx(f->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+					for (const auto& key : *f->fieldList) {
+						ImGui::PushID(key.c_str());
+
+						// 1. Draw the row label (the key/field name)
+						DrawFieldLabel(key);
+
+						// 2. Resolve current asset ID for the button label
+						auto currentAsset = f->a_getter(key);
+						std::string displayId = currentAsset ? currentAsset->Get_assetId() : "None";
+						std::string popupId = "Popup_" + key;
+
+						// 3. Render the Picker Button
+						// DrawFieldLabel already handled the SameLine offset and width
+						if (ImGui::Button((displayId + "##btn").c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+							ImGui::OpenPopup(popupId.c_str());
+						}
+
+						auto poollist = asset::all_asset_loaders[f->assettype]->GetAllAssetIds();
+
+						// 4. Implement the Popup Logic
+						AssetPickerPopup(
+							popupId.c_str(),
+							f->assettype,
+							[f, key]() { return f->a_getter(key); }, // Getter for current asset
+							[f, key](std::string selectedId) {
+								// Iterate all loaders to find the pointer corresponding to the selected ID
+								asset::internal::BaseAsset_base* foundAsset = asset::all_asset_loaders[f->assettype]->FindAssetById(selectedId);
+								// Update the dictionary via the provided setter
+								f->a_setter(key, foundAsset);
+							},
+							poollist // Pool of available assets to pick from
+						);
+
+						ImGui::PopID();
+					}
+					ImGui::TreePop();
 				}
 			}
 		}

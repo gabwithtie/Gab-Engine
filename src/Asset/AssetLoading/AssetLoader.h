@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <filesystem>
 
+#include "../AssetTypes/Types.h"
+
 namespace gbe {
 	namespace editor {
 		struct InspectorData;
@@ -16,6 +18,8 @@ namespace gbe {
 		}
 
 		extern editor::InspectorData* GetInspectorData(std::filesystem::path path);
+		extern gbe::asset::AssetType GetAssetType(std::filesystem::path path);
+		extern std::string GetAssetId(std::filesystem::path path);
 
 		class AssetLoader_base_base {
 		public:
@@ -24,10 +28,12 @@ namespace gbe {
 			/// </summary>
 			/// <returns>The count of remaining asynchronous load tasks.</returns>
 			int virtual CheckAsynchrounousTasks() = 0;
-			virtual internal::BaseAsset_base* GetBaseAssetData(std::filesystem::path path) = 0;
+			virtual internal::BaseAsset_base* FindAssetByPath(std::filesystem::path path) = 0;
+			virtual internal::BaseAsset_base* FindAssetById(std::string id) = 0;
+			virtual std::vector<std::string> GetAllAssetIds() = 0;
 		};
 
-		extern std::vector<AssetLoader_base_base*> all_asset_loaders;
+		extern std::unordered_map<gbe::asset::AssetType, AssetLoader_base_base*> all_asset_loaders;
 
 		template<class TAsset, class TAssetImportData>
 		class AssetLoader_base : public AssetLoader_base_base {
@@ -51,7 +57,7 @@ namespace gbe {
 
 				return nullptr;
 			}
-			static std::vector<std::string> GetAllAssetIds() {
+			virtual std::vector<std::string> GetAllAssetIds() override {
 				std::vector<std::string> ids;
 				for (const auto& pair : active_base_instance->fileasset_dictionary) {
 					ids.push_back(pair.first);
@@ -59,7 +65,7 @@ namespace gbe {
 				return ids;
 			}
 
-			internal::BaseAsset_base* GetBaseAssetData(std::filesystem::path asset_path) override {
+			internal::BaseAsset_base* FindAssetByPath(std::filesystem::path asset_path) override {
 				for (const auto& pair : active_base_instance->fileasset_dictionary)
 				{
 					internal::BaseAsset_base* baseasset = dynamic_cast<internal::BaseAsset_base*>(pair.second);
@@ -72,6 +78,19 @@ namespace gbe {
 				}
 
 				return nullptr;
+			}
+
+			internal::BaseAsset_base* FindAssetById(std::string id) override {
+				auto find_it = active_base_instance->fileasset_dictionary.find(id);
+
+				if (find_it == active_base_instance->fileasset_dictionary.end())
+					return nullptr;
+
+				auto entry = dynamic_cast<internal::BaseAsset_base*>(find_it->second);;
+				if (entry == nullptr)
+					return nullptr;
+
+				return entry;
 			}
 		};
 
@@ -129,8 +148,6 @@ namespace gbe {
 			}
 
 			virtual void AssignSelfAsLoader() {
-				all_asset_loaders.push_back(static_cast<AssetLoader_base_base*>(this));
-
 				this->active_base_instance = this;
 				this->active_instance = this;
 

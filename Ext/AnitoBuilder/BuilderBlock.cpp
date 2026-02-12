@@ -22,39 +22,14 @@ namespace gbe::ext::AnitoBuilder {
 		ceiling_parent->Local().position.Set(Vector3(0, this->height, 0));
 
 		//MATERIAL SETUP
-		auto def_material = asset::Material::GetAssetById("plaster");
+		def_material = asset::Material::GetAssetById("plaster");
 
 		//Editor
 		ceiling_editor_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), asset::Material::GetAssetById("grid"));
 
 		//Main - normal
-		ceiling_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), def_material);
-		top_roof_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("axisroof"), def_material);
-
-		ledge_dc = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof_1"), def_material);
-		wallnorm_DC[0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wallnorm1"), def_material);
-		wallnorm_DC[1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wallnorm2"), def_material);
-		wall3x4_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-1"), def_material);
-		wall3x4_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-2"), def_material);
-		wall3x4_DC[0][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-3"), def_material);
-		wall3x4_DC[1][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-1"), def_material);
-		wall3x4_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-2"), def_material);
-		wall3x4_DC[1][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-3"), def_material);
-		wall3x4_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-1"), def_material);
-		wall3x4_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-2"), def_material);
-		wall3x4_DC[2][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-3"), def_material);
-		wall3x4_DC[3][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-1"), def_material);
-		wall3x4_DC[3][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-2"), def_material);
-		wall3x4_DC[3][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-3"), def_material);
-		wall2x3_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_1-1"), def_material);
-		wall2x3_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_1-2"), def_material);
-		wall2x3_DC[1][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-1"), def_material);
-		wall2x3_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-2"), def_material);
-		wall2x3_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-1"), def_material);
-		wall2x3_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-2"), def_material);
-		windowwall_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("windowwall_1-1"), def_material);
-		windowwall_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("windowwall_1-2"), def_material);
-
+		drawcall_dict.insert_or_assign("horizontal_axis_triangle", &ceiling_DC);
+		drawcall_dict.insert_or_assign("axisroof", &top_roof_DC);
 		drawcall_dict.insert_or_assign("roof_1", &ledge_dc);
 		drawcall_dict.insert_or_assign("wallnorm1", &wallnorm_DC[0]);
 		drawcall_dict.insert_or_assign("wallnorm2", &wallnorm_DC[1]);
@@ -79,29 +54,11 @@ namespace gbe::ext::AnitoBuilder {
 		drawcall_dict.insert_or_assign("windowwall_1-1", &windowwall_DC[0][0]);
 		drawcall_dict.insert_or_assign("windowwall_1-2", &windowwall_DC[0][1]);
 
-		drawcall_list.push_back("roof_1");
-		drawcall_list.push_back("wallnorm1");
-		drawcall_list.push_back("wallnorm2");
-		drawcall_list.push_back("3x4wall_1-1");
-		drawcall_list.push_back("3x4wall_1-2");
-		drawcall_list.push_back("3x4wall_1-3");
-		drawcall_list.push_back("3x4wall_2-1");
-		drawcall_list.push_back("3x4wall_2-2");
-		drawcall_list.push_back("3x4wall_2-3");
-		drawcall_list.push_back("3x4wall_3-1");
-		drawcall_list.push_back("3x4wall_3-2");
-		drawcall_list.push_back("3x4wall_3-3");
-		drawcall_list.push_back("3x4wall_4-1");
-		drawcall_list.push_back("3x4wall_4-2");
-		drawcall_list.push_back("3x4wall_4-3");
-		drawcall_list.push_back("2x3wall_1-1");
-		drawcall_list.push_back("2x3wall_1-2");
-		drawcall_list.push_back("2x3wall_2-1");
-		drawcall_list.push_back("2x3wall_2-2");
-		drawcall_list.push_back("2x3wall_3-1");
-		drawcall_list.push_back("2x3wall_3-2");
-		drawcall_list.push_back("windowwall_1-1");
-		drawcall_list.push_back("windowwall_1-2");
+		for (const auto& pair : drawcall_dict)
+		{
+			*pair.second = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById(pair.first), def_material);
+			drawcall_list.push_back(pair.first);
+		}
 	}
 
 	BuilderBlock::BuilderBlock(gbe::Vector3 corners[4], float height)
@@ -139,17 +96,7 @@ namespace gbe::ext::AnitoBuilder {
 
 		this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
 
-		for (const auto& drawcall_id : this->drawcall_list)
-		{
-			asset::Material* mat = nullptr;
-
-			if (this->data.material_overrides.find(drawcall_id) == this->data.material_overrides.end())
-				continue;
-			else
-				mat = asset::Material::GetAssetById(this->data.material_overrides[drawcall_id]);
-
-			*drawcall_dict[drawcall_id] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById(drawcall_id), mat);
-		}
+		UpdateMaterials();
 
 		//INSPECTOR
 		{
@@ -191,6 +138,7 @@ namespace gbe::ext::AnitoBuilder {
 		{
 			auto field = new gbe::editor::InspectorAssetDictionary();
 			field->name = "Materials";
+			field->assettype = asset::MATERIAL;
 			field->fieldList = &this->drawcall_list;
 			field->a_getter = [=](std::string key) -> asset::internal::BaseAsset_base* {
 				if (this->data.material_overrides.find(key) == this->data.material_overrides.end())
@@ -269,6 +217,8 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::UpdateModelShown()
 	{
+		UpdateMaterials();
+
 		//set editor handle visibility
 		for (const auto& handle : this->handle_pool)
 		{
@@ -418,19 +368,14 @@ namespace gbe::ext::AnitoBuilder {
 
 				auto handle_data = GetSeg(handle);
 
-				bool odd = handle->Get_cur_width() % 2 == 1;
-				bool can_put_facade = handle->Get_cur_height() >= 3 && handle->Get_cur_width() >= 5 && odd;
+				bool can_put_facade = handle->Get_cur_height() >= 3 && handle->Get_cur_width() >= 5;
 
 				const auto get_center_x = [=](RenderObject* obj) {
-					int row_index = handle->Get_row(obj);
+					int row_index = handle->Get_x(obj);
 
 					int center_based_x = 0;
 
-					if (handle->Get_cur_width() % 2 == 1)
-						center_based_x = -(row_index - (handle->Get_cur_width() / 2));
-					else {
-						center_based_x = -(row_index - (handle->Get_cur_width() / 2));
-					}
+					center_based_x = -(row_index - (handle->Get_cur_width() / 2));
 
 					return -center_based_x;
 					};
@@ -464,44 +409,52 @@ namespace gbe::ext::AnitoBuilder {
 						return newrenderer;
 						};
 
-					int row_index = handle->Get_row(obj);
+					int x = handle->Get_x(obj);
 					int center_based_x = get_center_x(obj);
 
 					process_renderobject([&]()
 						{
 							if (handle_data != nullptr) {
-								if (handle_data->center_facade_type > 0) {
-									if (can_put_facade) {
-										int choice_x = center_based_x + 1;
-										if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
-											if (handle_data->center_facade_type == 2) {
-												if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
-												else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
-											}
-											return new RenderObject(wall3x4_DC[floor_index][choice_x]);
-										}
-										if (choice_x == -1 || choice_x == 3) {
+								//Facade
+								if (handle_data->decoration_type > 0 && handle_data->decoration_type <= 2 && can_put_facade) {
+									int choice_x = center_based_x + 1;
+									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
+										if (handle_data->decoration_type == 2) {
 											if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
 											else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
 										}
+										return new RenderObject(wall3x4_DC[floor_index][choice_x]);
 									}
-									if (handle_data->edge_designs_interval > 0)
-										if (handle->Get_cur_height() >= 3) {
-											int choice_x = -1;
-											int interval_x = abs(center_based_x) % 4;
-											if (center_based_x > 0) {
-												if (interval_x == 1) choice_x = 0;
-												if (interval_x == 2) choice_x = 1;
-											}
-											else {
-												if (interval_x == 1) choice_x = 1;
-												if (interval_x == 2) choice_x = 0;
-											}
-											if (interval_x == 1 && abs(center_based_x) + 2 > (handle->Get_cur_width() / 2)) choice_x = -1;
-											if (interval_x == 2 && abs(center_based_x) + 1 > (handle->Get_cur_width() / 2)) choice_x = -1;
-											if (choice_x >= 0 && floor_index < 3) return new RenderObject(wall2x3_DC[floor_index][choice_x]);
-										}
+									if (choice_x == -1 || choice_x == 3) {
+										if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
+										else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
+									}
 								}
+								//Pillars
+								if (handle_data->decoration_type == 3 && handle_data->edge_designs_interval >= 0)
+									if (handle->Get_cur_height() >= 3) {
+										int choice_x = -1;
+										int interval_x = (x + handle_data->edge_designs_offset) % (handle_data->edge_designs_interval + wall2x3_DC[0].size());
+										
+										choice_x = interval_x;
+										if (choice_x >= wall2x3_DC[0].size())
+											choice_x = -1;
+										
+										if (interval_x == 0 && x + 2 >= handle->Get_cur_width()) choice_x = -1;
+										if (interval_x == 1 && x + 1 >= handle->Get_cur_width()) choice_x = -1;
+										if (interval_x == 1 && x - 1 < 0) choice_x = -1;
+
+										if (choice_x >= 0)
+										{
+											if (floor_index == 0)
+												return new RenderObject(wall2x3_DC[0][choice_x]);
+											else if (floor_index == handle->Get_cur_height() - 1)
+												return new RenderObject(wall2x3_DC[2][choice_x]);
+											else
+												return new RenderObject(wall2x3_DC[1][choice_x]);
+
+										}
+									}
 								if (floor_index == 0) return new RenderObject(wallnorm_DC[0]);
 								if (floor_index > 0)
 								{
@@ -522,13 +475,13 @@ namespace gbe::ext::AnitoBuilder {
 					if (handle_data != nullptr) {
 						process_renderobject([&]()
 							{
-								if (handle_data->center_facade_type > 0) {
+								if (handle_data->decoration_type == 1 || handle_data->decoration_type == 2) {
 									if (can_put_facade && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
 									{
 										int choice_x = center_based_x + 1;
 
 										if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
-											if (handle_data->center_facade_type == 2)
+											if (handle_data->decoration_type == 2)
 												return new RenderObject(windowwall_DC[0][1]);
 											else
 												return new RenderObject(wall3x4_DC[3][choice_x]);
@@ -576,6 +529,21 @@ namespace gbe::ext::AnitoBuilder {
 
 		l = handle->Local().position.Get() + delta_right;
 		r = handle->Local().position.Get() - delta_right;
+	}
+
+	void BuilderBlock::UpdateMaterials()
+	{
+		for (const auto& drawcall_id : this->drawcall_list)
+		{
+			asset::Material* mat = nullptr;
+
+			if (this->data.material_overrides.find(drawcall_id) == this->data.material_overrides.end())
+				mat = def_material;
+			else
+				mat = asset::Material::GetAssetById(this->data.material_overrides[drawcall_id]);
+
+			*drawcall_dict[drawcall_id] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById(drawcall_id), mat);
+		}
 	}
 
 	void BuilderBlock::Refresh()

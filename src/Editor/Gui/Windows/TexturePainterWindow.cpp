@@ -91,7 +91,7 @@ void gbe::editor::TexturePainterWindow::DrawSelf()
     const auto getter = []() { return TexturePainter::GetTargetTexture(); };
     const auto setter = [](std::string id) { TexturePainter::SetTargetTexture(TextureLoader::GetAssetById(id)); };
 
-    TextureAssetPicker("TexturePicker", { 100, 100 }, getter, setter, TextureLoader::GetAllAssetIds());
+    TextureAssetPicker("TexturePicker", { 100, 100 }, getter, setter, asset::all_asset_loaders[asset::TEXTURE]->GetAllAssetIds());
 
     if (ImGui::Button("Re-save")) {
         TexturePainter::ApplyAndSave();

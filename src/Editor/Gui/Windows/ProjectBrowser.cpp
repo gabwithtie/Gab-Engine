@@ -1,6 +1,11 @@
 #include "ProjectBrowser.h"
 #include <iostream>
 
+#include "../Utility/DragDrop.h"
+
+#include "Asset/AssetLoading/AssetLoader.h"
+#include "Graphics/AssetLoaders/TextureLoader.h"
+
 namespace gbe {
     namespace editor {
 
@@ -70,17 +75,50 @@ namespace gbe {
             try {
                 for (auto const& entry : std::filesystem::directory_iterator(current_path)) {
                     const auto& path = entry.path();
+                    bool is_dir = entry.is_directory();
+
                     std::string filename = path.filename().string();
+                    auto assettype = asset::GetAssetType(path);
+                    
+                    if (assettype == asset::AssetType::NONE && !is_dir)
+                        continue;
+
+                    auto assetid = asset::GetAssetId(path);
 
                     if (strlen(search_filter) > 0 && filename.find(search_filter) == std::string::npos)
                         continue;
 
                     ImGui::PushID(filename.c_str());
-                    bool is_dir = entry.is_directory();
 
                     // --- 1. Icon Button ---
-                    if (is_dir) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.45f, 0.7f, 1.0f));
-                    ImGui::Button("##item", ImVec2(thumbnail_size, thumbnail_size));
+                    const auto ui_func = [=] {
+                        gfx::TextureData* texdata = nullptr;
+
+                        if (assettype == asset::TEXTURE) {
+                            texdata = gfx::TextureLoader::GetAssetRuntimeData(assetid);
+                        }
+                        else if (assettype == asset::MESH) {
+                            texdata = gfx::TextureLoader::GetAssetRuntimeData("mesh");
+                        }
+                        else if(is_dir){
+                            texdata = gfx::TextureLoader::GetAssetRuntimeData("folder");
+                        }
+
+                        auto size = ImVec2(thumbnail_size, thumbnail_size);
+                        if (texdata == nullptr)
+                            ImGui::Button("##item", size);
+                        else
+                            ImGui::ImageButton("##item", texdata->textureHandle.idx, size, ImVec2(0, 0), ImVec2(1, 1));
+                        };
+
+                    if (is_dir)
+                    {
+                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.45f, 0.7f, 1.0f));
+                        ui_func();
+                    }
+                    else
+                        DraggableSource(assettype, { .datatype = assettype, .id = assetid }, ui_func);
+                    
 
                     // Single Click / Select Callback
                     if (ImGui::IsItemClicked(0) && on_select_callback) {

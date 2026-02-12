@@ -149,6 +149,7 @@ void gbe::gfx::TextureLoader::UnLoadAsset_(TextureData* data)
 void gbe::gfx::TextureLoader::AssignSelfAsLoader()
 {
     AssetLoader::AssignSelfAsLoader();
+    asset::all_asset_loaders.insert_or_assign(asset::TEXTURE, this);
 
     // Default 1x1 White Pixel
     const uint32_t width = 1;

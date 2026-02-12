@@ -132,7 +132,7 @@ namespace gbe {
 						.textureHandle = bgfx::createTexture2D(resolution.x, resolution.y, false, 1, tformat, BGFX_TEXTURE_RT)
 					};
 					m_pp_textures.insert_or_assign(viewid, newtexdata);
-					auto newfb = bgfx::createFrameBuffer(1, &newtexdata.textureHandle, false);
+					auto newfb = bgfx::createFrameBuffer(1, &newtexdata.textureHandle, true);
 					m_ppFBs.push_back(newfb);
 					bgfx::setViewFrameBuffer(viewid, newfb);
 					bgfx::setViewRect(viewid, 0, 0, resolution.x, resolution.y);

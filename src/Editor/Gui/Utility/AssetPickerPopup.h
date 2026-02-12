@@ -7,12 +7,14 @@
 #include <algorithm>
 #include <functional>
 #include "Asset/gbe_asset.h"
+#include "DragDrop.h"
 
 namespace gbe::editor {
 
     inline bool AssetPickerPopup(
         const char* popupName,
-        std::function<asset::internal::BaseAsset_base*()> getter,
+        asset::AssetType assettype,
+        std::function<asset::internal::BaseAsset_base* ()> getter,
         std::function<void(std::string)> setter,
         const std::vector<std::string>& assetList) {
         bool selected = false;
@@ -44,8 +46,8 @@ namespace gbe::editor {
 
                     if (filter.empty() || assetLower.find(filter) != std::string::npos) {
                         bool selected_cur = false;
-                        if(cur_asset != nullptr)
-							selected_cur = cur_asset->Get_assetId() == asset;
+                        if (cur_asset != nullptr)
+                            selected_cur = cur_asset->Get_assetId() == asset;
 
                         if (ImGui::Selectable(asset.c_str(), selected_cur)) {
                             setter(asset);
@@ -75,47 +77,65 @@ namespace gbe::editor {
         std::function<void(std::string)> setter,
         const std::vector<std::string>& assetList)
     {
-        std::string popupId = std::string("Popup_") + label;
+        bool selected_new = false;
 
-        ImGui::BeginGroup();
-        ImGui::Text("%s", label);
+        DraggableTarget(asset::AssetType::TEXTURE,
+            [&](const DragData& data) {setter(data.id); },
+            [&]() {
+                std::string popupId = std::string("Popup_") + label;
+                ImGui::BeginGroup();
 
-        auto currentAsset = getter();
+                ImGui::Text("%s", label);
 
-        // Default values for the "Empty" state
-        bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
-        std::string displayId = "empty";
+                auto currentAsset = getter();
 
-        // 1. Null Check & Data Extraction
-        if (currentAsset != nullptr) {
-            displayId = currentAsset->Get_assetId();
-            auto assetData = TextureLoader::GetAssetRuntimeData(displayId);
-            if (assetData) {
-                handle = assetData->textureHandle;
-            }
-        }
+                // Default values for the "Empty" state
+                bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+                std::string displayId = "empty";
 
-        // 2. Prepare Texture ID for ImGui
-        ImTextureID texId = (ImTextureID)(uintptr_t)handle.idx;
+                // 1. Null Check & Data Extraction
+                if (currentAsset != nullptr) {
+                    displayId = currentAsset->Get_assetId();
+                    auto assetData = TextureLoader::GetAssetRuntimeData(displayId);
+                    if (assetData) {
+                        handle = assetData->textureHandle;
+                    }
+                }
 
-        // 3. Draw the Image Button
-        // We use the label as the ID for the button to ensure unique interaction
-        if (ImGui::ImageButton(label, texId, size, ImVec2(0, 0), ImVec2(1, 1))) {
-            ImGui::OpenPopup(popupId.c_str());
-        }
+                // 2. Prepare Texture ID for ImGui
+                ImTextureID texId = (ImTextureID)(uintptr_t)handle.idx;
 
-        // 4. Display text (shows "ID: empty" if null)
-        ImGui::TextWrapped("ID: %s", displayId.c_str());
+                
 
-        // 5. Integrate Popup logic
-        // We capture 'currentAsset' - if it's null, the lambda returns nullptr safely
-        const auto base_getter = [currentAsset]() -> asset::internal::BaseAsset_base* {
-            return static_cast<asset::internal::BaseAsset_base*>(currentAsset);
-            };
+                // 5. Integrate Popup logic
+                // We capture 'currentAsset' - if it's null, the lambda returns nullptr safely
+                const auto base_getter = [currentAsset]() -> asset::internal::BaseAsset_base* {
+                    return static_cast<asset::internal::BaseAsset_base*>(currentAsset);
+                    };
 
-        bool selected_new = AssetPickerPopup(popupId.c_str(), base_getter, setter, assetList);
+                // 3. Draw the Image Button
+                // We use the label as the ID for the button to ensure unique interaction
+                const auto& openfunc = [&]() {
+                    return ImGui::OpenPopup(popupId.c_str());
+                    };
 
-        ImGui::EndGroup();
+
+                if (currentAsset != nullptr) {
+                    if (ImGui::ImageButton(label, texId, size, ImVec2(0, 0), ImVec2(1, 1)))
+                        openfunc();
+                }
+                else
+                    if (ImGui::Button(label, size))
+                        openfunc();
+                    
+
+                // 4. Display text (shows "ID: empty" if null)
+                ImGui::TextWrapped("ID: %s", displayId.c_str());
+
+                AssetPickerPopup(popupId.c_str(), asset::TEXTURE, base_getter, setter, assetList);
+
+                ImGui::EndGroup();
+            });
 
         return selected_new;
     }

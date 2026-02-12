@@ -5,5 +5,6 @@ namespace gbe {
 
 	Material::Material(std::filesystem::path path) : BaseAsset(path)
 	{
+		this->assettype = AssetType::MATERIAL;
 	}
 }

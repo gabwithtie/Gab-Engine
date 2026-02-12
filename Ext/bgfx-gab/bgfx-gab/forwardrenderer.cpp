@@ -5,6 +5,13 @@
 #include <random> // Added for SSAO kernel generation
 #include "Math/gbe_math.h"
 
+const auto DestroyTextureData = [](gbe::gfx::TextureData& _data) {
+	if (bgfx::isValid(_data.textureHandle)) {
+		bgfx::destroy(_data.textureHandle);
+		_data.textureHandle = BGFX_INVALID_HANDLE;
+	}
+	};
+
 gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& passinfo) {
 	m_line_vbh = bgfx::createDynamicVertexBuffer(passinfo.max_lines, s_VERTEXLAYOUT, BGFX_BUFFER_NONE);
 
@@ -101,13 +108,6 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
 
 void gbe::gfx::bgfx_gab::ForwardRenderer::CleanUp()
 {
-	const auto DestroyTextureData = [](gbe::gfx::TextureData& _data) {
-		if (bgfx::isValid(_data.textureHandle)) {
-			bgfx::destroy(_data.textureHandle);
-			_data.textureHandle = BGFX_INVALID_HANDLE;
-		}
-		};
-
 	// 1. Destroy Post-Processing Framebuffers and Textures
 	for (auto fb : m_ppFBs) {
 		if (bgfx::isValid(fb)) bgfx::destroy(fb);
@@ -120,7 +120,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::CleanUp()
 	m_pp_textures.clear();
 
 	// 2. Destroy G-Buffers
-	auto destroyGBuffer = [DestroyTextureData](GBuffer& _gb) {
+	auto destroyGBuffer = [](GBuffer& _gb) {
 		if (bgfx::isValid(_gb.m_gbufferFB)) bgfx::destroy(_gb.m_gbufferFB);
 		DestroyTextureData(_gb.m_gbufferNormal);
 		DestroyTextureData(_gb.m_gbufferDepth);
@@ -133,7 +133,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::CleanUp()
 	DestroyTextureData(m_ssaoTexture);
 
 	// 4. Destroy Color/Depth Buffers
-	auto destroyCDBuffer = [DestroyTextureData](ColorDepthBuffer& _cdb) {
+	auto destroyCDBuffer = [](ColorDepthBuffer& _cdb) {
 		if (bgfx::isValid(_cdb.m_mainPassFBO)) bgfx::destroy(_cdb.m_mainPassFBO);
 		DestroyTextureData(_cdb.m_mainColorTexture);
 		DestroyTextureData(_cdb.m_mainDepthTexture);
@@ -546,6 +546,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		if (cpu_req.passed && !cpu_req.received && passinfo.frame_id == cpu_req.frame_done)
 		{
 			cpu_req.request.callback(cpu_req);
+			DestroyTextureData(cpu_req.render_target);
 			cpu_req.received = true;
 		}
 	}

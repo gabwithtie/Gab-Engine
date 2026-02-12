@@ -125,8 +125,10 @@ namespace gbe {
                 {
                     batchload_done = true;
 
-                    for (const auto& loader : gbe::asset::all_asset_loaders)
+                    for (const auto& lpair : gbe::asset::all_asset_loaders)
                     {
+                        const auto& loader = lpair.second;
+
                         if (loader->CheckAsynchrounousTasks() > 0) {
                             batchload_done = false;
                         }

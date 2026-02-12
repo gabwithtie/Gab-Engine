@@ -57,7 +57,7 @@ namespace gbe {
 			std::function<asset::internal::BaseAsset_base*(std::string)> a_getter;
 			std::function<void(std::string, asset::internal::BaseAsset_base*)> a_setter;
 			std::vector<std::string> *fieldList;
-			std::vector<std::string> *assetList;
+			asset::AssetType assettype;
 			InspectorAssetDictionary() {
 				this->fieldtype = FieldType::DICTIONARY;
 			}

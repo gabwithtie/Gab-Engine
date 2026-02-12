@@ -13,7 +13,7 @@ namespace gbe::ext::AnitoBuilder {
 		this->SetName("Anito Builder Block Set");
 
 		{
-			static std::vector<std::string> labels = { "none", "front", "back" };
+			static std::vector<std::string> labels = { "none", "front", "back", "pillars"};
 
 			auto field = new gbe::editor::InspectorChoice();
 			field->labels = &labels;
@@ -21,18 +21,58 @@ namespace gbe::ext::AnitoBuilder {
 				auto segdata = this->root_block->GetSeg(this);
 
 				if (segdata != nullptr)
-					return segdata->center_facade_type;
+					return segdata->decoration_type;
 
 				return 0;
 				};
 			field->setter = [=](int val) {
 				auto segdata = this->root_block->GetSeg(this);
 				if (segdata != nullptr)
-					segdata->center_facade_type = val;
+					segdata->decoration_type = val;
 
 				this->root_block->Refresh();
 				};
-			field->name = "center_facade_type";
+			field->name = "decoration_type";
+
+			this->inspectorData->fields.push_back(field);
+		}
+		{
+			auto field = new gbe::editor::InspectorFloat();
+			field->getter = [=]() {
+				auto segdata = this->root_block->GetSeg(this);
+
+				if (segdata != nullptr)
+					return segdata->edge_designs_interval;
+
+				return 0;
+				};
+			field->setter = [=](float val) {
+				auto segdata = this->root_block->GetSeg(this);
+				if (segdata != nullptr)
+					segdata->edge_designs_interval = val;
+				this->root_block->Refresh();
+				};
+			field->name = "edge_designs_interval";
+
+			this->inspectorData->fields.push_back(field);
+		}
+		{
+			auto field = new gbe::editor::InspectorFloat();
+			field->getter = [=]() {
+				auto segdata = this->root_block->GetSeg(this);
+
+				if (segdata != nullptr)
+					return segdata->edge_designs_offset;
+
+				return 0;
+				};
+			field->setter = [=](float val) {
+				auto segdata = this->root_block->GetSeg(this);
+				if (segdata != nullptr)
+					segdata->edge_designs_offset = val;
+				this->root_block->Refresh();
+				};
+			field->name = "edge_designs_offset";
 
 			this->inspectorData->fields.push_back(field);
 		}
@@ -127,7 +167,7 @@ namespace gbe::ext::AnitoBuilder {
 			// Cache indices for the facade/special wall logic
 			this->renderObjects[i] = renderertomove;
 			object_floors[renderertomove] = y;
-			object_rows[renderertomove] = x;
+			object_cols[renderertomove] = x;
 		}
 
 		this->cur_width = walls_needed;

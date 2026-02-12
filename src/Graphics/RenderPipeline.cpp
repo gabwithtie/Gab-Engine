@@ -69,7 +69,6 @@ gbe::RenderPipeline::RenderPipeline(gbe::Window& window, Vector2Int dimensions) 
 	bgfx::setViewClear(
 		0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
 	bgfx::setViewRect(0, 0, 0, dimensions.x, dimensions.y);
-	bgfx::setDebug(BGFX_DEBUG_TEXT);
 
 	// Asset Loaders (no change, but their implementation now uses bgfx handles)
 	this->shaderloader.AssignSelfAsLoader();

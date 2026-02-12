@@ -14,8 +14,9 @@ namespace gbe::ext::AnitoBuilder {
 		PosPair seg;
 		int handleindex;
 
-		int center_facade_type = 0;
+		int decoration_type = 0;
 		int edge_designs_interval = 0;
+		int edge_designs_offset = 0;
 	};
 
 	struct BlockSet {
@@ -65,6 +66,8 @@ namespace gbe::ext::AnitoBuilder {
 		float wall_import_width = 1.2f;
 
 		//Drawcalls
+		asset::Material* def_material = nullptr;
+
 		gfx::DrawCall* ceiling_editor_DC;
 		std::array<gfx::DrawCall*, 2> wallnorm_DC;
 		std::array<gfx::DrawCall*, 2> wallnorm_DC_corner;
@@ -90,6 +93,7 @@ namespace gbe::ext::AnitoBuilder {
 			model_shown = value;
 			UpdateModelShown();
 		}
+		void UpdateMaterials();
 		void Refresh();
 	protected:
 		void GeneralInit() override;

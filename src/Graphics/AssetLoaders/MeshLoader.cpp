@@ -99,6 +99,9 @@ bgfx::VertexLayout gbe::gfx::s_VERTEXLAYOUT;
 void gbe::gfx::MeshLoader::AssignSelfAsLoader()
 {
     AssetLoader::AssignSelfAsLoader();
+
+    asset::all_asset_loaders.insert_or_assign(asset::MESH, this);
+
     bgfx::VertexLayout newlayout;
     newlayout.begin()
         .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
