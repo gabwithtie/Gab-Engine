@@ -121,12 +121,11 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 						}
 
 						if (AssetPickerPopup(
-							f->name.c_str(),
+							popupId.c_str(),
 							[=]() {
 								return asset::all_asset_loaders[f->assettype]->FindAssetById(f->getter());
 							}, f->setter, asset::all_asset_loaders[f->assettype]->GetAllAssetIds()
 								)) {
-
 						}
 					}
 					);

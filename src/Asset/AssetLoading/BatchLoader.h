@@ -69,7 +69,7 @@ namespace gbe {
 
                         asset::serialization::gbeParser::ExportClass(newdata, directory / meta_filename);
                     }
-                    if (is_file_extension(filename_ext, ".png")) {
+                    if (is_file_extension(filename_ext, ".png") || is_file_extension(filename_ext, ".jpg")) {
                         auto newdata = asset::data::TextureImportData{
                             .path = filename_ext
                         };

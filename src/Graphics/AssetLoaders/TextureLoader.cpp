@@ -61,60 +61,75 @@ void gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* target, const asse
     if (importdata.path.size() == 0) return;
 
     const auto& pathstr = target->Get_asset_filepath().parent_path() / importdata.path;
-    // Load with Count to get the native format first
     bimg::ImageContainer* imageContainer = imageLoad(pathstr.string().c_str(), bgfx::TextureFormat::Count);
 
     if (imageContainer == nullptr) {
         throw std::runtime_error("Failed to decode texture: " + pathstr.string());
     }
 
-    // Prepare metadata
     uint32_t width = imageContainer->m_width;
     uint32_t height = imageContainer->m_height;
     loaddata->dimensions = Vector2Int(width, height);
 
-    bgfx::TextureFormat::Enum targetFormat = (bgfx::TextureFormat::Enum)imageContainer->m_format;
+    bgfx::TextureFormat::Enum nativeFormat = (bgfx::TextureFormat::Enum)imageContainer->m_format;
+    bgfx::TextureFormat::Enum targetFormat = bgfx::TextureFormat::RGBA8;
+
     std::vector<uint8_t> finalData;
+    uint32_t expectedSize = width * height * 4; // 4 bytes per pixel for RGBA8
+    finalData.resize(expectedSize);
 
-    // Handle RGBA16 specifically
-    if (targetFormat == bgfx::TextureFormat::RGBA16) {
-        targetFormat = bgfx::TextureFormat::RGBA8; // Force downsample target
-
-        // Size = Width * Height * 4 channels * 1 byte per channel
-        uint32_t targetSize = width * height * 4;
-        finalData.resize(targetSize);
-
+    if (nativeFormat == bgfx::TextureFormat::RGBA16) {
         const uint16_t* src16 = reinterpret_cast<const uint16_t*>(imageContainer->m_data);
         uint8_t* dst8 = finalData.data();
-
-        // Mapping 16-bit to 8-bit
         for (size_t i = 0; i < (size_t)width * height * 4; ++i) {
-            // Shifting 8 bits right effectively takes the most significant byte
             dst8[i] = static_cast<uint8_t>(src16[i] >> 8);
         }
     }
-    else {
-        // For other formats, use your signature of imageGetSize
-        // We pass a dummy TextureInfo if the function requires it for internal math
-        bimg::TextureInfo dummyInfo;
-        uint32_t size = bimg::imageGetSize(
-            &dummyInfo,
-            (uint16_t)width,
-            (uint16_t)height,
-            1,      // depth
-            false,  // cubeMap
-            false,  // hasMips
-            1,      // numLayers
-            (bimg::TextureFormat::Enum)targetFormat
-        );
-
-        finalData.assign((uint8_t*)imageContainer->m_data, (uint8_t*)imageContainer->m_data + size);
+    else if (nativeFormat == bgfx::TextureFormat::RGB8) {
+        const uint8_t* srcRGB = reinterpret_cast<const uint8_t*>(imageContainer->m_data);
+        uint8_t* dstRGBA = finalData.data();
+        for (size_t i = 0; i < (size_t)width * height; ++i) {
+            dstRGBA[i * 4 + 0] = srcRGB[i * 3 + 0];
+            dstRGBA[i * 4 + 1] = srcRGB[i * 3 + 1];
+            dstRGBA[i * 4 + 2] = srcRGB[i * 3 + 2];
+            dstRGBA[i * 4 + 3] = 255;
+        }
     }
-    // --- DOWNSAMPLE LOGIC END ---
+    else if (nativeFormat == bgfx::TextureFormat::RGBA8) {
+        memcpy(finalData.data(), imageContainer->m_data, expectedSize);
+    }
+    else {
+        // --- USING YOUR SPECIFIC imageConvert SIGNATURE ---
+
+        // 1. Get the unpack function for the source (native) format
+        bimg::UnpackFn unpack = bimg::getUnpack((bimg::TextureFormat::Enum)nativeFormat);
+
+        // 2. Get the pack function for our target (RGBA8)
+        bimg::PackFn pack = bimg::getPack(bimg::TextureFormat::RGBA8);
+
+        if (unpack && pack) {
+            // _bpp is 32 (bits per pixel) for RGBA8
+            // _size is usually the pixel count (width * height) for this signature
+            bimg::imageConvert(
+                finalData.data(),           // _dst
+                32,                         // _bpp
+                pack,                       // _pack
+                imageContainer->m_data,     // _src
+                unpack,                     // _unpack
+                width * height              // _size (pixel count)
+            );
+        }
+        else {
+            // Fallback or Error if format is unsupported by bimg's internal table
+            bimg::imageFree(imageContainer);
+            throw std::runtime_error("Unsupported texture format for conversion.");
+        }
+    }
+
+    // --- GPU RESOURCE CREATION ---
 
     uint64_t flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_TEXTURE_BLIT_DST;
 
-    // Create handle using the TARGET format (RGBA8)
     bgfx::TextureHandle textureHandle = bgfx::createTexture2D(
         (uint16_t)width, (uint16_t)height, false, 1,
         targetFormat, flags, nullptr
@@ -125,16 +140,15 @@ void gbe::gfx::TextureLoader::LoadAsset_(gbe::asset::Texture* target, const asse
         throw std::runtime_error("bgfx failed to create texture.");
     }
 
-    // Upload the processed data
     bgfx::updateTexture2D(
         textureHandle, 0, 0, 0, 0, (uint16_t)width, (uint16_t)height,
-        bgfx::copy(finalData.data(), finalData.size())
+        bgfx::copy(finalData.data(), expectedSize)
     );
 
     loaddata->textureHandle = textureHandle;
     loaddata->format = targetFormat;
-    loaddata->data = std::move(finalData); // Store the processed 8-bit data
-    loaddata->bitsPerPixel = 32; // RGBA8 is always 32
+    loaddata->data = std::move(finalData);
+    loaddata->bitsPerPixel = 32;
 
     bimg::imageFree(imageContainer);
 }
