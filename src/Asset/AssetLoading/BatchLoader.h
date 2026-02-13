@@ -67,7 +67,18 @@ namespace gbe {
                     if (is_file_extension(filename_ext, ".img.gbe")) {
                         std::filesystem::remove_all(filepath);
                     }
+                }
 
+                filepaths.clear();
+                get_all_filepaths(directory, filepaths);
+
+                for (size_t i = 0; i < filepaths.size(); i++)
+                {
+                    const auto& filepath = filepaths[i];
+                    const auto& directory = filepath.parent_path();
+                    const auto& filename_ext = filepath.filename().string();
+                    const auto& filename_only = filepath.stem().string();
+                    
                     if (is_file_extension(filename_ext, ".obj") || is_file_extension(filename_ext, ".fbx")) {
                         auto newdata = asset::data::MeshImportData{
                             .path = filename_ext

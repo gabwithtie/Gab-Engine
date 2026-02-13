@@ -159,7 +159,6 @@ namespace gbe {
 	void Engine::Run()
 	{
 #pragma region Asset Loading
-		asset::BatchLoader::GenerateMetafiles("DefaultAssets");
 		asset::BatchLoader::ReloadDirectory("DefaultAssets");
 
 		//Init all that needs assets here

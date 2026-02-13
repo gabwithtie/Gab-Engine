@@ -73,38 +73,40 @@ namespace gbe {
             static bool set_focus_next_frame = false;
 
             try {
-                for (auto const& entry : std::filesystem::directory_iterator(current_path)) {
-                    const auto& metapath = entry.path();
-                    const auto& actualpath = metapath;
+                for (auto& entry : std::filesystem::directory_iterator(current_path)) {
+                    auto& metapath = entry.path();
+                    std::filesystem::path actualpath = metapath;
                     bool is_dir = entry.is_directory();
+					std::filesystem::path parentpath = metapath.parent_path();
 
-                    std::string filename = actualpath.filename().string();
-                    auto assettype = asset::GetAssetType(actualpath);
-                    
+                    auto assettype = asset::GetAssetType(metapath);
                     if (assettype == asset::AssetType::NONE && !is_dir)
                         continue;
+                    auto assetid = asset::GetAssetId(metapath);
+                    
+                    gfx::TextureData* texdata = nullptr;
 
-                    auto assetid = asset::GetAssetId(actualpath);
+                    if (assettype == asset::TEXTURE) {
+                        texdata = gfx::TextureLoader::GetAssetRuntimeData(assetid);
+                        auto assetdata = asset::Texture::GetAssetById(assetid);
+                        actualpath = assetdata ? parentpath / assetdata->Get_import_data().path : actualpath;
+                    }
+                    else if (assettype == asset::MESH) {
+                        texdata = gfx::TextureLoader::GetAssetRuntimeData("mesh");
+                        auto assetdata = asset::Mesh::GetAssetById(assetid);
+                        actualpath = assetdata ? parentpath / assetdata->Get_import_data().path : actualpath;
+                    }
+                    else if (is_dir) {
+                        texdata = gfx::TextureLoader::GetAssetRuntimeData("folder");
+                    }
 
+                    std::string filename = actualpath.filename().string();
                     if (strlen(search_filter) > 0 && filename.find(search_filter) == std::string::npos)
                         continue;
-
                     ImGui::PushID(filename.c_str());
 
                     // --- 1. Icon Button ---
-                    const auto ui_func = [=] {
-                        gfx::TextureData* texdata = nullptr;
-
-                        if (assettype == asset::TEXTURE) {
-                            texdata = gfx::TextureLoader::GetAssetRuntimeData(assetid);
-                        }
-                        else if (assettype == asset::MESH) {
-                            texdata = gfx::TextureLoader::GetAssetRuntimeData("mesh");
-                        }
-                        else if(is_dir){
-                            texdata = gfx::TextureLoader::GetAssetRuntimeData("folder");
-                        }
-
+                    const auto ui_func = [&] {
                         auto size = ImVec2(thumbnail_size, thumbnail_size);
                         if (texdata == nullptr)
                             ImGui::Button("##item", size);

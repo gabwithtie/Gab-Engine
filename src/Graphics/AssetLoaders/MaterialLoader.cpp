@@ -156,8 +156,7 @@ void MaterialLoader::LoadAsset_(asset::Material* asset, const asset::data::Mater
                     asset::serialization::gbeParser::ExportClass<asset::data::MaterialImportData>(asset->Get_import_data(), targetMatPath);
 
                     // 5. Initialize the new directory
-                    asset::BatchLoader::GenerateMetafiles(targetDir);
-                    asset::BatchLoader::LoadAssetsFromDirectory(targetDir);
+					asset::BatchLoader::ReloadDirectory(targetDir);
 
                     printf("[MaterialLoader] Successfully duplicated material to: %s\n", targetDir.string().c_str());
                 }
