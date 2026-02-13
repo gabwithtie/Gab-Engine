@@ -16,8 +16,7 @@ void gbe::editor::ProjectLoader::Load(std::filesystem::path path)
 
 	auto fullPath = tolocal / newinfo.entry;
 
-	asset::BatchLoader::GenerateMetafiles(tolocal);
-	asset::BatchLoader::LoadAssetsFromDirectory(tolocal);
+	asset::BatchLoader::ReloadDirectory(tolocal);
 
 	gbe::SerializedObject data;
 	gbe::asset::serialization::gbeParser::PopulateClass(data, fullPath);

@@ -30,6 +30,7 @@ void gbe::editor::ViewportWindow::DrawSelf()
         [&](const DragData& data) {
             auto drawcall = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById(data.id), asset::Material::GetAssetById("lit"));
 			auto newrenderer = new RenderObject(drawcall);
+            newrenderer->PushEditorFlag(Object::SERIALIZABLE);
             newrenderer->SetParent(Engine::GetCurrentRoot());
         },
         [&]() {

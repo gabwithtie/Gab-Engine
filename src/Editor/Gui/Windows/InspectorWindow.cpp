@@ -131,11 +131,29 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 					);
 			}
 
+			if (field->fieldtype == editor::VECTOR2) {
+				auto f = static_cast<editor::InspectorVec2*>(field);
+				Vector2 proxy_f = f->getter();
+
+				if (this->DrawVector2Field(f->name.c_str(), &proxy_f)) {
+					f->setter(proxy_f);
+				}
+			}
+
 			if (field->fieldtype == editor::VECTOR3) {
 				auto f = static_cast<editor::InspectorVec3*>(field);
 				Vector3 proxy_f = f->getter();
 
 				if (this->DrawVector3Field(f->name.c_str(), &proxy_f)) {
+					f->setter(proxy_f);
+				}
+			}
+
+			if (field->fieldtype == editor::VECTOR4) {
+				auto f = static_cast<editor::InspectorVec4*>(field);
+				Vector4 proxy_f = f->getter();
+
+				if (this->DrawVector4Field(f->name.c_str(), &proxy_f)) {
 					f->setter(proxy_f);
 				}
 			}
@@ -250,6 +268,52 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 	}
 }
 
+bool gbe::editor::InspectorWindow::DrawVector2Field(std::string label, Vector2* field)
+{
+	ImGui::PushID(label.c_str());
+
+	float vec_arr[2] = { field->x, field->y};
+
+	DrawFieldLabel(label);
+
+	std::string field_id = "##" + label;
+	bool changed = ImGui::DragFloat2(field_id.c_str(), vec_arr);
+
+	if (changed)
+	{
+		field->x = vec_arr[0];
+		field->y = vec_arr[1];
+	}
+
+	ImGui::PopID();
+
+	return changed;
+}
+
+bool gbe::editor::InspectorWindow::DrawVector4Field(std::string label, Vector4* field)
+{
+	ImGui::PushID(label.c_str());
+
+	float vec_arr[4] = { field->x, field->y };
+
+	DrawFieldLabel(label);
+
+	std::string field_id = "##" + label;
+	bool changed = ImGui::DragFloat3(field_id.c_str(), vec_arr);
+
+	if (changed)
+	{
+		field->x = vec_arr[0];
+		field->y = vec_arr[1];
+		field->z = vec_arr[2];
+		field->w = vec_arr[3];
+	}
+
+	ImGui::PopID();
+
+	return changed;
+}
+
 bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* field, bool x_interactable, bool y_interactable, bool z_interactable)
 {
 	ImGui::PushID(label.c_str());
@@ -259,7 +323,7 @@ bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* 
 	DrawFieldLabel(label);
 
 	std::string field_id = "##" + label;
-	bool changed = ImGui::DragFloat3(field_id.c_str(), vec_arr);
+	bool changed = ImGui::DragFloat4(field_id.c_str(), vec_arr);
 
 	if (changed)
 	{

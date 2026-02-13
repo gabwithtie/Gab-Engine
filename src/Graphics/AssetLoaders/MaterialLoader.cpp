@@ -35,7 +35,7 @@ void MaterialLoader::LoadAsset_(asset::Material* asset, const asset::data::Mater
         else if (importedoverride.type == "vec2") {
             data->setOverride(id, Vector2(importedoverride.value_vec2[0], importedoverride.value_vec2[1]));
 
-            auto field = new editor::InspectorField<Vector2>();
+            auto field = new editor::InspectorVec2();
             field->name = id;
             field->getter = [data, id]() { return data->overrides.at(id).value_vec2; };
             field->setter = [=](Vector2 val) {
@@ -68,7 +68,7 @@ void MaterialLoader::LoadAsset_(asset::Material* asset, const asset::data::Mater
         else if (importedoverride.type == "vec4") {
             data->setOverride(id, Vector4(importedoverride.value_vec4[0], importedoverride.value_vec4[1], importedoverride.value_vec4[2], importedoverride.value_vec4[3]));
 
-            auto field = new editor::InspectorField<Vector4>();
+            auto field = new editor::InspectorVec4();
             field->name = id;
             field->getter = [data, id]() { return data->overrides.at(id).value_vec4; };
             field->setter = [=](Vector4 val) {

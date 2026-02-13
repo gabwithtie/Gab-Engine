@@ -74,16 +74,17 @@ namespace gbe {
 
             try {
                 for (auto const& entry : std::filesystem::directory_iterator(current_path)) {
-                    const auto& path = entry.path();
+                    const auto& metapath = entry.path();
+                    const auto& actualpath = metapath;
                     bool is_dir = entry.is_directory();
 
-                    std::string filename = path.filename().string();
-                    auto assettype = asset::GetAssetType(path);
+                    std::string filename = actualpath.filename().string();
+                    auto assettype = asset::GetAssetType(actualpath);
                     
                     if (assettype == asset::AssetType::NONE && !is_dir)
                         continue;
 
-                    auto assetid = asset::GetAssetId(path);
+                    auto assetid = asset::GetAssetId(actualpath);
 
                     if (strlen(search_filter) > 0 && filename.find(search_filter) == std::string::npos)
                         continue;
@@ -122,15 +123,15 @@ namespace gbe {
 
                     // Single Click / Select Callback
                     if (ImGui::IsItemClicked(0) && on_select_callback) {
-                        on_select_callback(path);
+                        on_select_callback(actualpath);
                     }
 
                     // Double Click to Open
                     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-                        if (is_dir) current_path = path;
+                        if (is_dir) current_path = actualpath;
                         else {
-                            std::string ext = path.extension().string();
-                            if (s_openers.count(ext)) s_openers[ext](path);
+                            std::string ext = actualpath.extension().string();
+                            if (s_openers.count(ext)) s_openers[ext](actualpath);
                         }
                     }
                     if (is_dir) ImGui::PopStyleColor();
@@ -138,19 +139,19 @@ namespace gbe {
                     // Context Menu
                     if (ImGui::BeginPopupContextItem()) {
                         if (ImGui::MenuItem("Rename")) {
-                            renaming_path = path;
+                            renaming_path = actualpath;
                             strncpy(rename_buffer, filename.c_str(), 256);
                             set_focus_next_frame = true;
                         }
-                        if (ImGui::MenuItem("Copy", "Ctrl+C")) { clipboard_path = path; is_cut_operation = false; }
-                        if (ImGui::MenuItem("Cut", "Ctrl+X")) { clipboard_path = path; is_cut_operation = true; }
+                        if (ImGui::MenuItem("Copy", "Ctrl+C")) { clipboard_path = actualpath; is_cut_operation = false; }
+                        if (ImGui::MenuItem("Cut", "Ctrl+X")) { clipboard_path = actualpath; is_cut_operation = true; }
                         ImGui::Separator();
-                        if (ImGui::MenuItem("Delete", "Del")) DeletePath(path);
+                        if (ImGui::MenuItem("Delete", "Del")) DeletePath(actualpath);
                         ImGui::EndPopup();
                     }
 
                     // --- 2. Label / Rename Logic ---
-                    if (renaming_path == path) {
+                    if (renaming_path == actualpath) {
                         if (set_focus_next_frame) { ImGui::SetKeyboardFocusHere(); set_focus_next_frame = false; }
                         ImGui::SetNextItemWidth(thumbnail_size);
 
@@ -159,7 +160,7 @@ namespace gbe {
 
                         if (ImGui::InputText("##renamebox", rename_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
                             if (!is_empty) {
-                                std::filesystem::rename(path, path.parent_path() / rename_buffer);
+                                std::filesystem::rename(actualpath, actualpath.parent_path() / rename_buffer);
                                 renaming_path.clear();
                             }
                         }
@@ -171,12 +172,12 @@ namespace gbe {
 
                         // Select on Label Click
                         if (ImGui::IsItemClicked(0) && on_select_callback) {
-                            on_select_callback(path);
+                            on_select_callback(actualpath);
                         }
 
                         // Rename on Label Double Click
                         if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-                            renaming_path = path;
+                            renaming_path = actualpath;
                             strncpy(rename_buffer, filename.c_str(), 256);
                             set_focus_next_frame = true;
                         }
@@ -249,10 +250,15 @@ namespace gbe {
             int i = 1;
             while (std::filesystem::exists(p)) p = at_path / ("New Folder (" + std::to_string(i++) + ")");
             std::filesystem::create_directory(p);
+
+            asset::BatchLoader::ReloadDirectory(at_path);
         }
 
         void ProjectBrowser::DeletePath(const std::filesystem::path& path) {
-            try { std::filesystem::remove_all(path); }
+            try { std::filesystem::remove_all(path); 
+            if(path.has_parent_path())
+                asset::BatchLoader::ReloadDirectory(path.parent_path());
+            }
             catch (...) {}
         }
 
@@ -267,6 +273,9 @@ namespace gbe {
                 else {
                     std::filesystem::copy(clipboard_path, target, std::filesystem::copy_options::recursive);
                 }
+
+                if (destination.has_parent_path())
+                    asset::BatchLoader::ReloadDirectory(destination.parent_path());
             }
             catch (...) {}
         }

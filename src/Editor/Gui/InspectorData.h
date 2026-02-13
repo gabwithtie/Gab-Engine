@@ -13,7 +13,9 @@ namespace gbe {
 			STRING,
 			INT,
 			FLOAT,
+			VECTOR2,
 			VECTOR3,
+			VECTOR4,
 			QUATERNION,
 			COLOR,
 			BOOLEAN,
@@ -35,10 +37,24 @@ namespace gbe {
 			std::function<void(T)> setter;
 		};
 
+		struct InspectorVec2 : public InspectorField<Vector2> {
+
+			InspectorVec2() {
+				this->fieldtype = FieldType::VECTOR2;
+			}
+		};
+
 		struct InspectorVec3 : public InspectorField<Vector3> {
 
 			InspectorVec3() {
 				this->fieldtype = FieldType::VECTOR3;
+			}
+		};
+
+		struct InspectorVec4 : public InspectorField<Vector4> {
+
+			InspectorVec4() {
+				this->fieldtype = FieldType::VECTOR4;
 			}
 		};
 

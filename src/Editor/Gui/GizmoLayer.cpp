@@ -84,6 +84,8 @@ void gbe::editor::GizmoLayer::DrawSelf()
 
         // Check if the gizmo was actively used
         if (ImGuizmo::IsUsing()) {
+            pointer_here = true;
+
             // Copy the updated data back to your GLM matrix
             selected[0]->World().SetMatrix(gbe::Matrix4(model_mat));
             selected[0]->PushState(Object::TRANSFORMED_USER);
@@ -105,6 +107,8 @@ void gbe::editor::GizmoLayer::DrawSelf()
         pointer_here = ImGuizmo::IsOver();
 
         if (ImGuizmo::IsUsing()) {
+            pointer_here = true;
+
             // 3. Calculate the Delta Matrix: NewCenter * Inverse(OldCenter)
             Matrix4 new_center_mat = gbe::Matrix4(model_mat);
             Matrix4 delta_mat = new_center_mat * old_center_mat.Inverted();

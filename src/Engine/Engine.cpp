@@ -160,7 +160,7 @@ namespace gbe {
 	{
 #pragma region Asset Loading
 		asset::BatchLoader::GenerateMetafiles("DefaultAssets");
-		asset::BatchLoader::LoadAssetsFromDirectory("DefaultAssets");
+		asset::BatchLoader::ReloadDirectory("DefaultAssets");
 
 		//Init all that needs assets here
 		renderpipeline.InitializeAssetRequisites();

@@ -24,8 +24,11 @@ uniform vec4 has_arm_tex;
 #define has_arm_tex has_arm_tex.x
 SAMPLER2D(arm_tex, 3);
 
+uniform vec4 tiling;
+
 //Camera buffers
 SAMPLER2D(tex_ao, 4);
+
 
 //Lights
 SAMPLER2DARRAY(light_map, 0);
@@ -106,13 +109,16 @@ float getShadow(int _layer, vec3 _wpos, vec3 _normal, vec3 _lightDir, float _min
 
 void main() {
     vec3 albedo = color.xyz;
+    vec2 final_texuv = v_texcoord0;
+    final_texuv *= tiling.xy;
+
     if (has_color_tex > 0.5) {
-        albedo *= texture2D(color_tex, v_texcoord0).xyz;
+        albedo *= texture2D(color_tex, final_texuv).xyz;
     }
 
     vec3 normal = normalize(v_normal);
     if (has_normal_tex > 0.5) {
-        vec3 normalSample = texture2D(normal_tex, v_texcoord0).xyz * 2.0 - 1.0;
+        vec3 normalSample = texture2D(normal_tex, final_texuv).xyz * 2.0 - 1.0;
         
         mat3 TBN = mat3(
             normalize(v_tangent),
@@ -127,7 +133,7 @@ void main() {
     float _metallic = metallic;  // Default non-metal
     
     if (has_arm_tex > 0.5) {
-        vec3 arm = texture2D(arm_tex, v_texcoord0).rgb;
+        vec3 arm = texture2D(arm_tex, final_texuv).rgb;
         _matAO = arm.r;
         _roughness = arm.g;
         _metallic = arm.b;
