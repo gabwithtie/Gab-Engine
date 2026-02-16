@@ -9,7 +9,7 @@
 
 #include "Asset/gbe_asset.h"
 
-void gbe::editor::InspectorWindow::SetInspectorData(std::vector<InspectorData*> _data)
+void gbe::editor::InspectorWindow::SetInspectorData(std::unordered_map<void*, InspectorData*> _data)
 {
 	this->data = _data;
 }
@@ -18,7 +18,7 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 	//FOR ONLY ONE
 	if (this->data.size() == 1)
 	{
-		auto& first_data = this->data[0];
+		auto& first_data = this->data.begin()->second;
 
 		for (auto& field : first_data->fields)
 		{
@@ -135,27 +135,81 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 				auto f = static_cast<editor::InspectorVec2*>(field);
 				Vector2 proxy_f = f->getter();
 
-				if (this->DrawVector2Field(f->name.c_str(), &proxy_f)) {
-					f->setter(proxy_f);
+				ImGui::PushID(f->name.c_str());
+
+				float vec_arr[2] = { proxy_f.x, proxy_f.y };
+
+				DrawFieldLabel(f->name);
+
+				std::string field_id = "##" + f->name;
+				bool changed = ImGui::DragFloat2(field_id.c_str(), vec_arr);
+
+				if (changed)
+				{
+					proxy_f.x = vec_arr[0];
+					proxy_f.y = vec_arr[1];
+
+					if (changed) {
+						f->setter(proxy_f);
+					}
 				}
+
+				ImGui::PopID();
 			}
 
 			if (field->fieldtype == editor::VECTOR3) {
 				auto f = static_cast<editor::InspectorVec3*>(field);
 				Vector3 proxy_f = f->getter();
 
-				if (this->DrawVector3Field(f->name.c_str(), &proxy_f)) {
-					f->setter(proxy_f);
+				ImGui::PushID(f->name.c_str());
+
+				float vec_arr[3] = { proxy_f.x, proxy_f.y, proxy_f.z };
+
+				DrawFieldLabel(f->name);
+
+				std::string field_id = "##" + f->name;
+				bool changed = ImGui::DragFloat3(field_id.c_str(), vec_arr);
+
+				if (changed)
+				{
+					proxy_f.x = vec_arr[0];
+					proxy_f.y = vec_arr[1];
+					proxy_f.z = vec_arr[2];
+
+					if (changed) {
+						f->setter(proxy_f);
+					}
 				}
+
+				ImGui::PopID();
 			}
 
 			if (field->fieldtype == editor::VECTOR4) {
 				auto f = static_cast<editor::InspectorVec4*>(field);
 				Vector4 proxy_f = f->getter();
 
-				if (this->DrawVector4Field(f->name.c_str(), &proxy_f)) {
-					f->setter(proxy_f);
+				ImGui::PushID(f->name.c_str());
+
+				float vec_arr[4] = { proxy_f.x, proxy_f.y, proxy_f.z, proxy_f.w };
+
+				DrawFieldLabel(f->name);
+
+				std::string field_id = "##" + f->name;
+				bool changed = ImGui::DragFloat4(field_id.c_str(), vec_arr);
+
+				if (changed)
+				{
+					proxy_f.x = vec_arr[0];
+					proxy_f.y = vec_arr[1];
+					proxy_f.z = vec_arr[2];
+					proxy_f.w = vec_arr[3];
+
+					if (changed) {
+						f->setter(proxy_f);
+					}
 				}
+
+				ImGui::PopID();
 			}
 
 			if (field->fieldtype == editor::COLOR) {
@@ -266,78 +320,6 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 	else {
 		ImGui::Text("Multi-inspect not supported yet.");
 	}
-}
-
-bool gbe::editor::InspectorWindow::DrawVector2Field(std::string label, Vector2* field)
-{
-	ImGui::PushID(label.c_str());
-
-	float vec_arr[2] = { field->x, field->y};
-
-	DrawFieldLabel(label);
-
-	std::string field_id = "##" + label;
-	bool changed = ImGui::DragFloat2(field_id.c_str(), vec_arr);
-
-	if (changed)
-	{
-		field->x = vec_arr[0];
-		field->y = vec_arr[1];
-	}
-
-	ImGui::PopID();
-
-	return changed;
-}
-
-bool gbe::editor::InspectorWindow::DrawVector4Field(std::string label, Vector4* field)
-{
-	ImGui::PushID(label.c_str());
-
-	float vec_arr[4] = { field->x, field->y };
-
-	DrawFieldLabel(label);
-
-	std::string field_id = "##" + label;
-	bool changed = ImGui::DragFloat3(field_id.c_str(), vec_arr);
-
-	if (changed)
-	{
-		field->x = vec_arr[0];
-		field->y = vec_arr[1];
-		field->z = vec_arr[2];
-		field->w = vec_arr[3];
-	}
-
-	ImGui::PopID();
-
-	return changed;
-}
-
-bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* field, bool x_interactable, bool y_interactable, bool z_interactable)
-{
-	ImGui::PushID(label.c_str());
-
-	float vec_arr[3] = { field->x, field->y, field->z };
-
-	DrawFieldLabel(label);
-
-	std::string field_id = "##" + label;
-	bool changed = ImGui::DragFloat4(field_id.c_str(), vec_arr);
-
-	if (changed)
-	{
-		if (x_interactable)
-			field->x = vec_arr[0];
-		if (y_interactable)
-			field->y = vec_arr[1];
-		if (z_interactable)
-			field->z = vec_arr[2];
-	}
-
-	ImGui::PopID();
-	
-	return changed;
 }
 
 void gbe::editor::InspectorWindow::DrawFieldLabel(std::string label) {

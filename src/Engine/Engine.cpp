@@ -416,6 +416,12 @@ namespace gbe {
 			for (auto rootdeletee : toDeleteRoots)
 			{
 				rootdeletee->SetParent(nullptr);
+
+				rootdeletee->CallRecursively([](Object* child) {
+					for (auto& func : Engine::instance->on_delete_callbacks)
+						func((void*)child);
+
+					}, false);
 			}
 
 			for (auto rootdeletee : toDeleteRoots)

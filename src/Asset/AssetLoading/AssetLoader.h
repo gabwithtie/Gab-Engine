@@ -17,6 +17,7 @@ namespace gbe {
 			class BaseAsset_base;
 		}
 
+		extern gbe::asset::internal::BaseAsset_base* GetBaseData(std::filesystem::path path);
 		extern editor::InspectorData* GetInspectorData(std::filesystem::path path);
 		extern gbe::asset::AssetType GetAssetType(std::filesystem::path path);
 		extern std::string GetAssetId(std::filesystem::path path);

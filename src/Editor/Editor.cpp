@@ -39,12 +39,20 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	}
 
 	this->projectWindow.SetOnSelectCallback([=](std::filesystem::path _path) {
-		auto _inspectordata = asset::GetInspectorData(_path);
+		auto asset = asset::GetBaseData(_path);
 		
-		if (_inspectordata == nullptr)
+		if (asset == nullptr)
 			return;
 
-		inspectorwindow.SetInspectorData({ _inspectordata });
+		inspectorwindow.SetInspectorData({ {asset, asset->GetInspectorData()} });
+		});
+
+	Engine::RegisterOnDeleteCallback([this](void* deleted) {
+		auto it = this->inspectorwindow.GetData(deleted);
+
+		if (it != nullptr) {
+			this->inspectorwindow.SetInspectorData({}); // Clear inspector if the currently inspected object is deleted
+		}
 		});
 
 	//===========================IMGUI=============================//
@@ -189,11 +197,11 @@ void gbe::Editor::SelectSingle(Object* other) {
 
 void gbe::Editor::UpdateSelection()
 {
-	std::vector<editor::InspectorData*> datas;
+	std::unordered_map<void*, editor::InspectorData*> datas;
 
 	for (const auto& other: instance->selected)
 	{
-		datas.push_back(other->GetInspectorData());
+		datas.insert_or_assign(other, other->GetInspectorData());
 
 		other->CallRecursively([&](Object* child) {
 			auto renderer_check = dynamic_cast<RenderObject*>(child);

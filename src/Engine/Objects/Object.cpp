@@ -140,13 +140,6 @@ void gbe::Object::GeneralInit()
 	this->inspectorData = new editor::InspectorData();
 
 	{
-		auto field = new editor::InspectorBool();
-		field->name = "Enabled";
-		field->getter = [=]() {return this->Get_enabled(); };
-		field->setter = [=](bool val) {this->Set_enabled(val); };
-		this->inspectorData->fields.push_back(field);
-	}
-	{
 		auto field = new editor::InspectorString();
 		field->name = "Name";
 		field->getter = [=]() {return this->GetName(); };
@@ -154,17 +147,71 @@ void gbe::Object::GeneralInit()
 		this->inspectorData->fields.push_back(field);
 	}
 	{
-		auto field = new editor::InspectorVec3();
-		field->name = "Position";
-		field->getter = [=]() {return this->Local().position.Get(); };
-		field->setter = [=](Vector3 val) {this->Local().position.Set(val); };
+		auto field = new editor::InspectorBool();
+		field->name = "Enabled";
+		field->getter = [=]() {return this->Get_enabled(); };
+		field->setter = [=](bool val) {this->Set_enabled(val); };
 		this->inspectorData->fields.push_back(field);
 	}
+
+	// --- Position ---
+	{
+		auto field = new editor::InspectorVec3();
+		field->name = "Position";
+		field->getter = [=]() { return this->Local().position.Get(); };
+		field->setter = [=](Vector3 val) {
+			if (this->GetEditorFlag(Object::NON_DIRECT_EDITABLE)) return;
+
+			Vector3 current = this->Local().position.Get();
+			Vector3 next = val;
+
+			// Apply granular locks
+			if (this->GetEditorFlag(Object::STATIC_POS_X)) next.x = current.x;
+			if (this->GetEditorFlag(Object::STATIC_POS_Y)) next.y = current.y;
+			if (this->GetEditorFlag(Object::STATIC_POS_Z)) next.z = current.z;
+
+			this->Local().position.Set(next);
+			};
+		this->inspectorData->fields.push_back(field);
+	}
+
+	// --- Rotation ---
 	{
 		auto field = new editor::InspectorVec3();
 		field->name = "Rotation";
-		field->getter = [=]() {return this->Local().rotation.Get().ToEuler(); };
-		field->setter = [=](Vector3 val) {this->Local().rotation.Set(Quaternion::Euler(val)); };
+		field->getter = [=]() { return this->Local().rotation.Get().ToEuler(); };
+		field->setter = [=](Vector3 val) {
+			if (this->GetEditorFlag(Object::NON_DIRECT_EDITABLE)) return;
+
+			Vector3 currentEuler = this->Local().rotation.Get().ToEuler();
+			Vector3 nextEuler = val;
+
+			if (this->GetEditorFlag(Object::STATIC_ROT_X)) nextEuler.x = currentEuler.x;
+			if (this->GetEditorFlag(Object::STATIC_ROT_Y)) nextEuler.y = currentEuler.y;
+			if (this->GetEditorFlag(Object::STATIC_ROT_Z)) nextEuler.z = currentEuler.z;
+
+			this->Local().rotation.Set(Quaternion::Euler(nextEuler));
+			};
+		this->inspectorData->fields.push_back(field);
+	}
+
+	// --- Scale ---
+	{
+		auto field = new editor::InspectorVec3();
+		field->name = "Scale";
+		field->getter = [=]() { return this->Local().scale.Get(); };
+		field->setter = [=](Vector3 val) {
+			if (this->GetEditorFlag(Object::NON_DIRECT_EDITABLE)) return;
+
+			Vector3 current = this->Local().scale.Get();
+			Vector3 next = val;
+
+			if (this->GetEditorFlag(Object::STATIC_SCALE_X)) next.x = current.x;
+			if (this->GetEditorFlag(Object::STATIC_SCALE_Y)) next.y = current.y;
+			if (this->GetEditorFlag(Object::STATIC_SCALE_Z)) next.z = current.z;
+
+			this->Local().scale.Set(next);
+			};
 		this->inspectorData->fields.push_back(field);
 	}
 
@@ -181,7 +228,6 @@ gbe::Object::Object():
 }
 
 gbe::Object::~Object(){
-	
 }
 
 gbe::Transform& gbe::Object::World()
