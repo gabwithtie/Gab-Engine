@@ -70,7 +70,7 @@ namespace gbe::ext::AnitoBuilder {
 		//Drawcalls
 		asset::Material* def_material = nullptr;
 
-		std::array<gfx::DrawCall*, 4> special_DC;
+		std::array<gfx::DrawCall*, 5> special_DC;
 		gfx::DrawCall* ceiling_editor_DC;
 		std::array<gfx::DrawCall*, 2> wallnorm_DC;
 		std::array<gfx::DrawCall*, 2> wallnorm_DC_corner;

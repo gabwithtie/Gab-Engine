@@ -92,14 +92,10 @@ gbe::SerializedObject gbe::RenderObject::Serialize() {
 gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
 {
 	auto _ptype = data->serialized_variables["primitive"];
+	asset::Mesh* input_mesh = nullptr;
 
 	if (_ptype == gbe::RenderObject::PrimitiveTypeStr(gbe::RenderObject::PrimitiveType::NONE)) {
-		auto input_mesh = MeshLoader::GetAssetByPath(data->serialized_variables["mesh"]);
-		auto input_mat = MaterialLoader::GetAssetByPath(data->serialized_variables["mat"]);
-		auto drawcall = RenderPipeline::RegisterDrawCall(input_mesh, input_mat);
-		
-		this->mDrawCall = drawcall;
-		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
+		input_mesh = MeshLoader::GetAssetById(data->serialized_variables["mesh"]);
 	}
 	else {
 		auto curptype = gbe::RenderObject::PrimitiveType::NONE;
@@ -110,10 +106,14 @@ gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
 			}
 		}
 
-		this->mDrawCall = primitive_drawcalls[curptype];
-		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
+		input_mesh = primitive_drawcalls[curptype]->get_meshasset();
 		this->ptype = curptype;
 	}
+
+	auto input_mat = MaterialLoader::GetAssetById(data->serialized_variables["mat"]);
+	auto drawcall = RenderPipeline::RegisterDrawCall(input_mesh, input_mat);
+	this->mDrawCall = drawcall;
+	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
 
 	InitInspector();
 }

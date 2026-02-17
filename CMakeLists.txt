@@ -37,27 +37,13 @@ find_package(SDL2_mixer CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>)
 
 #RENDERER CORE LIBRARY
-FetchContent_Declare(
-  "bgfx.cmake"
-  GIT_REPOSITORY "https://github.com/bkaradzic/bgfx.cmake.git"
-  GIT_TAG        "v1.135.9062-502"
-  SOURCE_DIR     "${CMAKE_CURRENT_SOURCE_DIR}/Ext/bgfx.cmake"
-)
-FetchContent_MakeAvailable(bgfx.cmake)
+add_subdirectory("Ext/bgfx.cmake")
 
 add_subdirectory("Ext/bgfx-imgui")
 add_subdirectory("Ext/bgfx-utils")
 add_subdirectory("Ext/bgfx-gab")
 
 #MikkTSpace
-FetchContent_Declare(
-  "mikktspace"
-  GIT_REPOSITORY "https://github.com/mmikk/MikkTSpace.git"
-  GIT_TAG        "master"
-  SOURCE_DIR     "${CMAKE_CURRENT_SOURCE_DIR}/Ext/mikktspace"
-)
-FetchContent_MakeAvailable(mikktspace)
-
 include("Ext/MikkTSpace.cmake")
 
 #Anito Builder extension
