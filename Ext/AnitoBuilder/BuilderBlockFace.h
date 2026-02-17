@@ -8,7 +8,7 @@
 
 namespace gbe::ext::AnitoBuilder {
 	class BuilderBlock;
-	class BlockSeg;
+	class BlockFace;
 
 	class BuilderBlockFace : public Object {
 	private:
@@ -66,13 +66,7 @@ namespace gbe::ext::AnitoBuilder {
 		int cur_width = 0;
 		int cur_height = 0;
 	public:
-		int GetMeshOverride(int floor);
-
-		void SetMeshOverride(int floor, int mo);
-
-		int GetTexOverride(int floor);
-
-		void SetTexOverride(int floor, int mo);
+		inline BuilderBlock* Get_root_block() { return root_block; }
 
 		void SetPositions(Vector3 local_a, Vector3 local_b);
 

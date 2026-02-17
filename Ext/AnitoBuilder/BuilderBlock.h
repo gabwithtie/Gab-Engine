@@ -10,9 +10,11 @@ namespace gbe::ext::AnitoBuilder {
 
 	typedef std::pair<int, int> PosPair;
 
-	struct BlockSeg {
+	struct BlockFace {
 		PosPair seg;
 		int handleindex;
+
+		std::unordered_map<int, int> dc_overrides;
 
 		int decoration_type = 0;
 		int edge_designs_interval = 0;
@@ -20,7 +22,7 @@ namespace gbe::ext::AnitoBuilder {
 	};
 
 	struct BlockSet {
-		std::vector<BlockSeg> segs;
+		std::vector<BlockFace> faces;
 	};
 
 	struct SetRoof {
@@ -68,6 +70,7 @@ namespace gbe::ext::AnitoBuilder {
 		//Drawcalls
 		asset::Material* def_material = nullptr;
 
+		std::array<gfx::DrawCall*, 4> special_DC;
 		gfx::DrawCall* ceiling_editor_DC;
 		std::array<gfx::DrawCall*, 2> wallnorm_DC;
 		std::array<gfx::DrawCall*, 2> wallnorm_DC_corner;
@@ -109,10 +112,10 @@ namespace gbe::ext::AnitoBuilder {
 		void UpdateModelShown();
 		void UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r);
 		
-		inline BlockSeg& GetHandle(int s, int i) {
-			i %= this->data.sets[s].segs.size();
+		inline BlockFace& GetHandle(int s, int i) {
+			i %= this->data.sets[s].faces.size();
 
-			return this->data.sets[s].segs[i];
+			return this->data.sets[s].faces[i];
 		}
 		bool CheckSetSegment(Vector3 p, Vector3 l, Vector3 r);
 		void ResetRoof(Object* roof, int s, int i, float height = 0.02f, float _inset = 0.0f, float _y = 0.0f);
@@ -134,6 +137,7 @@ namespace gbe::ext::AnitoBuilder {
 		void LoadAssets();
 	public:
 		inline bool Get_ModelShown() { return model_shown; }
+		inline int GetOverrideTypeCount() { return special_DC.size(); }
 
 		BuilderBlock(gbe::Vector3 corners[4], float height);
 		BuilderBlock(SerializedObject* data);
@@ -147,8 +151,8 @@ namespace gbe::ext::AnitoBuilder {
 				}
 			}
 		}
-		BlockSeg* GetSeg(int face_i);
-		BlockSeg* GetSeg(BuilderBlockFace* face);
+		BlockFace* GetSeg(int face_i);
+		BlockFace* GetSeg(BuilderBlockFace* face);
 		void AddBlock(int root_handle);
 		void AddBlock(int corners[4]);
 

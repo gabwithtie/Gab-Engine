@@ -5,7 +5,7 @@
 
 #include <typeinfo>
 
-bool gbe::ext::AnitoBuilder::AnitoBuilderExtension::floor_select = false;
+bool gbe::ext::AnitoBuilder::AnitoBuilderExtension::unit_select = false;
 
 void gbe::ext::AnitoBuilder::AnitoBuilderExtension::OnEngineInitialize()
 {

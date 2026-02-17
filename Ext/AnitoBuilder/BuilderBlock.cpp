@@ -6,6 +6,7 @@
 #include "Graphics/gbe_graphics.h"
 #include "Asset/gbe_asset.h"
 #include "Math/gbe_math.h"
+#include "BuilderBlockUnit.h"
 
 #include "AnitoBuilderExtension.h"
 
@@ -28,6 +29,11 @@ namespace gbe::ext::AnitoBuilder {
 		ceiling_editor_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), asset::Material::GetAssetById("grid"));
 
 		//Main - normal
+		drawcall_dict.insert_or_assign("fillerwall_1", &special_DC[0]);
+		drawcall_dict.insert_or_assign("fillerwall_2", &special_DC[1]);
+		drawcall_dict.insert_or_assign("fillerwall_3", &special_DC[2]);
+		drawcall_dict.insert_or_assign("fillerwall_4", &special_DC[3]);
+		drawcall_dict.insert_or_assign("fillerwall_5", &special_DC[4]);
 		drawcall_dict.insert_or_assign("horizontal_axis_triangle", &ceiling_DC);
 		drawcall_dict.insert_or_assign("axisroof", &top_roof_DC);
 		drawcall_dict.insert_or_assign("roof_1", &ledge_dc);
@@ -166,9 +172,9 @@ namespace gbe::ext::AnitoBuilder {
 		auto obj = Object::Serialize();
 
 		for (size_t s = 0; s < data.sets.size(); s++) {
-			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+			for (size_t i = 0; i < data.sets[s].faces.size(); i++)
 			{
-				auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
+				auto handle = this->handle_pool[this->data.sets[s].faces[i].handleindex];
 			}
 		}
 
@@ -198,10 +204,10 @@ namespace gbe::ext::AnitoBuilder {
 		for (const auto& set : newdata.sets)
 		{
 			int corner_ptrs[4] = {
-				set.segs[0].seg.first,
-				set.segs[1].seg.first,
-				set.segs[2].seg.first,
-				set.segs[3].seg.first
+				set.faces[0].seg.first,
+				set.faces[1].seg.first,
+				set.faces[2].seg.first,
+				set.faces[3].seg.first
 			};
 
 			this->AddBlock(corner_ptrs);
@@ -254,7 +260,7 @@ namespace gbe::ext::AnitoBuilder {
 			const auto GetQuadInsetPoints = [=](BlockSet& targetSet)
 				{
 					std::vector<std::pair<Vector3, Vector3>> allInsetSegments;
-					int numCorners = targetSet.segs.size();
+					int numCorners = targetSet.faces.size();
 
 					enum VertexType
 					{
@@ -268,12 +274,12 @@ namespace gbe::ext::AnitoBuilder {
 							int idxPrev = (i + numCorners - 1) % numCorners;
 							int idxNext = i;
 
-							bool prevIsEdge = handle_pool[targetSet.segs[idxPrev].handleindex]->Get_is_edge();
-							bool nextIsEdge = handle_pool[targetSet.segs[idxNext].handleindex]->Get_is_edge();
+							bool prevIsEdge = handle_pool[targetSet.faces[idxPrev].handleindex]->Get_is_edge();
+							bool nextIsEdge = handle_pool[targetSet.faces[idxNext].handleindex]->Get_is_edge();
 
-							Vector3 pMid = data.GetPosition(targetSet.segs[i].seg.first);
-							Vector3 pPrev = data.GetPosition(targetSet.segs[idxPrev].seg.first);
-							Vector3 pNext = data.GetPosition(targetSet.segs[idxNext].seg.second);
+							Vector3 pMid = data.GetPosition(targetSet.faces[i].seg.first);
+							Vector3 pPrev = data.GetPosition(targetSet.faces[idxPrev].seg.first);
+							Vector3 pNext = data.GetPosition(targetSet.faces[idxNext].seg.second);
 
 							Vector3 dPrev = ((Vector3)(pPrev - pMid)).Normalize();
 							Vector3 dNext = ((Vector3)(pNext - pMid)).Normalize();
@@ -301,7 +307,7 @@ namespace gbe::ext::AnitoBuilder {
 
 					for (int i = 0; i < numCorners; i++)
 					{
-						bool currentIsEdge = handle_pool[targetSet.segs[i].handleindex]->Get_is_edge();
+						bool currentIsEdge = handle_pool[targetSet.faces[i].handleindex]->Get_is_edge();
 
 						Vector3 L_bisector = CalculatePointInset(i, BISECTOR);
 						Vector3 L_edge = CalculatePointInset(i, R_EDGE);
@@ -520,10 +526,10 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r)
 	{
-		i %= this->data.sets[s].segs.size();
+		i %= this->data.sets[s].faces.size();
 
-		auto& seg = this->data.sets[s].segs[i].seg;
-		auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
+		auto& seg = this->data.sets[s].faces[i].seg;
+		auto handle = this->handle_pool[this->data.sets[s].faces[i].handleindex];
 
 		auto delta_right = handle->Local().GetRight() * (handle->Local().scale.Get().x);
 
@@ -555,7 +561,7 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::ResetHandle(int s, int i) {
 		auto& set = this->data.sets[s];
-		auto& seg = this->data.sets[s].segs[i].seg;
+		auto& seg = this->data.sets[s].faces[i].seg;
 
 		SetRoof* set_roof = nullptr;
 
@@ -571,7 +577,7 @@ namespace gbe::ext::AnitoBuilder {
 		ResetRoof(set_roof->handle_renderers[0], s, 0);
 		ResetRoof(set_roof->handle_renderers[1], s, 2);
 
-		auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
+		auto handle = this->handle_pool[this->data.sets[s].faces[i].handleindex];
 	
 		auto second = data.GetPosition(seg.second);
 		second.y += height;
@@ -581,7 +587,7 @@ namespace gbe::ext::AnitoBuilder {
 	void BuilderBlock::ResetAllHandles()
 	{
 		for (size_t s = 0; s < data.sets.size(); s++) {
-			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+			for (size_t i = 0; i < data.sets[s].faces.size(); i++)
 			{
 				ResetHandle(s, i);
 			}
@@ -672,7 +678,7 @@ namespace gbe::ext::AnitoBuilder {
 		std::vector<std::pair<int, Vector3>> pos_commits; // querry SetPosition calls
 
 		for (size_t s = 0; s < data.sets.size(); s++) {
-			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+			for (size_t i = 0; i < data.sets[s].faces.size(); i++)
 			{
 				auto& l = GetHandle(s, i);
 
@@ -692,7 +698,7 @@ namespace gbe::ext::AnitoBuilder {
 				int moved_i = i;
 				
 				for (size_t s = 0; s < data.sets.size(); s++) {
-					for (size_t i = 0; i < data.sets[moved_s].segs.size(); i++)
+					for (size_t i = 0; i < data.sets[moved_s].faces.size(); i++)
 					{
 						auto& handle = GetHandle(s, i);
 						
@@ -754,7 +760,7 @@ namespace gbe::ext::AnitoBuilder {
 
 			//update graphical handles
 			for (size_t s = 0; s < data.sets.size(); s++) {
-				for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+				for (size_t i = 0; i < data.sets[s].faces.size(); i++)
 				{
 					auto& l = GetHandle(s, i);
 					ResetHandle(s, i);
@@ -778,19 +784,19 @@ namespace gbe::ext::AnitoBuilder {
 		}
 	}
 
-	BlockSeg* BuilderBlock::GetSeg(int handle_i)
+	BlockFace* BuilderBlock::GetSeg(int handle_i)
 	{
 		if (handle_i >= 0) {
 			for (size_t set_i = 0; set_i < this->data.sets.size(); set_i++)
 			{
 				const auto& set = this->data.sets[set_i];
 
-				for (size_t seg_i = 0; seg_i < set.segs.size(); seg_i++)
+				for (size_t seg_i = 0; seg_i < set.faces.size(); seg_i++)
 				{
-					const auto& seg = set.segs[seg_i];
+					const auto& seg = set.faces[seg_i];
 
 					if (seg.handleindex == handle_i) {
-						return &this->data.sets[set_i].segs[seg_i];
+						return &this->data.sets[set_i].faces[seg_i];
 					}
 				}
 			}
@@ -799,7 +805,7 @@ namespace gbe::ext::AnitoBuilder {
 		return nullptr;
 	}
 
-	BlockSeg* BuilderBlock::GetSeg(BuilderBlockFace* face)
+	BlockFace* BuilderBlock::GetSeg(BuilderBlockFace* face)
 	{
 		auto handle_i = -1;
 
@@ -824,10 +830,10 @@ namespace gbe::ext::AnitoBuilder {
 		PosPair src_seg;
 
 		for (size_t s = 0; s < data.sets.size(); s++)
-			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+			for (size_t i = 0; i < data.sets[s].faces.size(); i++)
 			{
-				if (data.sets[s].segs[i].handleindex == root_handle) {
-					src_seg = data.sets[s].segs[i].seg;
+				if (data.sets[s].faces[i].handleindex == root_handle) {
+					src_seg = data.sets[s].faces[i].seg;
 				}
 			}
 
@@ -865,10 +871,10 @@ namespace gbe::ext::AnitoBuilder {
 
 		//look for existing root handle
 		for (const auto& set : this->data.sets)
-			for (const auto& seg : set.segs)
+			for (const auto& seg : set.faces)
 			{
 				if(seg.seg.second == corners[0] && seg.seg.first == corners[1]) {
-					newset.segs.push_back({
+					newset.faces.push_back({
 						.seg = {corners[0], corners[1]},
 						.handleindex = seg.handleindex
 						});
@@ -883,7 +889,7 @@ namespace gbe::ext::AnitoBuilder {
 		{
 			const auto& src_seg = src_segments[i];
 
-			newset.segs.push_back(
+			newset.faces.push_back(
 				{
 					.seg = src_seg,
 					.handleindex = (int)handle_pool.size() + incr
