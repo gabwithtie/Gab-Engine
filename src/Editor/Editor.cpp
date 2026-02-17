@@ -20,11 +20,9 @@
 
 gbe::Editor* gbe::Editor::instance = nullptr;
 
-gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionalwindows):
+gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionals):
 	menubar(this->windows),
-
 	spawnWindow(this->selected),
-	inspectorwindow(this->selected),
 	viewportWindow(this->selected)
 {
 	std::cout << "[EDITOR] Initializing..." << std::endl;
@@ -32,13 +30,30 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 	instance = this;
 
 	this->mwindow = window;
-	this->mrenderpipeline = renderpipeline;
 	this->mtime = _mtime;
 
-	for (const auto& addwindow : additionalwindows)
+	for (const auto& addwindow : additionals)
 	{
 		this->windows.push_back(addwindow);
+		this->external_windows.push_back(addwindow);
 	}
+
+	this->projectWindow.SetOnSelectCallback([=](std::filesystem::path _path) {
+		auto asset = asset::GetBaseData(_path);
+		
+		if (asset == nullptr)
+			return;
+
+		inspectorwindow.SetInspectorData({ {asset, asset->GetInspectorData()} });
+		});
+
+	Engine::RegisterOnDeleteCallback([this](void* deleted) {
+		auto it = this->inspectorwindow.GetData(deleted);
+
+		if (it != nullptr) {
+			this->inspectorwindow.SetInspectorData({}); // Clear inspector if the currently inspected object is deleted
+		}
+		});
 
 	//===========================IMGUI=============================//
 	SDL_Window* implemented_window = static_cast<SDL_Window*>(window->Get_implemented_window());
@@ -147,18 +162,15 @@ void gbe::Editor::OnDeselect(Object* other)
 }
 
 void gbe::Editor::SelectSingle(Object* other) {
-	if(other->GetEditorFlag(Object::SELECT_PARENT_INSTEAD)) {
-		if (other->GetParent() != nullptr) {
-			SelectSingle(other->GetParent());
-			return;
+	if(other != nullptr)
+		if (other->GetEditorFlag(Object::SELECT_PARENT_INSTEAD)) {
+			if (other->GetParent() != nullptr) {
+				SelectSingle(other->GetParent());
+				return;
+			}
+			else
+				throw std::runtime_error("Object has SELECT_PARENT_INSTEAD flag but no parent.");
 		}
-		else
-			throw std::runtime_error("Object has SELECT_PARENT_INSTEAD flag but no parent.");
-	}
-
-	auto newlyclicked = other;
-	
-	bool deselection = false;
 
 	if (instance->keyboard_shifting) {
 		auto it = std::find(instance->selected.begin(), instance->selected.end(), other);
@@ -168,30 +180,39 @@ void gbe::Editor::SelectSingle(Object* other) {
 			OnDeselect(other);
 			instance->selected.erase(it);
 		}
+		else if(other != nullptr) {
+			instance->selected.push_back(other);
+		}
 	}
-	else { //CLEAR SELECTION IF NOT MULTISELECTING AND CLICKED SOMETHING ELSE
+	else { //CLEAR SELECTION ALWAYS IF NOT MULTISELECTING
 		instance->DeselectAll();
+
+		if (other != nullptr) {
+			instance->selected.push_back(other);
+		}
 	}
 
-	if (!deselection) {
-		instance->selected.push_back(other);
-
-		UpdateSelection();
-	}
+	UpdateSelection();
 }
 
 void gbe::Editor::UpdateSelection()
 {
+	std::unordered_map<void*, editor::InspectorData*> datas;
+
 	for (const auto& other: instance->selected)
 	{
+		datas.insert_or_assign(other, other->GetInspectorData());
+
 		other->CallRecursively([&](Object* child) {
 			auto renderer_check = dynamic_cast<RenderObject*>(child);
 
 			if (renderer_check != nullptr) {
 				RenderPipeline::RegisterAdditionalGroup(renderer_check->Get_id(), 1);
 			}
-			});
+		});
 	}
+
+	instance->inspectorwindow.SetInspectorData(datas);
 }
 
 void gbe::Editor::DeselectAll() {
@@ -257,22 +278,28 @@ void gbe::Editor::ProcessRawWindowEvent(void* rawwindowevent) {
 	if (sdlevent->type == SDL_MOUSEBUTTONDOWN) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT && !this->FocusedOnEditorUI()) {
 
-			auto cur_id_oncursor = RenderPipeline::GetIdUnderPointer();
+			pointer_state = POINTER_DOWN;
 
-			if (cur_id_oncursor == UINT32_MAX) { //NOTHING WAS CLICKED
-				if (!this->keyboard_shifting) { //NOT MULTISELECTING
-					DeselectAll();
-				}
+			if (hijack_info.hijacker != nullptr) {
+				hijack_info.callback(RenderPipeline::GetWindow()->GetMousePixelPos(), pointer_state);
 			}
 			else {
-				SelectSingle(Object::GetObjectById(cur_id_oncursor));
+				if (cur_id_oncursor == UINT32_MAX) { //NOTHING WAS CLICKED
+					SelectSingle(nullptr);
+				}
+				else {
+					SelectSingle(Object::GetObjectById(cur_id_oncursor));
+				}
 			}
 		}
 	}
 	if (sdlevent->type == SDL_MOUSEBUTTONUP) {
 		if (sdlevent->button.button == SDL_BUTTON_LEFT) {
-			//COMMIT HELD GIZMO ACTION
-			
+			pointer_state = POINTER_NONE;
+
+			if (hijack_info.hijacker != nullptr) {
+				hijack_info.callback(RenderPipeline::GetWindow()->GetMousePixelPos(), pointer_state);
+			}
 		}
 	}
 }
@@ -304,6 +331,57 @@ void gbe::Editor::PrepareUpdate()
 		}
 	}
 
+	if (hijack_info.hijacker == nullptr)
+		RenderPipeline::GetRenderer()->SubmitCpuDataRequest({
+			.override_id = "id_cursor",
+			.cpu_pass_mode = Renderer::CPU_PASS_MODE::PASS_ID,
+			.cursor_pixel_pos = RenderPipeline::GetWindow()->GetMousePixelPos(),
+			.rect_size = 2,
+			.callback = [&](Renderer::CpuDataResponse& response) {
+				std::map<uint32_t, uint32_t> ids;  // This contains all the IDs found in the buffer
+				uint32_t maxAmount = 0;
+				for (auto& pixel : response.cpu_data)
+				{
+					if (0 == (pixel.r | pixel.g | pixel.b)) // Skip background
+					{
+						continue;
+					}
+
+					std::map<uint32_t, uint32_t>::iterator mapIter = ids.find(pixel.hashed());
+					uint32_t amount = 1;
+					if (mapIter != ids.end())
+					{
+						amount = mapIter->second + 1;
+					}
+
+					ids[pixel.hashed()] = amount; // Amount of times this ID (color) has been clicked on in buffer
+					maxAmount = maxAmount > amount ? maxAmount : amount;
+				}
+				this->cur_id_oncursor = UINT32_MAX;
+				if (maxAmount)
+				{
+					for (std::map<uint32_t, uint32_t>::iterator mapIter = ids.begin(); mapIter != ids.end(); mapIter++)
+					{
+						if (mapIter->second == maxAmount)
+						{
+							this->cur_id_oncursor = mapIter->first;
+							break;
+						}
+					}
+				}
+			}
+			});
+
+	if (pointer_state == POINTER_DOWN)
+		pointer_state = POINTER_HOLD;
+
+	if (pointer_state == POINTER_HOLD) {
+		if (hijack_info.hijacker != nullptr) {
+			hijack_info.callback(RenderPipeline::GetWindow()->GetMousePixelPos(), pointer_state);
+		}
+	}
+
+
 	//==============================IMGUI==============================//
 	ImGuiID dockspace_id = ImGui::GetID("maindockspace");
 	ImGui::DockSpaceOverViewport(dockspace_id);
@@ -317,17 +395,34 @@ void gbe::Editor::PrepareUpdate()
 
 		ImGuiID r = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.25f, nullptr, &dockspace_id);
 		ImGuiID l = dockspace_id;
+
+		ImGuiID l_d = ImGui::DockBuilderSplitNode(l, ImGuiDir_Down, 0.35f, nullptr, &l);
+		ImGuiID l_u = l;
+
 		ImGuiID r_d = ImGui::DockBuilderSplitNode(r, ImGuiDir_Down, 0.5f, nullptr, &r);
 		ImGuiID r_u = r;
 
 		// Dock windows into the new nodes
 		this->viewportWindow.Set_is_open(true);
+		this->projectWindow.Set_is_open(true);
 		this->inspectorwindow.Set_is_open(true);
+		this->texturePainterWindow.Set_is_open(true);
 		this->lightWindow.Set_is_open(true);
 
-		ImGui::DockBuilderDockWindow(this->viewportWindow.GetWindowId().c_str(), l);
+		ImGui::DockBuilderDockWindow(this->viewportWindow.GetWindowId().c_str(), l_u);
+		
+		ImGui::DockBuilderDockWindow(this->projectWindow.GetWindowId().c_str(), l_d);
+
 		ImGui::DockBuilderDockWindow(this->inspectorwindow.GetWindowId().c_str(), r_u);
+		ImGui::DockBuilderDockWindow(this->texturePainterWindow.GetWindowId().c_str(), r_u);
+		
 		ImGui::DockBuilderDockWindow(this->lightWindow.GetWindowId().c_str(), r_d);
+
+		for (const auto& ext : this->external_windows)
+		{
+			ext->Set_is_open(true);
+			ImGui::DockBuilderDockWindow(ext->GetWindowId().c_str(), r_d);
+		}
 
 		ImGui::DockBuilderFinish(dockspace_id);
 	}
@@ -345,5 +440,8 @@ void gbe::Editor::PrepareUpdate()
 
 void gbe::Editor::RenderPass()
 {
+	if (instance == nullptr)
+		return;
+
 	ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 }

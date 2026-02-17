@@ -15,8 +15,8 @@
 
 namespace gbe {
     namespace gfx {
-
-        // Forward declarations for external data types
+        struct MeshData;
+        struct MaterialData;
         struct TextureData;
 
         class DrawCall {
@@ -28,11 +28,15 @@ namespace gbe {
             ShaderData* shaderdata;
 
         public:
-            DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* shaderdata);
+            DrawCall(asset::Mesh* mesh, asset::Material* material);
             ~DrawCall(); // The destructor must now destroy bgfx handles
 
-            asset::Mesh* get_mesh();
-            asset::Material* get_material();
+            MeshData* get_meshdata();
+            MaterialData* get_materialdata();
+
+            asset::Mesh* get_meshasset() { return m_mesh; };
+            asset::Material* get_materialasset() { return m_material; };
+
             inline ShaderData* get_shaderdata() {
                 return shaderdata;
             }
@@ -48,7 +52,7 @@ namespace gbe {
                 return true;
             }
 
-            inline bool ApplyTextureOverride(const TextureData& valueref, std::string target, int stage) const {
+            inline bool ApplyTextureOverride(TextureData* valueref, std::string target, int stage) const {
                 this->shaderdata->ApplyTextureOverride(valueref, target, stage);
                 return true;
             }

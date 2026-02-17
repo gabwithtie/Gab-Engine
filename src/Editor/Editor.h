@@ -6,6 +6,7 @@
 #include "Gui/MenuBar.h"
 #include "Gui/ContextMenus.h"
 #include "Gui/Windows/CreditsWindow.h"
+#include "Gui/Windows/TexturePainterWindow.h"
 #include "Gui/Windows/InspectorWindow.h"
 #include "Gui/Windows/SpawnWindow.h"
 #include "Gui/Windows/StateWindow.h"
@@ -14,6 +15,7 @@
 #include "Gui/Windows/ConsoleWindow.h"
 #include "Gui/Windows/ViewportWindow.h"
 #include "Gui/Windows/LightExplorer.h"
+#include "Gui/Windows/ProjectBrowser.h"
 
 namespace gbe {
 	class RenderPipeline;
@@ -21,11 +23,15 @@ namespace gbe {
 	class Window;
 
 	class Editor {
+	public:
+		enum PointerState
+		{
+			POINTER_NONE, POINTER_DOWN, POINTER_HOLD
+		};
 	private:
 		static Editor* instance;
 
 		Window* mwindow;
-		RenderPipeline* mrenderpipeline;
 		Time* mtime;
 
 		std::vector<gbe::Object*> selected;
@@ -37,6 +43,13 @@ namespace gbe {
 		std::vector<EditorAction> action_stack;
 		unsigned int cur_action_index = 0;
 
+		PointerState pointer_state = PointerState::POINTER_DOWN;
+		struct PointerHijack {
+			editor::GuiElement* hijacker = nullptr;
+			std::function<void(Vector2Int, PointerState)> callback = nullptr;
+			std::function<void()> on_end_hijack = nullptr;
+		} hijack_info;
+
 		bool pointer_inUi;
 		bool keyboard_inUi;
 		bool keyboard_shifting = false;
@@ -46,6 +59,7 @@ namespace gbe {
 
 		//============GUI===========//
 		bool gui_initialized = false;
+		uint32_t cur_id_oncursor = UINT32_MAX;
 
 		//DOCKS
 		editor::MenuBar menubar;
@@ -59,6 +73,8 @@ namespace gbe {
 		editor::ImageDebugger imageDebuggerWindow;
 		editor::ViewportWindow viewportWindow;
 		editor::LightExplorer lightWindow;
+		editor::ProjectBrowser projectWindow;
+		editor::TexturePainterWindow texturePainterWindow;
 
 		std::vector<editor::GuiWindow*> windows = {
 			&hierarchyWindow,
@@ -68,11 +84,15 @@ namespace gbe {
 			&consoleWindow,
 			&imageDebuggerWindow,
 			&viewportWindow,
-			&lightWindow
+			&lightWindow,
+			&projectWindow,
+			&texturePainterWindow
 		};
 
+		std::vector<editor::GuiWindow*> external_windows;
+
 	public:
-		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionalwindows);
+		Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime, std::vector<editor::GuiWindow*> additionals);
 		~Editor();
 		static void OnDeselect(Object* other);
 		static void SelectSingle(Object* other);
@@ -84,10 +104,24 @@ namespace gbe {
 		void PrepareSceneChange();
 		void PrepareUpdate();
 		void ProcessRawWindowEvent(void* rawwindowevent);
-		void RenderPass();
+		static void RenderPass();
 		inline bool FocusedOnEditorUI() {
 			bool pointer_really_inUi = pointer_inUi && !viewportWindow.Get_pointer_here();
 			return pointer_really_inUi || keyboard_inUi;
 		}
+		static void HijackPointer(editor::GuiElement* hijacker, std::function<void(Vector2Int, PointerState)> callback, std::function<void()> on_end_hijack = []() {}) {
+			if (instance->hijack_info.hijacker != nullptr) {
+				instance->hijack_info.on_end_hijack();
+			}
+			
+			instance->hijack_info = { hijacker, callback, on_end_hijack };
+		}
+		static void EndPointerHijack() {
+			if (instance->hijack_info.hijacker != nullptr) {
+				instance->hijack_info.on_end_hijack();
+				instance->hijack_info = { nullptr, nullptr, nullptr };
+			}
+		}
+
 	};
 }

@@ -5,97 +5,107 @@
 #include <functional>
 
 #include "Asset/gbe_asset.h"
+#include "Math/gbe_math.h"
 
 namespace gbe {
 	namespace editor {
-		struct InspectorField {
-			enum FieldType {
-				STRING,
-				INT,
-				FLOAT,
-				VECTOR3,
-				QUATERNION,
-				COLOR,
-				BOOLEAN,
-				FUNCTION,
-				ASSET
-			};
-			
+		enum FieldType {
+			STRING,
+			INT,
+			FLOAT,
+			VECTOR2,
+			VECTOR3,
+			VECTOR4,
+			QUATERNION,
+			COLOR,
+			BOOLEAN,
+			FUNCTION,
+			CHOICE,
+			TEXTURE,
+			DICTIONARY,
+			ASSET
+		};
+
+		struct InspectorField_base {
 			std::string name;
 			FieldType fieldtype;
 		};
 
-		struct InspectorAsset_base : public InspectorField {
-			std::function<std::vector<gbe::asset::internal::BaseAsset_base*>()> _getter;
-			gbe::asset::internal::BaseAsset_base** choice;
-			std::string choice_label = "NULL";
+		template<typename T>
+		struct InspectorField : public InspectorField_base {
+			std::function<T()> getter;
+			std::function<void(T)> setter;
+		};
 
-			std::vector<gbe::asset::internal::BaseAsset_base*> GetChoices() {
-				return _getter();
-			}
+		struct InspectorVec2 : public InspectorField<Vector2> {
 
-			InspectorAsset_base() {
-				this->fieldtype = FieldType::ASSET;
+			InspectorVec2() {
+				this->fieldtype = FieldType::VECTOR2;
 			}
 		};
 
-		template<class TAssetLoader, class TAsset>
-		struct InspectorAsset : public InspectorAsset_base {
-			TAssetLoader* loader;
-
-			InspectorAsset() {
-				this->_getter = [this]() {
-					return this->loader->GetAssetList();
-					};
-			}
-		};
-
-		struct InspectorVec3 : public InspectorField {
-			float* x = nullptr;
-			float* y = nullptr;
-			float* z = nullptr;
+		struct InspectorVec3 : public InspectorField<Vector3> {
 
 			InspectorVec3() {
 				this->fieldtype = FieldType::VECTOR3;
 			}
 		};
 
-		struct InspectorColor : public InspectorField {
-			float* r = nullptr;
-			float* g = nullptr;
-			float* b = nullptr;
+		struct InspectorVec4 : public InspectorField<Vector4> {
 
+			InspectorVec4() {
+				this->fieldtype = FieldType::VECTOR4;
+			}
+		};
+
+		struct InspectorColor : public InspectorField<Vector3> {
 			InspectorColor() {
 				this->fieldtype = FieldType::COLOR;
 			}
 		};
 
-		struct InspectorFloat : public InspectorField {
-			float* x = nullptr;
-			std::function<void()> onchange;
-
+		struct InspectorFloat : public InspectorField<float> {
 			InspectorFloat() {
 				this->fieldtype = FieldType::FLOAT;
 			}
 		};
 
-		struct InspectorBool : public InspectorField {
-			bool* x = nullptr;
+		struct InspectorAssetDictionary : public InspectorField<int> {
+			std::function<asset::internal::BaseAsset_base*(std::string)> a_getter;
+			std::function<void(std::string, asset::internal::BaseAsset_base*)> a_setter;
+			std::vector<std::string> *fieldList;
+			asset::AssetType assettype;
+			InspectorAssetDictionary() {
+				this->fieldtype = FieldType::DICTIONARY;
+			}
+		};
 
+		struct InspectorAsset : public InspectorField<std::string> {
+			asset::AssetType assettype;
+			InspectorAsset() {
+				this->fieldtype = FieldType::ASSET;
+			}
+		};
+
+		struct InspectorBool : public InspectorField<bool> {
 			InspectorBool() {
 				this->fieldtype = FieldType::BOOLEAN;
 			}
 		};
 
-		struct InspectorString : public InspectorField {
-			std::string* str = nullptr;
-
+		struct InspectorString : public InspectorField<std::string> {
 			InspectorString() {
 				this->fieldtype = FieldType::STRING;
 			}
 		};
 
-		struct InspectorButton :public InspectorField {
+		struct InspectorTexture : public InspectorField<std::string> {
+			InspectorTexture() {
+				this->fieldtype = FieldType::TEXTURE;
+			}
+		};
+
+		struct InspectorButton :public InspectorField<bool> {
 			std::function<void()> onpress;
 
 			InspectorButton() {
@@ -103,8 +113,16 @@ namespace gbe {
 			}
 		};
 
+		struct InspectorChoice : public InspectorField<int> {
+			std::vector<std::string> *labels;
+
+			InspectorChoice() {
+				this->fieldtype = FieldType::CHOICE;
+			}
+		};
+
 		struct InspectorData {
-			std::vector<InspectorField*> fields;
+			std::vector<InspectorField_base*> fields;
 		};
 	}
 }

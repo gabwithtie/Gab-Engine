@@ -41,7 +41,8 @@ namespace gbe::editor {
 				break;
 			}
 			case gbe::editor::FileDialogue::FOLDER: {
-
+				nfdpickfolderu8args_t args = { 0 };
+				result = NFD_PickFolderU8_With(&outPath, &args);
 				break;
 			}
 			}

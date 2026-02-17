@@ -12,7 +12,7 @@ namespace gbe {
 			std::string GetWindowId() override;
 
 			gbe::asset::Texture* logo_tex;
-			TextureData& logo_tex_data;
+			TextureData* logo_tex_data;
 		public:
 			CreditsWindow();
 			void DrawSelf() override;

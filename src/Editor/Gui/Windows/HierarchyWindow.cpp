@@ -76,7 +76,10 @@ void gbe::editor::HierarchyWindow::DrawChildList(Object* parent, std::string lab
 		if (is_leaf)
 			flags |= ImGuiTreeNodeFlags_Leaf;
 
+		editor::ContextMenus::GenericObject(parent);
+
 		expanded = ImGui::TreeNodeEx(label.c_str(), flags);
+
 
 		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
 			gbe::Editor::SelectSingle(parent);

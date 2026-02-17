@@ -11,22 +11,12 @@ namespace gbe::editor {
 	};
 
 	class ProjectLoader {
+		static std::filesystem::path currentproject_dir;
+
 	public:
-		inline static void Load(std::filesystem::path path) {
-			ProjectInfo newinfo;
-
-			asset::serialization::gbeParser::PopulateClass(newinfo, path);
-
-			auto tolocal = path.parent_path();
-			auto fullPath = tolocal / newinfo.entry;
-
-			asset::BatchLoader::LoadAssetsFromDirectory(tolocal);
-
-			SerializedObject data;
-			gbe::asset::serialization::gbeParser::PopulateClass(data, fullPath);
-			auto newroot = gbe::Engine::CreateBlankRoot(&data);
-
-			gbe::Engine::ChangeRoot(newroot);
+		static void Load(std::filesystem::path path);
+		inline static std::filesystem::path GetCurrentProjectPath() {
+			return currentproject_dir;
 		}
 	};
 }

@@ -11,41 +11,37 @@ namespace gbe {
 		struct TextureData {
 			// Replaced Vulkan objects with bgfx handle
 			bgfx::TextureHandle textureHandle = BGFX_INVALID_HANDLE;
+			bgfx::TextureFormat::Enum format; // <--- Add this
+			uint32_t bitsPerPixel;
 
 			// Vulkan objects removed:
 			// vulkan::ImageView* textureImageView;
 			// vulkan::Image* textureImage;
 			// vulkan::Sampler* textureSampler;
-
-			unsigned int width;
-			unsigned int height;
+			std::vector<uint8_t> data;
 
 			//UI
 			bool gui_initialized = false;
 			// VkDescriptorSet DS; // REMOVED
+
+			Vector2Int dimensions;
+			int colorchannels;
 		};
 
 		// typedef std::function<VkDescriptorSet(gbe::vulkan::Sampler*, gbe::vulkan::ImageView*)> GbeUiCallbackFunction; // REMOVED
 
-		class TextureLoader : public asset::AssetLoader<asset::Texture, asset::data::TextureImportData, asset::data::TextureLoadData, TextureData> {
+		class TextureLoader : public asset::AssetLoader<asset::Texture, asset::data::TextureImportData, TextureData> {
 		private:
 			TextureData defaultImage;
 			// static GbeUiCallbackFunction Ui_Callback; // REMOVED
 		protected:
-			TextureData LoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) override;
-			void UnLoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, asset::data::TextureLoadData* data) override;
+			void LoadAsset_(asset::Texture* asset, const asset::data::TextureImportData& importdata, TextureData* data) override;
+			void UnLoadAsset_(TextureData* data) override;
 		public:
 			void AssignSelfAsLoader() override;
 			static TextureData& GetDefaultImage();
+			static void ReSave(asset::Texture* asset);
 
-			// GetGuiHandle now returns the bgfx handle. The UI layer (e.g., ImGui's bgfx backend) uses this directly.
-			inline static bgfx::TextureHandle GetGuiHandle(TextureData* data) {
-				if (data->gui_initialized == false) {
-					// In a full implementation, you might register this handle with the UI system here.
-					data->gui_initialized = true;
-				}
-				return data->textureHandle;
-			}
 			inline virtual void OnAsyncTaskCompleted(AsyncLoadTask* loadtask) override {
 				//This is a synchronous loader
 			}

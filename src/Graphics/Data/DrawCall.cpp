@@ -4,14 +4,19 @@
 #include "../RenderPipeline.h"
 #include "CallInstance.h"
 #include "../AssetLoaders/TextureLoader.h" 
+#include "../AssetLoaders/MeshLoader.h"
+#include "../AssetLoaders/MaterialLoader.h"
 #include "Math/gbe_math.h" // For Vector2, Vector3, Vector4 types
+
 
 namespace gbe {
     using namespace gfx;
 
-    DrawCall::DrawCall(asset::Mesh* mesh, asset::Material* material, ShaderData* _shaderdata)
+    DrawCall::DrawCall(asset::Mesh* mesh, asset::Material* material)
     {
-        this->shaderdata = _shaderdata;
+        auto shader_id = MaterialLoader::GetAssetRuntimeData(material->Get_assetId())->shader->Get_assetId();
+
+        this->shaderdata = ShaderLoader::GetAssetRuntimeData(shader_id);
         this->m_mesh = mesh;
         this->m_material = material;
     }
@@ -24,22 +29,22 @@ namespace gbe {
         // In this adapted model, uniformBuffers were mostly for tracking and don't hold BGFX handles to destroy.
     }
 
-    asset::Mesh* gfx::DrawCall::get_mesh()
+    MeshData* gfx::DrawCall::get_meshdata()
     {
-        return this->m_mesh;
+        return MeshLoader::GetAssetRuntimeData(this->m_mesh->Get_assetId());
     }
 
-    asset::Material* gfx::DrawCall::get_material()
+    MaterialData* gfx::DrawCall::get_materialdata()
     {
-        return this->m_material;
+        return MaterialLoader::GetAssetRuntimeData(this->m_material->Get_assetId());
     }
 
     bool gfx::DrawCall::SyncMaterialData()
     {
-        for (size_t m_i = 0; m_i < this->get_material()->getOverrideCount(); m_i++)
+        for (size_t m_i = 0; m_i < this->get_materialdata()->getOverrideCount(); m_i++)
         {
             std::string id;
-            auto& overridedata = this->get_material()->getOverride(m_i, id);
+            auto& overridedata = this->get_materialdata()->getOverride(m_i, id);
 
             if (overridedata.type == asset::Shader::UniformFieldType::BOOL) {
                 // BOOL is typically represented as a float/int in shaders
@@ -63,7 +68,7 @@ namespace gbe {
             else if (overridedata.type == asset::Shader::UniformFieldType::TEXTURE)
             {
                 // TextureData must now be adapted to hold a bgfx::TextureHandle
-                auto& findtexturedata = TextureLoader::GetAssetRuntimeData(overridedata.value_tex->Get_assetId());
+                auto findtexturedata = TextureLoader::GetAssetRuntimeData(overridedata.value_tex->Get_assetId());
                 this->ApplyTextureOverride(findtexturedata, id, overridedata.tex_stage);
             }
         }

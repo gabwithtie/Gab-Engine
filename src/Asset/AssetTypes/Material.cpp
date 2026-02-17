@@ -5,13 +5,6 @@ namespace gbe {
 
 	Material::Material(std::filesystem::path path) : BaseAsset(path)
 	{
-	}
-
-	MaterialOverride::MaterialOverride() {
-
-	}
-	
-	MaterialOverride::~MaterialOverride() {
-
+		this->assettype = AssetType::MATERIAL;
 	}
 }

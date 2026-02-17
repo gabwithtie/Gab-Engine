@@ -21,7 +21,7 @@ gfx::Light* gbe::DirectionalLight::GetData()
     return &this->mLight;
 }
 
-void gbe::DirectionalLight::InitializeInspectorData()
+void gbe::DirectionalLight::GeneralInit()
 {
 	this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
 
@@ -35,12 +35,13 @@ void gbe::DirectionalLight::InitializeInspectorData()
 		dirlight_gizmo->Local().scale.Set(Vector3(0.2, 0.2, -1.0f));
 	}
 
-	LightObject::InitializeInspectorData();
+	LightObject::GeneralInit();
 
 	//INSPECTOR
 	auto backtrack_field = new gbe::editor::InspectorFloat();
 	backtrack_field->name = "Shadowmap backtrack";
-	backtrack_field->x = &this->mLight.dir_backtrack_dist;
+	backtrack_field->getter = [=]() {return this->mLight.dir_backtrack_dist; };
+	backtrack_field->setter = [=](float val) {this->mLight.dir_backtrack_dist = val; };
 
 	this->inspectorData->fields.push_back(backtrack_field);
 }

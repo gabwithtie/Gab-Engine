@@ -13,7 +13,7 @@
 void gbe::editor::MenuBar::DrawSelf()
 {
 	if (ImGui::BeginMenu("File")) {
-		if (ImGui::MenuItem("Load")) {
+		if (ImGui::MenuItem("Load Project")) {
 			std::string outPath = FileDialogue::GetFilePath(FileDialogue::OPEN, "root.gbe");
 
 			if (outPath.size() != 0) {
@@ -23,7 +23,21 @@ void gbe::editor::MenuBar::DrawSelf()
 				Console::Log("Cancelled File Selection.");
 			}
 		}
-		if (ImGui::MenuItem("Save")) {
+		if (ImGui::MenuItem("Load Scene")) {
+			std::string outPath = FileDialogue::GetFilePath(FileDialogue::OPEN, "level");
+
+			if (outPath.size() != 0) {
+				gbe::SerializedObject data;
+				gbe::asset::serialization::gbeParser::PopulateClass(data, outPath);
+				auto newroot = gbe::Engine::CreateBlankRoot(&data);
+
+				gbe::Engine::ChangeRoot(newroot);
+			}
+			else {
+				Console::Log("Cancelled File Selection.");
+			}
+		}
+		if (ImGui::MenuItem("Save Scene")) {
 			std::string outPath = FileDialogue::GetFilePath(FileDialogue::SAVE);
 
 			if (outPath.size() != 0) {
@@ -51,42 +65,6 @@ void gbe::editor::MenuBar::DrawSelf()
 		{
 			if (ImGui::MenuItem(window->GetWindowId().c_str())) {
 				window->Set_is_open(true);
-			}
-		}
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("Import")) {
-		if (ImGui::MenuItem("Model")) {
-			std::string outPath = FileDialogue::GetFilePath(FileDialogue::OPEN);
-
-			if (outPath.size() > 0) {
-				std::filesystem::path outpathpath(outPath);
-				std::filesystem::path destpathpath("cache/models/");
-				std::filesystem::path destmetapath("cache/models/");
-
-				std::string filename = "cache_" + outpathpath.filename().string();
-				std::string metafilename = filename + ".gbe";
-
-				destpathpath /= filename;
-				destmetapath /= metafilename;
-
-				asset::FileUtil::Copy(outPath, destpathpath);
-
-				auto importdata = asset::data::MeshImportData{
-					.path = filename
-				};
-
-				asset::serialization::gbeParser::ExportClass(importdata, destmetapath);
-
-				auto newmesh = new asset::Mesh(destmetapath);
-				auto material = asset::Material::GetAssetById("lit");
-
-				auto newrenderer = new RenderObject(RenderPipeline::RegisterDrawCall(newmesh, material));
-				newrenderer->SetParent(Engine::GetCurrentRoot());
-
-				auto pos = Engine::GetActiveCamera()->World().position.Get() + Engine::GetActiveCamera()->World().GetForward() * 5.0f;
-				newrenderer->World().position.Set(pos);
-				newrenderer->SetName("new " + filename);
 			}
 		}
 		ImGui::EndMenu();

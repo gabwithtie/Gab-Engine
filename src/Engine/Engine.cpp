@@ -159,7 +159,7 @@ namespace gbe {
 	void Engine::Run()
 	{
 #pragma region Asset Loading
-		asset::BatchLoader::LoadAssetsFromDirectory("DefaultAssets");
+		asset::BatchLoader::ReloadDirectory("DefaultAssets");
 
 		//Init all that needs assets here
 		renderpipeline.InitializeAssetRequisites();
@@ -416,6 +416,12 @@ namespace gbe {
 			for (auto rootdeletee : toDeleteRoots)
 			{
 				rootdeletee->SetParent(nullptr);
+
+				rootdeletee->CallRecursively([](Object* child) {
+					for (auto& func : Engine::instance->on_delete_callbacks)
+						func((void*)child);
+
+					}, false);
 			}
 
 			for (auto rootdeletee : toDeleteRoots)

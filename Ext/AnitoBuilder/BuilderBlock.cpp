@@ -2,10 +2,13 @@
 
 #include <vector>
 
-#include "BuilderBlockSet.h"
+#include "BuilderBlockFace.h"
 #include "Graphics/gbe_graphics.h"
 #include "Asset/gbe_asset.h"
 #include "Math/gbe_math.h"
+#include "BuilderBlockUnit.h"
+
+#include "AnitoBuilderExtension.h"
 
 namespace gbe::ext::AnitoBuilder {
 	void BuilderBlock::LoadAssets()
@@ -14,48 +17,54 @@ namespace gbe::ext::AnitoBuilder {
 		ceiling_parent = new Object();
 		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_POS_X);
 		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_POS_Z);
-		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT_X);
-		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT_Y);
-		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT_Z);
+		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_ROT);
+		ceiling_parent->PushEditorFlag(Object::EditorFlags::STATIC_SCALE);
 		ceiling_parent->SetParent(this);
 		ceiling_parent->Local().position.Set(Vector3(0, this->height, 0));
 
 		//MATERIAL SETUP
-		auto material = asset::Material::GetAssetById("plaster");
+		def_material = asset::Material::GetAssetById("plaster");
 
 		//Editor
 		ceiling_editor_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), asset::Material::GetAssetById("grid"));
-		
+
 		//Main - normal
-		ceiling_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), material);
-		
-		roof_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("roof_1"), material);
-		
-		wallnorm_DC[0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wallnorm1"), material);
-		wallnorm_DC[1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("wallnorm2"), material);
+		drawcall_dict.insert_or_assign("fillerwall_1", &special_DC[0]);
+		drawcall_dict.insert_or_assign("fillerwall_2", &special_DC[1]);
+		drawcall_dict.insert_or_assign("fillerwall_3", &special_DC[2]);
+		drawcall_dict.insert_or_assign("fillerwall_4", &special_DC[3]);
+		drawcall_dict.insert_or_assign("fillerwall_5", &special_DC[4]);
+		drawcall_dict.insert_or_assign("horizontal_axis_triangle", &ceiling_DC);
+		drawcall_dict.insert_or_assign("axisroof", &top_roof_DC);
+		drawcall_dict.insert_or_assign("roof_1", &ledge_dc);
+		drawcall_dict.insert_or_assign("wallnorm1", &wallnorm_DC[0]);
+		drawcall_dict.insert_or_assign("wallnorm2", &wallnorm_DC[1]);
+		drawcall_dict.insert_or_assign("3x4wall_1-1", &wall3x4_DC[0][0]);
+		drawcall_dict.insert_or_assign("3x4wall_1-2", &wall3x4_DC[0][1]);
+		drawcall_dict.insert_or_assign("3x4wall_1-3", &wall3x4_DC[0][2]);
+		drawcall_dict.insert_or_assign("3x4wall_2-1", &wall3x4_DC[1][0]);
+		drawcall_dict.insert_or_assign("3x4wall_2-2", &wall3x4_DC[1][1]);
+		drawcall_dict.insert_or_assign("3x4wall_2-3", &wall3x4_DC[1][2]);
+		drawcall_dict.insert_or_assign("3x4wall_3-1", &wall3x4_DC[2][0]);
+		drawcall_dict.insert_or_assign("3x4wall_3-2", &wall3x4_DC[2][1]);
+		drawcall_dict.insert_or_assign("3x4wall_3-3", &wall3x4_DC[2][2]);
+		drawcall_dict.insert_or_assign("3x4wall_4-1", &wall3x4_DC[3][0]);
+		drawcall_dict.insert_or_assign("3x4wall_4-2", &wall3x4_DC[3][1]);
+		drawcall_dict.insert_or_assign("3x4wall_4-3", &wall3x4_DC[3][2]);
+		drawcall_dict.insert_or_assign("2x3wall_1-1", &wall2x3_DC[0][0]);
+		drawcall_dict.insert_or_assign("2x3wall_1-2", &wall2x3_DC[0][1]);
+		drawcall_dict.insert_or_assign("2x3wall_2-1", &wall2x3_DC[1][0]);
+		drawcall_dict.insert_or_assign("2x3wall_2-2", &wall2x3_DC[1][1]);
+		drawcall_dict.insert_or_assign("2x3wall_3-1", &wall2x3_DC[2][0]);
+		drawcall_dict.insert_or_assign("2x3wall_3-2", &wall2x3_DC[2][1]);
+		drawcall_dict.insert_or_assign("windowwall_1-1", &windowwall_DC[0][0]);
+		drawcall_dict.insert_or_assign("windowwall_1-2", &windowwall_DC[0][1]);
 
-		wall3x4_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-1"), material);
-		wall3x4_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-2"), material);
-		wall3x4_DC[0][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_1-3"), material);
-		wall3x4_DC[1][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-1"), material);
-		wall3x4_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-2"), material);
-		wall3x4_DC[1][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_2-3"), material);
-		wall3x4_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-1"), material);
-		wall3x4_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-2"), material);
-		wall3x4_DC[2][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_3-3"), material);
-		wall3x4_DC[3][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-1"), material);
-		wall3x4_DC[3][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-2"), material);
-		wall3x4_DC[3][2] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("3x4wall_4-3"), material);
-
-		wall2x3_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_1-1"), material);
-		wall2x3_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_1-2"), material);
-		wall2x3_DC[1][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-1"), material);
-		wall2x3_DC[1][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_2-2"), material);
-		wall2x3_DC[2][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-1"), material);
-		wall2x3_DC[2][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("2x3wall_3-2"), material);
-
-		windowwall_DC[0][0] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("windowwall_1-1"), material);
-		windowwall_DC[0][1] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("windowwall_1-2"), material);
+		for (const auto& pair : drawcall_dict)
+		{
+			*pair.second = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById(pair.first), def_material);
+			drawcall_list.push_back(pair.first);
+		}
 	}
 
 	BuilderBlock::BuilderBlock(gbe::Vector3 corners[4], float height)
@@ -81,48 +90,78 @@ namespace gbe::ext::AnitoBuilder {
 
 		AddBlock(corner_ptrs);
 
-		InitializeInspectorData();
-
-		this->SetModelShown(true);
-		this->UpdateModelShown();
+		GeneralInit();
+		
+		Refresh();
 	}
 
-	void BuilderBlock::InitializeInspectorData()
+
+	void BuilderBlock::GeneralInit()
 	{
-		Object::InitializeInspectorData();
+		Object::GeneralInit();
 
 		this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
+
+		UpdateMaterials();
 
 		//INSPECTOR
 		{
 			auto field = new gbe::editor::InspectorFloat();
-			field->name = "Height";
-			field->x = &this->height;
-			field->onchange = [=]() {
-				if(!model_shown)
-					this->ResetAllHandles();
+			field->name = "segment_max_width";
+			field->getter = [=]() { return this->wall_max_width; };
+			field->setter = [=](float val) {
+				this->wall_max_width = val;
+				this->Refresh();
 				};
 
 			this->inspectorData->fields.push_back(field);
 		}
-		{
-			auto field = new gbe::editor::InspectorFloat();
-			field->name = "segment_max_width";
-			field->x = &this->wall_max_width;
 
-			this->inspectorData->fields.push_back(field);
-		}
 		{
 			auto field = new gbe::editor::InspectorFloat();
 			field->name = "segment_max_height";
-			field->x = &this->wall_max_height;
+			field->getter = [=]() { return this->wall_max_height; };
+			field->setter = [=](float val) {
+				this->wall_max_height = val;
+				this->Refresh();
+				};
 
 			this->inspectorData->fields.push_back(field);
 		}
+
 		{
 			auto field = new gbe::editor::InspectorFloat();
 			field->name = "segment_depth";
-			field->x = &this->thickness;
+			field->getter = [=]() { return this->thickness; };
+			field->setter = [=](float val) {
+				this->thickness = val;
+				this->Refresh();
+				};
+
+			this->inspectorData->fields.push_back(field);
+		}
+
+		{
+			auto field = new gbe::editor::InspectorAssetDictionary();
+			field->name = "Materials";
+			field->assettype = asset::MATERIAL;
+			field->fieldList = &this->drawcall_list;
+			field->a_getter = [=](std::string key) -> asset::internal::BaseAsset_base* {
+				if (this->data.material_overrides.find(key) == this->data.material_overrides.end())
+					return nullptr;
+				std::string matid = this->data.material_overrides[key];
+				return asset::Material::GetAssetById(matid);
+				};
+			field->a_setter = [=](std::string key, asset::internal::BaseAsset_base* asset) {
+				if (asset == nullptr) {
+					this->data.material_overrides.erase(key);
+				}
+				else {
+					std::string matid = asset->Get_assetId();
+					this->data.material_overrides[key] = matid;
+				}
+				this->Refresh();
+				};
 
 			this->inspectorData->fields.push_back(field);
 		}
@@ -133,12 +172,9 @@ namespace gbe::ext::AnitoBuilder {
 		auto obj = Object::Serialize();
 
 		for (size_t s = 0; s < data.sets.size(); s++) {
-			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+			for (size_t i = 0; i < data.sets[s].faces.size(); i++)
 			{
-				auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
-
-				this->data.sets[s].segs[i].allow_multiseg = handle->Get_allow_special_walls();
-				this->data.sets[s].segs[i].is_backside = handle->Get_is_backside();
+				auto handle = this->handle_pool[this->data.sets[s].faces[i].handleindex];
 			}
 		}
 
@@ -164,37 +200,31 @@ namespace gbe::ext::AnitoBuilder {
 			this->data.AddPosition({ pos[0], pos[1] , pos[2] });
 		}
 
-		//OBJECTS
+		//ADDING
 		for (const auto& set : newdata.sets)
 		{
 			int corner_ptrs[4] = {
-				set.segs[0].seg.first,
-				set.segs[1].seg.first,
-				set.segs[2].seg.first,
-				set.segs[3].seg.first
+				set.faces[0].seg.first,
+				set.faces[1].seg.first,
+				set.faces[2].seg.first,
+				set.faces[3].seg.first
 			};
 
 			this->AddBlock(corner_ptrs);
 		}
 
-		for (size_t s = 0; s < newdata.sets.size(); s++) {
-			for (size_t i = 0; i < newdata.sets[s].segs.size(); i++)
-			{
-				auto handle = this->handle_pool[newdata.sets[s].segs[i].handleindex];
+		//OVERRWRITING
+		this->data = newdata;
 
-				handle->Set_allow_special_walls(newdata.sets[s].segs[i].allow_multiseg);
-				handle->Set_is_backside(newdata.sets[s].segs[i].is_backside);
-			}
-		}
-
-		InitializeInspectorData();
+		GeneralInit();
 		
-		this->SetModelShown(true);
-		this->UpdateModelShown();
+		Refresh();
 	}
 
 	void BuilderBlock::UpdateModelShown()
 	{
+		UpdateMaterials();
+
 		//set editor handle visibility
 		for (const auto& handle : this->handle_pool)
 		{
@@ -221,225 +251,305 @@ namespace gbe::ext::AnitoBuilder {
 		}
 
 		if (model_shown) {
-			for (const auto& handle : this->handle_pool)
+			auto temppool = std::vector<BuilderBlockFace*>(this->handle_pool);
+			
+			float inset_distance = 2.0f;
+			float roofheight = 2.5;
+			float roof_overshoot = 1.5;
+
+			const auto GetQuadInsetPoints = [=](BlockSet& targetSet)
+				{
+					std::vector<std::pair<Vector3, Vector3>> allInsetSegments;
+					int numCorners = targetSet.faces.size();
+
+					enum VertexType
+					{
+						BISECTOR,
+						L_EDGE,
+						R_EDGE
+					};
+
+					auto CalculatePointInset = [&](int i, VertexType returntype) -> Vector3
+						{
+							int idxPrev = (i + numCorners - 1) % numCorners;
+							int idxNext = i;
+
+							bool prevIsEdge = handle_pool[targetSet.faces[idxPrev].handleindex]->Get_is_edge();
+							bool nextIsEdge = handle_pool[targetSet.faces[idxNext].handleindex]->Get_is_edge();
+
+							Vector3 pMid = data.GetPosition(targetSet.faces[i].seg.first);
+							Vector3 pPrev = data.GetPosition(targetSet.faces[idxPrev].seg.first);
+							Vector3 pNext = data.GetPosition(targetSet.faces[idxNext].seg.second);
+
+							Vector3 dPrev = ((Vector3)(pPrev - pMid)).Normalize();
+							Vector3 dNext = ((Vector3)(pNext - pMid)).Normalize();
+
+							// CASE 1: True Exterior Corner (Inward Bisector)
+							if (returntype == BISECTOR) {
+								Vector3 bisector = ((Vector3)(dPrev + dNext)).Normalize();
+								float dot = std::clamp(dPrev.Dot(dNext), -1.0f, 1.0f);
+								float angle = acos(dot);
+								float len = inset_distance / sin(angle * 0.5f);
+								if (dNext.Cross(dPrev).y < 0) bisector = -bisector;
+								return pMid + (bisector * len);
+							}
+							else {
+								float dot = std::clamp(dPrev.Dot(dNext), -1.0f, 1.0f);
+								float angle = acos(dot);
+								float slideLen = inset_distance / sin(angle);
+
+								// We slide away from the junction point toward the edge
+								return (returntype == L_EDGE) ? pMid + (dPrev * slideLen) : pMid + (dNext * slideLen);
+							}
+
+							return pMid;
+						};
+
+					for (int i = 0; i < numCorners; i++)
+					{
+						bool currentIsEdge = handle_pool[targetSet.faces[i].handleindex]->Get_is_edge();
+
+						Vector3 L_bisector = CalculatePointInset(i, BISECTOR);
+						Vector3 L_edge = CalculatePointInset(i, R_EDGE);
+						Vector3 R_bisector = CalculatePointInset((i + 1) % numCorners, BISECTOR);
+						Vector3 R_edge = CalculatePointInset((i + 1) % numCorners, L_EDGE);
+
+						allInsetSegments.push_back({ L_bisector, R_bisector });
+					}
+
+					return allInsetSegments;
+				};
+
+			std::vector<std::pair<Vector3, Vector3>> insetpolygon;
+
+			//Roof handles
+
+			for (auto& set : this->data.sets)
+			{
+				bool put_roof = true;
+				auto insetpoints = GetQuadInsetPoints(set);
+
+				for (const auto& i_pair : insetpoints)
+				{
+					auto a = i_pair.first;
+					auto b = i_pair.second;
+
+					a.y = 0;
+					b.y = 0;
+
+					if (Vector3(a - b).SqrMagnitude() < wall_max_width * wall_max_width) {
+						put_roof = false;
+						break;
+					}
+				}
+
+				if (put_roof)
+					for (const auto& i_pair : insetpoints)
+					{
+						auto a = i_pair.first;
+						auto b = i_pair.second;
+
+						a.y = 0;
+						b.y = roofheight;
+
+						insetpolygon.push_back(i_pair);
+
+						auto handle = new BuilderBlockFace(this, 0);
+						handle->SetParent(ceiling_parent);
+						handle->PushEditorFlag(Object::SELECT_PARENT_INSTEAD);
+						display_renderers.push_back(handle);
+
+						temppool.push_back(handle);
+
+						handle->SetPositions(a, b);
+
+						handle->Set_visible(false);
+					}
+			}
+
+			for (auto& handle : temppool)
 			{
 				if (!handle->Get_is_edge())
 					continue;
 
-				bool odd = handle->Get_cur_width() % 2 == 1;
-				bool can_put_facade = handle->Get_cur_height() >= 3 && handle->Get_cur_width() >= 5 && odd;
+				auto handle_data = GetSeg(handle);
+
+				bool can_put_facade = handle->Get_cur_height() >= 3 && handle->Get_cur_width() >= 5;
 
 				const auto get_center_x = [=](RenderObject* obj) {
-					int row_index = handle->Get_row(obj);
+					int row_index = handle->Get_x(obj);
 
 					int center_based_x = 0;
 
-					if (handle->Get_cur_width() % 2 == 1)
-						center_based_x = - (row_index - (handle->Get_cur_width() / 2));
-					else {
-						center_based_x = - (row_index - (handle->Get_cur_width() / 2));
-					}
+					center_based_x = -(row_index - (handle->Get_cur_width() / 2));
 
-					return center_based_x;
-				};
+					return -center_based_x;
+					};
 
-				//MAIN SEGMENTS
+
+				// MAIN SEGMENTS
 				for (const auto& obj : handle->Get_all_segs())
 				{
+					int floor_index = handle->Get_floor(obj);
+
 					Vector3 pos = obj->World().position.Get();
 					pos -= Vector3(0, handle->Get_height_per_wall() / 2.0f, 0);
 
-					Quaternion rot = obj->World().rotation.Get();
-					Quaternion flip_rot = Quaternion::Euler(Vector3(0, 180, 0));
-					rot *= flip_rot;
+					// ----------------------------
 
-					int floor_index = handle->Get_floor(obj);
-					int row_index = handle->Get_row(obj);
+					const auto process_renderobject = [&](RenderObject* newrenderer) {
+						newrenderer->SetParent(handle);
+						newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
+						display_renderers.push_back(newrenderer);
+
+						auto inv__import_scale = Vector3(1.0 / wall_import_width, 1.0f / wall_import_height_from_zero, 1);
+						Vector3 final_scale = Vector3(1);
+						auto target_local_scale = obj->Local().scale.Get();
+						final_scale.x = (inv__import_scale.x * target_local_scale.x);
+						final_scale.y = (inv__import_scale.y * target_local_scale.y);
+						final_scale.z = thickness;
+
+						newrenderer->Local().scale.Set(final_scale);
+						newrenderer->World().position.Set(pos);
+
+						return newrenderer;
+						};
+
+					int x = handle->Get_x(obj);
 					int center_based_x = get_center_x(obj);
 
-					RenderObject* newrenderer = [=]()
-					{
-							if (handle->Get_allow_special_walls()) {
-								if (can_put_facade) //5x4 walls, minus 1 because the last layer can be pahabol
-								{
+					process_renderobject([&]()
+						{
+							if (handle_data != nullptr) {
+								//Facade
+								if (handle_data->decoration_type > 0 && handle_data->decoration_type <= 2 && can_put_facade) {
 									int choice_x = center_based_x + 1;
-
-									if (choice_x >= 0 && choice_x < 3 && floor_index < 4)
-									{
-										if (handle->Get_is_backside())
-										{
-											if (floor_index == 0 || floor_index == 3)
-												return new RenderObject(windowwall_DC[0][0]);
-											else if (floor_index < 4)
-												return new RenderObject(windowwall_DC[0][1]);
+									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
+										if (handle_data->decoration_type == 2) {
+											if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
+											else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
 										}
-
 										return new RenderObject(wall3x4_DC[floor_index][choice_x]);
 									}
-
 									if (choice_x == -1 || choice_x == 3) {
-										if (floor_index == 0 || floor_index == 3)
-											return new RenderObject(windowwall_DC[0][0]);
-										else if (floor_index < 4)
-											return new RenderObject(windowwall_DC[0][1]);
+										if (floor_index == 0 || floor_index == 3) return new RenderObject(windowwall_DC[0][0]);
+										else if (floor_index < 4) return new RenderObject(windowwall_DC[0][1]);
 									}
 								}
+								//Pillars
+								if (handle_data->decoration_type == 3 && handle_data->edge_designs_interval >= 0)
+									if (handle->Get_cur_height() >= 3) {
+										int choice_x = -1;
+										int interval_x = (x + handle_data->edge_designs_offset) % (handle_data->edge_designs_interval + wall2x3_DC[0].size());
+										
+										choice_x = interval_x;
+										if (choice_x >= wall2x3_DC[0].size())
+											choice_x = -1;
+										
+										if (interval_x == 0 && x + 2 >= handle->Get_cur_width()) choice_x = -1;
+										if (interval_x == 1 && x + 1 >= handle->Get_cur_width()) choice_x = -1;
+										if (interval_x == 1 && x - 1 < 0) choice_x = -1;
 
-								if (handle->Get_cur_height() >= 3) { //2x3 walls
-									int choice_x = -1;
-									int interval_x = abs(center_based_x) % 4;
+										if (choice_x >= 0)
+										{
+											if (floor_index == 0)
+												return new RenderObject(wall2x3_DC[0][choice_x]);
+											else if (floor_index == handle->Get_cur_height() - 1)
+												return new RenderObject(wall2x3_DC[2][choice_x]);
+											else
+												return new RenderObject(wall2x3_DC[1][choice_x]);
 
-									int interval_choice_0 = 1;
-									int interval_choice_1 = 2;
-
-									if (center_based_x > 0)
-									{
-										//LEFT
-										if (interval_x == interval_choice_0)
-											choice_x = 0;
-										if (interval_x == interval_choice_1)
-											choice_x = 1;
+										}
 									}
-									else
-									{
-										//RIGHT
-										if (interval_x == interval_choice_0)
-											choice_x = 1;
-										if (interval_x == interval_choice_1)
-											choice_x = 0;
-									}
-
-									if (interval_x == interval_choice_0 && abs(center_based_x) + 2 > (handle->Get_cur_width() / 2)) {
-										choice_x = -1;
-									}
-									if (interval_x == interval_choice_1 && abs(center_based_x) + 1 > (handle->Get_cur_width() / 2)) {
-										choice_x = -1;
-									}
-
-
-									if (choice_x >= 0 && floor_index < 3)
-										return new RenderObject(wall2x3_DC[floor_index][choice_x]);
+								if (floor_index == 0) return new RenderObject(wallnorm_DC[0]);
+								if (floor_index > 0)
+								{
+									return new RenderObject(wallnorm_DC[1]);
 								}
 							}
 
-							if (floor_index == 0)
-								return new RenderObject(wallnorm_DC[0]);
-							if (floor_index > 0)
-								return new RenderObject(wallnorm_DC[1]);
-							
-							return (RenderObject*)nullptr;
-						}();
-
-					newrenderer->SetParent(handle);
-					newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-					display_renderers.push_back(newrenderer);
-
-					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
-					Vector3 final_scale = Vector3(1);
-					final_scale.x = inv__import_scale.x * (handle->Get_width_per_wall() / 2.0f);
-					final_scale.y = inv__import_scale.y * (handle->Get_height_per_wall());
-					final_scale.z = thickness;
-
-					newrenderer->Local().scale.Set(final_scale);
-					newrenderer->World().position.Set(pos);
-					newrenderer->World().rotation.Set(rot);
-				}
-
-				//PAHABOL SEGMENTS
-				for (const auto& obj : handle->Get_all_segs())
-				{
-					int floor_index = handle->Get_floor(obj);
-					int row_index = handle->Get_row(obj);
+							return new RenderObject(wallnorm_DC[1]);
+						}());
 
 					//iterate only the last floor
 					if (handle->Get_cur_height() - 1 != floor_index) {
 						continue;
 					}
 
-					Vector3 pos = obj->World().position.Get();
-					pos -= Vector3(0, handle->Get_height_per_wall() / 2.0f, 0);
 					pos += Vector3(0, handle->Get_height_per_wall(), 0); // add 1 more floor worth of height
 
-					Quaternion rot = obj->World().rotation.Get();
-					Quaternion flip_rot = Quaternion::Euler(Vector3(0, 180, 0));
-					rot *= flip_rot;
+					if (handle_data != nullptr) {
+						process_renderobject([&]()
+							{
+								if (handle_data->decoration_type == 1 || handle_data->decoration_type == 2) {
+									if (can_put_facade && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
+									{
+										int choice_x = center_based_x + 1;
 
-					int center_based_x = get_center_x(obj);
+										if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
+											if (handle_data->decoration_type == 2)
+												return new RenderObject(windowwall_DC[0][1]);
+											else
+												return new RenderObject(wall3x4_DC[3][choice_x]);
+										}
 
-					RenderObject* newrenderer = [=]()
-						{
-							if (handle->Get_allow_special_walls()) {
-								if (can_put_facade && handle->Get_cur_height() == 3) //3x4 walls, minus 1 because the last layer can be pahabol
-								{
-									int choice_x = center_based_x + 1;
-
-									if (choice_x >= 0 && choice_x < 3 && floor_index < 4) {
-										if (handle->Get_is_backside())
-											return new RenderObject(windowwall_DC[0][1]);
-										else
-											return new RenderObject(wall3x4_DC[3][choice_x]);
-									}
-
-									if (choice_x == -1 || choice_x == 3) {
-										return new RenderObject(windowwall_DC[0][0]);
+										if (choice_x == -1 || choice_x == 3) {
+											return new RenderObject(windowwall_DC[0][0]);
+										}
 									}
 								}
-							}
 
-							return new RenderObject(roof_DC);
-						}();
-
-					newrenderer->SetParent(handle);
-					newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-					display_renderers.push_back(newrenderer);
-
-					auto inv__import_scale = Vector3(1.0f / (wall_import_width / 2), 1.0f / wall_import_height_from_zero, 1);
-					Vector3 final_scale = Vector3(1);
-					final_scale.x = inv__import_scale.x * (handle->Get_width_per_wall() / 2.0f);
-					final_scale.y = inv__import_scale.y * (handle->Get_height_per_wall());
-					final_scale.z = thickness;
-
-					newrenderer->Local().scale.Set(final_scale);
-					newrenderer->World().position.Set(pos);
-					newrenderer->World().rotation.Set(rot);
+								return new RenderObject(ledge_dc);
+							}());
+					}
 				}
 			}
 
 			for (const auto& roof : this->roof_pool)
 			{
-				for (const auto& roof_obj : roof.handle_renderers)
-				{
-					RenderObject* newrenderer = new RenderObject(ceiling_DC);
-					newrenderer->SetParent(ceiling_parent);
-					newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-					display_renderers.push_back(newrenderer);
-					newrenderer->Local().SetMatrix(roof_obj->Local().GetMatrix());
-				}
+				const auto createroofobj = [=](DrawCall* dc, int index, float height, float offset, float inset) {
+					RenderObject* base_ceiling = new RenderObject(dc);
+					base_ceiling->SetParent(ceiling_parent);
+					base_ceiling->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
+					display_renderers.push_back(base_ceiling);
+
+					ResetRoof(base_ceiling, roof.parent_index, index, height, inset, offset);
+					};
+
+				createroofobj(ceiling_DC, 0, 0.02f, 0, 0);
+				createroofobj(ceiling_DC, 2, 0.02f, 0, 0);
+				createroofobj(top_roof_DC, 0, 0.5f, roofheight, inset_distance - 0.5f);
+				createroofobj(top_roof_DC, 2, 0.5f, roofheight, inset_distance - 0.5f);
 			}
-		}
-
-	}
-
-	void BuilderBlock::SetModelShown(bool value)
-	{
-		if (model_shown != value) {
-			model_shown = value;
-			this->UpdateModelShown();
 		}
 	}
 
 	void BuilderBlock::UpdateHandleSegment(int s, int i, Vector3& l, Vector3& r)
 	{
-		i %= this->data.sets[s].segs.size();
+		i %= this->data.sets[s].faces.size();
 
-		auto& seg = this->data.sets[s].segs[i].seg;
-		auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
+		auto& seg = this->data.sets[s].faces[i].seg;
+		auto handle = this->handle_pool[this->data.sets[s].faces[i].handleindex];
 
-		auto delta_right = handle->Local().GetRight() * (handle->Get_handle_parent()->Local().scale.Get().x);
-		auto delta_up = -Vector3(0, height * 0.5f, 0);
+		auto delta_right = handle->Local().GetRight() * (handle->Local().scale.Get().x);
 
-		l = handle->Local().position.Get() - delta_right + delta_up;
-		r = handle->Local().position.Get() + delta_right + delta_up;
+		l = handle->Local().position.Get() + delta_right;
+		r = handle->Local().position.Get() - delta_right;
+	}
+
+	void BuilderBlock::UpdateMaterials()
+	{
+		for (const auto& drawcall_id : this->drawcall_list)
+		{
+			asset::Material* mat = nullptr;
+
+			if (this->data.material_overrides.find(drawcall_id) == this->data.material_overrides.end())
+				mat = def_material;
+			else
+				mat = asset::Material::GetAssetById(this->data.material_overrides[drawcall_id]);
+
+			*drawcall_dict[drawcall_id] = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById(drawcall_id), mat);
+		}
 	}
 
 	void BuilderBlock::Refresh()
@@ -451,7 +561,7 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::ResetHandle(int s, int i) {
 		auto& set = this->data.sets[s];
-		auto& seg = this->data.sets[s].segs[i].seg;
+		auto& seg = this->data.sets[s].faces[i].seg;
 
 		SetRoof* set_roof = nullptr;
 
@@ -467,21 +577,17 @@ namespace gbe::ext::AnitoBuilder {
 		ResetRoof(set_roof->handle_renderers[0], s, 0);
 		ResetRoof(set_roof->handle_renderers[1], s, 2);
 
-		auto handle = this->handle_pool[this->data.sets[s].segs[i].handleindex];
-		auto handle_parent = handle->Get_handle_parent();
-
-		Vector3 delta = data.GetPosition(seg.first) - data.GetPosition(seg.second);
-		float half_mag = delta.Magnitude() * 0.5f;
-
-		handle->Local().position.Set(Vector3::Mid(data.GetPosition(seg.first), data.GetPosition(seg.second)) + Vector3(0, height * 0.5f, 0));
-		handle->Local().rotation.Set(Quaternion::LookAtRotation(delta.Cross(Vector3::Up()).Normalize(), Vector3::Up()));
-		handle_parent->Local().scale.Set(Vector3(half_mag, height * 0.5f, 0.01f));
+		auto handle = this->handle_pool[this->data.sets[s].faces[i].handleindex];
+	
+		auto second = data.GetPosition(seg.second);
+		second.y += height;
+		handle->SetPositions(data.GetPosition(seg.first), second);
 	}
 
 	void BuilderBlock::ResetAllHandles()
 	{
 		for (size_t s = 0; s < data.sets.size(); s++) {
-			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+			for (size_t i = 0; i < data.sets[s].faces.size(); i++)
 			{
 				ResetHandle(s, i);
 			}
@@ -511,24 +617,41 @@ namespace gbe::ext::AnitoBuilder {
 		return true;
 	}
 
-	void BuilderBlock::ResetRoof(Object* roof, int s, int i)
+	void BuilderBlock::ResetRoof(Object* roof, int s, int i, float _height, float _inset, float _y)
 	{
-		const auto right = data.GetPosition(this->GetHandle(s, i).seg.second);
-		const auto left = data.GetPosition(this->GetHandle(s, i - 1).seg.first);
+		Vector3 right = data.GetPosition(this->GetHandle(s, i).seg.second) + Vector3(0, _y, 0);
+		Vector3 left = data.GetPosition(this->GetHandle(s, i - 1).seg.first) + Vector3(0, _y, 0);
+
+		Vector3 opp = data.GetPosition(this->GetHandle(s, i + 2).seg.first) + Vector3(0, _y, 0);
 
 		// Assuming you have your axis vectors and position vector
-		Vector3 position = data.GetPosition(this->GetHandle(s, i).seg.first);
-		Vector3 xAxis = right - position; // Example: local X-axis
-		Vector3 yAxis = Vector3(0.0f, 0.02f, 0.0f); // Example: local Y-axis
-		Vector3 zAxis = left - position; // Example: local Z-axis
+		Vector3 position = data.GetPosition(this->GetHandle(s, i).seg.first) + Vector3(0, _y, 0);
+
+		Vector3 i_xAxis = right - position; // Example: local X-axis
+		Vector3 i_zAxis = left - position; // Example: local Z-axis
+		Vector3 o_xAxis = right - opp; // Example: local X-axis
+		Vector3 o_zAxis = left - opp; // Example: local Z-axis
+		Vector3 yAxis = Vector3(0.0f, _height, 0.0f); // Example: local Y-axis
+
+		auto r_norm = i_xAxis.Normalize();
+		auto l_norm = i_zAxis.Normalize();
+		auto opp_r_norm = o_xAxis.Normalize();
+		auto opp_l_norm = o_zAxis.Normalize();
+
+		position += (i_xAxis.Normalize() + i_zAxis.Normalize()) * _inset;
+		Vector3 target_l = right - ((i_xAxis.Normalize() + o_xAxis.Normalize()) * _inset);
+		Vector3 target_r = left - ((i_zAxis.Normalize() + o_zAxis.Normalize()) * _inset);
 
 		// Create the glm::mat4
 		Matrix4 modelMatrix = Matrix4(1.0f); // Initialize with identity matrix
 
+		Vector3 final_l = target_l - position;
+		Vector3 final_r = target_r - position;
+
 		// Assign the axis vectors to the first three columns
-		modelMatrix[0] = Vector4(xAxis, 0.0f); // X-axis
+		modelMatrix[0] = Vector4(final_l, 0.0f); // X-axis
 		modelMatrix[1] = Vector4(yAxis, 0.0f); // Y-axis
-		modelMatrix[2] = Vector4(zAxis, 0.0f); // Z-axis
+		modelMatrix[2] = Vector4(final_r, 0.0f); // Z-axis
 
 		// Assign the position vector to the fourth column (translation)
 		modelMatrix[3] = Vector4(position, 1.0f); // Translation
@@ -555,7 +678,7 @@ namespace gbe::ext::AnitoBuilder {
 		std::vector<std::pair<int, Vector3>> pos_commits; // querry SetPosition calls
 
 		for (size_t s = 0; s < data.sets.size(); s++) {
-			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+			for (size_t i = 0; i < data.sets[s].faces.size(); i++)
 			{
 				auto& l = GetHandle(s, i);
 
@@ -567,7 +690,7 @@ namespace gbe::ext::AnitoBuilder {
 				Vector3 updated_l;
 				Vector3 updated_r;
 
-				BuilderBlockSet* moved_obj = this->handle_pool[l.handleindex];
+				BuilderBlockFace* moved_obj = this->handle_pool[l.handleindex];
 				UpdateHandleSegment(s, i, updated_l, updated_r);
 				int moved_pos_l = l.seg.first;
 				int moved_pos_r = l.seg.second;
@@ -575,7 +698,7 @@ namespace gbe::ext::AnitoBuilder {
 				int moved_i = i;
 				
 				for (size_t s = 0; s < data.sets.size(); s++) {
-					for (size_t i = 0; i < data.sets[moved_s].segs.size(); i++)
+					for (size_t i = 0; i < data.sets[moved_s].faces.size(); i++)
 					{
 						auto& handle = GetHandle(s, i);
 						
@@ -608,7 +731,7 @@ namespace gbe::ext::AnitoBuilder {
 				//Prevent flipping
 				auto opp_pos = handle_pool[GetHandle(moved_s, moved_i + 2).handleindex]->Local().position.Get(); //The handle opposite of the moved handle
 				Vector3 opp_dir = opp_pos - moved_obj->Local().position.Get();
-				auto opp_dot = opp_dir.Dot(moved_obj->Local().GetForward());
+				auto opp_dot = opp_dir.Dot(-moved_obj->Local().GetForward());
 				if (opp_dot < 0)
 					valid_move = false;
 
@@ -637,7 +760,7 @@ namespace gbe::ext::AnitoBuilder {
 
 			//update graphical handles
 			for (size_t s = 0; s < data.sets.size(); s++) {
-				for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+				for (size_t i = 0; i < data.sets[s].faces.size(); i++)
 				{
 					auto& l = GetHandle(s, i);
 					ResetHandle(s, i);
@@ -661,6 +784,42 @@ namespace gbe::ext::AnitoBuilder {
 		}
 	}
 
+	BlockFace* BuilderBlock::GetSeg(int handle_i)
+	{
+		if (handle_i >= 0) {
+			for (size_t set_i = 0; set_i < this->data.sets.size(); set_i++)
+			{
+				const auto& set = this->data.sets[set_i];
+
+				for (size_t seg_i = 0; seg_i < set.faces.size(); seg_i++)
+				{
+					const auto& seg = set.faces[seg_i];
+
+					if (seg.handleindex == handle_i) {
+						return &this->data.sets[set_i].faces[seg_i];
+					}
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	BlockFace* BuilderBlock::GetSeg(BuilderBlockFace* face)
+	{
+		auto handle_i = -1;
+
+		for (size_t i = 0; i < this->handle_pool.size(); i++)
+		{
+			if (handle_pool[i] == face) {
+				handle_i = i;
+				break;
+			}
+		}
+
+		return GetSeg(handle_i);
+	}
+
 	void BuilderBlock::AddBlock(int root_handle) {
 
 		if (!handle_pool[root_handle]->Get_is_edge())
@@ -668,13 +827,13 @@ namespace gbe::ext::AnitoBuilder {
 
 		handle_pool[root_handle]->Set_is_edge(false);
 
-		SetSeg src_seg;
+		PosPair src_seg;
 
 		for (size_t s = 0; s < data.sets.size(); s++)
-			for (size_t i = 0; i < data.sets[s].segs.size(); i++)
+			for (size_t i = 0; i < data.sets[s].faces.size(); i++)
 			{
-				if (data.sets[s].segs[i].handleindex == root_handle) {
-					src_seg = data.sets[s].segs[i].seg;
+				if (data.sets[s].faces[i].handleindex == root_handle) {
+					src_seg = data.sets[s].faces[i].seg;
 				}
 			}
 
@@ -697,7 +856,7 @@ namespace gbe::ext::AnitoBuilder {
 
 	void BuilderBlock::AddBlock(int corners[4]) {
 
-		std::vector<SetSeg> src_segments = {
+		std::vector<PosPair> src_segments = {
 			{corners[0], corners[1]},
 			{corners[1], corners[2]},
 			{corners[2], corners[3]},
@@ -712,10 +871,10 @@ namespace gbe::ext::AnitoBuilder {
 
 		//look for existing root handle
 		for (const auto& set : this->data.sets)
-			for (const auto& seg : set.segs)
+			for (const auto& seg : set.faces)
 			{
 				if(seg.seg.second == corners[0] && seg.seg.first == corners[1]) {
-					newset.segs.push_back({
+					newset.faces.push_back({
 						.seg = {corners[0], corners[1]},
 						.handleindex = seg.handleindex
 						});
@@ -725,12 +884,24 @@ namespace gbe::ext::AnitoBuilder {
 				}
 			}
 
+		int incr = 0;
 		for (size_t i = starting_index; i < src_segments.size(); i++)
 		{
 			const auto& src_seg = src_segments[i];
 
-			auto handle = new BuilderBlockSet(this);
-			
+			newset.faces.push_back(
+				{
+					.seg = src_seg,
+					.handleindex = (int)handle_pool.size() + incr
+				});
+
+			incr++;
+		}
+		this->data.sets.push_back(newset);
+		for (size_t i = starting_index; i < src_segments.size(); i++)
+		{
+			auto handle = new BuilderBlockFace(this, handle_pool.size());
+
 			handle_pool.push_back(handle);
 			handle->SetParent(this);
 
@@ -740,12 +911,6 @@ namespace gbe::ext::AnitoBuilder {
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_SCALE_Y);
 			handle->PushEditorFlag(Object::EditorFlags::STATIC_SCALE_Z);
 			handle->PushEditorFlag(Object::EditorFlags::NON_DIRECT_EDITABLE);
-			
-			newset.segs.push_back(
-				{
-					.seg = src_seg,
-					.handleindex = (int)(handle_pool.size() - 1)
-				});
 		}
 
 		//ROOF
@@ -756,7 +921,6 @@ namespace gbe::ext::AnitoBuilder {
 			return roof_renderer;
 			};
 
-		this->data.sets.push_back(newset);
 
 		SetRoof newset_roof = {
 			.handle_renderers = {CreateRoof(0), CreateRoof(2)},
@@ -765,6 +929,6 @@ namespace gbe::ext::AnitoBuilder {
 
 		this->roof_pool.push_back(newset_roof);
 
-		ResetAllHandles();
+		Refresh();
 	}
 }

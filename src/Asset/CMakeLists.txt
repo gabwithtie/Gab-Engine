@@ -13,9 +13,9 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
  "AssetLoading/AssetDeserializer.cpp"  
  "AssetTypes/Audio.cpp"
  "AssetTypes/Material.cpp"
-  "AssetLoading/BatchLoader.h" "File/FileUtil.h" "AssetLoading/AssetLoader.cpp")
+  "AssetLoading/BatchLoader.h" "File/FileUtil.h" "AssetLoading/AssetLoader.cpp" "AssetTypes/Types.h")
 
-target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math)
+target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE gbe_math gbe_editor)
 
 find_package(glaze CONFIG REQUIRED)
 target_link_libraries(${CURRENT_CMAKE_LIB} PRIVATE glaze::glaze)

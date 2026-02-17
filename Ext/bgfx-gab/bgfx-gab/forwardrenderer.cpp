@@ -5,6 +5,13 @@
 #include <random> // Added for SSAO kernel generation
 #include "Math/gbe_math.h"
 
+const auto DestroyTextureData = [](gbe::gfx::TextureData& _data) {
+	if (bgfx::isValid(_data.textureHandle)) {
+		bgfx::destroy(_data.textureHandle);
+		_data.textureHandle = BGFX_INVALID_HANDLE;
+	}
+	};
+
 gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& passinfo) {
 	m_line_vbh = bgfx::createDynamicVertexBuffer(passinfo.max_lines, s_VERTEXLAYOUT, BGFX_BUFFER_NONE);
 
@@ -50,7 +57,7 @@ gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& p
 			)
 		};
 
-		TextureLoader::RegisterExternal("shadowmap_" + std::to_string(i), m_debugShadowTextures[i]);
+		TextureLoader::Register("shadowmap_" + std::to_string(i), m_debugShadowTextures[i]);
 	}
 
 	light_view_arr.resize(max_lights);
@@ -65,8 +72,6 @@ gbe::gfx::bgfx_gab::ForwardRenderer::ForwardRenderer(const GraphicsRenderInfo& p
 	light_bias_mult_arr.resize(max_lights);
 	light_cone_inner_arr.resize(max_lights);
 	light_cone_outer_arr.resize(max_lights);
-
-	localarea_id_data.resize(id_texture_size * id_texture_size);
 
 	// Generate 64 random samples in a hemisphere
 	m_ssao_kernel_data.resize(64);
@@ -96,19 +101,13 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::InitializeAssetRequests()
 	bilateralblur_shader = ShaderLoader::GetAssetRuntimeData("bilateralblur");
 	bufferblend_shader = ShaderLoader::GetAssetRuntimeData("bufferblend");
 	id_shader = ShaderLoader::GetAssetRuntimeData("id");
+	uv_shader = ShaderLoader::GetAssetRuntimeData("uv");
 	skybox_shader = ShaderLoader::GetAssetRuntimeData("gradientskybox");
 	floorgrid_shader = ShaderLoader::GetAssetRuntimeData("floorgrid");
 }
 
 void gbe::gfx::bgfx_gab::ForwardRenderer::CleanUp()
 {
-	const auto DestroyTextureData = [](gbe::gfx::TextureData& _data) {
-		if (bgfx::isValid(_data.textureHandle)) {
-			bgfx::destroy(_data.textureHandle);
-			_data.textureHandle = BGFX_INVALID_HANDLE;
-		}
-		};
-
 	// 1. Destroy Post-Processing Framebuffers and Textures
 	for (auto fb : m_ppFBs) {
 		if (bgfx::isValid(fb)) bgfx::destroy(fb);
@@ -121,7 +120,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::CleanUp()
 	m_pp_textures.clear();
 
 	// 2. Destroy G-Buffers
-	auto destroyGBuffer = [DestroyTextureData](GBuffer& _gb) {
+	auto destroyGBuffer = [](GBuffer& _gb) {
 		if (bgfx::isValid(_gb.m_gbufferFB)) bgfx::destroy(_gb.m_gbufferFB);
 		DestroyTextureData(_gb.m_gbufferNormal);
 		DestroyTextureData(_gb.m_gbufferDepth);
@@ -134,17 +133,29 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::CleanUp()
 	DestroyTextureData(m_ssaoTexture);
 
 	// 4. Destroy Color/Depth Buffers
-	auto destroyCDBuffer = [DestroyTextureData](ColorDepthBuffer& _cdb) {
+	auto destroyCDBuffer = [](ColorDepthBuffer& _cdb) {
 		if (bgfx::isValid(_cdb.m_mainPassFBO)) bgfx::destroy(_cdb.m_mainPassFBO);
 		DestroyTextureData(_cdb.m_mainColorTexture);
 		DestroyTextureData(_cdb.m_mainDepthTexture);
 		_cdb.m_mainPassFBO = BGFX_INVALID_HANDLE;
 		};
 	destroyCDBuffer(mainscene_buffer);
+	destroyCDBuffer(uv_buffer);
 	destroyCDBuffer(id_buffer);
+}
 
-	// 5. Destroy ID system CPU-readback texture
-	DestroyTextureData(localarea_id_texture_cpu);
+gbe::gfx::Renderer::CpuDataResponse gbe::gfx::bgfx_gab::ForwardRenderer::PreprocessCpuRequest(CpuDataRequest request)
+{
+	return {
+		.request = request,
+		.cpu_data = std::vector<BRGA_t>(request.rect_size * request.rect_size, BRGA_t(0)),
+		.render_target = TextureData{
+			.textureHandle = bgfx::createTexture2D(request.rect_size, request.rect_size, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_BLIT_DST | BGFX_TEXTURE_READ_BACK)
+		},
+		.frame_done = UINT32_MAX,
+		.passed = false,
+		.received = false
+	};
 }
 
 
@@ -173,9 +184,9 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		if (instanceCount == 0) return false;
 
 		// 3. Bind Mesh
-		const auto& curmesh = MeshLoader::GetAssetRuntimeData(drawcall->get_mesh()->Get_assetId());
-		bgfx::setIndexBuffer(curmesh.index_vbh);
-		bgfx::setVertexBuffer(0, curmesh.vertex_vbh);
+		const auto& curmesh = drawcall->get_meshdata();
+		bgfx::setIndexBuffer(curmesh->index_vbh);
+		bgfx::setVertexBuffer(0, curmesh->vertex_vbh);
 
 		// 2. Allocate an Instance Data Buffer
 		// We need 64 bytes (16 floats) per instance for a Matrix4
@@ -193,14 +204,14 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		}
 
 		// 4. Set geometry and the instance buffer
-		bgfx::setIndexBuffer(curmesh.index_vbh);
-		bgfx::setVertexBuffer(0, curmesh.vertex_vbh);
+		bgfx::setIndexBuffer(curmesh->index_vbh);
+		bgfx::setVertexBuffer(0, curmesh->vertex_vbh);
 		bgfx::setInstanceDataBuffer(&idb); // This replaces setTransform!
 
 		return true;
 		};
 
-	const auto drawbuffer = [&passinfo, &frameinfo, drawbatch, this](RenderViewId viewid, int rendergroup, ShaderData _shader) {
+	const auto drawbuffer = [&passinfo, &frameinfo, drawbatch, this](RenderViewId viewid, int rendergroup, ShaderData* _shader) {
 		bgfx::setViewClear(viewid, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
 		bgfx::setViewTransform(viewid, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
 
@@ -212,7 +223,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 
 			if (drawbatch(shaderset.first, rendergroup)) {
 				bgfx::setState(BGFX_STATE_DEFAULT);
-				bgfx::submit(viewid, _shader.programHandle);
+				bgfx::submit(viewid, _shader->programHandle);
 				submitted = true;
 			}
 		}
@@ -232,102 +243,111 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	//================== 1. G-BUFFER PRE-PASS (For SSAO) ========================//
 	drawgbuffer(gbuffer_all, 0);
 	drawgbuffer(gbuffer_selected, 1); // outline pass for gbuffer
-	//================== ID PASS ========================//
-	bgfx::setViewClear(VIEW_ID_PASS, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
-	bgfx::setViewTransform(VIEW_ID_PASS, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
-	for (const auto& shaderset : passinfo.callgroups) {
-		auto drawcall = shaderset.first;
-		std::vector<uint32_t> instances;
+	//================== CPU PASS ========================//
+	const auto drawcpubuffer = [&](RenderViewId viewid, std::function<void(uint32_t)> submitfunc) {
+		bgfx::setViewClear(viewid, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
+		bgfx::setViewTransform(viewid, (const float*)&frameinfo.viewmat, (const float*)&frameinfo.projmat);
+		for (const auto& shaderset : passinfo.callgroups) {
+			auto drawcall = shaderset.first;
+			std::vector<uint32_t> instances;
 
-		for (const auto& instanceid : passinfo.callgroups[drawcall])
-		{
-			const auto& info = passinfo.infomap[instanceid];
+			for (const auto& instanceid : passinfo.callgroups[drawcall])
+			{
+				const auto& info = passinfo.infomap[instanceid];
 
-			if (!info.enabled)
-				continue;
+				if (!info.enabled)
+					continue;
 
-			const auto check_group = [=](int group) {
-				auto rendergroup_it = info.rendergroups.find(group);
-				if (rendergroup_it != info.rendergroups.end())
-					return rendergroup_it->second;
+				const auto check_group = [=](int group) {
+					auto rendergroup_it = info.rendergroups.find(group);
+					if (rendergroup_it != info.rendergroups.end())
+						return rendergroup_it->second;
 
-				return false;
-				};
+					return false;
+					};
 
-			if (check_group(0) || check_group(1))
-				instances.push_back(instanceid);
+				if (check_group(0) || check_group(1))
+					instances.push_back(instanceid);
+			}
+
+			// 1. Get the number of instances
+			uint32_t instanceCount = (uint32_t)instances.size();
+			if (instanceCount == 0) continue;
+
+			// 3. Bind Mesh
+			const auto& curmesh = drawcall->get_meshdata();
+			for (const auto& call_ptr : instances)
+			{
+				bgfx::setIndexBuffer(curmesh->index_vbh);
+				bgfx::setVertexBuffer(0, curmesh->vertex_vbh);
+
+				// 2. Allocate an Instance Data Buffer
+				// We need 64 bytes (16 floats) per instance for a Matrix4
+				bgfx::InstanceDataBuffer idb;
+				uint32_t stride = 64;
+				bgfx::allocInstanceDataBuffer(&idb, 1, stride);
+
+				// 3. Fill the buffer with your matrices
+				uint8_t* data = idb.data;
+
+				Matrix4 modelMatrix = passinfo.infomap[call_ptr].transform;
+				memcpy(data, &modelMatrix, stride);
+				data += stride;
+
+				// 4. Set geometry and the instance buffer
+				bgfx::setIndexBuffer(curmesh->index_vbh);
+				bgfx::setVertexBuffer(0, curmesh->vertex_vbh);
+				bgfx::setInstanceDataBuffer(&idb); // This replaces setTransform!
+
+				bgfx::setState(BGFX_STATE_DEFAULT);
+
+				submitfunc(call_ptr);
+			}
 		}
+		};
 
-		// 1. Get the number of instances
-		uint32_t instanceCount = (uint32_t)instances.size();
-		if (instanceCount == 0) continue;
-
-		// 3. Bind Mesh
-		const auto& curmesh = MeshLoader::GetAssetRuntimeData(drawcall->get_mesh()->Get_assetId());
-		for (const auto& call_ptr : instances)
-		{
-			bgfx::setIndexBuffer(curmesh.index_vbh);
-			bgfx::setVertexBuffer(0, curmesh.vertex_vbh);
-
-			// 2. Allocate an Instance Data Buffer
-			// We need 64 bytes (16 floats) per instance for a Matrix4
-			bgfx::InstanceDataBuffer idb;
-			uint32_t stride = 64;
-			bgfx::allocInstanceDataBuffer(&idb, 1, stride);
-
-			// 3. Fill the buffer with your matrices
-			uint8_t* data = idb.data;
-
-			Matrix4 modelMatrix = passinfo.infomap[call_ptr].transform;
-			memcpy(data, &modelMatrix, stride);
-			data += stride;
-
-			// 4. Set geometry and the instance buffer
-			bgfx::setIndexBuffer(curmesh.index_vbh);
-			bgfx::setVertexBuffer(0, curmesh.vertex_vbh);
-			bgfx::setInstanceDataBuffer(&idb); // This replaces setTransform!
-
-			id_shader.ApplyOverride(BRGA_t(call_ptr).ToVector4(), "id");
-
-			bgfx::setState(BGFX_STATE_DEFAULT);
-			bgfx::submit(VIEW_ID_PASS, id_shader.programHandle);
-		}
-	}
+	drawcpubuffer(VIEW_ID_PASS, [&](uint32_t call_id) {
+		id_shader->ApplyOverride(BRGA_t(call_id).ToVector4(), "id");
+		bgfx::submit(VIEW_ID_PASS, id_shader->programHandle);
+		});
+	drawcpubuffer(VIEW_UV_PASS, [&](uint32_t call_id) {
+		bgfx::submit(VIEW_UV_PASS, uv_shader->programHandle);
+		});
 	
 
 	Vector4 cam_params(frameinfo.nearclip, frameinfo.farclip, (float)resolution.x, (float)resolution.y);
 	//================== OUTLINE PASS ========================//
 	InitPP(outline_shader, VIEW_OUTLINE_SELECTED_PASS);
-	outline_shader.ApplyTextureOverride(gbuffer_selected.m_gbufferNormal, "tex_normal", 0);
-	outline_shader.ApplyTextureOverride(gbuffer_selected.m_gbufferDepth, "tex_depth", 1);
+	outline_shader->ApplyTextureOverride(&gbuffer_selected.m_gbufferNormal, "tex_normal", 0);
+	outline_shader->ApplyTextureOverride(&gbuffer_selected.m_gbufferDepth, "tex_depth", 1);
 	Vector4 outline_params(0.09, 0.01f, 0, 0);
-	outline_shader.ApplyOverride(cam_params, "u_camera_params");
-	outline_shader.ApplyOverride(outline_params, "u_outline_params");
+	outline_shader->ApplyOverride(cam_params, "u_camera_params");
+	outline_shader->ApplyOverride(outline_params, "u_outline_params");
 	SubmitPP();
 	//================== SSAO CALCULATION PASS ========================//
 	InitPP(ssao_shader, VIEW_SSAO_PASS);
-	curppshader.ApplyTextureOverride(gbuffer_all.m_gbufferNormal,"tex_normal",0);
-	curppshader.ApplyTextureOverride(gbuffer_all.m_gbufferDepth,"tex_depth",1);
-	curppshader.ApplyOverrideArray(m_ssao_kernel_data.data(), "u_kernel", 64);
+	curppshader->ApplyTextureOverride(&gbuffer_all.m_gbufferNormal,"tex_normal",0);
+	curppshader->ApplyTextureOverride(&gbuffer_all.m_gbufferDepth,"tex_depth",1);
+	curppshader->ApplyOverrideArray(m_ssao_kernel_data.data(), "u_kernel", 64);
 	Vector4 ssao_params(0.09, 0.01f, 0, 0);
-	curppshader.ApplyOverride(cam_params, "u_camera_params");
-	curppshader.ApplyOverride(ssao_params, "u_ssao_params");
+	curppshader->ApplyOverride(cam_params, "u_camera_params");
+	curppshader->ApplyOverride(ssao_params, "u_ssao_params");
 	SubmitPP();
 	float blurrad = 9;
 	float blur_sharpness = 5;
 	InitPP(bilateralblur_shader, VIEW_BLUR0_PASS);
-	curppshader.ApplyTextureOverride(m_pp_textures[VIEW_SSAO_PASS], "s_tex_input", 0);
-	curppshader.ApplyTextureOverride(gbuffer_all.m_gbufferDepth, "s_tex_depth", 1);
+	curppshader->ApplyTextureOverride(&m_pp_textures[VIEW_SSAO_PASS], "s_tex_input", 0);
+	curppshader->ApplyTextureOverride(&gbuffer_all.m_gbufferDepth, "s_tex_depth", 1);
 	Vector4 blur_h_params(blurrad, blur_sharpness, 1.0f, 0.0f); // Direction: Horizontal (1,0)
-	curppshader.ApplyOverride(cam_params, "u_camera_params");
-	curppshader.ApplyOverride(blur_h_params, "u_blur_params");
+	curppshader->ApplyOverride(cam_params, "u_camera_params");
+	curppshader->ApplyOverride(blur_h_params, "u_blur_params");
 	SubmitPP();
 	InitPP(bilateralblur_shader, VIEW_BLUR1_PASS);
-	curppshader.ApplyTextureOverride(m_pp_textures[VIEW_BLUR0_PASS], "s_tex_input", 0);
-	curppshader.ApplyTextureOverride(gbuffer_all.m_gbufferDepth, "s_tex_depth", 1);
+	curppshader->ApplyTextureOverride(&m_pp_textures[VIEW_BLUR0_PASS], "s_tex_input", 0);
+	curppshader->ApplyTextureOverride(&gbuffer_all.m_gbufferDepth, "s_tex_depth", 1);
 	Vector4 blur_v_params(blurrad, blur_sharpness, 0.0f, 1.0f);
-	curppshader.ApplyOverride(cam_params, "u_camera_params");
-	curppshader.ApplyOverride(blur_v_params, "u_blur_params");
+	curppshader->ApplyOverride(cam_params, "u_camera_params");
+	curppshader->ApplyOverride(blur_v_params, "u_blur_params");
 	SubmitPP();
 
 	TransferPPtoTexture(VIEW_BLUR1_PASS, m_ssaoTexture);
@@ -369,7 +389,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 				| BGFX_STATE_CULL_CW
 			);
 
-			bgfx::submit(shadowViewId, this->shadow_shader.programHandle);
+			bgfx::submit(shadowViewId, this->shadow_shader->programHandle);
 		}
 	}
 
@@ -382,9 +402,9 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	if (passinfo.lines_this_frame.size() > 0) {
 
 		// BGFX: Update dynamic vertex buffer
-		bgfx::update(m_line_vbh, 0, bgfx::makeRef(passinfo.lines_this_frame.data(), (uint32_t)(passinfo.lines_this_frame.size() * sizeof(asset::data::Vertex))));
+		bgfx::update(m_line_vbh, 0, bgfx::makeRef(passinfo.lines_this_frame.data(), (uint32_t)(passinfo.lines_this_frame.size() * sizeof(gbe::gfx::Vertex))));
 
-		auto lineshaderasset = this->line_call->get_material()->Get_load_data().shader;
+		auto lineshaderasset = this->line_call->get_materialdata()->shader;
 		const auto& lineshader = ShaderLoader::GetAssetRuntimeData(lineshaderasset->Get_assetId());
 
 		// 2. Set Vertex Buffer
@@ -401,22 +421,22 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		);
 
 		// 5. Submit
-		bgfx::submit(VIEW_SCENE_PASS, lineshader.programHandle);
+		bgfx::submit(VIEW_SCENE_PASS, lineshader->programHandle);
 
 		passinfo.lines_this_frame.clear();
 	}
 	//=================END OF LINE PASS
 
 	//=================SKYBOX PASS [VIEW_SKYBOX_PASS]
-	skybox_shader.ApplyOverride(Vector4(frameinfo.camera_pos, 1.0f), "camera_pos");
-	RenderFullscreenPass(VIEW_SCENE_PASS, skybox_shader.programHandle, BGFX_STATE_DEPTH_TEST_LEQUAL);
-	RenderFullscreenPass(VIEW_SCENE_PASS, floorgrid_shader.programHandle, BGFX_STATE_DEPTH_TEST_LEQUAL | BGFX_STATE_BLEND_ALPHA);
+	skybox_shader->ApplyOverride(Vector4(frameinfo.camera_pos, 1.0f), "camera_pos");
+	RenderFullscreenPass(VIEW_SCENE_PASS, skybox_shader->programHandle, BGFX_STATE_DEPTH_TEST_LEQUAL);
+	RenderFullscreenPass(VIEW_SCENE_PASS, floorgrid_shader->programHandle, BGFX_STATE_DEPTH_TEST_LEQUAL | BGFX_STATE_BLEND_ALPHA);
 	//=================END OF SKYBOX PASS
 
 	for (size_t i = 0; i < max_lights; i++)
 	{
 		// The original code was updating light uniforms for max_lights, even if not present,
-		// which is necessary for uniform arrays in the shader.
+		// which is necessary for uniform arrays in the shader->
 		if (i >= frameinfo.lightdatas.size())
 		{
 			light_color_arr[i] = Vector4(0);
@@ -454,7 +474,7 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 		// Set light data uniforms
 		
 		bgfx::setTexture(0, m_shadowArraySampler, m_shadowArrayTexture);
-		drawcall->ApplyTextureOverride(m_ssaoTexture, "tex_ao", 4); // SSAO map bound to slot 4
+		drawcall->ApplyTextureOverride(&m_ssaoTexture, "tex_ao", 4); // SSAO map bound to slot 4
 
 		drawcall->ApplyOverrideArray<Matrix4>(light_view_arr.data(), "light_view", max_lights);
 		drawcall->ApplyOverrideArray<Matrix4>(light_proj_arr.data(), "light_proj", max_lights);
@@ -478,72 +498,65 @@ void gbe::gfx::bgfx_gab::ForwardRenderer::RenderFrame(const SceneRenderInfo& fra
 	//============================== BLEND PASS =============================//
 
 	InitPP(bufferblend_shader, VIEW_SCREEN_PASS);
-	curppshader.ApplyTextureOverride(mainscene_buffer.m_mainColorTexture, "tex_buffer_a", 0);
-	curppshader.ApplyTextureOverride(m_pp_textures[VIEW_OUTLINE_SELECTED_PASS], "tex_buffer_b", 1);
+	curppshader->ApplyTextureOverride(&mainscene_buffer.m_mainColorTexture, "tex_buffer_a", 0);
+	curppshader->ApplyTextureOverride(&m_pp_textures[VIEW_OUTLINE_SELECTED_PASS], "tex_buffer_b", 1);
 	Vector4 blend_params(0, 0, 0, 0);
-	curppshader.ApplyOverride(blend_params, "u_blend_params");
+	curppshader->ApplyOverride(blend_params, "u_blend_params");
 	SubmitPP();
 
-	//============================== DEBUG CALLS =============================//
+	//============================== CPU CALLS =============================//
 
 	//BLIT AREA AROUND CURSOR FOR ID
-	
-	Vector2Int from = frameinfo.pointer_pixelpos - Vector2Int(id_texture_size / 2, id_texture_size / 2);
-	from.x = std::max(0, std::min(from.x, (int)resolution.x - id_texture_size));
-	from.y = std::max(0, std::min(from.y, (int)resolution.y - id_texture_size));
-
-	bgfx::blit(
-		VIEW_DEBUG_BLITTER,
-		localarea_id_texture_cpu.textureHandle, // Destination: Singular 2D texture
-		0, 0, 0, 0,               // Mip 0, X 0, Y 0, Z 0
-		id_buffer.m_mainColorTexture.textureHandle,     // Source: Your Texture Array
-		0, from.x, from.y, 0,               // Mip 0, X 0, Y 0, Layer 'i'
-		id_texture_size,
-		id_texture_size
-	);
-
-	if (read_done) {
-		this->frameid_readdone = bgfx::readTexture(localarea_id_texture_cpu.textureHandle, localarea_id_data.data());
-		read_done = false;
-	}
-
-	if (passinfo.frame_id == this->frameid_readdone)
+	for (auto& cpu_req : this->cpu_data_responses)
 	{
-		read_done = true;
-
-		std::map<uint32_t, uint32_t> ids;  // This contains all the IDs found in the buffer
-		uint32_t maxAmount = 0;
-		for (auto& pixel : localarea_id_data)
-		{
-			if (0 == (pixel.r | pixel.g | pixel.b)) // Skip background
+		if (!cpu_req.passed) {
+			if (!bgfx::isValid(cpu_req.render_target.textureHandle))
 			{
+				cpu_req.passed = true;
 				continue;
 			}
 
-			std::map<uint32_t, uint32_t>::iterator mapIter = ids.find(pixel.hashed());
-			uint32_t amount = 1;
-			if (mapIter != ids.end())
-			{
-				amount = mapIter->second + 1;
-			}
+			Vector2Int from = cpu_req.request.cursor_pixel_pos;
+			from -= Vector2Int(cpu_req.request.rect_size / 2, cpu_req.request.rect_size / 2);
+			from.x = std::max(0, std::min(from.x, (int)resolution.x - cpu_req.request.rect_size));
+			from.y = std::max(0, std::min(from.y, (int)resolution.y - cpu_req.request.rect_size));
 
-			ids[pixel.hashed()] = amount; // Amount of times this ID (color) has been clicked on in buffer
-			maxAmount = maxAmount > amount? maxAmount : amount;
-		}
+			auto src_buffer = id_buffer.m_mainColorTexture.textureHandle;
 
-		this->current_id_onpointer = UINT32_MAX;
-		if (maxAmount)
-		{
-			for (std::map<uint32_t, uint32_t>::iterator mapIter = ids.begin(); mapIter != ids.end(); mapIter++)
-			{
-				if (mapIter->second == maxAmount)
-				{
-					current_id_onpointer = mapIter->first;
-					break;
-				}
-			}
+			if(cpu_req.request.cpu_pass_mode == Renderer::PASS_UV)
+				src_buffer = uv_buffer.m_mainColorTexture.textureHandle;
+
+			bgfx::blit(
+				VIEW_DEBUG_BLITTER,
+				cpu_req.render_target.textureHandle, // Destination: Singular 2D texture
+				0, 0, 0, 0,               // Mip 0, X 0, Y 0, Z 0
+				src_buffer,     // Source: Your Texture Array
+				0, from.x, from.y, 0,               // Mip 0, X 0, Y 0, Layer 'i'
+				cpu_req.request.rect_size,
+				cpu_req.request.rect_size
+			);
+
+			cpu_req.frame_done = bgfx::readTexture(cpu_req.render_target.textureHandle, cpu_req.cpu_data.data());
+			cpu_req.passed = true;
 		}
 	}
+
+	for (auto& cpu_req : this->cpu_data_responses)
+	{
+		if (cpu_req.passed && !cpu_req.received && passinfo.frame_id == cpu_req.frame_done)
+		{
+			cpu_req.request.callback(cpu_req);
+			DestroyTextureData(cpu_req.render_target);
+			cpu_req.received = true;
+		}
+	}
+
+	const auto remove_if = [](const gbe::gfx::Renderer::CpuDataResponse& resp) {
+		return resp.received;
+		};
+	this->cpu_data_responses.erase(std::remove_if(this->cpu_data_responses.begin(), this->cpu_data_responses.end(), remove_if), this->cpu_data_responses.end());
+
+	//============================== DEBUG CALLS =============================//
 
 	//BLIT SHADOW PASSES
 	for (uint16_t i = 0; i < (uint16_t)max_lights; ++i) {
@@ -569,12 +582,12 @@ gbe::gfx::TextureData gbe::gfx::bgfx_gab::ForwardRenderer::ReloadFrame(Vector2In
 	uint16_t h = (uint16_t)reso.y;
 
 	//PINGPONGING
-	RegisterPPFramebuffer(VIEW_SSAO_PASS);
-	RegisterPPFramebuffer(VIEW_BLUR0_PASS);
-	RegisterPPFramebuffer(VIEW_BLUR1_PASS);
-	RegisterPPFramebuffer(VIEW_OUTLINE_SELECTED_PASS, bgfx::TextureFormat::BGRA8);
-	RegisterPPFramebuffer(VIEW_SCREEN_PASS, bgfx::TextureFormat::BGRA8);
-	TextureLoader::RegisterExternal("OUTLINE_PASS", m_pp_textures[VIEW_OUTLINE_SELECTED_PASS]);
+	RegisterFramebuffer(VIEW_SSAO_PASS);
+	RegisterFramebuffer(VIEW_BLUR0_PASS);
+	RegisterFramebuffer(VIEW_BLUR1_PASS);
+	RegisterFramebuffer(VIEW_OUTLINE_SELECTED_PASS, bgfx::TextureFormat::BGRA8);
+	RegisterFramebuffer(VIEW_SCREEN_PASS, bgfx::TextureFormat::BGRA8);
+	TextureLoader::Register("OUTLINE_PASS", m_pp_textures[VIEW_OUTLINE_SELECTED_PASS]);
 
 	//GBUFFERS
 	gbuffer_all = GBuffer(w, h, "ALL", VIEW_GBUFFER_PASS);
@@ -584,17 +597,14 @@ gbe::gfx::TextureData gbe::gfx::bgfx_gab::ForwardRenderer::ReloadFrame(Vector2In
 	m_ssaoTexture = TextureData{
 		.textureHandle = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_BLIT_DST)
 	};
-	TextureLoader::RegisterExternal("m_ssaoTexture", m_ssaoTexture);
+	TextureLoader::Register("m_ssaoTexture", m_ssaoTexture);
 
 	//MAIN PASS
 	mainscene_buffer = ColorDepthBuffer(w, h, "MAINPASS", VIEW_SCENE_PASS);
 
 	//ID PASS
 	id_buffer = ColorDepthBuffer(w, h, "IDPASS", VIEW_ID_PASS);
-	localarea_id_texture_cpu = TextureData{
-		.textureHandle = bgfx::createTexture2D(id_texture_size, id_texture_size, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_BLIT_DST | BGFX_TEXTURE_READ_BACK)
-	};
-	TextureLoader::RegisterExternal("localarea_id_texture", localarea_id_texture_cpu);
+	uv_buffer = ColorDepthBuffer(w, h, "UVPASS", VIEW_UV_PASS);
 
 	return m_pp_textures[VIEW_SCREEN_PASS];
 }

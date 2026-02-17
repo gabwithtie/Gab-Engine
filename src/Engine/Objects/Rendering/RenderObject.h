@@ -45,6 +45,8 @@ namespace gbe {
 		std::vector<std::vector<Vector3>> GetWorldSpaceVertexes();
 		virtual ~RenderObject();
 
+		void InitInspector();
+
 		SerializedObject Serialize() override;
 
 		// Inherited via EarlyUpdate

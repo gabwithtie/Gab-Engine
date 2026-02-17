@@ -7,12 +7,12 @@ namespace gbe {
 	class PointLight : public gbe::LightObject {
 	public:
 		inline PointLight() {
-			InitializeInspectorData();
+			GeneralInit();
 		}
 		inline PointLight(SerializedObject* data) : LightObject(data) {
-			InitializeInspectorData();
+			GeneralInit();
 		}
-		void InitializeInspectorData() override;
+		void GeneralInit() override;
 		// Inherited via Light
 		virtual gfx::Light* GetData() override;
 	};

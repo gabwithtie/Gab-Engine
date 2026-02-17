@@ -33,6 +33,7 @@ namespace gbe {
 		EngineState state = EngineState::Edit;
 
 		//SCENE MANAGEMENT
+		std::vector<std::function<void(void*)>> on_delete_callbacks;
 		SerializedObject* pre_play_scenedata = nullptr;
 		Root* current_root = nullptr;
 		Root* queued_rootchange = nullptr;
@@ -45,6 +46,9 @@ namespace gbe {
 
 		inline static EngineState Get_state() {
 			return instance->state;
+		}
+		inline static void RegisterOnDeleteCallback(std::function<void(void*)> callback) {
+			instance->on_delete_callbacks.push_back(callback);
 		}
 		static void Set_state(EngineState _state, bool change_scene = true);
 		static void Step(double dur);

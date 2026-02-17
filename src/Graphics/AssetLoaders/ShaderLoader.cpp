@@ -23,7 +23,7 @@ std::vector<char> readfile(std::filesystem::path path) {
     return buffer;
 };
 
-gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, asset::data::ShaderLoadData* data) {
+void gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, ShaderData* data) {
     //============READING SHADER BINARIES AND METADATA============//
     auto vertpath = asset->Get_asset_filepath().parent_path() / importdata.vert;
     auto fragpath = asset->Get_asset_filepath().parent_path() / importdata.frag;
@@ -60,30 +60,25 @@ gbe::gfx::ShaderData gbe::gfx::ShaderLoader::LoadAsset_(asset::Shader* asset, co
         throw std::runtime_error("Failed to create bgfx program handle!");
     }
 
-    ShaderData shaderdata = {};
-    shaderdata.asset = asset;
-    shaderdata.programHandle = programHandle;
-
-    return shaderdata;
+    data->asset = asset;
+    data->programHandle = programHandle;
 }
 
 
-void gbe::gfx::ShaderLoader::UnLoadAsset_(asset::Shader* asset, const asset::data::ShaderImportData& importdata, asset::data::ShaderLoadData* data)
+void gbe::gfx::ShaderLoader::UnLoadAsset_(ShaderData* data)
 {
-    const auto& shaderdata = this->GetAssetRuntimeData(asset->Get_assetId());
-
     // BGFX: Destroy the program handle (This also destroys the shaders because of the 'true' flag in createProgram)
-    if (bgfx::isValid(shaderdata.programHandle)) {
-        bgfx::destroy(shaderdata.programHandle);
+    if (bgfx::isValid(data->programHandle)) {
+        bgfx::destroy(data->programHandle);
     }
 
     // BGFX: Destroy all created uniform handles
-    for (const auto& block : shaderdata.uniformblocks) {
+    for (const auto& block : data->uniformblocks) {
         if (bgfx::isValid(block.uniformHandle)) {
             bgfx::destroy(block.uniformHandle);
         }
     }
-    for (const auto& field : shaderdata.uniformfields) {
+    for (const auto& field : data->uniformfields) {
         // Destroy all handles created for textures and single uniforms (if not part of a block)
         if (bgfx::isValid(field.uniformHandle)) {
             bgfx::destroy(field.uniformHandle);
@@ -94,4 +89,5 @@ void gbe::gfx::ShaderLoader::UnLoadAsset_(asset::Shader* asset, const asset::dat
 void gbe::gfx::ShaderLoader::AssignSelfAsLoader()
 {
     AssetLoader::AssignSelfAsLoader();
+    asset::all_asset_loaders.insert_or_assign(asset::SHADER, this);
 }

@@ -2,6 +2,8 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include "Editor/gbe_editor.h"
+#include "Editor/Gui/Utility/DragDrop.h"
+
 #include "Graphics/RenderPipeline.h"
 #include "Asset/gbe_asset.h"
 
@@ -24,6 +26,8 @@ gbe::RenderObject::RenderObject(DrawCall* mDrawCall)
 {
 	this->mDrawCall = mDrawCall;
 	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
+
+	InitInspector();
 }
 
 gbe::RenderObject::RenderObject(PrimitiveType _ptype)
@@ -31,12 +35,36 @@ gbe::RenderObject::RenderObject(PrimitiveType _ptype)
 	this->mDrawCall = primitive_drawcalls[_ptype];
 	to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
 	this->ptype = _ptype;
+
+	InitInspector();
 }
 
 gbe::RenderObject::~RenderObject()
 {
 	if (to_update != nullptr)
 		RenderPipeline::Get_Instance()->UnRegisterInstanceAll(this->Get_id());
+}
+
+void gbe::RenderObject::InitInspector()
+{
+	{
+		auto f = new editor::InspectorAsset();
+		f->name = "Material";
+		f->getter = [this]() { return this->mDrawCall->get_materialasset()->Get_assetId(); };
+		f->setter = [this](std::string val) {
+			auto newmat = asset::Material::GetAssetById(val);
+
+			auto input_mesh = this->mDrawCall->get_meshasset();
+			auto newdrawcall = RenderPipeline::RegisterDrawCall(input_mesh, newmat);
+
+			RenderPipeline::UnRegisterInstanceAll(this->Get_id());
+
+			this->mDrawCall = newdrawcall;
+			to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
+			};
+		f->assettype = asset::AssetType::MATERIAL;
+		this->inspectorData->fields.push_back(f);
+	}
 }
 
 void gbe::RenderObject::InvokeEarlyUpdate()
@@ -55,8 +83,8 @@ gbe::SerializedObject gbe::RenderObject::Serialize() {
 	auto data = gbe::Object::Serialize();
 
 	data.serialized_variables.insert_or_assign("primitive", PrimitiveTypeStr(this->ptype));
-	data.serialized_variables.insert_or_assign("mesh", this->mDrawCall->get_mesh()->Get_assetId());
-	data.serialized_variables.insert_or_assign("mat", this->mDrawCall->get_material()->Get_assetId());
+	data.serialized_variables.insert_or_assign("mesh", this->mDrawCall->get_meshasset()->Get_assetId());
+	data.serialized_variables.insert_or_assign("mat", this->mDrawCall->get_materialasset()->Get_assetId());
 
 	return data;
 }
@@ -86,14 +114,16 @@ gbe::RenderObject::RenderObject(SerializedObject* data) : Object(data)
 		to_update = RenderPipeline::Get_Instance()->RegisterInstance(this->Get_id(), mDrawCall, this->World().GetMatrix());
 		this->ptype = curptype;
 	}
+
+	InitInspector();
 }
 
 std::vector<std::vector<gbe::Vector3>> gbe::RenderObject::GetWorldSpaceVertexes()
 {
 	auto verts = std::vector<std::vector<Vector3>>();
-	auto& src_verts = this->Get_DrawCall()->get_mesh()->Get_load_data().vertices;
+	auto& src_verts = this->Get_DrawCall()->get_meshdata()->vertices;
 
-	for (const auto& face : this->Get_DrawCall()->get_mesh()->Get_load_data().faces)
+	for (const auto& face : this->Get_DrawCall()->get_meshdata()->faces)
 	{
 		auto newface = std::vector<Vector3>();
 

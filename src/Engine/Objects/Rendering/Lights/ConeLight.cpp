@@ -21,9 +21,9 @@ gfx::Light* gbe::ConeLight::GetData()
     return &this->mLight;
 }
 
-void gbe::ConeLight::InitializeInspectorData()
+void gbe::ConeLight::GeneralInit()
 {
-	LightObject::InitializeInspectorData();
+    LightObject::GeneralInit();
 
     this->PushEditorFlag(Object::EditorFlags::SERIALIZABLE);
 
@@ -41,27 +41,39 @@ void gbe::ConeLight::InitializeInspectorData()
     }
 
     //INSPECTOR
-    auto angleinner_field = new gbe::editor::InspectorFloat();
-    angleinner_field->name = "Inner Angle";
-    angleinner_field->x = &this->mLight.angle_inner_deg;
+    {
+        auto field = new gbe::editor::InspectorFloat();
+        field->name = "Inner Angle";
+        field->getter = [=]() { return this->mLight.angle_inner_deg; };
+        field->setter = [=](float val) { this->mLight.angle_inner_deg = val; };
 
-    this->inspectorData->fields.push_back(angleinner_field);
+        this->inspectorData->fields.push_back(field);
+    }
 
-    auto angleouter_field = new gbe::editor::InspectorFloat();
-    angleouter_field->name = "Outer Angle";
-    angleouter_field->x = &this->mLight.angle_outer_deg;
+    {
+        auto field = new gbe::editor::InspectorFloat();
+        field->name = "Outer Angle";
+        field->getter = [=]() { return this->mLight.angle_outer_deg; };
+        field->setter = [=](float val) { this->mLight.angle_outer_deg = val; };
 
-    this->inspectorData->fields.push_back(angleouter_field);
+        this->inspectorData->fields.push_back(field);
+    }
 
-    auto range_field = new gbe::editor::InspectorFloat();
-    range_field->name = "Range";
-    range_field->x = &this->mLight.range;
+    {
+        auto field = new gbe::editor::InspectorFloat();
+        field->name = "Range";
+        field->getter = [=]() { return this->mLight.range; };
+        field->setter = [=](float val) { this->mLight.range = val; };
 
-    this->inspectorData->fields.push_back(range_field);
+        this->inspectorData->fields.push_back(field);
+    }
 
-    auto near_field = new gbe::editor::InspectorFloat();
-    near_field->name = "Near Clip";
-    near_field->x = &this->mLight.near_clip;
+    {
+        auto field = new gbe::editor::InspectorFloat();
+        field->name = "Near Clip";
+        field->getter = [=]() { return this->mLight.near_clip; };
+        field->setter = [=](float val) { this->mLight.near_clip = val; };
 
-    this->inspectorData->fields.push_back(near_field);
+        this->inspectorData->fields.push_back(field);
+    }
 }

@@ -15,7 +15,7 @@ namespace gbe {
 			std::vector<gbe::Object*> selected;
 
 			struct export_subobject {
-				const asset::data::MeshLoadData* source_mesh;
+				const MeshData* source_mesh;
 				Matrix4 transform;
 			};
 		public:

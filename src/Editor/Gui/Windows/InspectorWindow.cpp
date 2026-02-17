@@ -3,233 +3,316 @@
 #include "../../Utility/ModelExport.h"
 #include "../../Editor.h"
 
+#include "../Utility/AssetPickerPopup.h"
+
+#include "../Utility/DragDrop.h"
+
 #include "Asset/gbe_asset.h"
+
+void gbe::editor::InspectorWindow::SetInspectorData(std::unordered_map<void*, InspectorData*> _data)
+{
+	this->data = _data;
+}
 
 void gbe::editor::InspectorWindow::DrawSelf() {
 	//FOR ONLY ONE
-	if (this->selected.size() == 1)
+	if (this->data.size() == 1)
 	{
-		auto selected_id = this->selected[0]->Get_id();
-		auto inspectordata = this->selected[0]->GetInspectorData();
+		auto& first_data = this->data.begin()->second;
 
-		//DRAW THE BUILT IN INSPECTORS PER OBJECT
+		for (auto& field : first_data->fields)
+		{
+			if (field->fieldtype == editor::STRING) {
+				auto f = static_cast<editor::InspectorString*>(field);
+				ImGui::PushID(f->name.c_str());
+				DrawFieldLabel(f->name);
 
-		if (ImGui::CollapsingHeader("Info")) {
-			//NAME
-			ImGui::Text("Name:");
-			ImGui::SameLine();
+				static char nameBuffer[128];
+				std::string name = f->getter();
+				strncpy(nameBuffer, name.c_str(), sizeof(nameBuffer) - 1);
+				nameBuffer[sizeof(nameBuffer) - 1] = '\0'; // Ensure null termination
 
-			static char nameBuffer[128];
-			std::string name = this->selected[0]->GetName();
-			strncpy(nameBuffer, name.c_str(), sizeof(nameBuffer) - 1);
-			nameBuffer[sizeof(nameBuffer) - 1] = '\0'; // Ensure null termination
+				static bool isEditingName = false;
 
-			static bool isEditingName = false;
+				if (isEditingName) {
+					// 1. Force focus so the user can start typing immediately
+					ImGui::SetKeyboardFocusHere();
 
-			if (isEditingName) {
-				// 1. Force focus so the user can start typing immediately
-				ImGui::SetKeyboardFocusHere();
-
-				// 2. Use EnterReturnsTrue to confirm the change
-				if (ImGui::InputText("##editname", nameBuffer, IM_ARRAYSIZE(nameBuffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
-					isEditingName = false;
-					this->selected[0]->SetName(nameBuffer);
-				}
-
-				// 3. De-focusing (clicking away) also saves/closes
-				if (ImGui::IsItemDeactivated()) {
-					isEditingName = false;
-				}
-			}
-			else {
-				// Render as a label or selectable
-				if (ImGui::Selectable(nameBuffer)) {
-					// Optional: Single click to select, logic handled elsewhere
-				}
-
-				// Double-click to trigger the rename state
-				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-					isEditingName = true;
-				}
-			}
-			
-			//Enabled
-			if (!this->selected[0]->GetEditorFlag(Object::NON_DIRECT_EDITABLE)) {
-				ImGui::Text("Enabled:");
-				ImGui::SameLine();
-
-				bool _enabled = this->selected[0]->Get_enabled_self();
-				if (ImGui::Checkbox("##enabled", &_enabled)) {
-					this->selected[0]->Set_enabled(_enabled);
-				}
-			}
-		}
-
-		if (ImGui::CollapsingHeader("Transform")) {
-			Vector3 position_gui_wrap = this->selected[0]->Local().position.Get();
-			Vector3 position_gui_wrap_old = position_gui_wrap;
-			if (this->DrawVector3Field("Position:", &position_gui_wrap,
-				!this->selected[0]->GetEditorFlag(Object::STATIC_POS_X),
-				!this->selected[0]->GetEditorFlag(Object::STATIC_POS_Y),
-				!this->selected[0]->GetEditorFlag(Object::STATIC_POS_Z)
-			)) {
-				Editor::CommitAction(
-					[=]() {
-						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(selected_id);
-						modified->Local().position.Set(position_gui_wrap);
-						selected[0]->PushState(Object::TRANSFORMED_USER);
-					},
-					[=]() {
-						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(selected_id);
-						modified->Local().position.Set(position_gui_wrap_old);
-						selected[0]->PushState(Object::TRANSFORMED_USER);
-					}
-				);
-			}
-
-			Vector3 scale_gui_wrap = this->selected[0]->Local().scale.Get();
-			Vector3 scale_gui_wrap_old = scale_gui_wrap;
-			if (this->DrawVector3Field("Scale:", &scale_gui_wrap,
-				!this->selected[0]->GetEditorFlag(Object::STATIC_SCALE_X),
-				!this->selected[0]->GetEditorFlag(Object::STATIC_SCALE_Y),
-				!this->selected[0]->GetEditorFlag(Object::STATIC_SCALE_Z)
-			)) {
-				Editor::CommitAction(
-					[=]() {
-						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(selected_id);
-						modified->Local().scale.Set(scale_gui_wrap);
-						selected[0]->PushState(Object::TRANSFORMED_USER);
-					},
-					[=]() {
-						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(selected_id);
-						modified->Local().scale.Set(scale_gui_wrap_old);
-						selected[0]->PushState(Object::TRANSFORMED_USER);
-					}
-				);
-			}
-
-			Vector3 rot_gui_wrap = this->selected[0]->Local().rotation.Get().ToEuler();
-			Vector3 rot_gui_wrap_old = rot_gui_wrap;
-			if (this->DrawVector3Field("Rotation:", &rot_gui_wrap
-				, !this->selected[0]->GetEditorFlag(Object::STATIC_ROT_X)
-				, !this->selected[0]->GetEditorFlag(Object::STATIC_ROT_Y)
-				, !this->selected[0]->GetEditorFlag(Object::STATIC_ROT_Z)
-			)) {
-				Editor::CommitAction(
-					[=]() {
-						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(selected_id);
-						modified->Local().rotation.Set(Quaternion::Euler(rot_gui_wrap));
-						selected[0]->PushState(Object::TRANSFORMED_USER);
-					},
-					[=]() {
-						auto modified = Engine::GetCurrentRoot()->GetObjectWithId(selected_id);
-						modified->Local().rotation.Set(Quaternion::Euler(rot_gui_wrap_old));
-						selected[0]->PushState(Object::TRANSFORMED_USER);
-					}
-				);
-			}
-		}
-
-		if (inspectordata->fields.size() > 0) {
-			//DRAW THE CUSTOM INSPECTORS
-			for (auto& field : inspectordata->fields)
-			{
-				if (field->fieldtype == editor::InspectorField::BOOLEAN) {
-					auto boolfield = static_cast<editor::InspectorBool*>(field);
-					bool proxy_bool = *boolfield->x;
-
-					ImGui::PushID(boolfield->name.c_str());
-
-					DrawFieldLabel(boolfield->name);
-					std::string field_id = "##" + boolfield->name;
-					bool changed = ImGui::Checkbox(field_id.c_str(), &proxy_bool);
-
-					if (changed)
-					{
-						*boolfield->x = proxy_bool;
+					// 2. Use EnterReturnsTrue to confirm the change
+					if (ImGui::InputText("##editname", nameBuffer, IM_ARRAYSIZE(nameBuffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
+						isEditingName = false;
+						f->setter(nameBuffer);
 					}
 
-					ImGui::PopID();
+					// 3. De-focusing (clicking away) also saves/closes
+					if (ImGui::IsItemDeactivated()) {
+						isEditingName = false;
+						f->setter(nameBuffer);
+					}
+				}
+				else {
+					// Render as a label or selectable
+					if (ImGui::Selectable(nameBuffer)) {
+						// Optional: Single click to select, logic handled elsewhere
+					}
+
+					// Double-click to trigger the rename state
+					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+						isEditingName = true;
+					}
 				}
 
-				if (field->fieldtype == editor::InspectorField::FLOAT) {
-					auto floatfield = static_cast<editor::InspectorFloat*>(field);
-					float proxy_float = *floatfield->x;
+				ImGui::PopID();
+			}
 
-					ImGui::PushID(floatfield->name.c_str());
+			if (field->fieldtype == editor::BOOLEAN) {
+				auto f = static_cast<editor::InspectorBool*>(field);
+				bool proxy_f = f->getter();
 
-					DrawFieldLabel(floatfield->name);
-					std::string field_id = "##" + floatfield->name;
-					bool changed = ImGui::InputFloat(field_id.c_str(), &proxy_float, 0, 0, "%.6f");
+				ImGui::PushID(f->name.c_str());
 
-					if (changed)
-					{
-						*floatfield->x = proxy_float;
+				DrawFieldLabel(f->name);
+				std::string field_id = "##" + f->name;
 
-						if (floatfield->onchange) {
-							floatfield->onchange();
+				if (ImGui::Checkbox(field_id.c_str(), &proxy_f))
+				{
+					f->setter(proxy_f);
+				}
+
+				ImGui::PopID();
+			}
+
+			if (field->fieldtype == editor::FLOAT) {
+				auto f = static_cast<editor::InspectorFloat*>(field);
+				float proxy_f = f->getter();
+
+				ImGui::PushID(f->name.c_str());
+
+				DrawFieldLabel(f->name);
+				std::string field_id = "##" + f->name;
+
+				if (ImGui::InputFloat(field_id.c_str(), &proxy_f, 0, 0, "%.6f"))
+				{
+					f->setter(proxy_f);
+				}
+
+				ImGui::PopID();
+			}
+
+			if (field->fieldtype == editor::ASSET) {
+				auto f = static_cast<editor::InspectorAsset*>(field);
+				std::string proxy_f = f->getter();
+				
+				DraggableTarget(asset::MATERIAL,
+					[=](const DragData& data) { f->setter(data.id); },
+					[=]() {
+						// 1. Draw the row label (the key/field name)
+						DrawFieldLabel(f->name);
+
+						// 2. Resolve current asset ID for the button label
+						auto currentAsset = f->getter();
+						std::string displayId = currentAsset.size() > 0 ? currentAsset : "None";
+						std::string popupId = "Popup_" + f->name;
+
+						// 3. Render the Picker Button
+						// DrawFieldLabel already handled the SameLine offset and width
+						if (ImGui::Button((displayId + "##btn").c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+							ImGui::OpenPopup(popupId.c_str());
+						}
+
+						if (AssetPickerPopup(
+							popupId.c_str(),
+							[=]() {
+								return asset::all_asset_loaders[f->assettype]->FindAssetById(f->getter());
+							}, f->setter, asset::all_asset_loaders[f->assettype]->GetAllAssetIds()
+								)) {
 						}
 					}
+					);
+			}
 
-					ImGui::PopID();
-				}
+			if (field->fieldtype == editor::VECTOR2) {
+				auto f = static_cast<editor::InspectorVec2*>(field);
+				Vector2 proxy_f = f->getter();
 
-				if (field->fieldtype == editor::InspectorField::VECTOR3) {
-					auto vec3field = static_cast<editor::InspectorColor*>(field);
-					Vector3 proxy_vec = { *vec3field->r, *vec3field->g, *vec3field->b };
+				ImGui::PushID(f->name.c_str());
 
-					this->DrawVector3Field(vec3field->name.c_str(), &proxy_vec);
+				float vec_arr[2] = { proxy_f.x, proxy_f.y };
 
-					*vec3field->r = proxy_vec.x;
-					*vec3field->g = proxy_vec.y;
-					*vec3field->b = proxy_vec.z;
-				}
+				DrawFieldLabel(f->name);
 
-				if (field->fieldtype == editor::InspectorField::COLOR) {
-					auto vec3field = static_cast<editor::InspectorVec3*>(field);
-					Vector3 proxy_vec = { *vec3field->x, *vec3field->y, *vec3field->z };
+				std::string field_id = "##" + f->name;
+				bool changed = ImGui::DragFloat2(field_id.c_str(), vec_arr);
 
-					DrawFieldLabel(vec3field->name);
-					std::string field_id = "##" + vec3field->name;
-					ImGui::ColorEdit3(field_id.c_str(), &proxy_vec.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+				if (changed)
+				{
+					proxy_f.x = vec_arr[0];
+					proxy_f.y = vec_arr[1];
 
-					*vec3field->x = proxy_vec.x;
-					*vec3field->y = proxy_vec.y;
-					*vec3field->z = proxy_vec.z;
-				}
-
-				if (field->fieldtype == editor::InspectorField::FUNCTION) {
-					auto buttonfield = static_cast<editor::InspectorButton*>(field);
-					if (ImGui::Button(buttonfield->name.c_str())) {
-						buttonfield->onpress();
+					if (changed) {
+						f->setter(proxy_f);
 					}
 				}
 
-				if (field->fieldtype == editor::InspectorField::ASSET) {
-					auto assetfield = static_cast<editor::InspectorAsset_base*>(field);
-					auto assetlist = assetfield->GetChoices();
+				ImGui::PopID();
+			}
 
-					if (ImGui::BeginCombo(assetfield->name.c_str(), assetfield->choice_label.c_str()))
+			if (field->fieldtype == editor::VECTOR3) {
+				auto f = static_cast<editor::InspectorVec3*>(field);
+				Vector3 proxy_f = f->getter();
+
+				ImGui::PushID(f->name.c_str());
+
+				float vec_arr[3] = { proxy_f.x, proxy_f.y, proxy_f.z };
+
+				DrawFieldLabel(f->name);
+
+				std::string field_id = "##" + f->name;
+				bool changed = ImGui::DragFloat3(field_id.c_str(), vec_arr);
+
+				if (changed)
+				{
+					proxy_f.x = vec_arr[0];
+					proxy_f.y = vec_arr[1];
+					proxy_f.z = vec_arr[2];
+
+					if (changed) {
+						f->setter(proxy_f);
+					}
+				}
+
+				ImGui::PopID();
+			}
+
+			if (field->fieldtype == editor::VECTOR4) {
+				auto f = static_cast<editor::InspectorVec4*>(field);
+				Vector4 proxy_f = f->getter();
+
+				ImGui::PushID(f->name.c_str());
+
+				float vec_arr[4] = { proxy_f.x, proxy_f.y, proxy_f.z, proxy_f.w };
+
+				DrawFieldLabel(f->name);
+
+				std::string field_id = "##" + f->name;
+				bool changed = ImGui::DragFloat4(field_id.c_str(), vec_arr);
+
+				if (changed)
+				{
+					proxy_f.x = vec_arr[0];
+					proxy_f.y = vec_arr[1];
+					proxy_f.z = vec_arr[2];
+					proxy_f.w = vec_arr[3];
+
+					if (changed) {
+						f->setter(proxy_f);
+					}
+				}
+
+				ImGui::PopID();
+			}
+
+			if (field->fieldtype == editor::COLOR) {
+				auto f = static_cast<editor::InspectorColor*>(field);
+				Vector3 proxy_f = f->getter();
+
+				DrawFieldLabel(f->name);
+				std::string field_id = "##" + f->name;
+				if (ImGui::ColorEdit3(field_id.c_str(), &proxy_f.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
+					f->setter(proxy_f);
+				}
+			}
+
+			if (field->fieldtype == editor::TEXTURE) {
+				auto f = static_cast<editor::InspectorTexture*>(field);
+				auto proxy_f = f->getter();
+
+				TextureAssetPicker(
+					f->name.c_str(),
+					ImVec2(64, 64),
+					[=]() {
+						auto asset = gbe::asset::Texture::GetAssetById(proxy_f);
+						return asset;
+					},
+					[=](std::string new_asset_id) {
+						f->setter(new_asset_id);
+					},
+					asset::all_asset_loaders[asset::TEXTURE]->GetAllAssetIds()
+				);
+			}
+
+			if (field->fieldtype == editor::FUNCTION) {
+				auto buttonfield = static_cast<editor::InspectorButton*>(field);
+				if (ImGui::Button(buttonfield->name.c_str())) {
+					buttonfield->onpress();
+				}
+			}
+
+			if (field->fieldtype == editor::CHOICE) {
+				auto f = static_cast<editor::InspectorChoice*>(field);
+				int proxy_f = f->getter();
+
+				if (ImGui::BeginCombo(f->name.c_str(), (*f->labels)[proxy_f].c_str()))
+				{
+					for (size_t n = 0; n < f->labels->size(); n++)
 					{
-						for (size_t n = 0; n < assetlist.size(); n++)
+						auto& cur = (*f->labels)[n];
+
+						const bool is_selected = proxy_f == n;
+						if (ImGui::Selectable(cur.c_str(), is_selected))
 						{
-							auto cur = assetlist[n]->Get_asset_filepath();
-
-							const bool is_selected = (cur == assetfield->choice_label.c_str());
-							if (ImGui::Selectable(cur.string().c_str(), is_selected))
-							{
-								*assetfield->choice = assetlist[n];
-								assetfield->choice_label = cur.string();
-							}
-
-							// Set the initial focus when opening the combo (scrolling to the item if needed)
-							if (is_selected)
-							{
-								ImGui::SetItemDefaultFocus();
-							}
+							f->setter(n);
 						}
-						ImGui::EndCombo();
+
+						if (is_selected)
+						{
+							ImGui::SetItemDefaultFocus();
+						}
 					}
+					ImGui::EndCombo();
+				}
+			}
+
+			if (field->fieldtype == editor::DICTIONARY) {
+				auto f = static_cast<editor::InspectorAssetDictionary*>(field);
+
+				// Create a collapsible group for the dictionary
+				if (ImGui::TreeNodeEx(f->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+					for (const auto& key : *f->fieldList) {
+						ImGui::PushID(key.c_str());
+
+						// 1. Draw the row label (the key/field name)
+						DrawFieldLabel(key);
+
+						// 2. Resolve current asset ID for the button label
+						auto currentAsset = f->a_getter(key);
+						std::string displayId = currentAsset ? currentAsset->Get_assetId() : "None";
+						std::string popupId = "Popup_" + key;
+
+						// 3. Render the Picker Button
+						// DrawFieldLabel already handled the SameLine offset and width
+						if (ImGui::Button((displayId + "##btn").c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+							ImGui::OpenPopup(popupId.c_str());
+						}
+
+						auto poollist = asset::all_asset_loaders[f->assettype]->GetAllAssetIds();
+
+						// 4. Implement the Popup Logic
+						AssetPickerPopup(
+							popupId.c_str(),
+							[f, key]() { return f->a_getter(key); }, // Getter for current asset
+							[f, key](std::string selectedId) {
+								// Iterate all loaders to find the pointer corresponding to the selected ID
+								asset::internal::BaseAsset_base* foundAsset = asset::all_asset_loaders[f->assettype]->FindAssetById(selectedId);
+								// Update the dictionary via the provided setter
+								f->a_setter(key, foundAsset);
+							},
+							poollist // Pool of available assets to pick from
+						);
+
+						ImGui::PopID();
+					}
+					ImGui::TreePop();
 				}
 			}
 		}
@@ -237,32 +320,6 @@ void gbe::editor::InspectorWindow::DrawSelf() {
 	else {
 		ImGui::Text("Multi-inspect not supported yet.");
 	}
-}
-
-bool gbe::editor::InspectorWindow::DrawVector3Field(std::string label, Vector3* field, bool x_interactable, bool y_interactable, bool z_interactable)
-{
-	ImGui::PushID(label.c_str());
-
-	float vec_arr[3] = { field->x, field->y, field->z };
-
-	DrawFieldLabel(label);
-
-	std::string field_id = "##" + label;
-	bool changed = ImGui::DragFloat3(field_id.c_str(), vec_arr);
-
-	if (changed)
-	{
-		if (x_interactable)
-			field->x = vec_arr[0];
-		if (y_interactable)
-			field->y = vec_arr[1];
-		if (z_interactable)
-			field->z = vec_arr[2];
-	}
-
-	ImGui::PopID();
-	
-	return changed;
 }
 
 void gbe::editor::InspectorWindow::DrawFieldLabel(std::string label) {

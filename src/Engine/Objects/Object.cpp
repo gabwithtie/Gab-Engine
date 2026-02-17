@@ -95,7 +95,7 @@ void gbe::Object::OnExternalTransformationChange(TransformChangeType changetype,
 	}
 }
 
-void gbe::Object::General_init()
+void gbe::Object::GeneralInit()
 {
 	//TRANSFORM
 	this->parent_matrix = Matrix4(1.0f);
@@ -136,7 +136,84 @@ void gbe::Object::General_init()
 		this->Local().rotation.Set(new_local_rot);
 		});
 
-	this->InitializeInspectorData();
+	//INSPECTOR
+	this->inspectorData = new editor::InspectorData();
+
+	{
+		auto field = new editor::InspectorString();
+		field->name = "Name";
+		field->getter = [=]() {return this->GetName(); };
+		field->setter = [=](std::string val) {this->SetName(val); };
+		this->inspectorData->fields.push_back(field);
+	}
+	{
+		auto field = new editor::InspectorBool();
+		field->name = "Enabled";
+		field->getter = [=]() {return this->Get_enabled(); };
+		field->setter = [=](bool val) {this->Set_enabled(val); };
+		this->inspectorData->fields.push_back(field);
+	}
+
+	// --- Position ---
+	{
+		auto field = new editor::InspectorVec3();
+		field->name = "Position";
+		field->getter = [=]() { return this->Local().position.Get(); };
+		field->setter = [=](Vector3 val) {
+			if (this->GetEditorFlag(Object::NON_DIRECT_EDITABLE)) return;
+
+			Vector3 current = this->Local().position.Get();
+			Vector3 next = val;
+
+			// Apply granular locks
+			if (this->GetEditorFlag(Object::STATIC_POS_X)) next.x = current.x;
+			if (this->GetEditorFlag(Object::STATIC_POS_Y)) next.y = current.y;
+			if (this->GetEditorFlag(Object::STATIC_POS_Z)) next.z = current.z;
+
+			this->Local().position.Set(next);
+			};
+		this->inspectorData->fields.push_back(field);
+	}
+
+	// --- Rotation ---
+	{
+		auto field = new editor::InspectorVec3();
+		field->name = "Rotation";
+		field->getter = [=]() { return this->Local().rotation.Get().ToEuler(); };
+		field->setter = [=](Vector3 val) {
+			if (this->GetEditorFlag(Object::NON_DIRECT_EDITABLE)) return;
+
+			Vector3 currentEuler = this->Local().rotation.Get().ToEuler();
+			Vector3 nextEuler = val;
+
+			if (this->GetEditorFlag(Object::STATIC_ROT_X)) nextEuler.x = currentEuler.x;
+			if (this->GetEditorFlag(Object::STATIC_ROT_Y)) nextEuler.y = currentEuler.y;
+			if (this->GetEditorFlag(Object::STATIC_ROT_Z)) nextEuler.z = currentEuler.z;
+
+			this->Local().rotation.Set(Quaternion::Euler(nextEuler));
+			};
+		this->inspectorData->fields.push_back(field);
+	}
+
+	// --- Scale ---
+	{
+		auto field = new editor::InspectorVec3();
+		field->name = "Scale";
+		field->getter = [=]() { return this->Local().scale.Get(); };
+		field->setter = [=](Vector3 val) {
+			if (this->GetEditorFlag(Object::NON_DIRECT_EDITABLE)) return;
+
+			Vector3 current = this->Local().scale.Get();
+			Vector3 next = val;
+
+			if (this->GetEditorFlag(Object::STATIC_SCALE_X)) next.x = current.x;
+			if (this->GetEditorFlag(Object::STATIC_SCALE_Y)) next.y = current.y;
+			if (this->GetEditorFlag(Object::STATIC_SCALE_Z)) next.z = current.z;
+
+			this->Local().scale.Set(next);
+			};
+		this->inspectorData->fields.push_back(field);
+	}
 
 	this->id = next_avail_id;
 	next_avail_id++;
@@ -147,15 +224,10 @@ gbe::Object::Object():
 	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
 	world()
 {
-	General_init();
-}
-
-void gbe::Object::InitializeInspectorData() {
-	this->inspectorData = new editor::InspectorData();
+	GeneralInit();
 }
 
 gbe::Object::~Object(){
-	
 }
 
 gbe::Transform& gbe::Object::World()
@@ -322,7 +394,7 @@ gbe::Object::Object(gbe::SerializedObject* data, bool load_children):
 	local(Transform([this](TransformChangeType type) {this->OnLocalTransformationChange(type); })),
 	world([](TransformChangeType type) {}) 
 {
-	General_init();
+	GeneralInit();
 
 	this->local.position.Set(Vector3(data->local_position[0], data->local_position[1], data->local_position[2]));
 	this->local.scale.Set(Vector3(data->local_scale[0], data->local_scale[1], data->local_scale[2]));

@@ -11,7 +11,7 @@ add_library(${CURRENT_CMAKE_LIB} STATIC
 	"AssetLoaders/ShaderLoader.cpp"
 	"AssetLoaders/MeshLoader.cpp"
 	"AssetLoaders/MaterialLoader.cpp"
-	 "Data/CallInstance.h" "Data/Light.h" "Renderer.h")
+	 "Data/CallInstance.h" "Data/Light.h" "Renderer.h" "util/TexturePainter.h" "util/TexturePainter.cpp" "util/TextureBlend.h" "util/TextureBlend.cpp")
 
 
 find_package(Stb REQUIRED)

@@ -2,10 +2,11 @@
 
 #include "Engine/Objects/Object.h"
 #include "Graphics/gbe_graphics.h"
+#include "Engine/ObjectFunctions/Update.h"
 
 namespace gbe {
 
-	class LightObject : public Object{
+	class LightObject : public Object, public Update{
 	protected:
 		gfx::Light mLight;
 		
@@ -26,7 +27,7 @@ namespace gbe {
 			mLight.cam_view = old_cam_view;
 			mLight.cam_proj = old_cam_proj;
 		}
-		void InitializeInspectorData() override;
+		void GeneralInit() override;
 		SerializedObject Serialize() override;
 
 		LightObject();
@@ -37,5 +38,8 @@ namespace gbe {
 
 		void OnLocalTransformationChange(TransformChangeType) override;
 		void OnExternalTransformationChange(TransformChangeType, Matrix4 parentmat) override;
+
+		// Inherited via Update
+		void InvokeUpdate(float deltatime) override;
 	};
 }

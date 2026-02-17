@@ -32,4 +32,9 @@ const float* gbe::Vector2::Get_Ptr() {
 	return &((*this).x);
 }
 
+float gbe::Vector2::Dot(Vector2 b) const
+{
+	return (this->x * b.x) + (this->y * b.y);
+}
+
 const gbe::Vector2 gbe::Vector2::zero = gbe::Vector2(0, 0);

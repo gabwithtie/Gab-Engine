@@ -45,7 +45,12 @@ namespace gbe {
 			NON_DIRECT_EDITABLE = 1 << 9,
 			SELECT_PARENT_INSTEAD = 1 << 10,
 			EXCLUDE_FROM_OBJECT_TREE = 1 << 11,
-			SERIALIZABLE = 1 << 12
+			SERIALIZABLE = 1 << 12,
+
+			STATIC_POS = STATIC_POS_X | STATIC_POS_Y | STATIC_POS_Z,
+			STATIC_ROT = STATIC_ROT_X | STATIC_ROT_Y | STATIC_ROT_Z,
+			STATIC_SCALE = STATIC_SCALE_X | STATIC_SCALE_Y | STATIC_SCALE_Z,
+			STATIC_ALL = STATIC_POS | STATIC_ROT | STATIC_SCALE,
 		};
 
 	private:
@@ -71,8 +76,8 @@ namespace gbe {
 		
 		Matrix4 parent_matrix = Matrix4(1.0f);
 
-		void General_init();
 	protected:
+		virtual void GeneralInit();
 		Root* root = nullptr;
 		Object* parent = nullptr;
 		virtual void OnLocalTransformationChange(TransformChangeType changetype);
@@ -82,8 +87,6 @@ namespace gbe {
 		}
 
 		editor::InspectorData* inspectorData = nullptr;
-
-		virtual void InitializeInspectorData();
 	public:
 
 		Object();

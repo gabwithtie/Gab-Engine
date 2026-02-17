@@ -10,23 +10,6 @@
 
 namespace gbe {
 	namespace asset {
-		class MaterialOverride {
-		public:
-			asset::Shader::UniformFieldType type;
-
-			MaterialOverride();
-			~MaterialOverride();
-
-			bool value_bool;
-			float value_float;
-			Vector2 value_vec2;
-			Vector3 value_vec3;
-			Vector4 value_vec4;
-			Matrix4 value_mat4;
-			asset::Texture* value_tex;
-			int tex_stage;
-		};
-
 		namespace data {
 			struct MaterialOverrideImport {
 				std::string id;
@@ -46,90 +29,11 @@ namespace gbe {
 				int defaultrendergroup;
 				std::vector<MaterialOverrideImport> overrides;
 			};
-			struct MaterialLoadData {
-				std::unordered_map<std::string, MaterialOverride> overrides;
-				bool shadowcaster;
-				int defaultrendergroup;
-				asset::Shader* shader = nullptr;
-			};
 		}
 
-		class Material : public BaseAsset<asset::Material, data::MaterialImportData, data::MaterialLoadData> {
+		class Material : public BaseAsset<asset::Material, data::MaterialImportData> {
 		public:
 			Material(std::filesystem::path path);
-
-			size_t getOverrideCount() const {
-				return this->load_data.overrides.size();
-			}
-
-			MaterialOverride& getOverride(size_t index, std::string& id) {
-				auto it = this->load_data.overrides.begin();
-				std::advance(it, index);
-
-				id = it->first;
-				return it->second;
-			}
-
-			template <typename TValue>
-			void setOverride(std::string id, TValue value) {}
-
-			template<>
-			void setOverride<bool>(std::string id, bool value) {
-				auto materialOverride = MaterialOverride();
-				materialOverride.type = Shader::UniformFieldType::BOOL;
-				materialOverride.value_bool = value;
-
-				this->load_data.overrides.insert_or_assign(id, materialOverride);
-			}
-			template<>
-			void setOverride<float>(std::string id, float value) {
-				auto materialOverride = MaterialOverride();
-				materialOverride.type = Shader::UniformFieldType::FLOAT;
-				materialOverride.value_float = value;
-
-				this->load_data.overrides.insert_or_assign(id, materialOverride);
-			}
-			template<>
-			void setOverride<Vector2>(std::string id, Vector2 value) {
-				auto materialOverride = MaterialOverride();
-				materialOverride.type = Shader::UniformFieldType::VEC2;
-				materialOverride.value_vec2 = value;
-
-				this->load_data.overrides.insert_or_assign(id, materialOverride);
-			}
-			template<>
-			void setOverride<Vector3>(std::string id, Vector3 value) {
-				auto materialOverride = MaterialOverride();
-				materialOverride.type = Shader::UniformFieldType::VEC3;
-				materialOverride.value_vec3 = value;
-
-				this->load_data.overrides.insert_or_assign(id, materialOverride);
-			}
-			template<>
-			void setOverride<Vector4>(std::string id, Vector4 value) {
-				auto materialOverride = MaterialOverride();
-				materialOverride.type = Shader::UniformFieldType::VEC4;
-				materialOverride.value_vec4 = value;
-
-				this->load_data.overrides.insert_or_assign(id, materialOverride);
-			}
-			template<>
-			void setOverride<Matrix4>(std::string id, Matrix4 value) {
-				auto materialOverride = MaterialOverride();
-				materialOverride.type = Shader::UniformFieldType::MAT4;
-				materialOverride.value_mat4 = value;
-
-				this->load_data.overrides.insert_or_assign(id, materialOverride);
-			}
-
-			void setTextureOverride(std::string id, asset::Texture* value, int stage) {
-				auto materialOverride = MaterialOverride();
-				materialOverride.type = Shader::UniformFieldType::TEXTURE;
-				materialOverride.value_tex = value;
-				materialOverride.tex_stage = stage;
-
-				this->load_data.overrides.insert_or_assign(id, materialOverride);
-			}
 		};
 	}
 }

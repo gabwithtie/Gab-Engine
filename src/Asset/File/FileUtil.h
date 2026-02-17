@@ -14,6 +14,9 @@ namespace gbe {
 				// Get the parent path (which is the folder/directory)
 				std::filesystem::path folderPath = directory.parent_path();
 
+				if (folderPath.empty())
+					return true;
+
 				return std::filesystem::create_directories(folderPath);
 			}
 

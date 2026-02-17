@@ -13,11 +13,11 @@ namespace gbe {
 			Mix_Chunk* audio_chunk;
 		};
 
-		class AudioLoader : public asset::AssetLoader<asset::Audio, asset::data::AudioImportData, asset::data::AudioLoadData, AudioData> {
+		class AudioLoader : public asset::AssetLoader<asset::Audio, asset::data::AudioImportData, AudioData> {
 		private:
 		protected:
-			AudioData LoadAsset_(asset::Audio* asset, const asset::data::AudioImportData& importdata, asset::data::AudioLoadData* data) override;
-			void UnLoadAsset_(asset::Audio* asset, const asset::data::AudioImportData& importdata, asset::data::AudioLoadData* data) override;
+			void LoadAsset_(asset::Audio* asset, const asset::data::AudioImportData& importdata, AudioData* data) override;
+			void UnLoadAsset_(AudioData* data) override;
 			inline virtual void OnAsyncTaskCompleted(AsyncLoadTask* loadtask) override {
 				//This is a synchronous loader
 			}
