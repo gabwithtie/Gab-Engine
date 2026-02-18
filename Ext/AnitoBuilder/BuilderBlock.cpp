@@ -323,7 +323,16 @@ namespace gbe::ext::AnitoBuilder {
 			std::vector<std::pair<Vector3, Vector3>> insetpolygon;
 
 			//Roof handles
+			const auto createroofobj = [=](DrawCall* dc, int parent_index, int index, float height, float offset, float inset) {
+				RenderObject* base_ceiling = new RenderObject(dc);
+				base_ceiling->SetParent(ceiling_parent);
+				base_ceiling->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
+				display_renderers.push_back(base_ceiling);
 
+				ResetRoof(base_ceiling, parent_index, index, height, inset, offset);
+				};
+
+			int set_i = 0;
 			for (auto& set : this->data.sets)
 			{
 				bool put_roof = true;
@@ -343,7 +352,7 @@ namespace gbe::ext::AnitoBuilder {
 					}
 				}
 
-				if (put_roof)
+				if (put_roof) {
 					for (const auto& i_pair : insetpoints)
 					{
 						auto a = i_pair.first;
@@ -365,6 +374,13 @@ namespace gbe::ext::AnitoBuilder {
 
 						handle->Set_visible(false);
 					}
+
+					createroofobj(top_roof_DC, set_i, 0, 0.5f, roofheight, inset_distance - 0.5f);
+					createroofobj(top_roof_DC, set_i, 2, 0.5f, roofheight, inset_distance - 0.5f);
+
+				}
+
+				set_i++;
 			}
 
 			for (auto& handle : temppool)
@@ -392,15 +408,27 @@ namespace gbe::ext::AnitoBuilder {
 				{
 					int floor_index = handle->Get_floor(obj);
 
+					int x = handle->Get_x(obj);
+					int center_based_x = get_center_x(obj);
+
 					Vector3 pos = obj->World().position.Get();
 					pos -= Vector3(0, handle->Get_height_per_wall() / 2.0f, 0);
+
+					int obj_id = x + (floor_index * handle->Get_cur_width());
 
 					// ----------------------------
 
 					const auto process_renderobject = [&](RenderObject* newrenderer) {
-						newrenderer->SetParent(handle);
+						auto newparent = new BuilderBlockUnit(handle, obj_id);
+						newparent->SetParent(handle);
+
+						if(!AnitoBuilderExtension::unit_select)
+							newparent->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
+
+						display_renderers.push_back(newparent);
+						
+						newrenderer->SetParent(newparent);
 						newrenderer->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-						display_renderers.push_back(newrenderer);
 
 						auto inv__import_scale = Vector3(1.0 / wall_import_width, 1.0f / wall_import_height_from_zero, 1);
 						Vector3 final_scale = Vector3(1);
@@ -409,14 +437,9 @@ namespace gbe::ext::AnitoBuilder {
 						final_scale.y = (inv__import_scale.y * target_local_scale.y);
 						final_scale.z = thickness;
 
-						newrenderer->Local().scale.Set(final_scale);
-						newrenderer->World().position.Set(pos);
-
-						return newrenderer;
+						newparent->Local().scale.Set(final_scale);
+						newparent->World().position.Set(pos);
 						};
-
-					int x = handle->Get_x(obj);
-					int center_based_x = get_center_x(obj);
 
 					process_renderobject([&]()
 						{
@@ -464,6 +487,12 @@ namespace gbe::ext::AnitoBuilder {
 								if (floor_index == 0) return new RenderObject(wallnorm_DC[0]);
 								if (floor_index > 0)
 								{
+									auto o_it = handle_data->dc_overrides.find(obj_id);
+
+									if (o_it != handle_data->dc_overrides.end())
+										if (o_it->second > 0 && o_it->second < special_DC.size())
+											return new RenderObject(special_DC[o_it->second - 1]);
+
 									return new RenderObject(wallnorm_DC[1]);
 								}
 							}
@@ -507,19 +536,8 @@ namespace gbe::ext::AnitoBuilder {
 
 			for (const auto& roof : this->roof_pool)
 			{
-				const auto createroofobj = [=](DrawCall* dc, int index, float height, float offset, float inset) {
-					RenderObject* base_ceiling = new RenderObject(dc);
-					base_ceiling->SetParent(ceiling_parent);
-					base_ceiling->PushEditorFlag(Object::EditorFlags::SELECT_PARENT_INSTEAD);
-					display_renderers.push_back(base_ceiling);
-
-					ResetRoof(base_ceiling, roof.parent_index, index, height, inset, offset);
-					};
-
-				createroofobj(ceiling_DC, 0, 0.02f, 0, 0);
-				createroofobj(ceiling_DC, 2, 0.02f, 0, 0);
-				createroofobj(top_roof_DC, 0, 0.5f, roofheight, inset_distance - 0.5f);
-				createroofobj(top_roof_DC, 2, 0.5f, roofheight, inset_distance - 0.5f);
+				createroofobj(ceiling_DC, roof.parent_index, 0, 0.02f, 0, 0);
+				createroofobj(ceiling_DC, roof.parent_index, 2, 0.02f, 0, 0);
 			}
 		}
 	}

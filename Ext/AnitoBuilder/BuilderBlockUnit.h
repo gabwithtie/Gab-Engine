@@ -12,6 +12,7 @@ namespace gbe::ext::AnitoBuilder {
 	class BlockFace;
 
 	class BuilderBlockUnit : public Object {
+		std::vector<std::string> labels;
 	public:
 		BuilderBlockUnit(BuilderBlockFace* parent, int _pos);
 	};

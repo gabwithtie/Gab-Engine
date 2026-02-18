@@ -53,6 +53,12 @@ gbe::Editor::Editor(RenderPipeline* renderpipeline, Window* window, Time* _mtime
 		if (it != nullptr) {
 			this->inspectorwindow.SetInspectorData({}); // Clear inspector if the currently inspected object is deleted
 		}
+
+		auto sel_it = std::find(this->selected.begin(), this->selected.end(), deleted);
+
+		if (sel_it != this->selected.end()) {
+			this->selected = {};
+		}
 		});
 
 	//===========================IMGUI=============================//

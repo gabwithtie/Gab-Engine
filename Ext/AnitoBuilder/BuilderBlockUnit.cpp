@@ -6,7 +6,9 @@
 gbe::ext::AnitoBuilder::BuilderBlockUnit::BuilderBlockUnit(BuilderBlockFace* parent, int _pos)
 {
 	{
-		static std::vector<std::string> labels;
+		this->labels = {};
+
+		labels.push_back("None");
 
 		auto root_block = parent->Get_root_block();
 
@@ -27,7 +29,7 @@ gbe::ext::AnitoBuilder::BuilderBlockUnit::BuilderBlockUnit(BuilderBlockFace* par
 				if (it != segdata->dc_overrides.end())
 					return it->second;
 
-				return -1;
+				return 0;
 			}
 
 			return 0;
