@@ -1,0 +1,46 @@
+\contentsline {section}{Abstract}{1}{section*.1}%
+\contentsline {section}{Contents}{2}{section*.2}%
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Overview of Current Technology}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Statement of the Problem}{4}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Project Objectives}{4}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Scope and Limitations}{5}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.5}Significance of the Study}{5}{subsection.1.5}%
+\contentsline {section}{\numberline {2}Review of Related Work}{6}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Neo-Classical Architecture}{6}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}De La Salle University Manila Architecture}{7}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}PCG Tools for Artists}{8}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Concepts}{9}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Concepts in Neo-Classical Architecture}{9}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Concepts in Procedural Content Generation}{9}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}\textbf {Ionic Order}}{9}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}\textbf {Doric Order}}{9}{subsubsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.3}\textbf {Tuscan Order}}{10}{subsubsection.3.2.3}%
+\contentsline {subsubsection}{\numberline {3.2.4}\textbf {Corinthian Order}}{10}{subsubsection.3.2.4}%
+\contentsline {subsubsection}{\numberline {3.2.5}\textbf {Composite Order}}{10}{subsubsection.3.2.5}%
+\contentsline {subsection}{\numberline {3.3}Classifying DLSU-Manila Architecture}{10}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Concepts in Procedural Content Generation}{10}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Methodology}{12}{section.4}%
+\contentsline {subsection}{\numberline {4.1}3D Asset Development Workflow}{12}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Creation of an Art Book}{13}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Creation of the Anito builder 3D Editor}{13}{subsection.4.3}%
+\contentsline {subsubsection}{\numberline {4.3.1}\textbf {PCG Library Algorithm}}{14}{subsubsection.4.3.1}%
+\contentsline {subsubsection}{\numberline {4.3.2}\textbf {Using the PCG library in the 3D editor}}{16}{subsubsection.4.3.2}%
+\contentsline {subsubsection}{\numberline {4.3.3}\textbf {Viewing and interacting with the result in the 3D editor}}{16}{subsubsection.4.3.3}%
+\contentsline {subsection}{\numberline {4.4}Evaluation}{16}{subsection.4.4}%
+\contentsline {subsubsection}{\numberline {4.4.1}\textbf {Evaluation of Anito Builder's usability}}{16}{subsubsection.4.4.1}%
+\contentsline {subsubsection}{\numberline {4.4.2}\textbf {Evaluation of Anito Builder's output}}{17}{subsubsection.4.4.2}%
+\contentsline {section}{\numberline {5}Results}{18}{section.5}%
+\contentsline {subsection}{\numberline {5.1}\textbf {Modular 3D Models}}{18}{subsection.5.1}%
+\contentsline {subsubsection}{\numberline {5.1.1}\textbf {1st Floor Wall Segments}}{18}{subsubsection.5.1.1}%
+\contentsline {subsubsection}{\numberline {5.1.2}\textbf {2nd Floor Wall Segments}}{19}{subsubsection.5.1.2}%
+\contentsline {subsubsection}{\numberline {5.1.3}\textbf {3rd Floor Wall Segments}}{19}{subsubsection.5.1.3}%
+\contentsline {subsubsection}{\numberline {5.1.4}\textbf {Rooftop Wall Segments}}{20}{subsubsection.5.1.4}%
+\contentsline {subsubsection}{\numberline {5.1.5}\textbf {2-Segment Wall Segments}}{21}{subsubsection.5.1.5}%
+\contentsline {subsubsection}{\numberline {5.1.6}\textbf {3-Segment Wall Segments}}{23}{subsubsection.5.1.6}%
+\contentsline {subsubsection}{\numberline {5.1.7}\textbf {Wall Segments}}{23}{subsubsection.5.1.7}%
+\contentsline {section}{\numberline {6}Conclusion}{25}{section.6}%
+\contentsline {subsection}{\numberline {6.1}\textbf {3D Asset Collection}}{25}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}\textbf {3D Asset development}}{25}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}\textbf {Prototype Evaluation}}{26}{subsection.6.3}%
+\contentsline {section}{References}{27}{section*.21}%
