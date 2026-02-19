@@ -10,6 +10,9 @@
 
 #include "AnitoBuilderExtension.h"
 
+#include <algorithm>
+#include <set>
+
 namespace gbe::ext::AnitoBuilder {
 	void BuilderBlock::LoadAssets()
 	{
@@ -585,7 +588,7 @@ namespace gbe::ext::AnitoBuilder {
 
 		for (auto& roof : this->roof_pool)
 		{
-			if(roof.parent_index == s)
+			if (roof.parent_index == s)
 				set_roof = &roof;
 		}
 
@@ -595,10 +598,10 @@ namespace gbe::ext::AnitoBuilder {
 		ResetRoof(set_roof->handle_renderers[0], s, 0);
 		ResetRoof(set_roof->handle_renderers[1], s, 2);
 
-		auto handle = this->handle_pool[this->data.sets[s].faces[i].handleindex];
-	
 		auto second = data.GetPosition(seg.second);
 		second.y += height;
+
+		auto handle = this->handle_pool[this->data.sets[s].faces[i].handleindex];
 		handle->SetPositions(data.GetPosition(seg.first), second);
 	}
 
@@ -948,5 +951,106 @@ namespace gbe::ext::AnitoBuilder {
 		this->roof_pool.push_back(newset_roof);
 
 		Refresh();
+	}
+
+	void gbe::ext::AnitoBuilder::BuilderBlock::Delete(BuilderBlockFace* handle)
+	{
+		if (!handle) return;
+
+		int target_set_index = -1;
+
+		// 1. Find the target set index
+		for (int i = 0; i < (int)data.sets.size(); ++i) {
+			for (const auto& face : data.sets[i].faces) {
+				if (face.handleindex < (int)handle_pool.size() && handle_pool[face.handleindex] == handle) {
+					target_set_index = i;
+					break;
+				}
+			}
+			if (target_set_index != -1) break;
+		}
+
+		if (target_set_index == -1) return;
+
+		// 2. Identify neighbors and find the "Shared" handle index
+		std::set<int> neighbor_sets;
+		int shared_handle_index = -1;
+
+		for (int i = 0; i < (int)data.sets.size(); ++i) {
+			if (i == target_set_index) continue;
+
+			for (const auto& neighbor_face : data.sets[i].faces) {
+				for (const auto& target_face : data.sets[target_set_index].faces) {
+					if (neighbor_face.handleindex == target_face.handleindex) {
+						neighbor_sets.insert(i);
+						shared_handle_index = target_face.handleindex; // This is the shared connection
+					}
+				}
+			}
+		}
+
+		// 3. Deletion Logic (Only if it's a corner/end-cap)
+		if (neighbor_sets.size() == 1) {
+
+			// --- STEP A: RESTORE THE SHARED HANDLE ---
+			if (shared_handle_index != -1 && handle_pool[shared_handle_index]) {
+				// The neighbor still uses this handle, so we just make it visible again
+				handle_pool[shared_handle_index]->Set_is_edge(true);
+			}
+
+			// --- STEP B: COLLECT UNIQUE HANDLES TO DESTROY ---
+			std::vector<int> unique_indices_to_remove;
+			for (const auto& face : data.sets[target_set_index].faces) {
+				// Only remove it if it ISN'T the shared one
+				if (face.handleindex != shared_handle_index) {
+					unique_indices_to_remove.push_back(face.handleindex);
+				}
+			}
+
+			// Sort descending to prevent shifting issues during pool erasure
+			std::sort(unique_indices_to_remove.begin(), unique_indices_to_remove.end(), std::greater<int>());
+
+			for (int idx : unique_indices_to_remove) {
+				if (handle_pool[idx]) {
+					handle_pool[idx]->Destroy();
+				}
+				handle_pool.erase(handle_pool.begin() + idx);
+
+				// Re-index all face references across all sets
+				for (auto& s : data.sets) {
+					for (auto& f : s.faces) {
+						if (f.handleindex > idx) {
+							f.handleindex--;
+						}
+					}
+				}
+				// Update the shared_handle_index tracker if it shifted
+				if (shared_handle_index > idx) {
+					shared_handle_index--;
+				}
+			}
+
+			// --- STEP C: ROOF POOL UPDATES ---
+			std::vector<int> roof_indices_to_remove;
+			for (int i = 0; i < (int)roof_pool.size(); ++i) {
+				if (roof_pool[i].parent_index == target_set_index) {
+					roof_indices_to_remove.push_back(i);
+				}
+			}
+			std::sort(roof_indices_to_remove.begin(), roof_indices_to_remove.end(), std::greater<int>());
+			for (int idx : roof_indices_to_remove) {
+				roof_pool.erase(roof_pool.begin() + idx);
+			}
+			for (auto& roof : roof_pool) {
+				if (roof.parent_index > target_set_index) {
+					roof.parent_index--;
+				}
+			}
+
+			// --- STEP D: REMOVE THE BLOCK SET ---
+			data.sets.erase(data.sets.begin() + target_set_index);
+
+			this->Refresh();
+		}
 	}
 }

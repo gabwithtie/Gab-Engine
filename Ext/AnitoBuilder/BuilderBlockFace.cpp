@@ -76,15 +76,26 @@ namespace gbe::ext::AnitoBuilder {
 
 			this->inspectorData->fields.push_back(field);
 		}
+		{
+			auto field = new gbe::editor::InspectorButton();
+			field->name = "Append Block";
+			field->onpress = [=]() {
+				if (this->is_edge)
+					root_block->AddBlock(this);
+				};
 
-		auto add_block_button = new gbe::editor::InspectorButton();
-		add_block_button->name = "Append Block";
-		add_block_button->onpress = [=]() {
-			if(this->is_edge)
-				root_block->AddBlock(this);
-			};
+			this->inspectorData->fields.push_back(field);
+		}
+		{
+			auto field = new gbe::editor::InspectorButton();
+			field->name = "Try Delete";
+			field->onpress = [=]() {
+				if (this->is_edge)
+					root_block->Delete(this);
+				};
 
-		this->inspectorData->fields.push_back(add_block_button);
+			this->inspectorData->fields.push_back(field);
+		}
 	}
 
 	void BuilderBlockFace::SetPositions(Vector3 local_a, Vector3 local_b)

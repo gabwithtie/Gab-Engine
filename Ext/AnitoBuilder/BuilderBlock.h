@@ -155,6 +155,7 @@ namespace gbe::ext::AnitoBuilder {
 		BlockFace* GetSeg(BuilderBlockFace* face);
 		void AddBlock(int root_handle);
 		void AddBlock(int corners[4]);
+		void Delete(BuilderBlockFace* handle);
 
 		SerializedObject Serialize() override;
 	};
