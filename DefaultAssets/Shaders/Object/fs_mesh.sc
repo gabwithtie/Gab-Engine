@@ -118,14 +118,21 @@ void main() {
 
     vec3 normal = normalize(v_normal);
     if (has_normal_tex > 0.5) {
+        // 1. Sample the texture
         vec3 normalSample = texture2D(normal_tex, final_texuv).xyz * 2.0 - 1.0;
-        
-        mat3 TBN = mat3(
-            normalize(v_tangent),
-            normalize(v_bitangent),
-            normal
-        );
-        //normal = normalize(mul(TBN, normalSample));
+
+        vec3 N = normalize(v_normal);
+        vec3 T = normalize(v_tangent);
+        vec3 B = normalize(v_bitangent);
+
+        // 2. Gram-Schmidt Orthogonalization 
+        // This forces T to be 90 degrees to N, even if the mesh data is slightly messy.
+        T = normalize(T - dot(T, N) * N);
+        mat3 TBN = mat3(T, B, N);
+
+        // 4. Transform and ensure it faces the camera hemisphere
+        normal = normalize(mul(TBN, normalSample));
+        normal = normal * sign(dot(normal, v_normal) + 0.00001);
     }
 
     float _matAO = 1.0;
@@ -181,7 +188,6 @@ void main() {
         vec3 halfDir = normalize(lightDir + viewDir);
         float specPower = pow(8192.0, 1.0 - _roughness); // Map roughness to shininess
         float spec = pow(max(dot(normal, halfDir), 0.0), specPower);
-        spec = 1;
 
         // Metallic colors the specular reflection with albedo
         vec3 specColor = lerp(vec3(0.04), albedo, _metallic);

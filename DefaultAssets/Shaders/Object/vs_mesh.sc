@@ -23,14 +23,30 @@ void main()
 	// 3. Clip Position (required for rasterization)
 	gl_Position = mul(u_viewProj, worldPos);
 
-	// 4. World Normal
-	mat3 normalMatrix = (mat3)model;
-	v_normal = normalize(mul(normalMatrix, a_normal));
-
 	// 5. View Vector (World Space)
 	vec3 camPos = u_invView[3].xyz; 
 	v_view = camPos - worldPos.xyz;
 
-    v_tangent = normalize(mul(normalMatrix, a_tangent.xyz) * a_tangent.w);
-	v_bitangent = cross(v_normal, v_tangent);
+	// --- MANUAL NORMAL MATRIX (Adjugate) ---
+    // Extract the basis vectors (columns) of the model matrix
+    vec3 col0 = normalize(i_data0.xyz);
+    vec3 col1 = normalize(i_data1.xyz);
+    vec3 col2 = normalize(i_data2.xyz);
+
+    // The cross products of the columns generate the Inverse-Transpose directions.
+    // This correctly handles non-uniform scaling distortion.
+    mat3 normalMatrix = mat3(
+        cross(col1, col2), // New X-axis
+        cross(col2, col0), // New Y-axis
+        cross(col0, col1)  // New Z-axis
+    );
+
+    v_normal = normalize(mul(normalMatrix, a_normal));
+
+    // Tangents are direction vectors, so they use the same matrix
+    v_tangent = normalize(mul(normalMatrix, a_tangent.xyz));
+
+    // BITANGENT: This is where the 'w' goes! 
+    // This handles the UV mirroring (handedness)
+    v_bitangent = normalize(cross(v_normal, v_tangent) * a_tangent.w);
 }

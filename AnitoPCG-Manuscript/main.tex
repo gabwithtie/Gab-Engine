@@ -1,62 +1,94 @@
-\documentclass[manuscript]{acmart}
-\setcopyright{none}
+\documentclass[manuscript,screen,12pt]{article}
 
-\bibliographystyle{ACM-Reference-Format}
 \usepackage{algorithm}
 \usepackage{algorithmicx}
 \usepackage{graphicx}
-\graphicspath{{figures/}}
 \usepackage{float}
 \usepackage{array}
 \usepackage{booktabs}
+\usepackage{setspace}
+\usepackage[numbers]{natbib}
+
+%styling
+\doublespacing
+\bibliographystyle{ACM-Reference-Format}
+
+\graphicspath{{figures/}}
+
+\newcommand{\myTitle}{Exploring Procedural Content Generation of De La Salle University Buildings}
+
+\title{\myTitle}
+\author{Eric Christian Arceo}
+\author{Carl Joshua Peñaflorida}
+\author{Gabriel Paulo Rayo}
+
 \begin{document}
 \nocite{*}
 
-\title[AnitoPCG]{Exploring Procedural Content Generation of Saint La Salle Hall in a Customized Game Engine}
-
-\author[1]{Rayo Gabriel Paulo}
-\email{gabriel_paulo_rayo@dlsu.edu.ph}
-\author[2]{Peñaflorida Carl Joshua}
-\email{carl_joshua_d_penaflorida@dlsu.edu.ph}
-\author[3]{Arceo Eric Christian}
-\email{eric_christian_arceo@dlsu.edu.ph}
-\affiliation{%
-    \institution{De La Salle University}
-    \city{Manila}
-    \country{Philippines}
-}
-
-\renewcommand{\shortauthors}{Rayo, et al.}
-
-%\address[1]{De La Salle University Laguna Campus, LTI Spine Road, Brgys. Binan and Malamig, Binan, Laguna 4024, Philippines}
-%\address[2]{Graphics, Animation, Multimedia, and Entertainment (GAME) Lab - De La Salle University}
-
-\date{February 18, 2026}
+\small
+\begin{titlepage}
+	\centering
+	
+	% Logo
+	\includegraphics[width=5cm]{figures/logos.jpg}
+	\par
+	\vspace{1em}
+	% Title	
+	{\title \Large \textbf{\myTitle} \par}
+	\vspace{1em}
+	% Institutional Context
+	{A Capstone Project Presented to \par}
+	{Department of Software Technology \par}
+	{College of Computer Science \par}
+	{De La Salle University \par}
+	\vspace{1em}
+	
+	% Degree Requirements
+	{In partial fulfillment of the requirements for the degree of\par}
+	\textbf{Bachelor of Science in Interactive Entertainment \\ Major in Game Development} \par
+	\vspace{0.5em}
+	{And \par}
+	\vspace{0.5em}
+	\textbf{Bachelor of Science in Interactive Entertainment \\ Major in Arts and Design} \par
+	\vspace{1em}
+	
+	% Authors
+	{Arceo, Eric Christian\par}
+	{Peñaflorida, Carl Joshua\par}
+	{Rayo, Gabriel Paulo\par}
+	\vspace{1em}
+	% Adviser
+	{\textbf{Neil Patrick Del Gallego, Ph. D.} \par}
+	{Adviser \par}
+	% Date
+	{July 28, 2025}
+	
+\end{titlepage}
 
 \begin{abstract}
 Procedural Content Generation (PCG) is the automated content generation technique widely used in game development, urban planning, digital heritage, and educational simulation. It has become an increasingly beneficial tool in three-dimensional asset creation. Very few PCG technologies are built to support domain-specific environments like schools and universities. As such, this project proposes the development of a PCG system specifically for generating De La Salle University Manila (DLSU Manila) buildings, particularly those that are Neo-Classical in architectural style. This will be achieved through the creation of a C++ PCG 3D editor tailored for procedurally generating DLSU buildings and assets designed to replicate real-life structures.
 \end{abstract}
 
-\begin{CCSXML}
-<ccs2012>
- <concept>
-  <concept_id>10010147.10010371.10010387</concept_id>
-  <concept_desc>Computing methodologies~Graphics systems and interfaces</concept_desc>
-  <concept_significance>500</concept_significance>
- </concept>
-</ccs2012>
-\end{CCSXML}
-
-\ccsdesc[500]{Computing methodologies~Graphics systems and interfaces}
-
+\newcommand{\keywords}[1]{%
+	\vspace{1.5em}
+	\noindent\textbf{Keywords:}\quad #1
+}
 \keywords{computer graphics, procedural content generation, neoclassical architecture, game engine}
 
-\maketitle
-
 \newpage
+
 \tableofcontents
 
 \newpage
+
+\listoffigures
+
+\newpage
+
+\listoftables
+
+\newpage
+
 \section{Introduction}
 
 \subsection{Overview of Current Technology}
@@ -68,7 +100,7 @@ PCG techniques are also being integrated into toolchains and wrappers compatible
 
 However, one documented challenge in current PCG applications—particularly in game environments—is the tendency for generated content to appear repetitive or generic, reducing the perceived authenticity of spaces like cities or architectural scenes \citep{togelius2013}.
 
-Addressing this issue is a key area of research, especially in attempts to refine structural detail, variety, and cultural fidelity in procedurally generated models.
+Current research aims to address this issue, attempting to refine structural detail, variety, and cultural fidelity in procedurally generated models.
 
 Beyond entertainment, PCG is gaining traction in areas such as urban planning, digital heritage, and educational simulation. Urban environments, much like virtual game worlds, require structured layouts and detailed asset placement, making them suitable for automated generation. Studies have shown that PCG can aid in generating realistic 3D cityscapes for planning, analysis, and visualization purposes, thereby supporting more efficient design workflows and enabling scenario testing in virtual simulations \citep{kim2018, parish2001}.
 
@@ -89,7 +121,7 @@ Due to the lack of PCG tools tailored for architectural modelling, this project 
 \end{figure}
 
 \subsection{Project Objectives}
-Our main objective is to create a procedural content generation method suited for DLSU buildings. The 3D scene editor that implements this method will be named “Anito Builder.” The specific objectives of this project are as follows:
+The study's primary objective was to create a procedural content generation method suited for DLSU buildings. The 3D scene editor that implements this method will be named “Anito Builder.” The specific objectives of this project are as follows:
 
 \begin{enumerate}
     \item Analyze and identify the architectural style of DLSU buildings, with the aim of understanding the underlying design principles and techniques necessary for accurate replication.
@@ -100,20 +132,22 @@ Our main objective is to create a procedural content generation method suited fo
 \end{enumerate}
 
 \subsection{Scope and Limitations}
-The project will focus on procedurally generating aspects of the buildings at De La Salle University. In particular, the project will focus on procedurally generating walls of the Saint La Salle Hall, using neo-classical architecture as a reference, which is a type of architecture from the 18th century that emphasizes symmetry and grandeur. Inspired by the classical architecture of ancient Greece and Rome, it is commonly characterized by simple geometric forms and symmetry. This scope will allow the project to demonstrate its ability to handle repeated patterns, as well as stretched patterns, without looking distorted. 
+Anito Builder primarily focused on procedurally generating the the Saint La Salle Hall at De La Salle University, Philippines. It accomplished this by using neo-classical architecture as a reference, which is a type of architecture from the 18th century that emphasizes symmetry and grandeur. 
 
-However, some buildings and structures cannot be generated due to copyright issues or other legal reasons, and the researchers will not be able to get official building schematics, making all generations inspired by Lasallian architecture instead of a one-to-one match of the real-life buildings/locations. This includes murals, sculptures, and artworks that can be found within or on the buildings. Similarly, floor plans, internal designs, and administrative rooms or buildings cannot be obtained or recreated without permission.
+However, some buildings and structures cannot be generated due to copyright issues or other legal reasons, and the researchers were not able to get official building schematics, making all generations inspired by Lasallian architecture instead of a one-to-one match of the real-life buildings/locations. This includes murals, sculptures, logos, and artworks that can be found within or on the buildings. Similarly, floor plans, internal designs, and administrative rooms or buildings cannot be obtained or recreated without permission.
 
-As mentioned, the project will revolve around the walls of La Salle Hall. And to be able to develop a PCG method for generating La Salle Hall, it is necessary to create the accompanying pillars, columns, windows, and anything that supports or encloses the wall. The project will not create models for any props like trash cans, food carts, and lamp posts since such objects are not part of a building. Instead, the focus will be on the parts that make up the building.
+As mentioned, the project revolved around the walls of La Salle Hall. As such, it was necessary to create the accompanying pillars, columns, windows, and anything that supports or encloses the wall. The project did not create models for any props like trash cans, food carts, and lamp posts since such objects are not part of the building. Instead, the focus will be on the structural parts that make up the building.
 
-The models to be used in this project will be made from scratch in Blender, since any engravings or statues will not be covered due to legal concerns. The decision to use Blender is due to the extensive amount of plug-ins available for the program, increasing the speed and efficiency in creating 3D assets. Blender is a free software with precision modeling that is perfect for modeling architectures that require symmetry and proportionality. With the help of modeling features like array, subdivision, and deform modifiers, artists will be able to produce highly-detailed models. Additionally, to develop further understanding of how assets, especially textures, behave when they are used for PCG methods, artists are going to utilize current existing PCG plugins and built-in features for Blender during the modelling process. This will not only help artists create models and textures that better fit the ideal output of the project, but doing so will also help the team determine what kind of PCG method is the most optimal choice. As for the textures, they will be made with the help of Substance Painter and Blender itself. Substance Painter uses Physically-Based Rendering (PBR) which is perfect for simulating real-world lighting conditions. It depicts materials like marble and stone realistically, and since the assets that are going to be created are mostly buildings, the project will greatly benefit from it. Additionally, Blender hosts a powerful shading node system which can be used to create procedural textures that can be used in the project. 3D Open-Source 3D scanning software, such as RealityScan, was considered to speed up the creation of 3D assets; however, due to the nature of the models that will be created, a stylized rendition of the neo-classical architecture, the use of 3D scanning software was omitted from the 3D creation workflow.
+[TODO: Re-evaluate and put in methodology.] The models used in this project were made from scratch in Blender, since any engravings or statues were not covered due to legal concerns. The decision to use Blender is due to the extensive amount of plug-ins available for the program, increasing the speed and efficiency in creating 3D assets. Blender is a free software with precision modeling that is perfect for modeling architectures that require symmetry and proportionality. With the help of modeling features like array, subdivision, and deform modifiers, artists were able to produce highly-detailed models. Additionally, to develop further understanding of how assets, especially textures, behave when they are used for PCG methods, artists utilized current existing PCG plugins and built-in features for Blender during the modeling process.
 
-The PCG 3D editor will be written in C++. This is because the underlying environment that the project will be tested on is a game engine that is also written in C++. Furthermore, the Vulkan rendering API to be used for the scene renderer is natively in C++. This project will also utilize the CMake build system with the assistance of the VCPKG package manager.
+For the textures, Substance Painter was used. Substance Painter uses Physically-Based Rendering (PBR) which is good for simulating real-world lighting conditions. It depicts materials like marble and stone realistically. Additionally, Blender hosts a powerful shading node system which can be used to create procedural textures that can be used in the project. 3D Open-Source 3D scanning software, such as RealityScan, was considered to speed up the creation of 3D assets; however, due to the nature of the models that was created, a stylized rendition of the neo-classical architecture, the use of 3D scanning software was omitted from the 3D creation workflow.
+
+The PCG 3D editor was written in C++. This is because the underlying environment that the project was to be tested on is a game engine that is also written in C++. Furthermore, the BGFX rendering library to be used for the scene renderer is natively in C++. This project also utilized the CMake build system with the assistance of the VCPKG package manager.
 
 \subsection{Significance of the Study}
-Exploring DLSU buildings as a venue for PCG offers significant value. This project can serve as a research on how to structure 3D modelling plug-ins for generalized use in applications. It can provide developers with an idea of how to design their library architecture if they are planning to create a 3D editor. Similarly, it will help 3D artists find a reference in understanding PCG and its application in urban modelling.
+Exploring DLSU buildings as a venue for PCG offers significant value. This project can serve as a reference on how to structure 3D modeling software for generalized use. It can provide developers with an idea of how to design their engine architecture if they are planning to create a 3D editor. Similarly, it will help 3D artists find a reference in understanding PCG and its application in urban modeling.
 
-Additionally, procedural generation of universities or other similar institutions, specifically DLSU buildings, is rare. PCG-generated buildings and structures can be used as 3D assets for various activities such as advertisements, virtual tours, or simulations that can be showcased to various media.
+Additionally, procedural generation of universities or other similar institutions, specifically DLSU buildings, is uncommon. PCG-generated buildings and structures can be used as 3D assets for various activities such as advertisements, virtual tours, or simulations that can be showcased to various media.
 
 \section{Review of Related Work}
 
@@ -201,6 +235,8 @@ Modern 3-dimensional modelling software (e.g., Blender, Houdini, Maya) offers to
 	
 Unreal Engine 5 is a modern Game engine that has procedurally generated content built into the engine. The software allows users to import their own assets and make PCG landscapes, which have been used by many game developers over the years, however, one common issue with Unreal Engine 5 is the low performance of the engine on many systems. Unreal Engine 5 has many features that are meant to make games visually appealing. Features such as Lumen and Ray Tracing allow developers to make amazing-looking games with very little effort, but because of this, many scenes become hard to optimize, and this extends to the PCG content the engine creates. Many scenes become hard to run, and for the developers, it becomes hard to generate because their systems lack the speed necessary to run all these features.
 
+\subsection{TODO: Find more studies for engines}
+
 \section{Concepts}
 
 \subsection{Concepts in Neo-Classical Architecture}
@@ -241,11 +277,13 @@ In contrast, high-human intervention methods are characterized by explicit human
 
 Another category of high-human intervention methods is algorithmic procedural generation. This is a method wherein content is produced through a fixed, step-by-step process embedded within an algorithm. This approach relies on a pre-determined sequence of operations applied to specific inputs. This methodological choice prioritizes predictability and reliability.
 
+\subsection{Concepts in Software Architecture}
+
 When creating a software architecture, it is important to note that developers prefer to be able to port a software library across multiple applications where it can be loaded as-is. Portability refers to how easy it is to successfully import and use an external library in your project (International Software Testing Qualifications Board, 2014). Portability is directly proportional to a software's ability for co-existence where it can share resources with other independent software.
 
 A software library is a module or component. This means that it should be a minimal piece of software item that should be testable in isolation. It should define the inputs it can receive, the outputs it will generate, and the underlying logic that it houses. The act of testing a library is called unit/component testing. Other developers may want to create projects that can help a library seamlessly communicate with other projects such as an external application. These projects are called wrappers as they "wrap" the underlying library in a format that the receiving project can understand (Babych, M., 2024).
 
-For this project, the language to be used is C++. This is because C++ is one of the lowest level languages out of the current mainstream languages. A low-level language is one that is close to assembly language (i.e., the language that computers can understand natively) (Ayepeku, F. O. n.d.). A low-level language is important in creating libraries because it makes it easier for higher-level languages to create high-performance wrappers.
+Using a low-level language is essential to creating game engines or libraries. A low-level language is one that is close to assembly language (i.e., the language that computers can understand natively) (Ayepeku, F. O. n.d.). This is important for libraries because creating high-performance wrappers will be easier.
 
 When creating libraries in C++, the choice of build system is important. A C++ build system is a tool to assist developers in automating the application's build process. C++ build systems may handle the linking of different libraries together. They may also be responsible for communicating with your package manager, which in turn, makes them responsible for handling dependencies. Linking in C++ means associating a symbol with its definition. One library may have a definition for the symbol, "Vector3." As such, when a developer links this library to their executable, they will now be able to use the Vector3 symbol in their code.
 
@@ -262,39 +300,41 @@ The application programming interface (API), is the way that programmers will be
 \end{itemize}
 
 \section{Methodology}
-The artists will be assigned to create the assets to be used by the Anito Builder. This would be imported to the PCG Library's local database, while subsequently being used for the creation of the Art Bible as well. The developers of the PCG Library will handle the creation of the internal logic, and also the subsequent Anito Builder 3D Scene Editor. It is this scene editor that all evaluations will take place.
+
+Anito Builder was created by a combination of artists and developer. The artists were be assigned to create the assets that would be imported to Anito Builder's local directory, while subsequently being used for the creation of the Art Bible. The developer of Anito Builder handled the creation of the internal logic, and also the subsequent 3D Scene Editor.
 
 \subsection{3D Asset Development Workflow}
-The development of modern 3D assets has followed a similar process for quite some time now, which is to help make the 3D development process more efficient and to reduce the number of steps needed in creating various assets. The step-by-step process may vary slightly depending on the specific steps needed in creating 3D assets to better match the project, but for PCG content, a workflow process has been generalized into the following steps (Fig., 15). 3D Asset workflows begin with a creative direction, artists and software developers discuss what art style the assets should follow, followed by gathering references, making the mesh models, and then texturing the 3D assets. The chosen workflow has the following steps:
+For PCG content, the 3D Asset workflows begin with a creative direction. Artists and the software developer discuss what art style the assets should follow, followed by gathering references, making the mesh models, and then texturing the 3D assets. The chosen workflow has the following steps:
 
 \begin{enumerate}
     \item Stylization and reference gathering: This step is about the stylization of the buildings chosen to be modeled; references and discussions are made here to ensure a consistent art style.
     \item Low-poly mesh modeling: Creating a low poly mesh model will be the start in creating the 3D assets to ensure that all models are easily exportable and workable. This step includes the standardization of the unit of measurement for all models, ensuring that all models follow a specific scale.  In addition to low poly mesh optimization, areas with more detail that require high poly mesh modelling will be created during this step, making them separate models.
-    \item Mesh optimization: Once a low poly mesh is created, optimizations and final passes must be done to ensure that all the models are functional and will run well on any program and machine. 
-    \item Texturing: Once the mesh of the 3D asset is done, the mesh must be textured. This step includes making normal maps, creating UV maps, and painting the textures for each of the models. In this phase of the 3D asset creation, textures must also be tested to see if lighting effects such as bloom and light reflections work well with the created textures.
+    \item Mesh optimization: Once a low poly mesh is created, optimizations and final passes must be done to ensure that all the models are functional and will run well on any program and machine.
+    \item UV Unwrapping: To facilitate subsequent steps, the UV coordinates of each mesh was unwrapped in such a way that avoided overlapping and stretching.
+    \item Texturing: Once the mesh of the 3D asset is done, the mesh must be textured. To ensure procedurality, simple tile-able textures was created for general use on all meshes.
     \item Asset integration: The final step is to compile all the 3D assets, ready to be integrated into the PCG Pipeline, allowing the program to use all the created 3D assets (see Figure 16).
 \end{enumerate}
 
-To ensure the quality of the generated content, limit creation will be implemented to guide the outputs of the procedural generation system. This involves setting clear constraints—such as size, proportions, and architectural elements—to make sure that the generated buildings are both visually coherent and structurally sound. By doing so, the team can avoid unrealistic results and maintain a consistent design language across all models, ultimately improving the overall quality and usability of the generated content.
+To ensure the quality of the generated content, limit creation was implemented to guide the outputs of the procedural generation system. This involves setting clear constraints—such as size, proportions, and architectural elements—to make sure that the generated buildings are both visually coherent and structurally sound. By doing so, the team can avoid unrealistic results and maintain a consistent design language across all models, ultimately improving the overall quality and usability of the generated content.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{figures/Collection of Modular Assets.png}
-    \caption{Flowchart showing the 3D Asset Development Workflow}
+    \includegraphics[width=1.0\linewidth]{figures/Slide4.JPG}
+    \caption{Flowchart showing the 3D Asset Development Workflow (todo: update this)}
     \label{fig:workflow}
 \end{figure}
 
 \subsection{Creation of an Art Book}
 
-The 3D models that will be used in the project will be made using real-world and in-game references, including mainly architectural photographs and illustrations. The neoclassical-influenced buildings, specifically, are going to be made following the system of classical orders. As such, it is important to study and learn how they are meant to be constructed and their use to ensure architectural accuracy.
+The 3D models that was be used in the project was be made using real-world and in-game references, including mainly architectural photographs and illustrations. The neoclassical-influenced buildings, specifically, are going to be made following the system of classical orders. As such, it is important to study and learn how they are meant to be constructed and their use to ensure architectural accuracy.
 
-As a product of this, the project includes the creation of an art book that showcases neoclassical architecture both in the real world and in games. It will serve both as a reference material for the group and as a visual and conceptual companion to the models. Through this, the art book aims to illustrate the influence of neoclassical and other historic architectural styles on the current standing buildings of De La Salle Manila.
+As a product of this, the project includes the creation of an art book that showcases neoclassical architecture both in the real world and in games. It served both as a reference material for the group and as a visual and conceptual companion to the models. Through this, the art book aims to illustrate the influence of neoclassical and other historic architectural styles on the current standing buildings of De La Salle Manila.
 
 \subsection{Creation of the Anito builder 3D Editor}
 
-An application named "Anito Builder" will be created. It will be a standalone 3D editor application that aims to allow users to intuitively use the created PCG method to generate custom scenes.
+An application named "Anito Builder" was be created for the project. It is standalone 3D editor application that aims to allow users to intuitively use the created PCG method to generate custom scenes.
 
-The application will be developed using several libraries. Major libraries to be used include the following (see Table 3):
+The application was be developed using several libraries. Major libraries to be used include the following (see Table 3):
 
 \begin{table}[h!]
 \centering
@@ -303,7 +343,7 @@ The application will be developed using several libraries. Major libraries to be
 \hline
 \textbf{Library/API} & \textbf{Description} \\
 \hline
-Vulkan & This is the rendering API to be used for the project. Vulkan is used because procedurally generated scenes require heavy optimization. This heavy optimization is something that Vulkan can offer since it lets developers interact with low-level functionality. \\
+BGFX & This is the rendering library to be used for the project. BGFX is used to provide an intuitive abstraction layer from low-level graphics programming. It is used such that the application can remain platform-agnostic. \\
 \hline
 SDL2 & This is the window and event management library that will be used. This is because SDL2 already contains most features that are needed for a full-fledged application window. Furthermore, SDL events are preferred over how other window libraries scan for events. \\
 \hline
@@ -314,7 +354,7 @@ ImGui & The graphical user interface library to be used for window layout and va
 \end{tabular}
 \end{table}
 
-The main concept of the 3D editor is based on editable blocks similar to what one can find on Unity's Probuilder or Blender's face edit mode. Anito Builder will spawn cubes in which all 4 faces of the cube are selectable and movable in the x-plane, while the cube's height can be controlled by the given inspector.
+The main concept of the 3D editor is based on editable blocks similar to what one can find on Unity's Probuilder or Blender's face edit mode. Anito Builder can spawn cubes in which all 4 faces of the cube are selectable and movable in the x-plane, while the cube's height can be controlled by dragging the roof up or down.
 
 The cube can be extended by selecting a face and pressing "append" on the editor. By doing so, another cube will spawn with that selected face as a shared face between the old cube and the new cube. This can be done indefinitely to create various building shapes.
 
@@ -323,7 +363,7 @@ After finalizing a block, the user of the application can click a button to turn
 
 \subsubsection{\textbf{PCG Library Algorithm}}
 
-The procedural generation of the building is based on the wall subdivisions that are created during the edit phase (wherein the block is still visible). For each subdivision, the PCG method will choose which segment type is used based on various parameters. For instance, the most basic parameters that the PCG method uses is the floor number. For the basic wall, it uses the basic 1st floor model if it is floor number 1. While it uses the basic 2nd+ floor model if it is anything above the first floor.
+The procedural generation of the building is based on the wall subdivisions that are created in real time. For each subdivision, the PCG method will choose which segment type is used based on various parameters. For instance, the most basic parameters that the PCG method uses is the floor number. For the basic wall, it uses the basic 1st floor model if it is floor number 1. While it uses the basic 2nd+ floor model if it is anything above the first floor.
 
 The PCG library will rely on a simple algorithm which will dictate its construction. The ratios and positioning of each element of the final output is to be specified in the GenerationParams class.
 
@@ -581,8 +621,6 @@ The prototype created is sufficiently equipped to act as a procedural asset gene
 Further improvements to the prototype include optimizations to the rendering pipeline. As there is observable framerate drops when rendering scenes with large blocks. Furthermore, to improve the viewing experience of users, some rendering features should be implemented. One of which is mipmapping, such that normal textures do not cause a model to appear too noisy when zoomed out. Another is ambient occlusion, such that the edges of geometry are darkened for visual clarity and realism.
 
 \newpage
-\bibliographystyle{ACM-Reference-Format}
-\bibliography{references}
 
 \begin{thebibliography}{99}
 
