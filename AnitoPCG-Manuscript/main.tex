@@ -1,13 +1,15 @@
 \documentclass[manuscript,screen,12pt]{article}
 
 \usepackage{algorithm}
-\usepackage{algorithmicx}
+\usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{array}
 \usepackage{booktabs}
 \usepackage{setspace}
 \usepackage[numbers]{natbib}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, arrows.meta, backgrounds, fit, shadows}
 
 %styling
 \doublespacing
@@ -365,100 +367,121 @@ After finalizing a block, the user of the application can click a button to turn
 
 The procedural generation of the building is based on the wall subdivisions that are created in real time. For each subdivision, the PCG method will choose which segment type is used based on various parameters. For instance, the most basic parameters that the PCG method uses is the floor number. For the basic wall, it uses the basic 1st floor model if it is floor number 1. While it uses the basic 2nd+ floor model if it is anything above the first floor.
 
-The PCG library will rely on a simple algorithm which will dictate its construction. The ratios and positioning of each element of the final output is to be specified in the GenerationParams class.
+\begin{algorithm}
+	\caption{Facade Wall Subdivision}
+	\begin{algorithmic}[1]
+		\REQUIRE $H$ (Parent Height), $W$ (Parent Total Width)
+		\REQUIRE $H_{max}$ (Max Wall Height), $W_{max}$ (Max Wall Width)
+		\ENSURE A set of $N$ subdivided wall segments positioned in local space
+		
+		\STATE $n_{layers} \gets \lceil H / H_{max} \rceil$
+		\STATE $n_{walls} \gets \lceil W / W_{max} \rceil$
+		\STATE $S_y \gets 1.0 / n_{layers}$ \COMMENT{Local Y-scale (0 to 1 range)}
+		\STATE $S_x \gets 2.0 / n_{walls}$  \COMMENT{Local X-scale (-1 to 1 range)}
+		
+		\STATE $Y_{start} \gets 0.0 + (S_y \cdot 0.5)$
+		\STATE $Y_{end} \gets 1.0 - (S_y \cdot 0.5)$
+		\STATE $X_{start} \gets -1.0 + (S_x \cdot 0.5)$
+		\STATE $X_{end} \gets 1.0 - (S_x \cdot 0.5)$
+		
+		\FOR{$i \gets 0$ \TO $(n_{layers} \cdot n_{walls} - 1)$}
+		\STATE $col \gets i \pmod{n_{walls}}$
+		\STATE $row \gets \lfloor i / n_{walls} \rfloor$
+		
+		\STATE $t_x \gets (n_{walls} > 1) ? (col / (n_{walls} - 1)) : 0.5$
+		\STATE $t_y \gets (n_{layers} > 1) ? (row / (n_{layers} - 1)) : 0.5$
+		
+		\STATE $P_x \gets {lerp}(X_{start}, X_{end}, t_x)$
+		\STATE $P_y \gets {lerp}(Y_{start}, Y_{end}, t_y)$
+		
+		\STATE ${segment} \gets {InstantiateSegment}()$
+		\STATE ${segment.position} \gets (P_x, P_y, 0)$
+		\STATE ${segment.scale} \gets (S_x, S_y, 1.0)$
+		\STATE ${StoreMetaData}({segment}, row, col)$
+		\ENDFOR
+	\end{algorithmic}
+\end{algorithm}
 
-\begin{verbatim}
-FUNCTION GENERATE_STRUCTURE(params)
+Given a set of inputs, the algorithm will generate a list of objects containing the mesh type and its transformation. This list can be used by the external environment to render the result. The algorithm is a simple loop that iterates over a plane that is defined by the input parameters.
 
-    DECLARE res AS GenerationResult
-    SET res.meshes TO EMPTY_LIST
+\subsubsection{\textbf{Structure of the 3D editor}}
 
-    PROCEDURE ADD_MESH(type, position, scale)
-        APPEND new Mesh {
-            .type = type,
-            .position = position,
-            .scale = scale,
-            .rotation = Quaternion::Euler(Vector3(0,0,0))
-        } TO res.meshes
-    END PROCEDURE
+The 3D editor itself is created using well-known libraries. The editor follows the hierarchical component system that is used by Godot, while the user experience and interfaces are heavily inspired by Unity.
 
-    // STEP 1: CALCULATE VECTORS
-    DECLARE delta AS Vector3 = params.to - params.from
-    DECLARE stepdir AS Vector3 = delta.Normalize()
-    DECLARE forward AS Vector3 = stepdir.Cross(params.up).Normalize()
-    DECLARE abdistance AS FLOAT = delta.Magnitude()
-    DECLARE halfheight AS FLOAT = params.height * 0.5f
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[
+		node distance=1.2cm and 1.5cm,
+		font=\small\sffamily,
+		% Style for the main containers
+		container/.style={draw, rectangle, dashed, inner sep=0.5cm, rounded corners, fill=gray!5},
+		% Style for boxes
+		base/.style={draw, rectangle, minimum width=3cm, minimum height=0.8cm, text centered, fill=white, drop shadow},
+		header/.style={base, fill=blue!20, font=\bfseries\small\sffamily},
+		manager/.style={base, fill=yellow!10, dashed},
+		% Style for arrows
+		arrow/.style={thick, -{Stealth[scale=1.2]}}
+		]
+		
+		% --- OBJECT SYSTEM SECTION ---
+		\node[header] (root) {Root Object};
+		\node[manager, below=of root] (managers) {Managers};
+		
+		% Level 2 Objects
+		\node[base, below=1.5cm of managers] (renderObj) {Render Object};
+		\node[base, left=of renderObj] (cameraObj) {Camera Object};
+		\node[base, right=of renderObj] (anitoObj) {Anito Builder Object};
+		
+		% Container for Object System
+		\begin{scope}[on background layer]
+			\node[container, fit=(root) (managers) (cameraObj) (anitoObj), label={[shift={(0,-0.5)}]above:\textbf{Object System}}] (objSys) {};
+		\end{scope}
+		
+		% --- OTHER SECTIONS ---
+		\node[header, below=2cm of anitoObj] (pcgMethod) {Anito Builder PCG Method};
+		
+		% Graphics System Group
+		\node[header, below=2cm of renderObj] (graphicsHead) {Graphics System};
+		\node[base, below=0.5cm of graphicsHead] (bgfx) {BGFX};
+		\node[base, below=0.3cm of bgfx] (imgui) {IMGUI};
+		\node[base, below=0.3cm of imgui] (forward) {Forward Rendering};
+		\node[base, below=0.3cm of forward] (instanced) {Instanced Rendering};
+		
+		% Container for Graphics System
+		\begin{scope}[on background layer]
+			\node[container, fit=(graphicsHead) (instanced), fill=blue!5] (gfxSys) {};
+		\end{scope}
+		
+		% --- DRAWING ARROWS ---
+		\draw[arrow] (root) -- (managers);
+		\draw[arrow] (managers.south) -- ++(0,-0.8) -| (cameraObj.north);
+		\draw[arrow] (managers.south) -- ++(0,-0.8) -| (renderObj.north);
+		\draw[arrow] (managers.south) -- ++(0,-0.8) -| (anitoObj.north);
+		
+		\draw[arrow] (anitoObj) -- (pcgMethod);
+		\draw[arrow] (renderObj) -- (gfxSys.north);
+		
+	\end{tikzpicture}
+	\caption{Anito Engine Architecture: Object and Graphics Systems Hierarchy}
+\end{figure}
 
-    // STEP 2: EXECUTE MAIN WALL SEGMENT LOOP
-    FOR x FROM 0 TO abdistance STEP params.pillarInterval
-
-        // Common base position for current segment
-        DECLARE segment_center_x AS FLOAT = x + (params.pillarInterval * 0.5f)
-        DECLARE base_segment_pos AS Vector3 = params.from + (stepdir * segment_center_x)
-
-        // STEP 2.1: PILLAR PLACEMENT
-        DECLARE pillarpos AS Vector3 = params.from + (stepdir * x) + (params.up * halfheight)
-        DECLARE pillarscale AS Vector3 = Vector3(0.5f) * params.pillarThickness
-        SET pillarscale.y TO halfheight
-        CALL ADD_MESH("pillar", pillarpos, pillarscale)
-
-        // STEP 2.2: WALL SEGMENT PLACEMENT
-        DECLARE wallpos AS Vector3 = base_segment_pos + (params.up * halfheight)
-        DECLARE wallscale AS Vector3
-        SET wallscale.x TO params.pillarInterval * 0.5f
-        SET wallscale.y TO halfheight
-        SET wallscale.z TO params.wallThickness * 0.5f)
-        CALL ADD_MESH("wall", wallpos, wallscale)
-
-        // STEP 2.3: ROOF PLACEMENT
-        DECLARE roofpos AS Vector3 = base_segment_pos
-        DECLARE roofpos_y AS float
-        SET roofpos_y TO (params.height + (params.roofHeight * 0.5f))
-        ADD params.up * roofpos_y TO roofpos
-        DECLARE roofscale AS Vector3
-        SET roofscale.x TO params.pillarInterval * 0.5f
-        SET roofscale.y TO params.roofHeight * 0.5f
-        SET roofscale.z TO params.roofThickness * 0.5f
-        CALL ADD_MESH("roof", roofpos, roofscale)
-    END FOR
-
-    RETURN res
-
-END FUNCTION
-\end{verbatim}
-
-Given a set of inputs, the algorithm will generate a list of objects containing the mesh type and its transformation. This list can be used by the external environment to render the result. The algorithm is a simple loop that iterates over a plane that is defined by the input parameters. Columns and beams will be evenly spaced out across this plane, and a roof will be used to cap each segment of wall.
-
-\subsubsection{\textbf{Using the PCG library in the 3D editor}}
-
-To create the Anito Builder 3D editor, it will utilize the created PCG library's cross-platform C++ API. The 3D editor will take responsibility for loading and caching the meshes that will be used in the procedural generation. The primary output of the PCG library will be an XML that can be read by the 3D editor in order to construct the resulting model inside the scene editor. The following algorithm explains how a developer should use the API in any external project.
-
-\begin{verbatim}
-// CALL THE BUILDER
-DECLARE params AS GenerationParams FROM ext::AnitoBuilder
-CALL ext::AnitoBuilder::AnitoBuilder::Generate WITH params RETURNING builder_result
-
-// READ THE RESULT AND USE EXTERNALLY-LOADED MESHES
-FOR EACH objdata IN builder_result.meshes
-    CALL create_mesh WITH objdata.position, objdata.scale, Quaternion::Euler(Vector3(0, 0, 0))
-END FOR
-\end{verbatim}
+TODO: Expound on engine architecture and optimizations done.
 
 \subsubsection{\textbf{Viewing and interacting with the result in the 3D editor}}
 
-The 3D editor will be complete with basic camera controls, object selection/movement, inspecting, and saving/serializing. These features will be utilized by users to create and explore the capabilities of Anito Builder.
+The 3D editor is complete with camera controls, object selection/movement, inspecting, and saving/serializing. These features can be utilized by users to create and explore the capabilities of Anito Builder.
 
-The 3D editor will have the ability to create an exported .obj file for use in other applications. This is helpful if the user wants to evaluate the output of Anito Builder in an environment they are already familiar with. The 3D editor will also feature a real-time scalable wall user-interface. Where a user can select a pillar, move it, and then the entire wall will be regenerated according to the new specifications and positions.
+The 3D editor has the ability to create an exported 3D file for use in other applications. This is helpful if the user wants to evaluate the output of Anito Builder in an environment they are already familiar with.
 
 \subsection{Evaluation}
 
-There will be two parts to the evaluation of Anito Builder: the evaluation of the usability of the 3D editor and the quality of its output.
+There are two parts to the evaluation of Anito Builder: the evaluation of the usability of the 3D editor and the quality of its output.
 
 \subsubsection{\textbf{Evaluation of Anito Builder's usability}}
 
-To evaluate the usability of the Anito Builder 3D editor, participants will be gathered from the student population of De La Salle University Manila. They will be exposed to the 3D editor and be requested to spend both unstructured and structured time in the application.
+To evaluate the usability of the Anito Builder 3D editor, participants were gathered from the student population of De La Salle University Manila, as well as external participants who have a background in architectural modeling. They were exposed to the 3D editor and were requested to spend both unstructured and structured time in the application.
 
-For the unstructured time, they will just be requested to create and explore the features of the editor without assistance. While for the structured time, they will be asked to complete tasks wherein minimal assistance can be given. The data that will be gathered from these tests are based on the data collected by Kamińska(2022). These include but are not limited to:
+For the unstructured time, they were requested to create and explore the features of the editor without assistance. While for the structured time, they were asked to complete tasks wherein minimal assistance was given. The data gathered from these tests were based on the methods used by Kamińska(2022). These include but are not limited to:
 
 \begin{enumerate}
     \item Time to complete tasks
@@ -470,9 +493,9 @@ For the unstructured time, they will just be requested to create and explore the
 
 \subsubsection{\textbf{Evaluation of Anito Builder's output}}
 
-Similarly, the evaluation of the project’s output will come from students based in DLSU Manila. As DLSU Manila students are more familiar with La Salle Hall, it is only appropriate that participants are chosen from their population. The evaluation for Anito Builder’s output will only include the final scene which makes the need for asset development/programming knowledge unnecessary. 
+Similarly, the evaluation of the project’s output was gathered from students based in DLSU Manila. As DLSU Manila students are more familiar with La Salle Hall, it is only appropriate that participants are chosen from their population. The evaluation for Anito Builder’s output only includes renders from the final scene, which makes the need for asset development/programming knowledge unnecessary. 
 
-After the participants are able to create scenes, they will be given ample time to examine and explore the scene they have created. This scene will then serve as the basis for their evaluation. They will be asked to answer a survey form adapted from instruments used by previous HCI studies such as Lavie and Taractinsky’s (2004) aesthetics model, Hassenzahl’s pragmatic and hedonic quality dimensions, and the Visual Aesthetic Perception (VAP) scale. On a scale of 1-5, the participants will evaluate the scene based on this criteria: 
+After the participants are able to create scenes, they were given ample time to examine and explore the scene they have created. This scene served as the basis for their evaluation. They were then asked to answer a survey form adapted from instruments used by previous HCI studies such as Lavie and Taractinsky’s (2004) aesthetics model, Hassenzahl’s pragmatic and hedonic quality dimensions, and the Visual Aesthetic Perception (VAP) scale. On a scale of 1-5, the participants evaluated the scene based on this criteria: 
 
 \begin{enumerate}
     \item Perceived Architectural Authenticity – measures how well the scene represents known DLSU architecture and its defining features (e.g., columns, facades, building symmetry).
@@ -482,9 +505,9 @@ After the participants are able to create scenes, they will be given ample time 
     \item Structural Believability – captures whether the forms look physically plausible and grounded in real-world architectural logic.
 \end{enumerate}
 
-To complement this perception-based evaluation of the generated scenes, we will also conduct a System Usability Scale (SUS) test to assess the usability of the PCG-based 3D scene editor itself. The SUS is a widely adopted and validated tool in HCI research for quickly gauging overall system usability, and it provides a standardized score that can indicate whether the interface is efficient, intuitive, and accessible to users. This dual-evaluation strategy ensures that the study captures both the user’s visual and architectural impressions of the generated content and the functional usability of the editor that produces it.
+To complement this perception-based evaluation of the generated scenes, we also conducted a System Usability Scale (SUS) test to assess the usability of the PCG-based 3D scene editor itself. The SUS is a widely adopted and validated tool in HCI research for quickly gauging overall system usability, and it provides a standardized score that can indicate whether the interface is efficient, intuitive, and accessible to users. This dual-evaluation strategy ensures that the study captures both the user’s visual and architectural impressions of the generated content and the functional usability of the editor that produces it.
 
-Responses to the survey will serve as a means to provide insight into how effective the PCG system captures the look and feel of DLSU Manila. By making the evaluation focus solely on the output and not on the technical aspect of the development, it prioritizes user experience and visual quality. This is to make sure that the generated scenes meet the expectations of the participants in terms of architectural accuracy and design quality without needing any technical background. 
+Responses to the survey served as a means to provide insight into how effective the PCG system captures the look and feel of DLSU Manila. By making the evaluation focus solely on the output and not on the technical aspect of the development, it prioritizes user experience and visual quality. This is to make sure that the generated scenes meet the expectations of the participants in terms of architectural accuracy and design quality without needing any technical background. 
 
 \section{Results}
 

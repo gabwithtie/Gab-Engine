@@ -25,14 +25,14 @@
 \contentsline {subsection}{\numberline {4.2}Creation of an Art Book}{28}{}%
 \contentsline {subsection}{\numberline {4.3}Creation of the Anito builder 3D Editor}{29}{}%
 \contentsline {subsubsection}{\numberline {4.3.1}\textbf {PCG Library Algorithm}}{30}{}%
-\contentsline {subsubsection}{\numberline {4.3.2}\textbf {Using the PCG library in the 3D editor}}{33}{}%
-\contentsline {subsubsection}{\numberline {4.3.3}\textbf {Viewing and interacting with the result in the 3D editor}}{34}{}%
+\contentsline {subsubsection}{\numberline {4.3.2}\textbf {Structure of the 3D editor}}{32}{}%
+\contentsline {subsubsection}{\numberline {4.3.3}\textbf {Viewing and interacting with the result in the 3D editor}}{33}{}%
 \contentsline {subsection}{\numberline {4.4}Evaluation}{34}{}%
-\contentsline {subsubsection}{\numberline {4.4.1}\textbf {Evaluation of Anito Builder's usability}}{35}{}%
+\contentsline {subsubsection}{\numberline {4.4.1}\textbf {Evaluation of Anito Builder's usability}}{34}{}%
 \contentsline {subsubsection}{\numberline {4.4.2}\textbf {Evaluation of Anito Builder's output}}{35}{}%
 \contentsline {section}{\numberline {5}Results}{37}{}%
 \contentsline {subsection}{\numberline {5.1}\textbf {Modular 3D Models}}{37}{}%
-\contentsline {subsubsection}{\numberline {5.1.1}\textbf {1st Floor Wall Segments}}{38}{}%
+\contentsline {subsubsection}{\numberline {5.1.1}\textbf {1st Floor Wall Segments}}{37}{}%
 \contentsline {subsubsection}{\numberline {5.1.2}\textbf {2nd Floor Wall Segments}}{38}{}%
 \contentsline {subsubsection}{\numberline {5.1.3}\textbf {3rd Floor Wall Segments}}{39}{}%
 \contentsline {subsubsection}{\numberline {5.1.4}\textbf {Rooftop Wall Segments}}{40}{}%
