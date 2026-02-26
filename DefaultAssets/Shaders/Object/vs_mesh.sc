@@ -11,42 +11,28 @@ $output v_pos, v_view, v_normal, v_color0, v_texcoord0, v_tangent, v_bitangent
 
 void main()
 {
-	// 1. Calculate the Model Matrix from instance data
-	mat4 model = mtxFromCols(i_data0, i_data1, i_data2, i_data3);
+	//BGFX==========================
+    mat4 model = mtxFromCols(i_data0, i_data1, i_data2, i_data3);
 
-	// 2. World Position (used for shadows and lighting)
-	vec4 worldPos = mul(model, vec4(a_position, 1.0));
-	v_pos = worldPos.xyz;
-	v_color0 = a_color0;
-    v_texcoord0 = a_texcoord0;
+	vec3 wpos = mul(model, vec4(a_position, 1.0) ).xyz;
+	gl_Position = mul(u_viewProj, vec4(wpos, 1.0) );
 
-	// 3. Clip Position (required for rasterization)
-	gl_Position = mul(u_viewProj, worldPos);
+	vec3 normal = a_normal;
+	vec3 wnormal = mul(model, vec4(normal.xyz, 0.0) ).xyz;
 
-	// 5. View Vector (World Space)
-	vec3 camPos = u_invView[3].xyz; 
-	v_view = camPos - worldPos.xyz;
+	vec4 tangent = a_tangent;
+	vec3 wtangent = mul(model, vec4(tangent.xyz, 0.0) ).xyz;
 
-	// --- MANUAL NORMAL MATRIX (Adjugate) ---
-    // Extract the basis vectors (columns) of the model matrix
-    vec3 col0 = normalize(i_data0.xyz);
-    vec3 col1 = normalize(i_data1.xyz);
-    vec3 col2 = normalize(i_data2.xyz);
+	v_normal = wnormal;
+	v_tangent = wtangent;
+	v_bitangent = cross(v_normal, v_tangent) * tangent.w;
 
-    // The cross products of the columns generate the Inverse-Transpose directions.
-    // This correctly handles non-uniform scaling distortion.
-    mat3 normalMatrix = mat3(
-        cross(col1, col2), // New X-axis
-        cross(col2, col0), // New Y-axis
-        cross(col0, col1)  // New Z-axis
-    );
+	mat3 tbn = mtxFromCols(v_tangent, v_bitangent, v_normal);
 
-    v_normal = normalize(mul(normalMatrix, a_normal));
+	v_pos = wpos;
 
-    // Tangents are direction vectors, so they use the same matrix
-    v_tangent = normalize(mul(normalMatrix, a_tangent.xyz));
+	vec3 weyepos = mul(vec4(0.0, 0.0, 0.0, 1.0), u_view).xyz;
+	v_view = mul(weyepos - wpos, tbn);
 
-    // BITANGENT: This is where the 'w' goes! 
-    // This handles the UV mirroring (handedness)
-    v_bitangent = normalize(cross(v_normal, v_tangent) * a_tangent.w);
+	v_texcoord0 = a_texcoord0;
 }

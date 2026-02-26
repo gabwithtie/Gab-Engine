@@ -5,6 +5,7 @@ $input v_pos, v_view, v_normal, v_color0, v_texcoord0, v_tangent, v_bitangent
  */
 
 #include <bgfx_shader.sh>
+#include "../shaderlib.sh"
 
 #define MAX_LIGHTS 10
 
@@ -107,32 +108,83 @@ float getShadow(int _layer, vec3 _wpos, vec3 _normal, vec3 _lightDir, float _min
     return shadow / 16.0;
 }
 
+vec2 blinn(vec3 _lightDir, vec3 _normal, vec3 _viewDir)
+{
+	float ndotl = dot(_normal, _lightDir);
+	//vec3 reflected = _lightDir - 2.0*ndotl*_normal; // reflect(_lightDir, _normal);
+	vec3 reflected = 2.0*ndotl*_normal - _lightDir;
+	float rdotv = dot(reflected, _viewDir);
+	return vec2(ndotl, rdotv);
+}
+
+float fresnel(float _ndotl, float _bias, float _pow)
+{
+	float facing = (1.0 - _ndotl);
+	return max(_bias + (1.0 - _bias) * pow(facing, _pow), 0.0);
+}
+
+vec4 lit(float _ndotl, float _rdotv, float _m)
+{
+	float diff = max(0.0, _ndotl);
+	float spec = step(0.0, _ndotl) * max(0.0, _rdotv * _m);
+	return vec4(1.0, diff, spec, 1.0);
+}
+
+vec4 powRgba(vec4 _rgba, float _pow)
+{
+	vec4 result;
+	result.xyz = pow(_rgba.xyz, vec3_splat(_pow) );
+	result.w = _rgba.w;
+	return result;
+}
+
+vec3 perturbNormal(vec3 _wpos, vec3 _normal, vec2 _uv, sampler2D _normalTex) {
+    // 1. Get Normal Map components (X and Y only)
+    vec3 normalSample = texture2D(_normalTex, _uv).xyz * 2.0 - 1.0;
+    
+    // 2. Get the surface derivatives
+    vec3 dp1 = dFdx(_wpos);
+    vec3 dp2 = dFdy(_wpos);
+    vec2 duv1 = dFdx(_uv);
+    vec2 duv2 = dFdy(_uv);
+
+    // 3. Solve the linear system for Tangent and Bitangent
+    vec3 dp2perp = cross(dp2, _normal);
+    vec3 dp1perp = cross(_normal, dp1);
+    
+    // This creates a coordinate system based purely on UV flow
+    vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+    vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+
+    // 4. Construct the Surface Gradient
+    // We normalize the basis vectors to handle scaling/distortion
+    float invmax = inversesqrt(max(dot(T, T), dot(B, B)));
+    
+    // Surface Gradient accumulation: Normal = normalize(N_geom - Gradient)
+    // We force the Z to be positive to ensure it points out
+    vec3 res = normalize(_normal - invmax * (normalSample.x * T + normalSample.y * B));
+    
+    // Guard: ensure it stays on the forward hemisphere
+    return res * sign(dot(res, _normal) + 0.0001);
+}
+
 void main() {
     vec3 albedo = color.xyz;
     vec2 final_texuv = v_texcoord0;
     final_texuv *= tiling.xy;
 
     if (has_color_tex > 0.5) {
-        albedo *= texture2D(color_tex, final_texuv).xyz;
+        albedo *= toLinear(texture2D(color_tex, final_texuv) );;
     }
 
-    vec3 normal = normalize(v_normal);
+    // 1. Geometric Normal and View Direction (World Space)
+    vec3 geoNormal = normalize(v_normal);
+    vec3 view = normalize(v_view);
+    vec3 normal = geoNormal;
+
+    // 2. Perturb Normal using Surface Gradients
     if (has_normal_tex > 0.5) {
-        // 1. Sample the texture
-        vec3 normalSample = texture2D(normal_tex, final_texuv).xyz * 2.0 - 1.0;
-
-        vec3 N = normalize(v_normal);
-        vec3 T = normalize(v_tangent);
-        vec3 B = normalize(v_bitangent);
-
-        // 2. Gram-Schmidt Orthogonalization 
-        // This forces T to be 90 degrees to N, even if the mesh data is slightly messy.
-        T = normalize(T - dot(T, N) * N);
-        mat3 TBN = mat3(T, B, N);
-
-        // 4. Transform and ensure it faces the camera hemisphere
-        normal = normalize(mul(TBN, normalSample));
-        normal = normal * sign(dot(normal, v_normal) + 0.00001);
+        normal = perturbNormal(v_pos, geoNormal, final_texuv, normal_tex);
     }
 
     float _matAO = 1.0;
@@ -145,11 +197,9 @@ void main() {
         _roughness = arm.g;
         _metallic = arm.b;
     }
-
-    vec3 viewDir = normalize(v_view);
-    vec3 finalDiffuse = vec3(0.0, 0.0, 0.0);
-    vec3 finalSpecular = vec3(0.0, 0.0, 0.0);
     
+    vec3 lightColor = vec3(0 ,0 ,0);
+
     for (int i = 0; i < MAX_LIGHTS; ++i) {
         vec3 lightDir;
         float attenuation = 1.0;
@@ -182,32 +232,20 @@ void main() {
             }
         }
 
-        // Diffuse (Lambert)
-        float diff = max(dot(normal, lightDir), 0.0);
-        // --- Specular (Simplified Blinn-Phong for PBR-ish look) ---
-        vec3 halfDir = normalize(lightDir + viewDir);
-        float specPower = pow(8192.0, 1.0 - _roughness); // Map roughness to shininess
-        float spec = pow(max(dot(normal, halfDir), 0.0), specPower);
+	    lightDir = lightDir;
+	    vec2 bln = blinn(lightDir, normal, view);
+	    vec4 lc = lit(bln.x, bln.y, 1.0);
+	    vec3 rgb = saturate(lc.y) * attenuation;
 
-        // Metallic colors the specular reflection with albedo
-        vec3 specColor = lerp(vec3(0.04), albedo, _metallic);
-        
-        finalDiffuse += light_color[i].xyz * diff * attenuation * shadow;
-        finalSpecular += light_color[i].xyz * spec * attenuation * shadow * specColor;
+        lightColor += light_color[i].xyz * rgb;
     }
-
-    // Ambient light baseline
-    finalDiffuse += vec3(0.2f);
 
     // Sample SSAO using screen coordinates
     vec2 screenUV = gl_FragCoord.xy / u_viewRect.zw;
     float combinedAO = _matAO * max(texture2D(tex_ao, screenUV).r, 0.1f);
 
-    vec3 diffuseResult = finalDiffuse * albedo * (1.0 - _metallic) * combinedAO;
-    vec3 ambientResult = vec3(0.05) * albedo;
-
-    vec3 result = ambientResult + (diffuseResult + finalSpecular);
-
-    result = clamp(result, 0.0, 1.0);
-    gl_FragColor = vec4(result, 1.0);
+    ////////
+	gl_FragColor.xyz = max(vec3_splat(0.05), lightColor.xyz) * albedo.xyz * combinedAO;
+	gl_FragColor.w = 1.0;
+	gl_FragColor = toGamma(gl_FragColor);
 }

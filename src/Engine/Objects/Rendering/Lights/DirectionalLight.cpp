@@ -37,6 +37,7 @@ void gbe::DirectionalLight::GeneralInit()
 
 	LightObject::GeneralInit();
 
+
 	//INSPECTOR
 	auto backtrack_field = new gbe::editor::InspectorFloat();
 	backtrack_field->name = "Shadowmap backtrack";
