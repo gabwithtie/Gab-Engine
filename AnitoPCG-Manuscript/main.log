@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.2.20)  20 FEB 2026 22:01
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.2.20)  1 MAR 2026 20:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -651,52 +651,47 @@ Overfull \hbox (5.99922pt too wide) in paragraph at lines 464--465
  [][] 
  []
 
-[32]
-Overfull \hbox (15.8184pt too wide) in paragraph at lines 470--471
-\OT1/cmr/m/n/10.95 The 3D ed-i-tor will be com-plete with ba-sic cam-era con-tr
-ols, ob-ject se-lec-tion/movement,
- []
-
-[33] [34] [35] [36]
+[32] [33] [34] [35] [36]
 <Figures/1st Floor Wall Segments.png, id=162, 1927.2pt x 1084.05pt>
 File: Figures/1st Floor Wall Segments.png Graphic file (type png)
 <use Figures/1st Floor Wall Segments.png>
 Package pdftex.def Info: Figures/1st Floor Wall Segments.png  used on input lin
-e 539.
+e 541.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
  [37]
 <figures/2nd Floor Wall Segments.png, id=167, 1927.2pt x 1084.05pt>
 File: figures/2nd Floor Wall Segments.png Graphic file (type png)
 <use figures/2nd Floor Wall Segments.png>
 Package pdftex.def Info: figures/2nd Floor Wall Segments.png  used on input lin
-e 550.
+e 552.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
  [38 <./Figures/1st Floor Wall Segments.png>]
 <figures/3rd Floor Wall Segments.png, id=172, 1927.2pt x 1084.05pt>
 File: figures/3rd Floor Wall Segments.png Graphic file (type png)
 <use figures/3rd Floor Wall Segments.png>
 Package pdftex.def Info: figures/3rd Floor Wall Segments.png  used on input lin
-e 561.
+e 563.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
- [39 <./figures/2nd Floor Wall Segments.png>]
+
+[39 <./figures/2nd Floor Wall Segments.png>]
 <figures/RooftopFloor Wall Segments.png, id=177, 1927.2pt x 1084.05pt>
 File: figures/RooftopFloor Wall Segments.png Graphic file (type png)
 <use figures/RooftopFloor Wall Segments.png>
 Package pdftex.def Info: figures/RooftopFloor Wall Segments.png  used on input 
-line 572.
+line 574.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
  [40 <./figures/3rd Floor Wall Segments.png>]
 <figures/Wall Segments.png, id=182, 1927.2pt x 1084.05pt>
 File: figures/Wall Segments.png Graphic file (type png)
 <use figures/Wall Segments.png>
-Package pdftex.def Info: figures/Wall Segments.png  used on input line 583.
+Package pdftex.def Info: figures/Wall Segments.png  used on input line 585.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
  [41 <./figures/RooftopFloor Wall Segments.png>]
 <figures/2-Segment Wall Segments Var 2.png, id=187, 1927.2pt x 1084.05pt>
 File: figures/2-Segment Wall Segments Var 2.png Graphic file (type png)
 <use figures/2-Segment Wall Segments Var 2.png>
 Package pdftex.def Info: figures/2-Segment Wall Segments Var 2.png  used on inp
-ut line 590.
+ut line 592.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
  [42 <./figures/Wall Segments.png> <./figures/2-Segment Wall Segments Var 2.png
 >]
@@ -704,20 +699,20 @@ ut line 590.
 File: figures/3-Segment Wall Segments.png Graphic file (type png)
 <use figures/3-Segment Wall Segments.png>
 Package pdftex.def Info: figures/3-Segment Wall Segments.png  used on input lin
-e 601.
+e 603.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
 File: figures/Wall Segments.png Graphic file (type png)
 <use figures/Wall Segments.png>
-Package pdftex.def Info: figures/Wall Segments.png  used on input line 612.
+Package pdftex.def Info: figures/Wall Segments.png  used on input line 614.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
  [43 <./figures/3-Segment Wall Segments.png>]
 <figures/Intro.png, id=199, 2258.4375pt x 1693.82813pt>
 File: figures/Intro.png Graphic file (type png)
 <use figures/Intro.png>
-Package pdftex.def Info: figures/Intro.png  used on input line 621.
+Package pdftex.def Info: figures/Intro.png  used on input line 623.
 (pdftex.def)             Requested size: 390.0pt x 292.49582pt.
- [44] [45 <./figures/Intro.png (PNG copy)>] [46] [47] [48]
-[49] (main.aux)
+ [44] [45 <./figures/Intro.png (PNG copy)>] [46]
+[47] [48] [49] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
@@ -747,7 +742,7 @@ X/fonts/type1/public/amsfonts/cm/cmss10.pfb><C:/Users/PC/AppData/Local/Programs
 /MiKTeX/fonts/type1/public/amsfonts/cm/cmssbx10.pfb><C:/Users/PC/AppData/Local/
 Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/PC/AppData/
 Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb>
-Output written on main.pdf (50 pages, 14506714 bytes).
+Output written on main.pdf (50 pages, 14506522 bytes).
 PDF statistics:
  267 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
