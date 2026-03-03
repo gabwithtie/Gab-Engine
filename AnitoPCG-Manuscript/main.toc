@@ -4,42 +4,42 @@
 \contentsline {subsection}{\numberline {1.3}Project Objectives}{10}{}%
 \contentsline {subsection}{\numberline {1.4}Scope and Limitations}{10}{}%
 \contentsline {subsection}{\numberline {1.5}Significance of the Study}{12}{}%
-\contentsline {section}{\numberline {2}Review of Related Work}{13}{}%
-\contentsline {subsection}{\numberline {2.1}Neo-Classical Architecture}{13}{}%
-\contentsline {subsection}{\numberline {2.2}De La Salle University Manila Architecture}{15}{}%
+\contentsline {section}{\numberline {2}Review of Related Work}{14}{}%
+\contentsline {subsection}{\numberline {2.1}Neo-Classical Architecture}{14}{}%
+\contentsline {subsection}{\numberline {2.2}De La Salle University Manila Architecture}{16}{}%
 \contentsline {subsection}{\numberline {2.3}PCG Tools for Artists}{18}{}%
-\contentsline {subsection}{\numberline {2.4}TODO: Find more studies for engines}{19}{}%
-\contentsline {section}{\numberline {3}Concepts}{19}{}%
-\contentsline {subsection}{\numberline {3.1}Concepts in Neo-Classical Architecture}{19}{}%
-\contentsline {subsection}{\numberline {3.2}Concepts in Procedural Content Generation}{19}{}%
-\contentsline {subsubsection}{\numberline {3.2.1}\textbf {Ionic Order}}{20}{}%
-\contentsline {subsubsection}{\numberline {3.2.2}\textbf {Doric Order}}{20}{}%
-\contentsline {subsubsection}{\numberline {3.2.3}\textbf {Tuscan Order}}{21}{}%
-\contentsline {subsubsection}{\numberline {3.2.4}\textbf {Corinthian Order}}{21}{}%
-\contentsline {subsubsection}{\numberline {3.2.5}\textbf {Composite Order}}{21}{}%
-\contentsline {subsection}{\numberline {3.3}Classifying DLSU-Manila Architecture}{22}{}%
-\contentsline {subsection}{\numberline {3.4}Concepts in Procedural Content Generation}{23}{}%
-\contentsline {subsection}{\numberline {3.5}Concepts in Software Architecture}{24}{}%
-\contentsline {section}{\numberline {4}Methodology}{26}{}%
-\contentsline {subsection}{\numberline {4.1}3D Asset Development Workflow}{26}{}%
-\contentsline {subsection}{\numberline {4.2}Creation of an Art Book}{28}{}%
-\contentsline {subsection}{\numberline {4.3}Creation of the Anito builder 3D Editor}{29}{}%
-\contentsline {subsubsection}{\numberline {4.3.1}\textbf {PCG Library Algorithm}}{30}{}%
-\contentsline {subsubsection}{\numberline {4.3.2}\textbf {Structure of the 3D editor}}{32}{}%
-\contentsline {subsubsection}{\numberline {4.3.3}\textbf {Viewing and interacting with the result in the 3D editor}}{34}{}%
-\contentsline {subsection}{\numberline {4.4}Evaluation}{34}{}%
-\contentsline {subsubsection}{\numberline {4.4.1}\textbf {Evaluation of Anito Builder's usability}}{34}{}%
-\contentsline {subsubsection}{\numberline {4.4.2}\textbf {Evaluation of Anito Builder's output}}{35}{}%
-\contentsline {section}{\numberline {5}Results}{37}{}%
-\contentsline {subsection}{\numberline {5.1}\textbf {Modular 3D Models}}{37}{}%
-\contentsline {subsubsection}{\numberline {5.1.1}\textbf {1st Floor Wall Segments}}{37}{}%
-\contentsline {subsubsection}{\numberline {5.1.2}\textbf {2nd Floor Wall Segments}}{38}{}%
-\contentsline {subsubsection}{\numberline {5.1.3}\textbf {3rd Floor Wall Segments}}{39}{}%
-\contentsline {subsubsection}{\numberline {5.1.4}\textbf {Rooftop Wall Segments}}{40}{}%
-\contentsline {subsubsection}{\numberline {5.1.5}\textbf {2-Segment Wall Segments}}{41}{}%
-\contentsline {subsubsection}{\numberline {5.1.6}\textbf {3-Segment Wall Segments}}{43}{}%
-\contentsline {subsubsection}{\numberline {5.1.7}\textbf {Wall Segments}}{43}{}%
-\contentsline {section}{\numberline {6}Conclusion}{45}{}%
-\contentsline {subsection}{\numberline {6.1}\textbf {3D Asset Collection}}{45}{}%
-\contentsline {subsection}{\numberline {6.2}\textbf {3D Asset development}}{46}{}%
-\contentsline {subsection}{\numberline {6.3}\textbf {Prototype Evaluation}}{47}{}%
+\contentsline {section}{\numberline {3}Concepts}{20}{}%
+\contentsline {subsection}{\numberline {3.1}Concepts in Neo-Classical Architecture}{20}{}%
+\contentsline {subsection}{\numberline {3.2}Concepts in Procedural Content Generation}{20}{}%
+\contentsline {subsubsection}{\numberline {3.2.1}Ionic Order}{21}{}%
+\contentsline {subsubsection}{\numberline {3.2.2}Doric Order}{21}{}%
+\contentsline {subsubsection}{\numberline {3.2.3}Tuscan Order}{22}{}%
+\contentsline {subsubsection}{\numberline {3.2.4}Corinthian Order}{22}{}%
+\contentsline {subsubsection}{\numberline {3.2.5}Composite Order}{22}{}%
+\contentsline {subsection}{\numberline {3.3}Classifying DLSU-Manila Architecture}{23}{}%
+\contentsline {subsection}{\numberline {3.4}Concepts in Procedural Content Generation}{24}{}%
+\contentsline {subsection}{\numberline {3.5}Concepts in Graphics Programming}{25}{}%
+\contentsline {section}{\numberline {4}Methodology}{29}{}%
+\contentsline {subsection}{\numberline {4.1}3D Asset Development Workflow}{29}{}%
+\contentsline {subsection}{\numberline {4.2}Creation of an Art Book}{31}{}%
+\contentsline {subsection}{\numberline {4.3}Creation of the Anito builder 3D Editor}{32}{}%
+\contentsline {subsubsection}{\numberline {4.3.1}The PCG System}{35}{}%
+\contentsline {subsection}{\numberline {4.4}Evaluation}{38}{}%
+\contentsline {subsubsection}{\numberline {4.4.1}Evaluation of Anito Builder's usability}{38}{}%
+\contentsline {subsubsection}{\numberline {4.4.2}Evaluation of Anito Builder's output}{40}{}%
+\contentsline {section}{\numberline {5}Results}{42}{}%
+\contentsline {subsection}{\numberline {5.1}User Evaluation}{42}{}%
+\contentsline {subsubsection}{\numberline {5.1.1}Evaluation of Anito Builder's usability}{42}{}%
+\contentsline {subsubsection}{\numberline {5.1.2}Evaluation of Anito Builder's output}{43}{}%
+\contentsline {subsection}{\numberline {5.2}Modular 3D Models}{44}{}%
+\contentsline {subsubsection}{\numberline {5.2.1}1st Floor Wall Segments}{45}{}%
+\contentsline {subsubsection}{\numberline {5.2.2}2nd Floor Wall Segments}{46}{}%
+\contentsline {subsubsection}{\numberline {5.2.3}3rd Floor Wall Segments}{47}{}%
+\contentsline {subsubsection}{\numberline {5.2.4}Rooftop Wall Segments}{48}{}%
+\contentsline {subsubsection}{\numberline {5.2.5}2-Segment Wall Segments}{49}{}%
+\contentsline {subsubsection}{\numberline {5.2.6}3-Segment Wall Segments}{51}{}%
+\contentsline {subsubsection}{\numberline {5.2.7}Wall Segments}{51}{}%
+\contentsline {section}{\numberline {6}Conclusion}{54}{}%
+\contentsline {subsection}{\numberline {6.1}3D Asset Collection}{54}{}%
+\contentsline {subsection}{\numberline {6.2}3D Asset development}{54}{}%
+\contentsline {subsection}{\numberline {6.3}Prototype Evaluation}{55}{}%
