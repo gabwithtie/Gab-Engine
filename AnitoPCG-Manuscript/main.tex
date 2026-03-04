@@ -446,11 +446,33 @@ This system is based on editable blocks similar to what one can find on Unity's 
 
 Furthermore, the cube can be extended by selecting a face and pressing "append" on the editor. By doing so, another cube will spawn with that selected face as a shared face between the old cube and the new cube. This can be done indefinitely to create various building shapes. This process is outlined visually below:
 
-$ insert user interaction figure here
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\linewidth]{Figures/append.png}%
+	\caption{Tiling and Stretching algorithm illustration}
+\end{figure}
 
 For each subdivided square, the PCG system will choose which mesh type is used. It will do this through a rule-based algorithm that takes into account the following inputs:
 
-$ insert table for user inputs
+\begin{table}[h!]
+	\centering
+	\caption{Summary of inputs for the mesh choice algorithm}
+	\begin{tabular}{|p{3cm}|p{10cm}|}
+		\hline
+		\textbf{Name} & \textbf{Description} \\
+		\hline
+		Column Index & Describes the current position of the segment in the X axis.\\
+		\hline
+		Floor Index & Describes the current position of the segment in the Y axis.\\
+		\hline
+		Face Width & Describes the total columns of the parent of the current segment.\\
+		\hline
+		Face Height & Describes the top floor of the parent of the current segment.\\
+		\hline
+		Facade Type & User-specified type to decide whether the user wants to have a front-style facade in the current face.\\
+		\hline
+	\end{tabular}
+\end{table}
 
 $ insert algorithm for mesh choice
 

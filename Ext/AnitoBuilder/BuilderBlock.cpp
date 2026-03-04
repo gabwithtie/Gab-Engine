@@ -32,14 +32,13 @@ namespace gbe::ext::AnitoBuilder {
 		ceiling_editor_DC = RenderPipeline::RegisterDrawCall(asset::Mesh::GetAssetById("horizontal_axis_triangle"), asset::Material::GetAssetById("grid"));
 
 		//Main - normal
+		drawcall_dict.insert_or_assign("horizontal_axis_triangle", &ceiling_DC);
+		drawcall_dict.insert_or_assign("axisroof", &top_roof_DC);
+		drawcall_dict.insert_or_assign("roof_1", &ledge_dc);
 		drawcall_dict.insert_or_assign("fillerwall_1", &special_DC[0]);
 		drawcall_dict.insert_or_assign("fillerwall_2", &special_DC[1]);
 		drawcall_dict.insert_or_assign("fillerwall_3", &special_DC[2]);
 		drawcall_dict.insert_or_assign("fillerwall_4", &special_DC[3]);
-		drawcall_dict.insert_or_assign("fillerwall_5", &special_DC[4]);
-		drawcall_dict.insert_or_assign("horizontal_axis_triangle", &ceiling_DC);
-		drawcall_dict.insert_or_assign("axisroof", &top_roof_DC);
-		drawcall_dict.insert_or_assign("roof_1", &ledge_dc);
 		drawcall_dict.insert_or_assign("wallnorm1", &wallnorm_DC[0]);
 		drawcall_dict.insert_or_assign("wallnorm2", &wallnorm_DC[1]);
 		drawcall_dict.insert_or_assign("3x4wall_1-1", &wall3x4_DC[0][0]);
