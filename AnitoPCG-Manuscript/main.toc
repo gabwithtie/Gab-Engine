@@ -1,36 +1,35 @@
-\contentsline {section}{\numberline {1}Introduction}{8}{}%
-\contentsline {subsection}{\numberline {1.1}Overview of Current Technology}{8}{}%
-\contentsline {subsection}{\numberline {1.2}Statement of the Problem}{10}{}%
-\contentsline {subsection}{\numberline {1.3}Project Objectives}{11}{}%
-\contentsline {subsection}{\numberline {1.4}Scope and Limitations}{11}{}%
-\contentsline {subsection}{\numberline {1.5}Significance of the Study}{14}{}%
-\contentsline {section}{\numberline {2}Review of Related Work}{15}{}%
-\contentsline {subsection}{\numberline {2.1}Neo-Classical Architecture}{15}{}%
-\contentsline {subsection}{\numberline {2.2}De La Salle University Manila Architecture}{17}{}%
-\contentsline {subsection}{\numberline {2.3}PCG Tools for Artists}{19}{}%
-\contentsline {section}{\numberline {3}Concepts}{21}{}%
-\contentsline {subsection}{\numberline {3.1}Concepts in Neo-Classical Architecture}{21}{}%
-\contentsline {subsection}{\numberline {3.2}Concepts in Procedural Content Generation}{21}{}%
-\contentsline {subsubsection}{\numberline {3.2.1}Ionic Order}{22}{}%
-\contentsline {subsubsection}{\numberline {3.2.2}Doric Order}{23}{}%
-\contentsline {subsubsection}{\numberline {3.2.3}Tuscan Order}{23}{}%
-\contentsline {subsubsection}{\numberline {3.2.4}Corinthian Order}{23}{}%
-\contentsline {subsubsection}{\numberline {3.2.5}Composite Order}{24}{}%
-\contentsline {subsection}{\numberline {3.3}Classifying DLSU-Manila Architecture}{24}{}%
-\contentsline {subsection}{\numberline {3.4}Concepts in Procedural Content Generation}{25}{}%
-\contentsline {subsection}{\numberline {3.5}Concepts in Graphics Programming}{27}{}%
-\contentsline {section}{\numberline {4}Methodology}{31}{}%
-\contentsline {subsection}{\numberline {4.1}3D Asset Development Workflow}{31}{}%
+\contentsline {section}{\numberline {1}Introduction}{7}{}%
+\contentsline {subsection}{\numberline {1.1}Overview of Current Technology}{7}{}%
+\contentsline {subsection}{\numberline {1.2}Statement of the Problem}{9}{}%
+\contentsline {subsection}{\numberline {1.3}Project Objectives}{10}{}%
+\contentsline {subsection}{\numberline {1.4}Scope and Limitations}{10}{}%
+\contentsline {subsection}{\numberline {1.5}Significance of the Study}{13}{}%
+\contentsline {section}{\numberline {2}Review of Related Work}{14}{}%
+\contentsline {subsection}{\numberline {2.1}Neo-Classical Architecture}{14}{}%
+\contentsline {subsection}{\numberline {2.2}De La Salle University Manila Architecture}{16}{}%
+\contentsline {subsection}{\numberline {2.3}PCG Tools for Artists}{18}{}%
+\contentsline {section}{\numberline {3}Concepts}{20}{}%
+\contentsline {subsection}{\numberline {3.1}Concepts in Neo-Classical Architecture}{20}{}%
+\contentsline {subsubsection}{\numberline {3.1.1}Ionic Order}{21}{}%
+\contentsline {subsubsection}{\numberline {3.1.2}Doric Order}{21}{}%
+\contentsline {subsubsection}{\numberline {3.1.3}Tuscan Order}{22}{}%
+\contentsline {subsubsection}{\numberline {3.1.4}Corinthian Order}{22}{}%
+\contentsline {subsubsection}{\numberline {3.1.5}Composite Order}{23}{}%
+\contentsline {subsection}{\numberline {3.2}Classifying DLSU-Manila Architecture}{23}{}%
+\contentsline {subsection}{\numberline {3.3}Concepts in Procedural Content Generation}{24}{}%
+\contentsline {subsection}{\numberline {3.4}Concepts in Graphics Programming}{26}{}%
+\contentsline {section}{\numberline {4}Methodology}{30}{}%
+\contentsline {subsection}{\numberline {4.1}3D Asset Development Workflow}{30}{}%
 \contentsline {subsubsection}{\numberline {4.1.1}Reference Gathering}{31}{}%
 \contentsline {subsubsection}{\numberline {4.1.2}La Salle Hall Modularity Study}{31}{}%
-\contentsline {subsubsection}{\numberline {4.1.3}Mesh Modelling}{33}{}%
+\contentsline {subsubsection}{\numberline {4.1.3}Mesh Modelling}{32}{}%
 \contentsline {subsubsection}{\numberline {4.1.4}Mesh optimization}{33}{}%
-\contentsline {subsubsection}{\numberline {4.1.5}UV Unwrapping}{34}{}%
+\contentsline {subsubsection}{\numberline {4.1.5}UV Unwrapping}{33}{}%
 \contentsline {subsubsection}{\numberline {4.1.6}Texturing}{34}{}%
 \contentsline {subsubsection}{\numberline {4.1.7}Asset integration and Evaluation}{36}{}%
-\contentsline {subsection}{\numberline {4.2}Creation of an Art Book}{37}{}%
-\contentsline {subsection}{\numberline {4.3}Creation of the Anito builder 3D Editor}{38}{}%
-\contentsline {subsubsection}{\numberline {4.3.1}The PCG System}{41}{}%
+\contentsline {subsection}{\numberline {4.2}Creation of an Art Book}{36}{}%
+\contentsline {subsection}{\numberline {4.3}Creation of the Anito builder 3D Editor}{37}{}%
+\contentsline {subsubsection}{\numberline {4.3.1}The PCG System}{40}{}%
 \contentsline {subsection}{\numberline {4.4}Evaluation}{45}{}%
 \contentsline {subsubsection}{\numberline {4.4.1}Evaluation of Anito Builder's usability}{45}{}%
 \contentsline {subsubsection}{\numberline {4.4.2}Evaluation of Anito Builder's output}{46}{}%
@@ -39,8 +38,6 @@
 \contentsline {subsubsection}{\numberline {5.1.1}Wall Segments Classification}{51}{}%
 \contentsline {subsection}{\numberline {5.2}The Anito Builder 3D Editor}{57}{}%
 \contentsline {subsubsection}{\numberline {5.2.1}Evaluation of Anito Builder's usability}{60}{}%
-\contentsline {subsubsection}{\numberline {5.2.2}Evaluation of Anito Builder's output}{61}{}%
-\contentsline {section}{\numberline {6}Conclusion}{63}{}%
-\contentsline {subsection}{\numberline {6.1}Prototype Evaluation}{63}{}%
-\contentsline {subsection}{\numberline {6.2}Asset Collection Evaluation}{63}{}%
-\contentsline {subsection}{\numberline {6.3}Architectural Accuracy and Consistency}{63}{}%
+\contentsline {subsubsection}{\numberline {5.2.2}Evaluation of Anito Builder's output}{62}{}%
+\contentsline {section}{\numberline {6}Conclusion}{64}{}%
+\contentsline {subsection}{\numberline {6.1}Future Work}{65}{}%

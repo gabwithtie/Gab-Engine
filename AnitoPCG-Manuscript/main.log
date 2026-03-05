@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.2.20)  6 MAR 2026 03:52
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.2.20)  6 MAR 2026 04:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -730,151 +730,152 @@ Package pdftex.def Info: figures/logos.jpg  used on input line 59.
  [1
 
 {C:/Users/PC/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map} <./figures/logos
-.jpg>] [1] (main.toc [2] [3])
+.jpg>] [1] (main.toc [2])
 \tf@toc=\write4
 \openout4 = `main.toc'.
 
- [4] (main.lof
+ [3] (main.lof
 Overfull \hbox (64.39528pt too wide) in paragraph at lines 5--5
  [][] []\OT1/cmr/m/n/10.95 Side-by-side com-par-i-son of the parts of a clas-si
 -cal or-der (https://smarthistory.org) 
  []
 
-[5])
+[4])
 \tf@lof=\write5
 \openout5 = `main.lof'.
 
- [6] (main.lot)
+ [5] (main.lot)
 \tf@lot=\write6
 \openout6 = `main.lot'.
 
- [7] [8] [9]
-<figures/figures/Slide1.jpg, id=66, 963.6pt x 542.025pt>
+ [6] [7] [8]
+<figures/figures/Slide1.jpg, id=63, 963.6pt x 542.025pt>
 File: figures/figures/Slide1.jpg Graphic file (type jpg)
 <use figures/figures/Slide1.jpg>
-Package pdftex.def Info: figures/figures/Slide1.jpg  used on input line 144.
+Package pdftex.def Info: figures/figures/Slide1.jpg  used on input line 146.
 (pdftex.def)             Requested size: 390.0pt x 219.37004pt.
- [10 <./figures/figures/Slide1.jpg>] [11]
-<figures/Figures/Slide7.jpg, id=73, 963.6pt x 542.025pt>
+ [9 <./figures/figures/Slide1.jpg>] [10]
+<figures/Figures/Slide7.jpg, id=70, 963.6pt x 542.025pt>
 File: figures/Figures/Slide7.jpg Graphic file (type jpg)
 <use figures/Figures/Slide7.jpg>
-Package pdftex.def Info: figures/Figures/Slide7.jpg  used on input line 167.
+Package pdftex.def Info: figures/Figures/Slide7.jpg  used on input line 169.
 (pdftex.def)             Requested size: 390.0pt x 219.37004pt.
 
-[12 <./figures/Figures/Slide7.jpg>] [13] [14]
-<figures/figures/Slide2.jpg, id=84, 963.6pt x 542.025pt>
+[11 <./figures/Figures/Slide7.jpg>] [12] [13]
+<figures/figures/Slide2.jpg, id=81, 963.6pt x 542.025pt>
 File: figures/figures/Slide2.jpg Graphic file (type jpg)
 <use figures/figures/Slide2.jpg>
-Package pdftex.def Info: figures/figures/Slide2.jpg  used on input line 196.
+Package pdftex.def Info: figures/figures/Slide2.jpg  used on input line 198.
 (pdftex.def)             Requested size: 390.0pt x 219.37004pt.
- [15 <./figures/figures/Slide2.jpg>]
-Overfull \hbox (32.33858pt too wide) in paragraph at lines 212--229
+ [14 <./figures/figures/Slide2.jpg>]
+Overfull \hbox (32.33858pt too wide) in paragraph at lines 214--231
  [][] 
  []
 
-[16] [17]
-<figures/figures/Slide3.jpg, id=95, 963.6pt x 542.025pt>
+[15] [16]
+<figures/figures/Slide3.jpg, id=92, 963.6pt x 542.025pt>
 File: figures/figures/Slide3.jpg Graphic file (type jpg)
 <use figures/figures/Slide3.jpg>
-Package pdftex.def Info: figures/figures/Slide3.jpg  used on input line 248.
+Package pdftex.def Info: figures/figures/Slide3.jpg  used on input line 250.
 (pdftex.def)             Requested size: 390.0pt x 219.37004pt.
- [18 <./figures/figures/Slide3.jpg>] [19] [20] [21]
-<figures/figures/Slide 6.jpg, id=109, 963.6pt x 542.025pt>
+ [17 <./figures/figures/Slide3.jpg>] [18] [19]
+<figures/figures/Slide 6.jpg, id=103, 963.6pt x 542.025pt>
 File: figures/figures/Slide 6.jpg Graphic file (type jpg)
 <use figures/figures/Slide 6.jpg>
-Package pdftex.def Info: figures/figures/Slide 6.jpg  used on input line 289.
+Package pdftex.def Info: figures/figures/Slide 6.jpg  used on input line 288.
 (pdftex.def)             Requested size: 390.0pt x 219.37004pt.
 
-Underfull \hbox (badness 1430) in paragraph at lines 290--290
+Underfull \hbox (badness 1430) in paragraph at lines 289--289
 []\OT1/cmr/m/n/12 Figure 5: Side-by-side com-par-i-son of the parts of a clas-s
 i-cal or-der
  []
 
-[22 <./figures/figures/Slide 6.jpg>] [23] [24]
-Overfull \hbox (5.15685pt too wide) in paragraph at lines 319--320
+[20] [21 <./figures/figures/Slide 6.jpg>] [22] [23]
+Overfull \hbox (5.15685pt too wide) in paragraph at lines 318--319
 []\OT1/cmr/m/n/10.95 Low-human-intervention meth-ods pri-mar-ily en-com-pass te
 ch-niques such as noise-
  []
 
-[25]
-<figures/pcgexamples.png, id=123, 513.92pt x 321.2pt>
+[24]
+<figures/pcgexamples.png, id=120, 513.92pt x 321.2pt>
 File: figures/pcgexamples.png Graphic file (type png)
 <use figures/pcgexamples.png>
-Package pdftex.def Info: figures/pcgexamples.png  used on input line 325.
+Package pdftex.def Info: figures/pcgexamples.png  used on input line 324.
 (pdftex.def)             Requested size: 390.0pt x 243.75185pt.
- [26] [27 <./figures/pcgexamples.png>] [28] [29] [30] [31]
-<figures/figures/Slide8.jpg, id=143, 963.6pt x 542.025pt>
+ [25] [26 <./figures/pcgexamples.png>] [27] [28] [29]
+<figures/figures/Slide4.JPG, id=136, 963.6pt x 542.025pt>
+File: figures/figures/Slide4.JPG Graphic file (type jpg)
+<use figures/figures/Slide4.JPG>
+Package pdftex.def Info: figures/figures/Slide4.JPG  used on input line 371.
+(pdftex.def)             Requested size: 390.0pt x 219.37004pt.
+ [30 <./figures/figures/Slide4.JPG>]
+<figures/figures/Slide8.jpg, id=141, 963.6pt x 542.025pt>
 File: figures/figures/Slide8.jpg Graphic file (type jpg)
 <use figures/figures/Slide8.jpg>
-Package pdftex.def Info: figures/figures/Slide8.jpg  used on input line 386.
+Package pdftex.def Info: figures/figures/Slide8.jpg  used on input line 392.
 (pdftex.def)             Requested size: 390.0pt x 219.37004pt.
- [32 <./figures/figures/Slide8.jpg>] [33]
-<figures/Plaster Texture.png, id=150, 967.36406pt x 640.64343pt>
+ [31] [32 <./figures/figures/Slide8.jpg>] [33]
+<figures/Plaster Texture.png, id=151, 967.36406pt x 640.64343pt>
 File: figures/Plaster Texture.png Graphic file (type png)
 <use figures/Plaster Texture.png>
-Package pdftex.def Info: figures/Plaster Texture.png  used on input line 415.
+Package pdftex.def Info: figures/Plaster Texture.png  used on input line 421.
 (pdftex.def)             Requested size: 390.0pt x 258.27634pt.
  [34]
-Overfull \hbox (0.92906pt too wide) in paragraph at lines 420--421
+Overfull \hbox (0.92906pt too wide) in paragraph at lines 426--427
 []\OT1/cmr/m/n/10.95 On the other hand, pro-ce-du-ral tex-tur-ing in Sub-stance
  Painter was done through
  []
 
-[35 <./figures/Plaster Texture.png>]
-<figures/figures/Slide4.JPG, id=159, 963.6pt x 542.025pt>
-File: figures/figures/Slide4.JPG Graphic file (type jpg)
-<use figures/figures/Slide4.JPG>
-Package pdftex.def Info: figures/figures/Slide4.JPG  used on input line 432.
-(pdftex.def)             Requested size: 390.0pt x 219.37004pt.
- [36] [37 <./figures/figures/Slide4.JPG>]
-Overfull \hbox (5.0858pt too wide) in paragraph at lines 452--465
+[35 <./figures/Plaster Texture.png>] [36]
+Overfull \hbox (5.0858pt too wide) in paragraph at lines 451--464
  [][] 
  []
 
+[37]
 <Figures/enginearch.png, id=167, 546.54187pt x 567.62062pt>
 File: Figures/enginearch.png Graphic file (type png)
 <use Figures/enginearch.png>
-Package pdftex.def Info: Figures/enginearch.png  used on input line 468.
+Package pdftex.def Info: Figures/enginearch.png  used on input line 467.
 (pdftex.def)             Requested size: 390.0pt x 405.04016pt.
-[38] [39 <./Figures/enginearch.png>]
-Overfull \hbox (7.38638pt too wide) in paragraph at lines 479--480
+ [38] [39 <./Figures/enginearch.png>]
+Overfull \hbox (7.38638pt too wide) in paragraph at lines 478--479
 []\OT1/cmr/m/n/10.95 Scene In-te-gra-tion: Each Ob-ject in-stance de-fines its 
 spa-tial pa-ram-e-ters through
  []
 
-[40]
-<Figures/anitobuilder_arch.png, id=178, 323.70938pt x 321.45094pt>
+<Figures/anitobuilder_arch.png, id=175, 323.70938pt x 321.45094pt>
 File: Figures/anitobuilder_arch.png Graphic file (type png)
 <use Figures/anitobuilder_arch.png>
-Package pdftex.def Info: Figures/anitobuilder_arch.png  used on input line 492.
+Package pdftex.def Info: Figures/anitobuilder_arch.png  used on input line 491.
 
 (pdftex.def)             Requested size: 195.0pt x 193.64212pt.
+[40]
 LaTeX Font Info:    Trying to load font information for OMS+cmr on input line 5
-07.
+06.
  (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/base\omscmr.fd
 File: omscmr.fd 2024/11/19 v2.5n Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 507.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 506.
 <Figures/stretchmethod.png, id=179, 691.83469pt x 453.94594pt>
 File: Figures/stretchmethod.png Graphic file (type png)
 <use Figures/stretchmethod.png>
-Package pdftex.def Info: Figures/stretchmethod.png  used on input line 535.
+Package pdftex.def Info: Figures/stretchmethod.png  used on input line 534.
 (pdftex.def)             Requested size: 390.0pt x 255.90501pt.
 
 [41 <./Figures/anitobuilder_arch.png>] [42]
 <Figures/append.png, id=191, 546.54187pt x 247.67531pt>
 File: Figures/append.png Graphic file (type png)
 <use Figures/append.png>
-Package pdftex.def Info: Figures/append.png  used on input line 545.
+Package pdftex.def Info: Figures/append.png  used on input line 544.
 (pdftex.def)             Requested size: 390.0pt x 176.73503pt.
  [43 <./Figures/stretchmethod.png>]
-Overfull \hbox (5.0858pt too wide) in paragraph at lines 554--569
+Overfull \hbox (5.0858pt too wide) in paragraph at lines 553--568
  [][] 
  []
 
 [44 <./Figures/append.png>]
-Overfull \hbox (5.0858pt too wide) in paragraph at lines 586--597
+Overfull \hbox (5.0858pt too wide) in paragraph at lines 585--596
  [][] 
  []
 
@@ -882,7 +883,7 @@ Overfull \hbox (5.0858pt too wide) in paragraph at lines 586--597
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
-Overfull \hbox (38.76744pt too wide) in paragraph at lines 599--600
+Overfull \hbox (38.76744pt too wide) in paragraph at lines 598--599
 []\OT1/cmr/m/n/10.95 The data gath-ered from these tests were based on the meth
 -ods used by Kami^^Snska(2022).
  []
@@ -892,7 +893,7 @@ Overfull \hbox (38.76744pt too wide) in paragraph at lines 599--600
 File: figures/Regular Wall and Corner Segments.png Graphic file (type png)
 <use figures/Regular Wall and Corner Segments.png>
 Package pdftex.def Info: figures/Regular Wall and Corner Segments.png  used on 
-input line 638.
+input line 637.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
  [48]
 <figures/Collection of Modular Corner Segments.png, id=214, 1927.2pt x 1084.05p
@@ -901,154 +902,156 @@ File: figures/Collection of Modular Corner Segments.png Graphic file (type png)
 
 <use figures/Collection of Modular Corner Segments.png>
 Package pdftex.def Info: figures/Collection of Modular Corner Segments.png  use
-d on input line 647.
+d on input line 646.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
  [49 <./figures/Regular Wall and Corner Segments.png>]
 <figures/[Sample] 1st Floor Segment.png, id=219, 1927.2pt x 1084.05pt>
 File: figures/[Sample] 1st Floor Segment.png Graphic file (type png)
 <use figures/[Sample] 1st Floor Segment.png>
 Package pdftex.def Info: figures/[Sample] 1st Floor Segment.png  used on input 
-line 673.
+line 672.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
 
 [50 <./figures/Collection of Modular Corner Segments.png>]
-<figures/Wall Segments.png, id=224, 1927.2pt x 1084.05pt>
-File: figures/Wall Segments.png Graphic file (type png)
-<use figures/Wall Segments.png>
-Package pdftex.def Info: figures/Wall Segments.png  used on input line 684.
-(pdftex.def)             Requested size: 390.0pt x 219.37006pt.
+<figures/Wall Segments Concept Diagram.png, id=224, 847.66687pt x 585.68813pt>
+File: figures/Wall Segments Concept Diagram.png Graphic file (type png)
+<use figures/Wall Segments Concept Diagram.png>
+Package pdftex.def Info: figures/Wall Segments Concept Diagram.png  used on inp
+ut line 683.
+(pdftex.def)             Requested size: 390.0pt x 269.4645pt.
  [51 <./figures/[Sample] 1st Floor Segment.png>]
 File: figures/Regular Wall and Corner Segments.png Graphic file (type png)
 <use figures/Regular Wall and Corner Segments.png>
 Package pdftex.def Info: figures/Regular Wall and Corner Segments.png  used on 
-input line 693.
+input line 692.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
- [52 <./figures/Wall Segments.png>]
+ [52 <./figures/Wall Segments Concept Diagram.png>]
 <figures/Multi-Segments.png, id=233, 1927.2pt x 1084.05pt>
 File: figures/Multi-Segments.png Graphic file (type png)
 <use figures/Multi-Segments.png>
-Package pdftex.def Info: figures/Multi-Segments.png  used on input line 700.
+Package pdftex.def Info: figures/Multi-Segments.png  used on input line 699.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
 <figures/Filler Walls.png, id=234, 1927.2pt x 1084.05pt>
 File: figures/Filler Walls.png Graphic file (type png)
 <use figures/Filler Walls.png>
-Package pdftex.def Info: figures/Filler Walls.png  used on input line 707.
+Package pdftex.def Info: figures/Filler Walls.png  used on input line 706.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
- [53 <./figures/Multi-Segments.png>]
+
+[53 <./figures/Multi-Segments.png>]
 <figures/Intro.png, id=239, 2258.4375pt x 1693.82813pt>
 File: figures/Intro.png Graphic file (type png)
 <use figures/Intro.png>
-Package pdftex.def Info: figures/Intro.png  used on input line 716.
+Package pdftex.def Info: figures/Intro.png  used on input line 715.
 (pdftex.def)             Requested size: 390.0pt x 292.49582pt.
  [54 <./figures/Filler Walls.png>]
 <figures/[Sample] LS Hall.png, id=245, 1927.2pt x 1084.05pt>
 File: figures/[Sample] LS Hall.png Graphic file (type png)
 <use figures/[Sample] LS Hall.png>
-Package pdftex.def Info: figures/[Sample] LS Hall.png  used on input line 723.
+Package pdftex.def Info: figures/[Sample] LS Hall.png  used on input line 722.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
  [55 <./figures/Intro.png (PNG copy)>]
 <figures/[Sample] 1-Story Building.png, id=249, 1927.2pt x 1084.05pt>
 File: figures/[Sample] 1-Story Building.png Graphic file (type png)
 <use figures/[Sample] 1-Story Building.png>
 Package pdftex.def Info: figures/[Sample] 1-Story Building.png  used on input l
-ine 730.
+ine 729.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
 <figures/[Sample] 10-Story Building.png, id=250, 1927.2pt x 1084.05pt>
 File: figures/[Sample] 10-Story Building.png Graphic file (type png)
 <use figures/[Sample] 10-Story Building.png>
 Package pdftex.def Info: figures/[Sample] 10-Story Building.png  used on input 
-line 737.
+line 736.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
  [56 <./figures/[Sample] LS Hall.png> <./figures/[Sample] 1-Story Building.png>
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 752--752
+Underfull \hbox (badness 10000) in paragraph at lines 751--751
 []|\OT1/cmr/m/n/12 Object Trans-la-tion,
  []
 
 
-Underfull \hbox (badness 1163) in paragraph at lines 755--755
+Underfull \hbox (badness 1163) in paragraph at lines 754--754
 []|\OT1/cmr/m/n/12 Uses screen-space gra-di-ents to de-ter-mine
  []
 
 
-Underfull \hbox (badness 4303) in paragraph at lines 755--755
+Underfull \hbox (badness 4303) in paragraph at lines 754--754
 \OT1/cmr/m/n/12 tan-gent space with-out re-ly-ing on pre-
  []
 
 
-Underfull \hbox (badness 1163) in paragraph at lines 760--761
+Underfull \hbox (badness 1163) in paragraph at lines 759--759
 []|\OT1/cmr/m/n/12 Any cho-sen di-rec-tory will be re-cur-sively
  []
 
+[57 <./figures/[Sample] 10-Story Building.png>]
+<figures/anitobuilder_task1.png, id=260, 1444.64719pt x 754.31813pt>
+File: figures/anitobuilder_task1.png Graphic file (type png)
+<use figures/anitobuilder_task1.png>
+Package pdftex.def Info: figures/anitobuilder_task1.png  used on input line 767
+.
+(pdftex.def)             Requested size: 390.0pt x 203.63408pt.
+ [58]
+<figures/anitobuilder_task2.png, id=264, 1444.64719pt x 752.0597pt>
+File: figures/anitobuilder_task2.png Graphic file (type png)
+<use figures/anitobuilder_task2.png>
+Package pdftex.def Info: figures/anitobuilder_task2.png  used on input line 774
+.
+(pdftex.def)             Requested size: 390.0pt x 203.0244pt.
+<figures/anitobuilder_task3.png, id=265, 1444.64719pt x 756.57657pt>
+File: figures/anitobuilder_task3.png Graphic file (type png)
+<use figures/anitobuilder_task3.png>
+Package pdftex.def Info: figures/anitobuilder_task3.png  used on input line 781
+.
+(pdftex.def)             Requested size: 390.0pt x 204.24376pt.
+ [59 <./figures/anitobuilder_task1.png> <./figures/anitobuilder_task2.png>]
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<figures/anitobuilder_task1.png, id=256, 1444.64719pt x 754.31813pt>
-File: figures/anitobuilder_task1.png Graphic file (type png)
-<use figures/anitobuilder_task1.png>
-Package pdftex.def Info: figures/anitobuilder_task1.png  used on input line 768
-.
-(pdftex.def)             Requested size: 390.0pt x 203.63408pt.
-[57 <./figures/[Sample] 10-Story Building.png>]
-Overfull \vbox (69.30049pt too high) has occurred while \output is active []
-
-
-[58 <./figures/anitobuilder_task1.png>]
-<figures/anitobuilder_task2.png, id=265, 1444.64719pt x 752.0597pt>
-File: figures/anitobuilder_task2.png Graphic file (type png)
-<use figures/anitobuilder_task2.png>
-Package pdftex.def Info: figures/anitobuilder_task2.png  used on input line 775
-.
-(pdftex.def)             Requested size: 390.0pt x 203.0244pt.
-<figures/anitobuilder_task3.png, id=266, 1444.64719pt x 756.57657pt>
-File: figures/anitobuilder_task3.png Graphic file (type png)
-<use figures/anitobuilder_task3.png>
-Package pdftex.def Info: figures/anitobuilder_task3.png  used on input line 782
-.
-(pdftex.def)             Requested size: 390.0pt x 204.24376pt.
- [59 <./figures/anitobuilder_task2.png> <./figures/anitobuilder_task3.png>] [60
-]
-Overfull \hbox (7.71466pt too wide) in paragraph at lines 854--854
+[60 <./figures/anitobuilder_task3.png>] [61]
+Overfull \hbox (7.71466pt too wide) in paragraph at lines 855--855
  [][]\OT1/cmr/m/n/12 Authenticity 
  []
 
 
-Overfull \hbox (6.5744pt too wide) in paragraph at lines 854--854
+Overfull \hbox (6.5744pt too wide) in paragraph at lines 855--855
  [][]\OT1/cmr/m/n/12 Believability 
  []
 
 
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-Overfull \hbox (3.41513pt too wide) in paragraph at lines 871--880
+Overfull \hbox (3.41513pt too wide) in paragraph at lines 872--881
  [][] 
  []
 
-[61] [62] [63] [64]
-Underfull \hbox (badness 10000) in paragraph at lines 981--984
+[62] [63] [64]
+Overfull \hbox (5.22572pt too wide) in paragraph at lines 900--901
+[]\OT1/cmr/bx/n/10.95 Performance Op-ti-miza-tion: \OT1/cmr/m/n/10.95 Im-ple-me
+nt-ing dy-namic Level of De-tail (LOD)
+ []
+
+[65] [66]
+Underfull \hbox (badness 10000) in paragraph at lines 985--988
 []\OT1/cmr/m/n/10.95 Cable Mat-ters. (2024). Ray Trac-ing vs Ras-ter-i-za-tion:
  Un-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 981--984
+Underfull \hbox (badness 10000) in paragraph at lines 985--988
 \OT1/cmr/m/n/10.95 pack-ing Com-puter Graph-ics Ren-der-ing. Re-trieved from
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 981--984
+Underfull \hbox (badness 10000) in paragraph at lines 985--988
 \OT1/cmr/m/n/10.95 https://www.cablematters.com/Blog/Computer-Accessories/ray-t
 racing-
  []
 
-[65]
-Underfull \hbox (badness 1132) in paragraph at lines 986--989
+[67]
+Underfull \hbox (badness 1132) in paragraph at lines 990--993
 []\OT1/cmr/m/n/10.95 CMake. (2026). Why CMake? | Mas-ter-ing CMake. Re-trieved 
 from
  []
 
-[66] [67] (main.aux)
+[68] [69] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
@@ -1059,10 +1062,10 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 16519 strings out of 467871
- 348155 string characters out of 5419828
- 730062 words of memory out of 5000000
- 45087 multiletter control sequences out of 15000+600000
+ 16520 strings out of 467871
+ 348307 string characters out of 5419828
+ 731062 words of memory out of 5000000
+ 45088 multiletter control sequences out of 15000+600000
  634784 words of font info for 64 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  84i,10n,104p,1472b,979s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1076,9 +1079,9 @@ pe1/public/amsfonts/cm/cmr10.pfb><C:/Users/PC/AppData/Local/Programs/MiKTeX/fon
 ts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/PC/AppData/Local/Programs/MiKTe
 X/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/PC/AppData/Local/Programs
 /MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb>
-Output written on main.pdf (68 pages, 18252281 bytes).
+Output written on main.pdf (70 pages, 16392679 bytes).
 PDF statistics:
- 340 PDF objects out of 1000 (max. 8388607)
+ 346 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  250 words of extra memory for PDF output out of 10000 (max. 10000000)
 
