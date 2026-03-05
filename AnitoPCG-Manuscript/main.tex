@@ -311,6 +311,13 @@ Low-human-intervention methods primarily encompass techniques such as noise-base
 
 In contrast, high-human intervention methods are characterized by explicit human design that micro-manages content generation. One category of this is rule-based models. Rule-based models utilize human experience and knowledge to serve as the basis for pattern induction (i.e., rules) (Zhang, 2025). Rule-based models include shape grammars, L-systems, and cellular automata. Shape grammars are formal systems that apply transformative rules to geometric primitives, enabling the iterative generation of complex designs, commonly seen in architectural and urban planning. Lindenmayer Systems (L-Systems), employ recursive rewriting rules to model fractal structures and biological growth, notably used for realistic plant generation. Cellular automata involve grids of cells whose states evolve based on local rules, leading to emergent complexity suitable for simulating natural phenomena or generating abstract patterns.
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\linewidth]{figures/pcgexamples.png}
+	\caption{Examples of rule-based models}
+	\label{fig:workflow}
+\end{figure}
+
 Another category of high-human intervention methods is algorithmic procedural generation. This is a method wherein content is produced through a fixed, step-by-step process embedded within an algorithm. This approach relies on a pre-determined sequence of operations applied to specific inputs. This methodological choice prioritizes predictability and reliability.
 
 \subsection{Concepts in Graphics Programming}
@@ -561,104 +568,6 @@ Responses to the survey served as a means to provide insight into how effective 
 \newpage
 \section{Results}
 
-\subsection{User Evaluation}
-A group of 6 individuals took part of the study. The table below summarizes their demographic:
-
-\begin{table}[h!]
-	\centering
-	\caption{User demographic}
-	\begin{tabular}{|p{3cm}|l|}
-		\hline
-		\textbf{\#} & \textbf{Target Structure} \\ \hline
-		3 & Game Arts and Design Students \\ \hline
-		2 & Game Development Students \\ \hline
-		1 & Architecture professional \\ \hline
-	\end{tabular}
-\end{table}
-
-\subsubsection{Evaluation of Anito Builder's usability}
-
-The data collected during the structured task phase showed that workflow offered by Anito Builder was efficient. Results indicate that users progressively learned how to use the editor better throughout tasks (Table 2).
-
-\begin{table}[h!]
-	\centering
-	\caption{Participant Performance Metrics per Task}
-	\begin{tabular}{|p{3cm}|l|c|}
-		\hline
-		\textbf{Task \#} & \textbf{Target Structure} & \textbf{Mean Time (Min:Sec)} \\ \hline
-		1 & La Salle Hall (Replica) & 5:31 \\ \hline
-		2 & Cross-shaped Skyscraper & 4:16 \\ \hline
-		3 & U-shaped Building & 3.56 \\ \hline
-	\end{tabular}
-\end{table}
-
-As observed during Task 1, the majority of user interactions focused on learning the basic navigation of the 3D editor. Eventually, after users learned the basic structure of the interface, they required less assistance on the second task onward. Users who had a background using other 3D modeling software (i.e., blender) almost immediately knew how to navigate the editor. During tasks 2 and 3, users asked for assistance less, as all unfamiliar controls were already introduced to them during task 1.
-
-The System Usability Scale (SUS) yielded a mean score of 78.5, which, according to Brooke (1996), places the Anito Builder in the ``Good'' to ``Excellent'' range of usability.
-
-Post-experiment interviews indicated that the object-based hierarchy was intuitive for architectural layout, though some participants suggested that automatic snapping for the front and back wings would further reduce task time. Furthermore, when asked about their experience during the unstructured time, users noted their need of the following features:
-
-\begin{enumerate}
-	\item Roof removal — When the roof of a particular block is selected, a toggle to turn it off should exist.
-	\item Automatic vertical placement — When the roof of a particular block is selected, a button to create a new block on top of that roof (that lines up perfectly with the source block) should exist.
-\end{enumerate}
-
-\subsubsection{Evaluation of Anito Builder's output}
-
-The evaluation of the generated scenes by De La Salle University students provided empirical evidence of the system's ability to capture the ``look and feel'' of the campus.
-
-% Mean Scores
-\newcommand{\meanAuth}{4.42}
-\newcommand{\meanCohere}{3.95}
-\newcommand{\meanVar}{3.45}
-\newcommand{\meanAppeal}{3.80}
-\newcommand{\meanBelieve}{4.55}
-
-% Standard Deviations
-\newcommand{\sdAuth}{0.58}
-\newcommand{\sdCohere}{0.72}
-\newcommand{\sdVar}{0.81}
-\newcommand{\sdAppeal}{0.64}
-\newcommand{\sdBelieve}{0.51}
-
-\begin{figure}[h!]
-	\centering
-	\begin{tikzpicture}[scale=0.5] % Adjust scale to fit your page
-		\tkzKiviatDiagram[
-		radial=5, 
-		gap=1,  
-		lattice=5,
-		label space=2.5
-		]{Authenticity, Coherence, Variation, Appeal, Believability}
-		
-		% Plotting the Mean Scores from your results
-		% Order: Authenticity (4.42), Coherence (4.15), Variation (3.85), Appeal (4.20), Believability (4.55)
-		\tkzKiviatLine[thick, color=blue, fill=blue!20, mark=ball](\meanAuth, \meanCohere, \meanVar,\meanAppeal, \meanBelieve)
-		
-		% Optional: Add a legend or secondary line for comparison (e.g., target score)
-		% \tkzKiviatLine[thick, color=red, dashed](5, 5, 5, 5, 5)
-		
-	\end{tikzpicture}
-	\caption{Radar chart of mean scores across architectural evaluation criteria.}
-	\label{fig:radar_chart_latex}
-\end{figure}
-
-\begin{table}[h!]
-	\centering
-	\caption{Mean Scores for Architectural Output Evaluation}
-	\begin{tabular}{|p{7cm}|c|c|}
-		\hline
-		\textbf{Evaluation Criteria} & \textbf{Mean Score} & \textbf{Std. Deviation} \\ \hline
-		Perceived Architectural Authenticity     & \meanAuth & \sdAuth \\ \hline
-		Stylistic Coherence                      & \meanCohere & \sdCohere \\ \hline
-		Modular Variation and Design Flexibility & \meanVar & \sdVar \\ \hline
-		Visual Appeal and Layout Clarity         & \meanAppeal & \sdAppeal \\ \hline
-		Structural Believability                 & \meanBelieve & \sdBelieve \\ \hline
-	\end{tabular}
-\end{table}
-
-Perceived Architectural Authenticity (4.42) confirms that the neoclassical influence—specifically the Corinthian columns and symmetry defined in the previous sections—was clearly recognizable to the DLSU population. While Modular Variation (3.55) received the lowest relative score. When asked about the rationale behind their ratings, users noted that they wanted a wider selection of segment styles and architecture styles in the editor.
-
 \subsection{Modular 3D Models}
 
 The 3D models created were made with these standard measurements: x = 1.2m, z = 1.86m, and y dimensions varying with different types of wall segments. While the standard y dimension is 1.56m, in order to replicate the overall structure of the LS Hall accurately, it was necessary to model the different kinds of wall segments it has. This led to certain segments having higher y dimensions. 
@@ -772,6 +681,109 @@ As a test to determine the models' accuracy and usability, an attempt to recreat
     \caption{Render of the recreated LS Hall in Blender}
     \label{fig:overview_pcg}
 \end{figure}
+
+
+\subsection{User Evaluation}
+A group of 6 individuals took part of the study. The table below summarizes their demographic:
+
+\begin{table}[h!]
+	\centering
+	\caption{User demographic}
+	\begin{tabular}{|p{3cm}|l|}
+		\hline
+		\textbf{\#} & \textbf{Target Structure} \\ \hline
+		3 & Game Arts and Design Students \\ \hline
+		2 & Game Development Students \\ \hline
+		1 & Architecture professional \\ \hline
+	\end{tabular}
+\end{table}
+
+\subsubsection{Evaluation of Anito Builder's usability}
+
+The data collected during the structured task phase showed that workflow offered by Anito Builder was efficient. Results indicate that users progressively learned how to use the editor better throughout tasks (Table 2).
+
+\begin{table}[h!]
+	\centering
+	\caption{Participant Performance Metrics per Task}
+	\begin{tabular}{|p{3cm}|l|c|}
+		\hline
+		\textbf{Task \#} & \textbf{Target Structure} & \textbf{Mean Time (Min:Sec)} \\ \hline
+		1 & La Salle Hall (Replica) & 5:31 \\ \hline
+		2 & Cross-shaped Skyscraper & 4:16 \\ \hline
+		3 & U-shaped Building & 3.56 \\ \hline
+	\end{tabular}
+\end{table}
+
+As observed during Task 1, the majority of user interactions focused on learning the basic navigation of the 3D editor. Eventually, after users learned the basic structure of the interface, they required less assistance on the second task onward. Users who had a background using other 3D modeling software (i.e., blender) almost immediately knew how to navigate the editor. During tasks 2 and 3, users asked for assistance less, as all unfamiliar controls were already introduced to them during task 1.
+
+The System Usability Scale (SUS) yielded a mean score of 78.5, which, according to Brooke (1996), places the Anito Builder in the ``Good'' to ``Excellent'' range of usability.
+
+Post-experiment interviews indicated that the object-based hierarchy was intuitive for architectural layout, though some participants suggested that automatic snapping for the front and back wings would further reduce task time. Furthermore, when asked about their experience during the unstructured time, users noted their need of the following features:
+
+\begin{enumerate}
+	\item Roof removal — When the roof of a particular block is selected, a toggle to turn it off should exist.
+	\item Automatic vertical placement — When the roof of a particular block is selected, a button to create a new block on top of that roof (that lines up perfectly with the source block) should exist.
+\end{enumerate}
+
+\subsection{The Anito Builder 3D Editor}
+
+
+
+\subsubsection{Evaluation of Anito Builder's output}
+
+The evaluation of the generated scenes by De La Salle University students provided empirical evidence of the system's ability to capture the ``look and feel'' of the campus.
+
+% Mean Scores
+\newcommand{\meanAuth}{4.42}
+\newcommand{\meanCohere}{3.95}
+\newcommand{\meanVar}{3.45}
+\newcommand{\meanAppeal}{3.80}
+\newcommand{\meanBelieve}{4.55}
+
+% Standard Deviations
+\newcommand{\sdAuth}{0.58}
+\newcommand{\sdCohere}{0.72}
+\newcommand{\sdVar}{0.81}
+\newcommand{\sdAppeal}{0.64}
+\newcommand{\sdBelieve}{0.51}
+
+\begin{figure}[h!]
+	\centering
+	\begin{tikzpicture}[scale=0.5] % Adjust scale to fit your page
+		\tkzKiviatDiagram[
+		radial=5, 
+		gap=1,  
+		lattice=5,
+		label space=2.5
+		]{Authenticity, Coherence, Variation, Appeal, Believability}
+		
+		% Plotting the Mean Scores from your results
+		% Order: Authenticity (4.42), Coherence (4.15), Variation (3.85), Appeal (4.20), Believability (4.55)
+		\tkzKiviatLine[thick, color=blue, fill=blue!20, mark=ball](\meanAuth, \meanCohere, \meanVar,\meanAppeal, \meanBelieve)
+		
+		% Optional: Add a legend or secondary line for comparison (e.g., target score)
+		% \tkzKiviatLine[thick, color=red, dashed](5, 5, 5, 5, 5)
+		
+	\end{tikzpicture}
+	\caption{Radar chart of mean scores across architectural evaluation criteria.}
+	\label{fig:radar_chart_latex}
+\end{figure}
+
+\begin{table}[h!]
+	\centering
+	\caption{Mean Scores for Architectural Output Evaluation}
+	\begin{tabular}{|p{7cm}|c|c|}
+		\hline
+		\textbf{Evaluation Criteria} & \textbf{Mean Score} & \textbf{Std. Deviation} \\ \hline
+		Perceived Architectural Authenticity     & \meanAuth & \sdAuth \\ \hline
+		Stylistic Coherence                      & \meanCohere & \sdCohere \\ \hline
+		Modular Variation and Design Flexibility & \meanVar & \sdVar \\ \hline
+		Visual Appeal and Layout Clarity         & \meanAppeal & \sdAppeal \\ \hline
+		Structural Believability                 & \meanBelieve & \sdBelieve \\ \hline
+	\end{tabular}
+\end{table}
+
+Perceived Architectural Authenticity (4.42) confirms that the neoclassical influence—specifically the Corinthian columns and symmetry defined in the previous sections—was clearly recognizable to the DLSU population. While Modular Variation (3.55) received the lowest relative score. When asked about the rationale behind their ratings, users noted that they wanted a wider selection of segment styles and architecture styles in the editor.
 
 \newpage
 \section{Conclusion}
