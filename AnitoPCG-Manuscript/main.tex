@@ -10,8 +10,30 @@
 \usepackage[numbers]{natbib}
 \usepackage{tikz}
 \usepackage{tkz-kiviat, numprint}
+\usepackage{amsmath}
 \usetikzlibrary{arrows}
 \usetikzlibrary{positioning, shapes.geometric, arrows.meta, backgrounds, fit, shadows}
+
+\makeatletter
+\newenvironment{breakablealgorithm}
+{% \begin{breakablealgorithm}
+		\begin{center}
+			\refstepcounter{algorithm}% New algorithm
+			\hrule height.8pt depth0pt \kern2pt% \hrule top
+			\renewcommand{\caption}[2][\relax]{% Make a real caption
+				{\raggedright\textbf{\fname@algorithm~\thealgorithm:} ##2\par}%
+				\ifx\relax##1\relax % Add to list of algorithms
+				\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+				\else
+				\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+				\fi
+				\kern2pt\hrule\kern2pt
+			}
+		}{% \end{breakablealgorithm}
+		\kern2pt\hrule\relax% \hrule bottom
+	\end{center}
+}
+\makeatother
 
 %styling
 \doublespacing
@@ -474,10 +496,6 @@ For each subdivided square, the PCG system will choose which mesh type is used. 
 	\end{tabular}
 \end{table}
 
-$ insert algorithm for mesh choice
-
-$ insert example figure for algorithm for mesh choice
-
 Face selection as a method of shape manipulation was preferred over edge selection, which was the originally proposed plan for an older iteration of Anito Builder. Face selection was preferred because it was more intuitive that neoclassical buildings should follow a layout that is blocky or parallel by nature. Face translation through a wall's normal direction (i.e., the direction it is facing) makes it easier to create parallel lines in the layout.
 
 \subsection{Evaluation}
@@ -579,13 +597,13 @@ Post-experiment interviews indicated that the object-based hierarchy was intuiti
 
 \subsubsection{Evaluation of Anito Builder's output}
 
-The evaluation of the generated scenes by De La Salle University students provided empirical evidence of the system's ability to capture the ``look and feel'' of the campus. 
+The evaluation of the generated scenes by De La Salle University students provided empirical evidence of the system's ability to capture the ``look and feel'' of the campus.
 
 % Mean Scores
 \newcommand{\meanAuth}{4.42}
-\newcommand{\meanCohere}{4.15}
-\newcommand{\meanVar}{3.55}
-\newcommand{\meanAppeal}{4.20}
+\newcommand{\meanCohere}{3.95}
+\newcommand{\meanVar}{3.45}
+\newcommand{\meanAppeal}{3.80}
 \newcommand{\meanBelieve}{4.55}
 
 % Standard Deviations
