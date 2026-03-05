@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.2.18)  18 FEB 2026 18:04
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.2.18)  4 MAR 2026 16:49
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**"c:/Users/Carl Joshua/OneDrive/Desktop/Final CAPIET Documents/CAPIET-3/AnitoPCG-Manuscript/main.tex"
-(c:/Users/Carl Joshua/OneDrive/Desktop/Final CAPIET Documents/CAPIET-3/AnitoPCG-Manuscript/main.tex
+**"c:/Users/Carl Joshua/OneDrive/Documents/GitHub/Gab-Engine/AnitoPCG-Manuscript/main.tex"
+(c:/Users/Carl Joshua/OneDrive/Documents/GitHub/Gab-Engine/AnitoPCG-Manuscript/main.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
 (c:/texlive/2025/texmf-dist/tex/latex/acmart/acmart.cls
@@ -630,6 +630,9 @@ LaTeX Warning: Label `fig:overview_pcg' multiply defined.
 LaTeX Warning: Label `fig:workflow' multiply defined.
 
 
+LaTeX Warning: Label `fig:workflow' multiply defined.
+
+
 LaTeX Warning: Label `tab:classification' multiply defined.
 
 
@@ -1018,143 +1021,166 @@ Package pdftex.def Info: figures/figures/Slide3.jpg  used on input line 178.
 Class acmart Warning: A possible image without description on input line 181.
 
 [7.7] [8.8 <./figures/Figures/Slide3.JPG>]
+<figures/figures/Slide 6.jpg, id=232, 963.6pt x 542.025pt>
+File: figures/figures/Slide 6.jpg Graphic file (type jpg)
+<use figures/figures/Slide 6.jpg>
+Package pdftex.def Info: figures/figures/Slide 6.jpg  used on input line 218.
+(pdftex.def)             Requested size: 430.00462pt x 241.87442pt.
+
+
+Class acmart Warning: A possible image without description on input line 221.
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [9.9]
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/it' will be
-(Font)              scaled to size 9.0pt on input line 216.
+(Font)              scaled to size 9.0pt on input line 224.
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/b/it' in size <9> not available
-(Font)              Font shape `T1/LinuxBiolinumT-TLF/b/sl' tried instead on input line 216.
+(Font)              Font shape `T1/LinuxBiolinumT-TLF/b/sl' tried instead on input line 224.
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/b/sl' will be
-(Font)              scaled to size 9.0pt on input line 216.
+(Font)              scaled to size 9.0pt on input line 224.
+ [10.10 <./figures/Figures/Slide 6.jpg>]
+Underfull \vbox (badness 2073) has occurred while \output is active []
 
-Underfull \vbox (badness 1910) has occurred while \output is active []
+ [11.11]
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [9.9] [10.10] [11.11] [12.12]
-<figures/figures/Collection of Modular Assets.png, id=260, 982.42032pt x 513.41812pt>
+ [12.12]
+<figures/figures/Collection of Modular Assets.png, id=257, 982.42032pt x 513.41812pt>
 File: figures/figures/Collection of Modular Assets.png Graphic file (type png)
 <use figures/figures/Collection of Modular Assets.png>
-Package pdftex.def Info: figures/figures/Collection of Modular Assets.png  used on input line 282.
+Package pdftex.def Info: figures/figures/Collection of Modular Assets.png  used on input line 290.
 (pdftex.def)             Requested size: 430.00462pt x 224.72171pt.
 
 
-Class acmart Warning: A possible image without description on input line 285.
+Class acmart Warning: A possible image without description on input line 293.
 
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [13.13]
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[13.13 <./figures/Figures/Collection of Modular Assets.png>]
-LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 330.
+[14.14 <./figures/Figures/Collection of Modular Assets.png>]
+LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 338.
  (c:/texlive/2025/texmf-dist/tex/latex/inconsolata/t1zi4.fd
 File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 330.
+(Font)              scaled to size 9.0pt on input line 338.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
- [14.14{c:/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc}] [15.15] [16.16] [17.17]
-<Figures/1st Floor Wall Segments.png, id=303, 1927.2pt x 1084.05pt>
+ [15.15{c:/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc}] [16.16] [17.17]
+Underfull \vbox (badness 1881) has occurred while \output is active []
+
+ [18.18]
+<Figures/1st Floor Wall Segments.png, id=309, 1927.2pt x 1084.05pt>
 File: Figures/1st Floor Wall Segments.png Graphic file (type png)
 <use Figures/1st Floor Wall Segments.png>
-Package pdftex.def Info: Figures/1st Floor Wall Segments.png  used on input line 478.
+Package pdftex.def Info: Figures/1st Floor Wall Segments.png  used on input line 486.
 (pdftex.def)             Requested size: 430.00462pt x 241.86615pt.
 
 
-Class acmart Warning: A possible image without description on input line 481.
+Class acmart Warning: A possible image without description on input line 489.
 
-<figures/2nd Floor Wall Segments.png, id=304, 1927.2pt x 1084.05pt>
+<figures/2nd Floor Wall Segments.png, id=310, 1927.2pt x 1084.05pt>
 File: figures/2nd Floor Wall Segments.png Graphic file (type png)
 <use figures/2nd Floor Wall Segments.png>
-Package pdftex.def Info: figures/2nd Floor Wall Segments.png  used on input line 489.
+Package pdftex.def Info: figures/2nd Floor Wall Segments.png  used on input line 497.
 (pdftex.def)             Requested size: 430.00462pt x 241.86615pt.
 
-Class acmart Warning: A possible image without description on input line 492.
+Class acmart Warning: A possible image without description on input line 500.
 
-[18.18 <./figures/1st Floor Wall Segments.png>]
-<figures/3rd Floor Wall Segments.png, id=313, 1927.2pt x 1084.05pt>
+[19.19 <./figures/1st Floor Wall Segments.png>]
+<figures/3rd Floor Wall Segments.png, id=321, 1927.2pt x 1084.05pt>
 File: figures/3rd Floor Wall Segments.png Graphic file (type png)
 <use figures/3rd Floor Wall Segments.png>
-Package pdftex.def Info: figures/3rd Floor Wall Segments.png  used on input line 500.
+Package pdftex.def Info: figures/3rd Floor Wall Segments.png  used on input line 508.
 (pdftex.def)             Requested size: 430.00462pt x 241.86615pt.
 
 
-Class acmart Warning: A possible image without description on input line 503.
+Class acmart Warning: A possible image without description on input line 511.
 
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [19.19 <./figures/2nd Floor Wall Segments.png>]
-<figures/RooftopFloor Wall Segments.png, id=323, 1927.2pt x 1084.05pt>
+ [20.20 <./figures/2nd Floor Wall Segments.png>]
+<figures/RooftopFloor Wall Segments.png, id=329, 1927.2pt x 1084.05pt>
 File: figures/RooftopFloor Wall Segments.png Graphic file (type png)
 <use figures/RooftopFloor Wall Segments.png>
-Package pdftex.def Info: figures/RooftopFloor Wall Segments.png  used on input line 511.
+Package pdftex.def Info: figures/RooftopFloor Wall Segments.png  used on input line 519.
 (pdftex.def)             Requested size: 430.00462pt x 241.86615pt.
 
 
-Class acmart Warning: A possible image without description on input line 514.
+Class acmart Warning: A possible image without description on input line 522.
 
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [20.20 <./figures/3rd Floor Wall Segments.png>]
-<figures/Wall Segments.png, id=331, 1927.2pt x 1084.05pt>
+ [21.21 <./figures/3rd Floor Wall Segments.png>]
+<figures/Wall Segments.png, id=337, 1927.2pt x 1084.05pt>
 File: figures/Wall Segments.png Graphic file (type png)
 <use figures/Wall Segments.png>
-Package pdftex.def Info: figures/Wall Segments.png  used on input line 522.
+Package pdftex.def Info: figures/Wall Segments.png  used on input line 530.
 (pdftex.def)             Requested size: 430.00462pt x 241.86615pt.
 
 
-Class acmart Warning: A possible image without description on input line 525.
+Class acmart Warning: A possible image without description on input line 533.
 
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [21.21 <./figures/RooftopFloor Wall Segments.png>]
-<figures/2-Segment Wall Segments Var 2.png, id=339, 1927.2pt x 1084.05pt>
+ [22.22 <./figures/RooftopFloor Wall Segments.png>]
+<figures/2-Segment Wall Segments Var 2.png, id=345, 1927.2pt x 1084.05pt>
 File: figures/2-Segment Wall Segments Var 2.png Graphic file (type png)
 <use figures/2-Segment Wall Segments Var 2.png>
-Package pdftex.def Info: figures/2-Segment Wall Segments Var 2.png  used on input line 529.
+Package pdftex.def Info: figures/2-Segment Wall Segments Var 2.png  used on input line 537.
 (pdftex.def)             Requested size: 430.00462pt x 241.86615pt.
 
 
-Class acmart Warning: A possible image without description on input line 532.
+Class acmart Warning: A possible image without description on input line 540.
 
-[22.22 <./figures/Wall Segments.png> <./figures/2-Segment Wall Segments Var 2.png>]
-<figures/3-Segment Wall Segments.png, id=348, 1927.2pt x 1084.05pt>
+[23.23 <./figures/Wall Segments.png> <./figures/2-Segment Wall Segments Var 2.png>]
+<figures/3-Segment Wall Segments.png, id=354, 1927.2pt x 1084.05pt>
 File: figures/3-Segment Wall Segments.png Graphic file (type png)
 <use figures/3-Segment Wall Segments.png>
-Package pdftex.def Info: figures/3-Segment Wall Segments.png  used on input line 540.
+Package pdftex.def Info: figures/3-Segment Wall Segments.png  used on input line 548.
 (pdftex.def)             Requested size: 430.00462pt x 241.86615pt.
 
 
-Class acmart Warning: A possible image without description on input line 543.
+Class acmart Warning: A possible image without description on input line 551.
 
 File: figures/Wall Segments.png Graphic file (type png)
 <use figures/Wall Segments.png>
-Package pdftex.def Info: figures/Wall Segments.png  used on input line 551.
+Package pdftex.def Info: figures/Wall Segments.png  used on input line 559.
 (pdftex.def)             Requested size: 430.00462pt x 241.86615pt.
 
-Class acmart Warning: A possible image without description on input line 554.
+Class acmart Warning: A possible image without description on input line 562.
 
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [23.23 <./figures/3-Segment Wall Segments.png>]
-<figures/Intro.png, id=357, 2258.4375pt x 1693.82813pt>
+ [24.24 <./figures/3-Segment Wall Segments.png>]
+<figures/Intro.png, id=363, 2258.4375pt x 1693.82813pt>
 File: figures/Intro.png Graphic file (type png)
 <use figures/Intro.png>
-Package pdftex.def Info: figures/Intro.png  used on input line 560.
+Package pdftex.def Info: figures/Intro.png  used on input line 568.
 (pdftex.def)             Requested size: 430.00462pt x 322.50267pt.
 
 
-Class acmart Warning: A possible image without description on input line 563.
+Class acmart Warning: A possible image without description on input line 571.
 
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [24.24] [25.25 <./figures/Intro.png (PNG copy)>] [26.26]
+ [25.25] [26.26 <./figures/Intro.png (PNG copy)>] [27.27]
 No file main.bbl.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
-(Font)              scaled to size 7.0pt on input line 592.
+(Font)              scaled to size 7.0pt on input line 600.
 
 Class acmart Warning: Some images may lack descriptions.
 (acmart)              ACM is committed to complying with the upcoming US ADA https://accessiblyapp.com/accessibility-compliance/ada/ and European Accessibility Act (EAA) https://accessiblyapp.com/accessibility-compliance/eaa/ regulations by actively working to ensure our publications and application services are accessible to individuals with disabilities, adhering to the WCAG guidelines to provide a seamless experience for all users, and regularly reviewing our accessibility practices to maintain compliance with evolving standards. 
@@ -1162,17 +1188,17 @@ Class acmart Warning: Some images may lack descriptions.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 666.
+(hyperref)                removing `subscript' on input line 674.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 666.
+(hyperref)                removing `subscript' on input line 674.
 
 (c:/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 ) (c:/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [27.27] (./main.aux)
+) [28.28] (./main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -1182,21 +1208,21 @@ L3 programming layer <2026-01-19>
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 388A4950A98DE55A73109C3DCFB6C109;5440.
+(rerunfilecheck)             Checksum: D74D605A3D29F9F2724826C145E7F9F0;5440.
  ) 
 Here is how much of TeX's memory you used:
- 21871 strings out of 467533
- 353531 string characters out of 5423668
- 828016 words of memory out of 5000000
- 49704 multiletter control sequences out of 15000+600000
+ 21882 strings out of 467533
+ 353806 string characters out of 5423668
+ 828068 words of memory out of 5000000
+ 49713 multiletter control sequences out of 15000+600000
  793583 words of font info for 378 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 90i,12n,131p,1991b,810s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,12n,131p,1979b,810s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinBiolinumT.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinBiolinumTB.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinBiolinumTBO.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinBiolinumTI.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinLibertineT.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinLibertineTB.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinLibertineTI.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/newtx/txsys.pfb>
-Output written on main.pdf (27 pages, 15048179 bytes).
+Output written on main.pdf (28 pages, 15180400 bytes).
 PDF statistics:
- 462 PDF objects out of 1000 (max. 8388607)
- 386 compressed objects within 4 object streams
- 127 named destinations out of 1000 (max. 500000)
- 82741 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 468 PDF objects out of 1000 (max. 8388607)
+ 390 compressed objects within 4 object streams
+ 129 named destinations out of 1000 (max. 500000)
+ 82746 words of extra memory for PDF output out of 89155 (max. 10000000)
 
