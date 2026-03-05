@@ -1,8 +1,8 @@
-PWD c:/Users/Carl Joshua/OneDrive/Desktop/Final CAPIET Documents/CAPIET-3/AnitoPCG-Manuscript
+PWD c:/Users/Carl Joshua/OneDrive/Documents/GitHub/Gab-Engine/AnitoPCG-Manuscript
 INPUT c:/texlive/2025/texmf.cnf
 INPUT c:/texlive/2025/texmf-dist/web2c/texmf.cnf
 INPUT c:/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT c:/Users/Carl Joshua/OneDrive/Desktop/Final CAPIET Documents/CAPIET-3/AnitoPCG-Manuscript/main.tex
+INPUT c:/Users/Carl Joshua/OneDrive/Documents/GitHub/Gab-Engine/AnitoPCG-Manuscript/main.tex
 OUTPUT main.log
 INPUT c:/texlive/2025/texmf-dist/tex/latex/acmart/acmart.cls
 INPUT c:/texlive/2025/texmf-dist/tex/latex/acmart/acmart.cls
@@ -413,6 +413,10 @@ INPUT ./figures/Figures/Slide3.JPG
 INPUT c:/texlive/2025/texmf-dist/fonts/vf/public/newtx/ntxsy.vf
 INPUT c:/texlive/2025/texmf-dist/fonts/tfm/public/newtx/txsys.tfm
 INPUT c:/texlive/2025/texmf-dist/fonts/tfm/public/newtx/txex-bar.tfm
+INPUT ./figures/Figures/Slide 6.jpg
+INPUT ./figures/Figures/Slide 6.jpg
+INPUT ./figures/Figures/Slide 6.jpg
+INPUT ./figures/Figures/Slide 6.jpg
 INPUT c:/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinBiolinumTI-tlf-t1.tfm
 INPUT c:/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinBiolinumTBO-tlf-t1.tfm
 INPUT c:/texlive/2025/texmf-dist/fonts/vf/public/libertine/LinBiolinumTI-tlf-t1.vf
