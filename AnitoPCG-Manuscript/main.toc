@@ -3,7 +3,7 @@
 \contentsline {subsection}{\numberline {1.2}Statement of the Problem}{10}{}%
 \contentsline {subsection}{\numberline {1.3}Project Objectives}{11}{}%
 \contentsline {subsection}{\numberline {1.4}Scope and Limitations}{11}{}%
-\contentsline {subsection}{\numberline {1.5}Significance of the Study}{13}{}%
+\contentsline {subsection}{\numberline {1.5}Significance of the Study}{14}{}%
 \contentsline {section}{\numberline {2}Review of Related Work}{15}{}%
 \contentsline {subsection}{\numberline {2.1}Neo-Classical Architecture}{15}{}%
 \contentsline {subsection}{\numberline {2.2}De La Salle University Manila Architecture}{17}{}%
@@ -21,25 +21,26 @@
 \contentsline {subsection}{\numberline {3.5}Concepts in Graphics Programming}{27}{}%
 \contentsline {section}{\numberline {4}Methodology}{31}{}%
 \contentsline {subsection}{\numberline {4.1}3D Asset Development Workflow}{31}{}%
-\contentsline {subsection}{\numberline {4.2}Creation of an Art Book}{33}{}%
-\contentsline {subsection}{\numberline {4.3}Creation of the Anito builder 3D Editor}{34}{}%
-\contentsline {subsubsection}{\numberline {4.3.1}The PCG System}{37}{}%
-\contentsline {subsection}{\numberline {4.4}Evaluation}{41}{}%
-\contentsline {subsubsection}{\numberline {4.4.1}Evaluation of Anito Builder's usability}{41}{}%
-\contentsline {subsubsection}{\numberline {4.4.2}Evaluation of Anito Builder's output}{42}{}%
-\contentsline {section}{\numberline {5}Results}{44}{}%
-\contentsline {subsection}{\numberline {5.1}Modular 3D Models}{44}{}%
-\contentsline {subsubsection}{\numberline {5.1.1}1st Floor Wall Segments}{44}{}%
-\contentsline {subsubsection}{\numberline {5.1.2}2nd Floor Wall Segments}{45}{}%
-\contentsline {subsubsection}{\numberline {5.1.3}3rd Floor Wall Segments}{46}{}%
-\contentsline {subsubsection}{\numberline {5.1.4}Rooftop Wall Segments}{47}{}%
-\contentsline {subsubsection}{\numberline {5.1.5}2-Segment Wall Segments}{48}{}%
-\contentsline {subsubsection}{\numberline {5.1.6}3-Segment Wall Segments}{50}{}%
-\contentsline {subsubsection}{\numberline {5.1.7}Wall Segments}{50}{}%
-\contentsline {subsection}{\numberline {5.2}User Evaluation}{52}{}%
-\contentsline {subsubsection}{\numberline {5.2.1}Evaluation of Anito Builder's usability}{53}{}%
-\contentsline {subsubsection}{\numberline {5.2.2}Evaluation of Anito Builder's output}{54}{}%
-\contentsline {section}{\numberline {6}Conclusion}{56}{}%
-\contentsline {subsection}{\numberline {6.1}3D Asset Collection}{56}{}%
-\contentsline {subsection}{\numberline {6.2}3D Asset development}{56}{}%
-\contentsline {subsection}{\numberline {6.3}Prototype Evaluation}{57}{}%
+\contentsline {subsubsection}{\numberline {4.1.1}Reference Gathering}{31}{}%
+\contentsline {subsubsection}{\numberline {4.1.2}La Salle Hall Modularity Study}{31}{}%
+\contentsline {subsubsection}{\numberline {4.1.3}Mesh Modelling}{33}{}%
+\contentsline {subsubsection}{\numberline {4.1.4}Mesh optimization}{33}{}%
+\contentsline {subsubsection}{\numberline {4.1.5}UV Unwrapping}{34}{}%
+\contentsline {subsubsection}{\numberline {4.1.6}Texturing}{34}{}%
+\contentsline {subsubsection}{\numberline {4.1.7}Asset integration and Evaluation}{36}{}%
+\contentsline {subsection}{\numberline {4.2}Creation of an Art Book}{37}{}%
+\contentsline {subsection}{\numberline {4.3}Creation of the Anito builder 3D Editor}{38}{}%
+\contentsline {subsubsection}{\numberline {4.3.1}The PCG System}{41}{}%
+\contentsline {subsection}{\numberline {4.4}Evaluation}{45}{}%
+\contentsline {subsubsection}{\numberline {4.4.1}Evaluation of Anito Builder's usability}{45}{}%
+\contentsline {subsubsection}{\numberline {4.4.2}Evaluation of Anito Builder's output}{46}{}%
+\contentsline {section}{\numberline {5}Results}{48}{}%
+\contentsline {subsection}{\numberline {5.1}Asset Modularity Review}{48}{}%
+\contentsline {subsubsection}{\numberline {5.1.1}Wall Segments Classification}{51}{}%
+\contentsline {subsection}{\numberline {5.2}The Anito Builder 3D Editor}{57}{}%
+\contentsline {subsubsection}{\numberline {5.2.1}Evaluation of Anito Builder's usability}{60}{}%
+\contentsline {subsubsection}{\numberline {5.2.2}Evaluation of Anito Builder's output}{61}{}%
+\contentsline {section}{\numberline {6}Conclusion}{63}{}%
+\contentsline {subsection}{\numberline {6.1}Prototype Evaluation}{63}{}%
+\contentsline {subsection}{\numberline {6.2}Asset Collection Evaluation}{63}{}%
+\contentsline {subsection}{\numberline {6.3}Architectural Accuracy and Consistency}{63}{}%

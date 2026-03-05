@@ -625,106 +625,7 @@ Responses to the survey served as a means to provide insight into how effective 
 \newpage
 \section{Results}
 
-\subsection{Modular 3D Models}
-The results of the project can be divided into three parts: the results of the user evaluation of Anito Builder's usability, the results of the user evaluation of Anito Builder's output, as well as the resulting collection of 3D assets created for the editor. The results of the user evaluation of Anito Builder's usability and output are based on the data collected from the participants, while the results of the collection of 3D assets are based on the assets created during the development process.
-
-\subsection{User Evaluation}
-A group of 6 individuals took part of the study. The table below summarizes their demographic:
-
-\begin{table}[h!]
-	\centering
-	\caption{User demographic}
-	\begin{tabular}{|p{3cm}|l|}
-		\hline
-		\textbf{\#} & \textbf{Target Structure} \\ \hline
-		3 & Game Arts and Design Students \\ \hline
-		2 & Game Development Students \\ \hline
-		1 & Architecture professional \\ \hline
-	\end{tabular}
-\end{table}
-
-\subsubsection{Evaluation of Anito Builder's usability}
-
-The data collected during the structured task phase showed that workflow offered by Anito Builder was efficient. Results indicate that users progressively learned how to use the editor better throughout tasks (Table 2).
-
-\begin{table}[h!]
-	\centering
-	\caption{Participant Performance Metrics per Task}
-	\begin{tabular}{|p{3cm}|l|c|}
-		\hline
-		\textbf{Task \#} & \textbf{Target Structure} & \textbf{Mean Time (Min:Sec)} \\ \hline
-		1 & La Salle Hall (Replica) & 5:31 \\ \hline
-		2 & Cross-shaped Skyscraper & 4:16 \\ \hline
-		3 & U-shaped Building & 3.56 \\ \hline
-	\end{tabular}
-\end{table}
-
-As observed during Task 1, the majority of user interactions focused on learning the basic navigation of the 3D editor. Eventually, after users learned the basic structure of the interface, they required less assistance on the second task onward. Users who had a background using other 3D modeling software (i.e., blender) almost immediately knew how to navigate the editor. During tasks 2 and 3, users asked for assistance less, as all unfamiliar controls were already introduced to them during task 1.
-
-The System Usability Scale (SUS) yielded a mean score of 78.5, which, according to Brooke (1996), places the Anito Builder in the ``Good'' to ``Excellent'' range of usability.
-
-Post-experiment interviews indicated that the object-based hierarchy was intuitive for architectural layout, though some participants suggested that automatic snapping for the front and back wings would further reduce task time. Furthermore, when asked about their experience during the unstructured time, users noted their need of the following features:
-
-\begin{enumerate}
-	\item Roof removal — When the roof of a particular block is selected, a toggle to turn it off should exist.
-	\item Automatic vertical placement — When the roof of a particular block is selected, a button to create a new block on top of that roof (that lines up perfectly with the source block) should exist.
-\end{enumerate}
-
-\subsubsection{Evaluation of Anito Builder's output}
-
-The evaluation of the generated scenes by De La Salle University students provided empirical evidence of the system's ability to capture the ``look and feel'' of the campus.
-
-% Mean Scores
-\newcommand{\meanAuth}{4.42}
-\newcommand{\meanCohere}{3.95}
-\newcommand{\meanVar}{3.45}
-\newcommand{\meanAppeal}{3.80}
-\newcommand{\meanBelieve}{4.55}
-
-% Standard Deviations
-\newcommand{\sdAuth}{0.58}
-\newcommand{\sdCohere}{0.72}
-\newcommand{\sdVar}{0.81}
-\newcommand{\sdAppeal}{0.64}
-\newcommand{\sdBelieve}{0.51}
-
-\begin{figure}[h!]
-	\centering
-	\begin{tikzpicture}[scale=0.5] % Adjust scale to fit your page
-		\tkzKiviatDiagram[
-		radial=5, 
-		gap=1,  
-		lattice=5,
-		label space=2.5
-		]{Authenticity, Coherence, Variation, Appeal, Believability}
-		
-		% Plotting the Mean Scores from your results
-		% Order: Authenticity (4.42), Coherence (4.15), Variation (3.85), Appeal (4.20), Believability (4.55)
-		\tkzKiviatLine[thick, color=blue, fill=blue!20, mark=ball](\meanAuth, \meanCohere, \meanVar,\meanAppeal, \meanBelieve)
-		
-		% Optional: Add a legend or secondary line for comparison (e.g., target score)
-		% \tkzKiviatLine[thick, color=red, dashed](5, 5, 5, 5, 5)
-		
-	\end{tikzpicture}
-	\caption{Radar chart of mean scores across architectural evaluation criteria.}
-	\label{fig:radar_chart_latex}
-\end{figure}
-
-\begin{table}[h!]
-	\centering
-	\caption{Mean Scores for Architectural Output Evaluation}
-	\begin{tabular}{|p{7cm}|c|c|}
-		\hline
-		\textbf{Evaluation Criteria} & \textbf{Mean Score} & \textbf{Std. Deviation} \\ \hline
-		Perceived Architectural Authenticity     & \meanAuth & \sdAuth \\ \hline
-		Stylistic Coherence                      & \meanCohere & \sdCohere \\ \hline
-		Modular Variation and Design Flexibility & \meanVar & \sdVar \\ \hline
-		Visual Appeal and Layout Clarity         & \meanAppeal & \sdAppeal \\ \hline
-		Structural Believability                 & \meanBelieve & \sdBelieve \\ \hline
-	\end{tabular}
-\end{table}
-
-Perceived Architectural Authenticity (4.42) confirms that the neoclassical influence—specifically the Corinthian columns and symmetry defined in the previous sections—was clearly recognizable to the DLSU population. While Modular Variation (3.55) received the lowest relative score. When asked about the rationale behind their ratings, users noted that they wanted a wider selection of segment styles and architecture styles in the editor.
+The results of the project can be divided into three parts: the resulting collection of 3D assets created for the editor, the editor itself, the results of the user evaluation of Anito Builder's usability, the results of the user evaluation of Anito Builder's output. The results of the user evaluation of Anito Builder's usability and output are based on the data collected from the participants, while the results of the collection of 3D assets are based on the assets created during the development process.
 
 \subsection{Asset Modularity Review}
 
@@ -734,7 +635,7 @@ wall segments are the basic building blocks of the PCG system. They are modular 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Figures/{[2] Collection of Modular Segments.png}}
+    \includegraphics[width=1.0\linewidth]{figures/Regular Wall and Corner Segments.png}
     \caption{Render of the Collection of Modular Wall Segments}
     \label{fig:overview_pcg}
 \end{figure}
@@ -743,7 +644,7 @@ The PCG method used by Anito Builder generates a set of wall segments based on t
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{figures/{Collection of Modular Corner Assets.png}}
+    \includegraphics[width=1.0\linewidth]{figures/Collection of Modular Corner Segments.png}
     \caption{Render of the Collection of Modular Corner Segments}
     \label{fig:overview_pcg}
 \end{figure}
@@ -769,7 +670,7 @@ The figure below is a sample 1st floor segment, which has the mentioned dimensio
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Figures/[Sample] 1st Floor Wall Segment.png}
+    \includegraphics[width=1.0\linewidth]{figures/[Sample] 1st Floor Segment.png}
     \caption{1st Floor Wall Segment}
     \label{fig:overview_pcg}
 \end{figure}
@@ -838,8 +739,53 @@ As a test to determine the models' accuracy and usability, an attempt to recreat
     \label{fig:overview_pcg}
 \end{figure}
 
+\subsection{The Anito Builder 3D Editor}
 
-\subsection{User Evaluation}
+The Anito Builder 3D editor has the following final list of general features implemented:
+
+\begin{table}[h!]
+	\centering
+	\caption{List of Features}
+	\begin{tabular}{|p{4cm}|p{8cm}|}
+		\hline
+		\textbf{Feature Name} & \textbf{Implementation details} \\ \hline
+		Object Translation, Rotation, and Scale & Uses an internal combined transformation matrix per object. \\ \hline
+		Object Hierarchy & Uses each object's transformation matrix to cascade transformations down to each child. \\ \hline
+		Texture mapping & Uses a global texture dictionary that connects engine code to BGFX texture handles.\\ \hline
+		Normal mapping & Uses screen-space gradients to determine tangent space without relying on pre-calculated tangents.\\ \hline
+		Forward rendering & Uses a primary fragment shader that loops through all lights such that it compiles all light data in the scene per-object.\\ \hline
+		Geometry outlining & Uses a geometry buffer containing normal data.\\ \hline
+		Object Picking & Uses GPU to CPU read operations through a geometry buffer containing identification data.\\ \hline
+		Screen-space Ambient Occlusion & Implements automatic darkening of crevices by using geometry buffers. \\ \hline
+		Automatic asset loading  & Any chosen directory will be recursively crawled such that any compatible file type will be loaded into the global asset dictionary.\\
+	\end{tabular}
+\end{table}
+
+Participants of the usability test were required to learn how to use these features in order to complete their tasks. For each of their tasks to be counted as complete, the output had to closely resemble the following figures:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\linewidth]{anitobuilder_task1.png}
+	\caption{Task 1 target output}
+	\label{fig:overview_pcg}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\linewidth]{anitobuilder_task2.png}
+	\caption{Task 2 target output (doubled for demonstration purposes)}
+	\label{fig:overview_pcg}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\linewidth]{anitobuilder_task3.png}
+	\caption{Task 3 target output}
+	\label{fig:overview_pcg}
+\end{figure}
+
+\subsubsection{Evaluation of Anito Builder's usability}
+
 A group of 6 individuals took part of the study. The table below summarizes their demographic:
 
 \begin{table}[h!]
@@ -853,8 +799,6 @@ A group of 6 individuals took part of the study. The table below summarizes thei
 		1 & Architecture professional \\ \hline
 	\end{tabular}
 \end{table}
-
-\subsubsection{Evaluation of Anito Builder's usability}
 
 The data collected during the structured task phase showed that workflow offered by Anito Builder was efficient. Results indicate that users progressively learned how to use the editor better throughout tasks (Table 2).
 
@@ -880,10 +824,6 @@ Post-experiment interviews indicated that the object-based hierarchy was intuiti
 	\item Roof removal — When the roof of a particular block is selected, a toggle to turn it off should exist.
 	\item Automatic vertical placement — When the roof of a particular block is selected, a button to create a new block on top of that roof (that lines up perfectly with the source block) should exist.
 \end{enumerate}
-
-\subsection{The Anito Builder 3D Editor}
-
-
 
 \subsubsection{Evaluation of Anito Builder's output}
 

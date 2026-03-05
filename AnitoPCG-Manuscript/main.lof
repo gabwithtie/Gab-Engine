@@ -1,20 +1,28 @@
 \contentsline {figure}{\numberline {1}{\ignorespaces Concept diagram of the overview of current technology of PCG}}{10}{}%
-\contentsline {figure}{\numberline {2}{\ignorespaces Collection of Neo-classical Architecture, Jardin des Tuileries, Pallandiana (Viscenza), Palace of Versailles, Brandenburg Gate, Pantheon (Assassins’ Creed Unity), and the Opéra Garnier}}{15}{}%
-\contentsline {figure}{\numberline {3}{\ignorespaces Collection of Neo-classical features of DLSU Manila buildings}}{18}{}%
-\contentsline {figure}{\numberline {4}{\ignorespaces Side-by-side comparison of the parts of a classical order (https://smarthistory.org) and La Salle Hall}}{22}{}%
-\contentsline {figure}{\numberline {5}{\ignorespaces Examples of rule-based models}}{27}{}%
-\contentsline {figure}{\numberline {6}{\ignorespaces Flowchart showing the 3D Asset Development Workflow (todo: update this)}}{33}{}%
-\contentsline {figure}{\numberline {7}{\ignorespaces Anito Builder Engine Architecture}}{35}{}%
-\contentsline {figure}{\numberline {8}{\ignorespaces Anito Builder PCG System Architecture}}{37}{}%
-\contentsline {figure}{\numberline {9}{\ignorespaces Tiling and Stretching algorithm illustration}}{39}{}%
-\contentsline {figure}{\numberline {10}{\ignorespaces Tiling and Stretching algorithm illustration}}{40}{}%
-\contentsline {figure}{\numberline {11}{\ignorespaces Render of the textured 1st Floor Wall Segments}}{45}{}%
-\contentsline {figure}{\numberline {12}{\ignorespaces Render of the textured 2nd Floor Wall Segments}}{46}{}%
-\contentsline {figure}{\numberline {13}{\ignorespaces Render of the textured 3rd Floor Wall Segments}}{47}{}%
-\contentsline {figure}{\numberline {14}{\ignorespaces Render of the textured Rooftop Floor Wall Segments}}{48}{}%
-\contentsline {figure}{\numberline {15}{\ignorespaces Render of the textured 2-Segment Wall Segments Variation 1}}{49}{}%
-\contentsline {figure}{\numberline {16}{\ignorespaces Render of the textured 2-Segment Wall Segments Variation 2}}{49}{}%
-\contentsline {figure}{\numberline {17}{\ignorespaces Render of the textured 3-Segment Wall Segments}}{50}{}%
-\contentsline {figure}{\numberline {18}{\ignorespaces Render of the textured Wall Segments}}{51}{}%
-\contentsline {figure}{\numberline {19}{\ignorespaces Render of the recreated LS Hall in Blender}}{52}{}%
-\contentsline {figure}{\numberline {20}{\ignorespaces Radar chart of mean scores across architectural evaluation criteria.}}{54}{}%
+\contentsline {figure}{\numberline {2}{\ignorespaces Collection of images showing LS Hall's features}}{12}{}%
+\contentsline {figure}{\numberline {3}{\ignorespaces Collection of Neo-classical Architecture, Jardin des Tuileries, Pallandiana (Viscenza), Palace of Versailles, Brandenburg Gate, Pantheon (Assassins’ Creed Unity), and the Opéra Garnier}}{15}{}%
+\contentsline {figure}{\numberline {4}{\ignorespaces Collection of Neo-classical features of DLSU Manila buildings}}{18}{}%
+\contentsline {figure}{\numberline {5}{\ignorespaces Side-by-side comparison of the parts of a classical order (https://smarthistory.org) and La Salle Hall}}{22}{}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Examples of rule-based models}}{27}{}%
+\contentsline {figure}{\numberline {7}{\ignorespaces Images showing the modularity of the La Salle Hall floors}}{32}{}%
+\contentsline {figure}{\numberline {8}{\ignorespaces Images showing the modularity of the La Salle Hall floors}}{35}{}%
+\contentsline {figure}{\numberline {9}{\ignorespaces Flowchart showing the 3D Asset Development Workflow (todo: update this)}}{37}{}%
+\contentsline {figure}{\numberline {10}{\ignorespaces Anito Builder Engine Architecture}}{39}{}%
+\contentsline {figure}{\numberline {11}{\ignorespaces Anito Builder PCG System Architecture}}{41}{}%
+\contentsline {figure}{\numberline {12}{\ignorespaces Tiling and Stretching algorithm illustration}}{43}{}%
+\contentsline {figure}{\numberline {13}{\ignorespaces Tiling and Stretching algorithm illustration}}{44}{}%
+\contentsline {figure}{\numberline {14}{\ignorespaces Render of the Collection of Modular Wall Segments}}{49}{}%
+\contentsline {figure}{\numberline {15}{\ignorespaces Render of the Collection of Modular Corner Segments}}{50}{}%
+\contentsline {figure}{\numberline {16}{\ignorespaces 1st Floor Wall Segment}}{51}{}%
+\contentsline {figure}{\numberline {17}{\ignorespaces Classification of Wall Segments}}{52}{}%
+\contentsline {figure}{\numberline {18}{\ignorespaces Viewport Render of Regular Wall and Corner Segments in Blender}}{53}{}%
+\contentsline {figure}{\numberline {19}{\ignorespaces Viewport Render of Multi-Segment Models in Blender}}{53}{}%
+\contentsline {figure}{\numberline {20}{\ignorespaces Viewport Render of Filler Wall Models in Blender}}{54}{}%
+\contentsline {figure}{\numberline {21}{\ignorespaces Textured Render of the recreated LS Hall in Blender}}{55}{}%
+\contentsline {figure}{\numberline {22}{\ignorespaces Viewport Render of the recreated LS Hall in Blender}}{56}{}%
+\contentsline {figure}{\numberline {23}{\ignorespaces Viewport Render of 1-Story Building in Blender}}{56}{}%
+\contentsline {figure}{\numberline {24}{\ignorespaces Viewport Render of 10-Story Building in Blender}}{57}{}%
+\contentsline {figure}{\numberline {25}{\ignorespaces Task 1 target output}}{58}{}%
+\contentsline {figure}{\numberline {26}{\ignorespaces Task 2 target output (doubled for demonstration purposes)}}{59}{}%
+\contentsline {figure}{\numberline {27}{\ignorespaces Task 3 target output}}{59}{}%
+\contentsline {figure}{\numberline {28}{\ignorespaces Radar chart of mean scores across architectural evaluation criteria.}}{62}{}%
