@@ -87,7 +87,7 @@
 	{\textbf{Neil Patrick Del Gallego, Ph. D.} \par}
 	{Adviser \par}
 	% Date
-	{March 1, 2026}
+	{March 5, 2026}
 	
 \end{titlepage}
 
@@ -158,15 +158,24 @@ The study's primary objective was to create a procedural content generation meth
 \end{enumerate}
 
 \subsection{Scope and Limitations}
-Anito Builder primarily focused on procedurally generating the the Saint La Salle Hall at De La Salle University, Philippines. It accomplished this by using neo-classical architecture as a reference, which is a type of architecture from the 18th century that emphasizes symmetry and grandeur. 
+Anito Builder primarily focused on procedurally generating the overall facade of Saint La Salle Hall at De La Salle University, Philippines. This included the creation of all exterior elements of the building, excluding all objects and structures found within the hallways and outside the building itself. It was accomplished by using neo-classical architecture as a reference, which is a type of architecture from the 18th century that emphasizes symmetry and grandeur. 
 
-However, some buildings and structures cannot be generated due to copyright issues or other legal reasons, and the researchers were not able to get official building schematics, making all generations inspired by Lasallian architecture instead of a one-to-one match of the real-life buildings/locations. This includes murals, sculptures, logos, and artworks that can be found within or on the buildings. Similarly, floor plans, internal designs, and administrative rooms or buildings cannot be obtained or recreated without permission.
+While the St. La Salle Hall originally held sophisticated and intricate details, the project focused on the overall structure and design of the building, rather than the finer details. This removed the need to create highly detailed models , which would have been time-consuming and inefficient considering the capabilities of the engine and the PCG method used. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{Figures/Slide7.jpg}%
+    \caption{Collection of images showing LS Hall's features}
+    \label{fig:overview_pcg}
+\end{figure}
+
+Additionally, some buildings and structures coiuld not be generated due to copyright issues or other legal reasons, and the researchers were not able to get official building schematics, making all generations inspired by Lasallian architecture instead of a one-to-one match of the real-life buildings/locations. This includes murals, sculptures, logos, and artworks that can be found within or on the buildings. Similarly, floor plans, internal designs, and administrative rooms or buildings cannot be obtained or recreated without permission.
 
 As mentioned, the project revolved around the walls of La Salle Hall. As such, it was necessary to create the accompanying pillars, columns, windows, and anything that supports or encloses the wall. The project did not create models for any props like trash cans, food carts, and lamp posts since such objects are not part of the building. Instead, the focus will be on the structural parts that make up the building.
 
-[TODO: Re-evaluate and put in methodology.] The models used in this project were made from scratch in Blender, since any engravings or statues were not covered due to legal concerns. The decision to use Blender is due to the extensive amount of plug-ins available for the program, increasing the speed and efficiency in creating 3D assets. Blender is a free software with precision modeling that is perfect for modeling architectures that require symmetry and proportionality. With the help of modeling features like array, subdivision, and deform modifiers, artists were able to produce highly-detailed models. Additionally, to develop further understanding of how assets, especially textures, behave when they are used for PCG methods, artists utilized current existing PCG plugins and built-in features for Blender during the modeling process.
+The models used in this project were made from scratch in Blender, since any engravings or statues were not covered due to legal concerns. The decision to use Blender is due to the extensive amount of plug-ins available for the program, increasing the speed and efficiency in creating 3D assets. Blender is a free software with precision modeling that is perfect for modeling architectures that require symmetry and proportionality. With the help of modeling features like array, subdivision, and deform modifiers, artists were able to produce highly-detailed models. Additionally, to develop further understanding of how assets, especially textures, behave when they are used for PCG methods, artists utilized current existing PCG plugins and built-in features for Blender during the modeling process.
 
-For the textures, Substance Painter was used. Substance Painter uses Physically-Based Rendering (PBR) which is good for simulating real-world lighting conditions. It depicts materials like marble and stone realistically. Additionally, Blender hosts a powerful shading node system which can be used to create procedural textures that can be used in the project. 3D Open-Source 3D scanning software, such as RealityScan, was considered to speed up the creation of 3D assets; however, due to the nature of the models that was created, a stylized rendition of the neo-classical architecture, the use of 3D scanning software was omitted from the 3D creation workflow.
+For the textures, both Blender and Substance Painter were used as well as external programs that helped generate texture maps needed for integration into the Anito Builder. Substance Painter uses Physically-Based Rendering (PBR) which is good for simulating real-world lighting conditions. It depicts materials like marble and stone realistically. Additionally, Blender hosts a powerful shading node system which can be used to create procedural textures that can be used in the project. 3D Open-Source 3D scanning software, such as RealityScan, was considered to speed up the creation of 3D assets; however, due to the nature of the models that were created, a more stylized rendition of the neo-classical architecture, the use of 3D scanning softwares was omitted from the 3D creation workflow. 
 
 The PCG 3D editor was written in C++. This is because the underlying environment that the project was to be tested on is a game engine that is also written in C++. Furthermore, the BGFX rendering library to be used for the scene renderer is natively in C++. This project also utilized the CMake build system with the assistance of the VCPKG package manager.
 
@@ -357,16 +366,64 @@ Integrating these C++ libraries into a project typically requires a build system
 Anito Builder was created by a combination of artists and developer. The artists were be assigned to create the assets that would be imported to Anito Builder's local directory, while subsequently being used for the creation of the Art Bible. The developer of Anito Builder handled the creation of the internal logic, and also the subsequent 3D Scene Editor.
 
 \subsection{3D Asset Development Workflow}
-For PCG content, the 3D Asset workflows begin with a creative direction. Artists and the software developer discuss what art style the assets should follow, followed by gathering references, making the mesh models, and then texturing the 3D assets. The chosen workflow has the following steps:
 
-\begin{enumerate}
-    \item Stylization and reference gathering: This step is about the stylization of the buildings chosen to be modeled; references and discussions are made here to ensure a consistent art style.
-    \item Low-poly mesh modeling: Creating a low poly mesh model will be the start in creating the 3D assets to ensure that all models are easily exportable and workable. This step includes the standardization of the unit of measurement for all models, ensuring that all models follow a specific scale.  In addition to low poly mesh optimization, areas with more detail that require high poly mesh modelling will be created during this step, making them separate models.
-    \item Mesh optimization: Once a low poly mesh is created, optimizations and final passes must be done to ensure that all the models are functional and will run well on any program and machine.
-    \item UV Unwrapping: To facilitate subsequent steps, the UV coordinates of each mesh was unwrapped in such a way that avoided overlapping and stretching.
-    \item Texturing: Once the mesh of the 3D asset is done, the mesh must be textured. To ensure procedurality, simple tile-able textures was created for general use on all meshes.
-    \item Asset integration: The final step is to compile all the 3D assets, ready to be integrated into the PCG Pipeline, allowing the program to use all the created 3D assets (see Figure 16).
-\end{enumerate}
+For PCG content, the 3D Asset workflows began with a creative direction. Artists and the software developer discuss what art style the assets should follow, followed by gathering references, making the mesh models, and then texturing the 3D assets. The chosen workflow has the following steps:
+
+\subsubsection{Reference Gathering}
+
+This step covered the gathering of images, from both online and real-life sources, that were used as references. Additionally, discussions and final decisions were made during this process to ensure a consistent art style.
+
+\subsubsection{La Salle Hall Modularity Study}
+
+To ensure that the 3D assets are optimized for procedural generation, the modularity of the La Salle Hall was studied. This involved analyzing the building's structure and design to identify repeating elements and patterns that could be efficiently modelled and reused in the PCG process. 
+
+La Salle Hall has a very modular designs, with many repeating elements and patterns, making it a good candidate for procedural generation. Every level or floor of the building has a similar design, varying only in specific parts such as the center part of the building. With this in mind, it was only appropriate to model the assets in a way that allows for easy reuse and manipulation. 
+
+For the first floor, the pattern was clear: arches and triple windows. The arches repeated for several segments, only getting interrupted by the windows. The second floor had a similar pattern, with the only difference being that the arches were replaced by rectangular windows. The third floor had a different pattern, with the windows being smaller and more closely spaced. The rooftop had a simple pattern, with the same wall repeating throughout the entire roof, only getting interrupted by the triangular pediment in the center. With all floors having a clear repeating pattern, it was easy to determine what to model. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{figures/Slide8.jpg}
+    \caption{Images showing the modularity of the La Salle Hall floors}
+    \label{fig:workflow}
+\end{figure}
+
+\subsubsection{Mesh Modelling}
+
+After ensuring that the modularity of the building is well-studied, the next step is to create the mesh models for the 3D assets.
+
+Creating model will be the start in creating the 3D assets to ensure that all models are easily exportable and workable. This step includes the standardization of the unit of measurement for all models, ensuring that all models follow a specific scale.  In addition to low poly mesh optimization, areas with more detail that require high poly mesh modelling will be created during this step, making them separate models.
+    
+\subsubsection{Mesh optimization}
+
+Once the initial meshes were created, optimizations and final passes were done to ensure that all the models have all their original features aside from the details and are functional and will run well on the engine and with the PCG method. This part of the process was one of the crucial steps in ensuring that the resulting mesh in the Anito Builder shows no issues. This step included checking for any mesh errors such as non-manifold edges, n-gons, z-depth fighting, and any other issues that arose after exporting them into the editor. 
+
+A significant change that was made during this step was the decision to export the low-poly versions of the models instead of the subdivided and beveled ones due to the massive decrease in the performance of the editor when using high-poly models. Initially, the models were made with a high-poly mesh to capture all the details of the building such as the arches, bevels, and columns. However, when the engine was tested with the high-poly models, it was found that the performance of the engine was significantly decreased, making it difficult to test the PCG method. As such, the quality of the models was sacrificed for the sake of performance.
+
+\subsubsection{UV Unwrapping}
+
+Since the models were made to be repeated, it was important to ensure that the UVs of the models were properly unwrapped and optimized for tiling. Having a clean UV layout made sure that there were no texture issues like offsets, stretching, and seams when the models were used in the editor. 
+
+\subsubsection{Texturing}
+
+The texturing process involved three methods: procedural texturing in Blender, procedural texturing in Substance Painter, and taking real-life photographs of materials that can serve as textures for the models. 
+
+Procedural texturing in Blender was done through the shader nodes. Blender has a very powerful procedural texturing system that allows artists to create complex textures without the need for image textures. By using a combination of noise textures, color ramps, bump maps, principled bsdf shaders, and other nodes, realistic textures were created for the models. The figure below is the node tree of the procedural plaster texture that served as the initial texture of the models. However, the procedural texture only served its purpose within Blender. To be able to import textures in the Anito Builder, a set of texture maps were needed, specifically the albedo, normal, and ARM maps. As such, these texture maps had to ba baked and exported from Blender, which did not turn out to be the most efficient and ideal method to go with.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{figures/Plaster Texture.png}
+    \caption{Images showing the modularity of the La Salle Hall floors}
+    \label{fig:workflow}
+\end{figure}
+
+On the other hand, procedural texturing in Substance Painter was done through the use of smart materials and turned out to be significantly easier than the method used in Blender. Substance Painter has a very intuitive interface for creating procedural textures while also allowing artists to create the most realistic textures that fit the models. However, issues surfaced during the exporting of the textures from Substance Painter to the Anito Builder. The exported textures appeared wrong when used in the editor, which were ultimately discarded to save time and effort.
+
+As a final solution, real-life photographs of materials were taken and edited in Photoshop to be used as base textures for the models. These images were first edited in Photoshop with the Pattern Preview and using the help of generative tools to ensure that the textures tiled seamlessly, or at least smoothly. After finalization, these images were taken into an external texture map generator that generated the necessary albedo, normal, and ARM maps. The texture bases used included materials that fit the architectural style of the models such as concrete and plaster.
+
+\subsubsection{Asset integration and Evaluation}
+
+The final step was integrating all the individual models into the editor. The asset import system of the editor allowed new versions of the assets to replace the existing ones as long as it is saved with the exact same file name. This made the integration part of the process easier and efficient, providing significant room for model improvements and optimizations.
 
 To ensure the quality of the generated content, limit creation was implemented to guide the outputs of the procedural generation system. This involves setting clear constraints—such as size, proportions, and architectural elements—to make sure that the generated buildings are both visually coherent and structurally sound. By doing so, the team can avoid unrealistic results and maintain a consistent design language across all models, ultimately improving the overall quality and usability of the generated content.
 
@@ -385,7 +442,7 @@ As a product of this, the project includes the creation of an art book that show
 
 \subsection{Creation of the Anito builder 3D Editor}
 
-An application named "Anito Builder" was be created for the project. It is standalone 3D editor application that aims to allow users to intuitively use the created PCG method to generate custom scenes.
+An application named "Anito Builder" was created for the project. It is standalone 3D editor application that aims to allow users to intuitively use the created PCG method to generate custom scenes.
 
 The application was be developed using several libraries. Major libraries to be used include the following (see Table 3):
 
@@ -569,8 +626,129 @@ Responses to the survey served as a means to provide insight into how effective 
 \section{Results}
 
 \subsection{Modular 3D Models}
+The results of the project can be divided into three parts: the results of the user evaluation of Anito Builder's usability, the results of the user evaluation of Anito Builder's output, as well as the resulting collection of 3D assets created for the editor. The results of the user evaluation of Anito Builder's usability and output are based on the data collected from the participants, while the results of the collection of 3D assets are based on the assets created during the development process.
 
-The 3D models created were made with these standard measurements: x = 1.2m, z = 1.86m, and y dimensions varying with different types of wall segments. While the standard y dimension is 1.56m, in order to replicate the overall structure of the LS Hall accurately, it was necessary to model the different kinds of wall segments it has. This led to certain segments having higher y dimensions. 
+\subsection{User Evaluation}
+A group of 6 individuals took part of the study. The table below summarizes their demographic:
+
+\begin{table}[h!]
+	\centering
+	\caption{User demographic}
+	\begin{tabular}{|p{3cm}|l|}
+		\hline
+		\textbf{\#} & \textbf{Target Structure} \\ \hline
+		3 & Game Arts and Design Students \\ \hline
+		2 & Game Development Students \\ \hline
+		1 & Architecture professional \\ \hline
+	\end{tabular}
+\end{table}
+
+\subsubsection{Evaluation of Anito Builder's usability}
+
+The data collected during the structured task phase showed that workflow offered by Anito Builder was efficient. Results indicate that users progressively learned how to use the editor better throughout tasks (Table 2).
+
+\begin{table}[h!]
+	\centering
+	\caption{Participant Performance Metrics per Task}
+	\begin{tabular}{|p{3cm}|l|c|}
+		\hline
+		\textbf{Task \#} & \textbf{Target Structure} & \textbf{Mean Time (Min:Sec)} \\ \hline
+		1 & La Salle Hall (Replica) & 5:31 \\ \hline
+		2 & Cross-shaped Skyscraper & 4:16 \\ \hline
+		3 & U-shaped Building & 3.56 \\ \hline
+	\end{tabular}
+\end{table}
+
+As observed during Task 1, the majority of user interactions focused on learning the basic navigation of the 3D editor. Eventually, after users learned the basic structure of the interface, they required less assistance on the second task onward. Users who had a background using other 3D modeling software (i.e., blender) almost immediately knew how to navigate the editor. During tasks 2 and 3, users asked for assistance less, as all unfamiliar controls were already introduced to them during task 1.
+
+The System Usability Scale (SUS) yielded a mean score of 78.5, which, according to Brooke (1996), places the Anito Builder in the ``Good'' to ``Excellent'' range of usability.
+
+Post-experiment interviews indicated that the object-based hierarchy was intuitive for architectural layout, though some participants suggested that automatic snapping for the front and back wings would further reduce task time. Furthermore, when asked about their experience during the unstructured time, users noted their need of the following features:
+
+\begin{enumerate}
+	\item Roof removal — When the roof of a particular block is selected, a toggle to turn it off should exist.
+	\item Automatic vertical placement — When the roof of a particular block is selected, a button to create a new block on top of that roof (that lines up perfectly with the source block) should exist.
+\end{enumerate}
+
+\subsubsection{Evaluation of Anito Builder's output}
+
+The evaluation of the generated scenes by De La Salle University students provided empirical evidence of the system's ability to capture the ``look and feel'' of the campus.
+
+% Mean Scores
+\newcommand{\meanAuth}{4.42}
+\newcommand{\meanCohere}{3.95}
+\newcommand{\meanVar}{3.45}
+\newcommand{\meanAppeal}{3.80}
+\newcommand{\meanBelieve}{4.55}
+
+% Standard Deviations
+\newcommand{\sdAuth}{0.58}
+\newcommand{\sdCohere}{0.72}
+\newcommand{\sdVar}{0.81}
+\newcommand{\sdAppeal}{0.64}
+\newcommand{\sdBelieve}{0.51}
+
+\begin{figure}[h!]
+	\centering
+	\begin{tikzpicture}[scale=0.5] % Adjust scale to fit your page
+		\tkzKiviatDiagram[
+		radial=5, 
+		gap=1,  
+		lattice=5,
+		label space=2.5
+		]{Authenticity, Coherence, Variation, Appeal, Believability}
+		
+		% Plotting the Mean Scores from your results
+		% Order: Authenticity (4.42), Coherence (4.15), Variation (3.85), Appeal (4.20), Believability (4.55)
+		\tkzKiviatLine[thick, color=blue, fill=blue!20, mark=ball](\meanAuth, \meanCohere, \meanVar,\meanAppeal, \meanBelieve)
+		
+		% Optional: Add a legend or secondary line for comparison (e.g., target score)
+		% \tkzKiviatLine[thick, color=red, dashed](5, 5, 5, 5, 5)
+		
+	\end{tikzpicture}
+	\caption{Radar chart of mean scores across architectural evaluation criteria.}
+	\label{fig:radar_chart_latex}
+\end{figure}
+
+\begin{table}[h!]
+	\centering
+	\caption{Mean Scores for Architectural Output Evaluation}
+	\begin{tabular}{|p{7cm}|c|c|}
+		\hline
+		\textbf{Evaluation Criteria} & \textbf{Mean Score} & \textbf{Std. Deviation} \\ \hline
+		Perceived Architectural Authenticity     & \meanAuth & \sdAuth \\ \hline
+		Stylistic Coherence                      & \meanCohere & \sdCohere \\ \hline
+		Modular Variation and Design Flexibility & \meanVar & \sdVar \\ \hline
+		Visual Appeal and Layout Clarity         & \meanAppeal & \sdAppeal \\ \hline
+		Structural Believability                 & \meanBelieve & \sdBelieve \\ \hline
+	\end{tabular}
+\end{table}
+
+Perceived Architectural Authenticity (4.42) confirms that the neoclassical influence—specifically the Corinthian columns and symmetry defined in the previous sections—was clearly recognizable to the DLSU population. While Modular Variation (3.55) received the lowest relative score. When asked about the rationale behind their ratings, users noted that they wanted a wider selection of segment styles and architecture styles in the editor.
+
+\subsection{Asset Modularity Review}
+
+With the nature of the LS Hall's architecture, it was easier to to create different types of modular wall segments than modelling the whole building itself. This is because the building has a pattern of wall segments that are used in different parts of the building. For example, the first floor of the LS Hall has a pattern of having arched hallways and the second floor has a pattern of having pillars and railings in equal segments. As such, the modular wall segments were created to replicate these patterns, and to be used in the PCG system to create the building.
+
+wall segments are the basic building blocks of the PCG system. They are modular pieces with standardized dimensions cut out from the original building. By creating a library of these segments, the PCG system can efficiently generate new building layouts while maintaining architectural consistency. Each segment is designed to fit together seamlessly, allowing for a wide variety of configurations while adhering to the visual and structural language of the LS Hall.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{Figures/{[2] Collection of Modular Segments.png}}
+    \caption{Render of the Collection of Modular Wall Segments}
+    \label{fig:overview_pcg}
+\end{figure}
+
+The PCG method used by Anito Builder generates a set of wall segments based on the dimensions of the block that the user creates. Since a block consists of corners and faces, it was necessary to create models that would fit such method. This led to the creation of regular wall segments for the faces of the block, corner wall segments for the corners of the block, and rooftop segments for the roof of the block. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{figures/{Collection of Modular Corner Assets.png}}
+    \caption{Render of the Collection of Modular Corner Segments}
+    \label{fig:overview_pcg}
+\end{figure}
+
+The 3D models created were made with these standard measurements: x = 1.2m, z = 1.86m, and y dimensions varying with different types of wall segments. While the standard y dimension is 1.56m, in order to replicate the overall structure of the LS Hall accurately, it was necessary to model the different kinds of wall segments it has. This led to certain segments having higher y dimensions, specifically the rooftop segments. 
 
 \begin{table}[H]
   \centering
@@ -587,98 +765,76 @@ The 3D models created were made with these standard measurements: x = 1.2m, z = 
   \end{tabular}
 \end{table}
 
-The final collection of models can be classified into 7 categories:
-
-    \subsubsection{1st Floor Wall Segments}
-    
-    Wall segments that can only be used for the 1st floor of the building, as to keep consistency with the real-world counterpart. This includes the regular 1st floor wall segment and the corner version of it that does not have the wall behind it.
+The figure below is a sample 1st floor segment, which has the mentioned dimensions. 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Figures/1st Floor Wall Segments.png}
-    \caption{Render of the textured 1st Floor Wall Segments}
-    \label{fig:overview_pcg}
-\end{figure}
-    
-    \subsubsection{2nd Floor Wall Segments}
-    
-    Wall segments that can only be used for the 2nd floor of the building, as to keep consistency with the real-world counterpart. This includes the regular 2nd floor wall segment and the corner version of it that does not have the wall behind it.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1.0\linewidth]{2nd Floor Wall Segments.png}
-    \caption{Render of the textured 2nd Floor Wall Segments}
-    \label{fig:overview_pcg}
-\end{figure}
-    
-    \subsubsection{3rd Floor Wall Segments}
-    
-    Wall segments that can only be used for the 3rd floor of the building, as to keep consistency with the real-world counterpart. This includes the regular 3rd floor wall segment and the corner version of it that does not have the wall behind it.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1.0\linewidth]{3rd Floor Wall Segments.png}
-    \caption{Render of the textured 3rd Floor Wall Segments}
-    \label{fig:overview_pcg}
-\end{figure}
-    
-    \subsubsection{Rooftop Wall Segments}
-    
-    Wall segments that can only be used for the rooftop floor of the building, as to keep consistency with the real-world counterpart. This includes the regular rooftop floor wall segment and the corner version of it that does not have the wall behind it.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1.0\linewidth]{RooftopFloor Wall Segments.png}
-    \caption{Render of the textured Rooftop Floor Wall Segments}
-    \label{fig:overview_pcg}
-\end{figure}
-    
-    \subsubsection{2-Segment Wall Segments}
-    
-    Wall segments that are a set of 2 wall segments that cannot be used without the other. They were initially made to have a measurement equivalent to a 1x2 or 2x2 of the regular wall segments, but was divided into 2 or 4 regular wall segments for efficiency in terms of exporting to the game engine. These wall segments do not have corner versions and are not meant to be placed in corners.
-    
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1.0\linewidth]{Wall Segments.png}
-    \caption{Render of the textured 2-Segment Wall Segments Variation 1}
+    \includegraphics[width=1.0\linewidth]{Figures/[Sample] 1st Floor Wall Segment.png}
+    \caption{1st Floor Wall Segment}
     \label{fig:overview_pcg}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1.0\linewidth]{2-Segment Wall Segments Var 2.png}
-    \caption{Render of the textured 2-Segment Wall Segments Variation 2}
-    \label{fig:overview_pcg}
-\end{figure}
-    
-    \subsubsection{3-Segment Wall Segments}
-    
-    Wall segments that are a set of 3 wall segments that cannot be used without the other. They were initially made to have a measurement equivalent to a 1x3 or 2x3 of the regular wall segments, but was divided into 3 or 6 regular wall segments for efficiency in terms of exporting to the game engine. These wall segments do not have corner versions and are not meant to be placed in corners.
+\subsubsection{Wall Segments Classification}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1.0\linewidth]{3-Segment Wall Segments.png}
-    \caption{Render of the textured 3-Segment Wall Segments}
-    \label{fig:overview_pcg}
-\end{figure}
-    
-    \subsubsection{Wall Segments}
-    
-    Wall segments that originally belonged to the center section of the real-world counterpart. These walls can be placed on any floors except for corners.
+The final collection of models can be classified into 7 categories based on their use and design. These categories are as follows:
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\linewidth]{Wall Segments.png}
-    \caption{Render of the textured Wall Segments}
+    \caption{Classification of Wall Segments}
     \label{fig:overview_pcg}
 \end{figure}
 
-As a test to determine the models' accuracy and usability, an attempt to recreate the LS Hall building was made. In terms of individual model accuracy, the models have much to improve. The topology of certain models are a bit off from their real-world counterparts. The measurements of the models when compared to the real building seem a little different. This is due to the standardization of measurements to make the models modular and easier to work with. Additionally, the texture of the models lack variety. While the seams might not be obvious, it is not as seamless as expected and a pattern can be observed when the models are lined up. 
+The regular wall and corner segments are the original segments that were modelled from the LS Hall. They are programmed to be used only in their respective floors (i.e., 1st floor segments can only be used in the first floor, and so on). The rooftop segments are the segments that were modelled to be used for the roof of the blocks. They are programmed to only be used in the roof of the blocks. The 2-segment and 3-segment models are models that were created to be used for larger faces. Unlike the previous segments, filler segments are modelled to fit all of the floors except for corners, and are based from both the La Salle Hall and Yuchengco Hall, which are the two buildings in the DLSU Manila campus with influences from neoclassical architecture. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{Regular Wall and Corner Segments.png}
+    \caption{Viewport Render of Regular Wall and Corner Segments in Blender}
+    \label{fig:overview_pcg}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{Multi-Segments.png}
+    \caption{Viewport Render of Multi-Segment Models in Blender}
+    \label{fig:overview_pcg}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{Filler Walls.png}
+    \caption{Viewport Render of Filler Wall Models in Blender}
+    \label{fig:overview_pcg}
+\end{figure}
+
+As a test to determine the models' accuracy and usability, an attempt to recreate the LS Hall building as well as other combinations of wall segments were made. In terms of individual model accuracy, the models have much to improve. The topology of certain models are a bit off from their real-world counterparts. The measurements of the models when compared to the real building seem a little different. This is due to the standardization of measurements to make the models modular and easier to work with. Additionally, the texture of the models lack variety. While the seams might not be obvious, it is not as seamless as expected and a pattern can be observed when the models are lined up. 
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\linewidth]{Intro.png}
-    \caption{Render of the recreated LS Hall in Blender}
+    \caption{Textured Render of the recreated LS Hall in Blender}
+    \label{fig:overview_pcg}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{[Sample] LS Hall.png}
+    \caption{Viewport Render of the recreated LS Hall in Blender}
+    \label{fig:overview_pcg}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{[Sample] 1-Story Building.png}
+    \caption{Viewport Render of 1-Story Building in Blender}
+    \label{fig:overview_pcg}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{{[Sample] 10-Story Building.png}}
+    \caption{Viewport Render of 10-Story Building in Blender}
     \label{fig:overview_pcg}
 \end{figure}
 
@@ -788,21 +944,19 @@ Perceived Architectural Authenticity (4.42) confirms that the neoclassical influ
 \newpage
 \section{Conclusion}
 
-\subsection{3D Asset Collection}
-
-The project resulted in the creation of a collection of textured 3D modular assets that is easily importable to the specified editor - Anito Builder. This collection of models consists of different types of wall segments that can be duplicated and arranged. It has a complete set of wall segments enough to recreate the overall structure of the LS Hall building in the DLSU Manila campus, with 1 variation for each kind of wall segment and certain limitations for the arrangement of specific ones. However, visual artifacts can be observed which might have resulted from various modelling and texturing mishaps.
-
-\subsection{3D Asset development}
-
-While the model collection is able to recreate the LS Hall, there are still improvements to be made, especially in the modelling process. When arranged to form a structure, the models appear to work and behave appropriately at first glance. However, when observed carefully, artifacts and texturing issues can be seen, specifically on areas where the objects are joined. Reasons for this could be: overlapping meshes, texturing or UV errors, or rendering miscalculations. Since the models are divided into standardized measurements, it is problematic for certain wall segments whenit comes to texturing, specifically the 2-segment and 3-segment models. While most of the 2-segment models do not have any major issues, the 3-segment ones do. The 3-segment model that has four pillars was initially meant to be exported and generated as one whole model. However, due to issues within the editor, it was segmented into several standard segments. Since the models with pillars have subdivision modifiers for clean and detailed curvatures, segmenting them resulted into sharp seams or cuts which are evident in the rendered mages above.
-
-In conclusion, while the models appear to work as intended, a cleaner and more accurate result requires improvements and revisions to the modelling and texturing process. 
-
 \subsection{Prototype Evaluation}
 
 The prototype created is sufficiently equipped to act as a procedural asset generation tool at its current state. It can create environmental assets for games, or pieces of "filler" buildings in games that need much variation between similarly styled buildings. It can be used in city builders, driving simulators, or other types of games wherein the player cannot go into a building's interior.
 
 Further improvements to the prototype include optimizations to the rendering pipeline. As there is observable framerate drops when rendering scenes with large blocks. Furthermore, to improve the viewing experience of users, some rendering features should be implemented. One of which is mipmapping, such that normal textures do not cause a model to appear too noisy when zoomed out. Another is ambient occlusion, such that the edges of geometry are darkened for visual clarity and realism.
+
+\subsection{Asset Collection Evaluation}
+
+To add
+
+\subsection{Architectural Accuracy and Consistency}
+
+To add
 
 \newpage
 
