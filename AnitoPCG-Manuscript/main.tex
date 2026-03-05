@@ -9,7 +9,31 @@
 \usepackage{setspace}
 \usepackage[numbers]{natbib}
 \usepackage{tikz}
+\usepackage{tkz-kiviat, numprint}
+\usepackage{amsmath}
+\usetikzlibrary{arrows}
 \usetikzlibrary{positioning, shapes.geometric, arrows.meta, backgrounds, fit, shadows}
+
+\makeatletter
+\newenvironment{breakablealgorithm}
+{% \begin{breakablealgorithm}
+		\begin{center}
+			\refstepcounter{algorithm}% New algorithm
+			\hrule height.8pt depth0pt \kern2pt% \hrule top
+			\renewcommand{\caption}[2][\relax]{% Make a real caption
+				{\raggedright\textbf{\fname@algorithm~\thealgorithm:} ##2\par}%
+				\ifx\relax##1\relax % Add to list of algorithms
+				\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+				\else
+				\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+				\fi
+				\kern2pt\hrule\kern2pt
+			}
+		}{% \end{breakablealgorithm}
+		\kern2pt\hrule\relax% \hrule bottom
+	\end{center}
+}
+\makeatother
 
 %styling
 \doublespacing
@@ -248,20 +272,30 @@ It was mentioned in Table 1 that one of the characteristics of neoclassical arch
 PCG methods may be categorized into low-human-intervention methods (e.g., noise-based generation) and high-human-intervention methods (e.g., rule-based models such as shape grammars and L-systems).
 
 There is a pedestal that usually serves as the base of the order. However, in some structures, the pedestal is not present. On top of the pedestal is where the column starts. The base is typically what makes up the bottom part of the column except for doric columns as they don’t have a base. Above the base is the shaft which is the longest part of the classical order. They are usually fluted and tapers towards the top (a refinement called entasis). At the very top of the column is the capital which varies in design and structure depending on the type of order. The entablature is what comes on top of the columns and is divided horizontally, like the column. Similar to the capital, Entablatures are different depending on the type of order. However, they all have the same three parts. The architrave that comes on the most bottom, the frieze which comes in the middle and is the most decorative part, and the cornice which tops the entablature. 
+
 Classical orders come in a wide range of styles, appearances, and proportions. These differences arise from their historical origins and symbolisms. There are five different kinds of classical orders: Doric, Ionic, Tuscan, Corinthian, and Composite. (see Figure 5).
 
-\subsubsection{\textbf{Ionic Order}}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{figures/Slide 6.jpg}
+    \caption{Side-by-side comparison of the parts of a classical order (https://smarthistory.org) and La Salle Hall}
+    \label{fig:workflow}
+\end{figure}
+
+\subsubsection{Ionic Order}
 Unlike the Tuscan order, the Ionic order is fluted. It has a slender shaft and a height of approximately 8 times its diameter. Its capital has spiral scrolls (volutes) on either side and its entablature has a continuous frieze. It symbolizes femininity, grace, and elegance which supports the use of Ionic columns for the Temple of Athena Nike.
 
-\subsubsection{\textbf{Doric Order}}
+\subsubsection{Doric Order}
 The doric order is a unique order in a sense that it does not have a base (see Figure 5). Although there is a base for it shown in the figure above, what is shown is a roman doric order, which has bases unlike greek doric bases that lack it. It has a fluted shaft and is significantly small in terms of proportions. Similar to the Tuscan order, it has a simple echinus and abacus and is meant to symbolize masculinity and strength. Its entablature commonly hosts triglyphs and metopes in the frieze. (Summerson, 1980). They are used for temples and civic buildings such as the Parthenon in Athens.
 
-\subsubsection{\textbf{Tuscan Order}}
+\subsubsection{Tuscan Order}
 As illustrated in Figure 5, the Tuscan order is the simplest Roman order among all of them with an unfluted shaft as well as a simple base and capital. Its entablature is plain and minimally decorated. It lacks the complexity that the other orders have, and instead focuses on evoking a sense of strength and utility. They are commonly used for forts, warehouses, and military buildings.
 
-\subsubsection{\textbf{Corinthian Order}}The Corinthian order is the tallest and thinnest among all the classical orders with its height being 10 times its diameter. Its capital is decorated with acanthus leaves and scrolls; and its entablature is significantly more ornamented than Doric ones, similar to the Ionic order. It symbolizes luxury and beauty and is used for building interiors and monuments dedicated to gods. The most famous example of the Corinthian order is the Pantheon in Rome.
+\subsubsection{Corinthian Order}
 
-\subsubsection{\textbf{Composite Order}}
+The Corinthian order is the tallest and thinnest among all the classical orders with its height being 10 times its diameter. Its capital is decorated with acanthus leaves and scrolls; and its entablature is significantly more ornamented than Doric ones, similar to the Ionic order. It symbolizes luxury and beauty and is used for building interiors and monuments dedicated to gods. The most famous example of the Corinthian order is the Pantheon in Rome.
+
+\subsubsection{Composite Order}
 Similar to the Corinthian order, the Composite order is one of the orders with the tallest columns with its height being 10 times its diameter. Its capital is a combination of the Ionic and Corinthian styles, in a sense that it has both the volutes of the Ionic order and the acanthus leaves of the Corinthian order. It symbolizes grandeur and authority and is commonly used in arches and monuments. 
 Here is a summary of all the similarities and differences between the five different classical orders:
 
@@ -281,25 +315,34 @@ Another category of high-human intervention methods is algorithmic procedural ge
 
 \subsection{Concepts in Graphics Programming}
 
-When creating a software architecture, it is important to note that developers prefer to be able to port a software library across multiple applications where it can be loaded as-is. Portability refers to how easy it is to successfully import and use an external library in your project (International Software Testing Qualifications Board, 2014). Portability is directly proportional to a software's ability for co-existence where it can share resources with other independent software.
+In the development of applications that require 3-dimensional visuals, the software needs to communicate with the Graphics Processing Unit (GPU) to render frames. This communication is managed by a Graphics Application Programming Interfaces (APIs).
 
-A software library is a module or component. This means that it should be a minimal piece of software item that should be testable in isolation. It should define the inputs it can receive, the outputs it will generate, and the underlying logic that it houses. The act of testing a library is called unit/component testing. Other developers may want to create projects that can help a library seamlessly communicate with other projects such as an external application. These projects are called wrappers as they "wrap" the underlying library in a format that the receiving project can understand (Babych, M., 2024).
+Graphics APIs provide a standardized set of functions that allow developers to perform hardware-accelerated rendering and computational tasks on the GPU (Vulkan Working Group, 2026). Currently, the industry is defined by three primary standards: OpenGL, Vulkan, and DirectX 12 (DX12). OpenGL, maintained by the Khronos Group, has historically been the cross-platform standard, though its development has shifted toward maintenance as more modern alternatives emerge. Vulkan, also from the Khronos Group, released its 1.4 specification in early 2026, introducing the "Roadmap 2026" milestone to standardize advanced features like improved descriptor management and ray tracing across diverse hardware (Vulkan Working Group, 2026). Meanwhile, DirectX 12 remains the proprietary standard for Microsoft Windows and Xbox platforms, focusing on tight integration with the Windows operating system and high-performance gaming.
 
-Using a low-level language is essential to creating game engines or libraries. A low-level language is one that is close to assembly language (i.e., the language that computers can understand natively) (Ayepeku, F. O. n.d.). This is important for libraries because creating high-performance wrappers will be easier.
-
-When creating libraries in C++, the choice of build system is important. A C++ build system is a tool to assist developers in automating the application's build process. C++ build systems may handle the linking of different libraries together. They may also be responsible for communicating with your package manager, which in turn, makes them responsible for handling dependencies. Linking in C++ means associating a symbol with its definition. One library may have a definition for the symbol, "Vector3." As such, when a developer links this library to their executable, they will now be able to use the Vector3 symbol in their code.
-
-CMake is an example of a build system. CMake is cross-platform, and mainstream across many C++ projects. This in turn, makes it well documented and flexible. CMake uses CMakeLists.txt files to determine how linking between libraries is done.
-
-The application programming interface (API), is the way that programmers will be able to use the library. For object-oriented languages, the API should be anchored on SOLID design principles which include: 
+The primary distinction between these APIs lies in their level of abstraction, categorized as either high-level or low-level.
 
 \begin{itemize}
-    \item Single Responsibility Principle
-    \item Open/Closed Principle
-    \item Liskov Substitution Principle
-    \item Interface Segregation Principle
-    \item Dependency Inversion Principle
+	\item High-Level APIs (e.g., OpenGL): These APIs abstract away specific hardware details, such as memory allocation and CPU-GPU synchronization. This makes OpenGL easier for beginners to adopt but often results in higher CPU overhead and less predictable performance, as the driver makes many decisions on behalf of the developer (Yusov, 2025).
+	\item Low-Level APIs (e.g., Vulkan, DX12): Often referred to as "explicit" APIs, these provide a thin abstraction layer that gives developers direct control over GPU resources. This allows for significant performance optimizations and better multi-threading capabilities, however, it requires the developer to manually manage complex tasks like memory barriers and command buffer submissions (Vulkan Working Group, 2026).
 \end{itemize}
+
+Modern game engines, such as Unity and Unreal Engine, act as an additional layer of abstraction above Graphics APIs. Rather than forcing developers to write API-specific code, these engines utilize an internal rendering abstraction layer. Unreal Engine, for example, uses its Render Hardware Interface (RHI) to translate engine-level commands into the appropriate Vulkan, DX12, or Metal calls depending on the target platform (N-iX Games, 2026). Unity employs a similar approach via its Scriptable Render Pipeline (SRP), allowing for a unified development workflow where the engine handles the underlying API integration automatically to ensure cross-platform compatibility (N-iX Games, 2026).
+
+Two primary paradigms define how frames are rendered through these Graphics APIs:
+\begin{itemize}
+	\item Rasterization: The traditional method where triangles are projected onto a 2D plane. The GPU determines which pixels are covered by these triangles and colors themghly effici accordingly. It is hient and optimized for real-time performance but struggles with physically accurate reflections and shadows (Cable Matters, 2024).
+	\item Raytracing: A method that simulates the physical behavior of light by casting rays from the camera into the scene to calculate intersections with objects. This produces photorealistic effects like global illumination and complex refractions but is computationally expensive, often requiring dedicated hardware acceleration found in modern GPUs (NVIDIA, 2020).
+\end{itemize}
+For projects that require more control than a full game engine but less boilerplate than raw Vulkan or DX12, developers often utilize Graphics API Wrappers. Libraries such as bgfx, Diligent Engine, and Wicked Engine provide a unified interface that wraps multiple back-end APIs into a single set of commands (Yusov, 2025).
+
+\begin{itemize}
+	\item Diligent Engine: A modular, cross-platform library designed to leverage the performance of most modern Graphics APIs like Vulkan and DX12 while maintaining support for legacy systems like OpenGL (Diligent Graphics, 2025).
+	\item bgfx: A popular "bring your own engine" style library that focuses on being a cross-platform, API-agnostic rendering library.
+\end{itemize}
+
+These wrappers are almost exclusively written in C++ because the language provides the low-level memory access and deterministic performance required for high-performance graphics, while also offering the object-oriented features necessary to organize complex rendering pipelines (Yusov, 2025).
+
+Integrating these C++ libraries into a project typically requires a build system, a set of tools that automates the compilation and linking of source code into an executable. For this purpose, CMake has become the standard build system for graphics programming (Kitware, 2026). Strictly speaking, CMake is a build system generator; it does not compile code itself but rather reads a CMakeLists.txt file to generate platform-specific project files, such as Visual Studio solutions on Windows or Makefiles on Linux (Viking Software, 2026). This allows graphics developers to maintain a single configuration file that works across different operating systems and hardware environments (Kitware, 2026).
 
 \newpage
 \section{Methodology}
@@ -340,33 +383,53 @@ An application named "Anito Builder" was be created for the project. It is stand
 The application was be developed using several libraries. Major libraries to be used include the following (see Table 3):
 
 \begin{table}[h!]
-\centering
-\caption{Summary of Libraries and APIs Used in the Project}
-\begin{tabular}{|p{3cm}|p{10cm}|}
-\hline
-\textbf{Library/API} & \textbf{Description} \\
-\hline
-BGFX & This is the rendering library to be used for the project. BGFX is used to provide an intuitive abstraction layer from low-level graphics programming. It is used such that the application can remain platform-agnostic. \\
-\hline
-SDL2 & This is the window and event management library that will be used. This is because SDL2 already contains most features that are needed for a full-fledged application window. Furthermore, SDL events are preferred over how other window libraries scan for events. \\
-\hline
-Assimp & The 3D asset importer to be used. Assimp is preferred because it can handle the loading of large models relatively easily — a requirement to be able to use the high-poly modules created. \\
-\hline
-ImGui & The graphical user interface library to be used for window layout and various types of user interaction. ImGui allows for customizable UI layouts and easier implementation. \\
-\hline
-\end{tabular}
+	\centering
+	\caption{Summary of Libraries and APIs Used in the Project}
+	\begin{tabular}{|p{3cm}|p{10cm}|}
+		\hline
+		\textbf{Library/API} & \textbf{Description} \\
+		\hline
+		BGFX & This is the rendering library to be used for the project. BGFX is used to provide an intuitive abstraction layer from low-level graphics programming. It is used such that the application can remain platform-agnostic. \\
+		\hline
+		SDL2 & This is the window and event management library that will be used. This is because SDL2 already contains most features that are needed for a full-fledged application window. Furthermore, SDL events are preferred over how other window libraries scan for events. \\
+		\hline
+		Assimp & The 3D asset importer to be used. Assimp is preferred because it supports both mesh import and export of multiple modern file formats. \\
+		\hline
+		ImGui & The graphical user interface library to be used for window layout and various types of user interaction. ImGui allows for customizable UI layouts and easier implementation. \\
+		\hline
+	\end{tabular}
 \end{table}
 
-The main concept of the 3D editor is based on editable blocks similar to what one can find on Unity's Probuilder or Blender's face edit mode. Anito Builder can spawn cubes in which all 4 faces of the cube are selectable and movable in the x-plane, while the cube's height can be controlled by dragging the roof up or down.
+\begin{figure}[H]
+	\includegraphics[width=1.0\linewidth]{Figures/enginearch.png}%
+	\caption{Anito Builder Engine Architecture}
+\end{figure}
 
-The cube can be extended by selecting a face and pressing "append" on the editor. By doing so, another cube will spawn with that selected face as a shared face between the old cube and the new cube. This can be done indefinitely to create various building shapes.
+The architectural framework of the Anito Builder 3D Editor is structured around a modular design that decouples resource acquisition from real-time state management. The system has two main branches: the Asset Loading system and Runtime Object Management.
 
-This form of shape manipulation is preferred over edge selection, which was the originally proposed plan for an older iteration of Anito Builder. This is because face selection made it more intuitive that neoclassical buildings should follow a layout that is blocky by nature.
-After finalizing a block, the user of the application can click a button to turn the block into a procedurally generated version of the Saint La Salle Hall (the block is now not visible at this state).
+The Asset Loading system implements a directory-crawling mechanism that identifies files based on supported types or extensions (e.g., fbx or obj files for geometric mesh data, jpg and png for textures). Upon identification, meta data is generated for these files before being passed to external libraries. In particular, data is processed through the Open Asset Import Library (Assimp), and texture data is processed through BGFX-BImg. Once processed, the handles of these resources are registered in their respective dictionaries. This ensures that assets are accessible by any system that requires them, and that assets are only loaded once unless the user requests a re-import.
 
-\subsubsection{\textbf{PCG Library Algorithm}}
+Once assets are imported, the engine starts the Runtime Object Management system. This system is based on the node-hierarchy system by Godot. Wherein all objects in the scene inherit from a common base class.
 
-The procedural generation of the building is based on the wall subdivisions that are created in real time. For each subdivision, the PCG method will choose which segment type is used based on various parameters. For instance, the most basic parameters that the PCG method uses is the floor number. For the basic wall, it uses the basic 1st floor model if it is floor number 1. While it uses the basic 2nd+ floor model if it is anything above the first floor.
+\begin{itemize}
+	\item Scene Integration: Each Object instance defines its spatial parameters through a local transformation matrix and its relative position within the scene hierarchy (parent-child relationships).
+	
+	\item Extensibility: The Object class acts as an interface for specialized functionality. Cameras, rigid-bodies, colliders, and renderers all derive from this base class. External libraries will also define their own child classes that inherit from the Object class.
+	
+	\item Interface and Manipulation: Each object exposes inspector data. In the Graphical User Interface (GUI) pass, a selected object's inspector data is retrieved and rendered in an inspector window. This interface is implemented using Dear ImGui, which interfaces with the bgfx graphics abstraction layer.
+\end{itemize}
+
+\subsubsection{The PCG System}
+
+The PCG system of Anito Builder is implemented as an external library. In the editor, it exists as a derived class of the base Object class, with specialized functionality and inspector data.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.5\linewidth]{Figures/anitobuilder_arch.png}%
+	\caption{Anito Builder PCG System Architecture}
+\end{figure}
+
+The PCG system works by creating a series of blocks that the user can transform. After creating these blocks, the walls are subdivided into smaller squares and scaled automatically. The algorithm and visual representation of this process is outlined below:
 
 \begin{algorithm}
 	\caption{Facade Wall Subdivision}
@@ -403,96 +466,83 @@ The procedural generation of the building is based on the wall subdivisions that
 	\end{algorithmic}
 \end{algorithm}
 
-Given a set of inputs, the algorithm will generate a list of objects containing the mesh type and its transformation. This list can be used by the external environment to render the result. The algorithm is a simple loop that iterates over a plane that is defined by the input parameters.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\linewidth]{Figures/stretchmethod.png}%
+	\caption{Tiling and Stretching algorithm illustration}
+\end{figure}
 
-\subsubsection{\textbf{Structure of the 3D editor}}
+This system is based on editable blocks similar to what one can find on Unity's Probuilder or Blender's face edit mode. The user interface allows you to select any face of any particular block, and move it in the x-plane. While the cube's height can be controlled by dragging the roof up or down.
 
-The 3D editor itself is created using well-known libraries. The editor follows the hierarchical component system that is used by Godot, while the user experience and interfaces are heavily inspired by Unity.
+Furthermore, the cube can be extended by selecting a face and pressing "append" on the editor. By doing so, another cube will spawn with that selected face as a shared face between the old cube and the new cube. This can be done indefinitely to create various building shapes. This process is outlined visually below:
 
 \begin{figure}[H]
 	\centering
-	\begin{tikzpicture}[
-		node distance=1.2cm and 1.5cm,
-		font=\small\sffamily,
-		% Style for the main containers
-		container/.style={draw, rectangle, dashed, inner sep=0.5cm, rounded corners, fill=gray!5},
-		% Style for boxes
-		base/.style={draw, rectangle, minimum width=3cm, minimum height=0.8cm, text centered, fill=white, drop shadow},
-		header/.style={base, fill=blue!20, font=\bfseries\small\sffamily},
-		manager/.style={base, fill=yellow!10, dashed},
-		% Style for arrows
-		arrow/.style={thick, -{Stealth[scale=1.2]}}
-		]
-		
-		% --- OBJECT SYSTEM SECTION ---
-		\node[header] (root) {Root Object};
-		\node[manager, below=of root] (managers) {Managers};
-		
-		% Level 2 Objects
-		\node[base, below=1.5cm of managers] (renderObj) {Render Object};
-		\node[base, left=of renderObj] (cameraObj) {Camera Object};
-		\node[base, right=of renderObj] (anitoObj) {Anito Builder Object};
-		
-		% Container for Object System
-		\begin{scope}[on background layer]
-			\node[container, fit=(root) (managers) (cameraObj) (anitoObj), label={[shift={(0,-0.5)}]above:\textbf{Object System}}] (objSys) {};
-		\end{scope}
-		
-		% --- OTHER SECTIONS ---
-		\node[header, below=2cm of anitoObj] (pcgMethod) {Anito Builder PCG Method};
-		
-		% Graphics System Group
-		\node[header, below=2cm of renderObj] (graphicsHead) {Graphics System};
-		\node[base, below=0.5cm of graphicsHead] (bgfx) {BGFX};
-		\node[base, below=0.3cm of bgfx] (imgui) {IMGUI};
-		\node[base, below=0.3cm of imgui] (forward) {Forward Rendering};
-		\node[base, below=0.3cm of forward] (instanced) {Instanced Rendering};
-		
-		% Container for Graphics System
-		\begin{scope}[on background layer]
-			\node[container, fit=(graphicsHead) (instanced), fill=blue!5] (gfxSys) {};
-		\end{scope}
-		
-		% --- DRAWING ARROWS ---
-		\draw[arrow] (root) -- (managers);
-		\draw[arrow] (managers.south) -- ++(0,-0.8) -| (cameraObj.north);
-		\draw[arrow] (managers.south) -- ++(0,-0.8) -| (renderObj.north);
-		\draw[arrow] (managers.south) -- ++(0,-0.8) -| (anitoObj.north);
-		
-		\draw[arrow] (anitoObj) -- (pcgMethod);
-		\draw[arrow] (renderObj) -- (gfxSys.north);
-		
-	\end{tikzpicture}
-	\caption{Anito Engine Architecture: Object and Graphics Systems Hierarchy}
+	\includegraphics[width=1.0\linewidth]{Figures/append.png}%
+	\caption{Tiling and Stretching algorithm illustration}
 \end{figure}
 
-TODO: Expound on engine architecture and optimizations done.
+For each subdivided square, the PCG system will choose which mesh type is used. It will do this through a rule-based algorithm that takes into account the following inputs:
 
-\subsubsection{\textbf{Viewing and interacting with the result in the 3D editor}}
+\begin{table}[h!]
+	\centering
+	\caption{Summary of inputs for the mesh choice algorithm}
+	\begin{tabular}{|p{3cm}|p{10cm}|}
+		\hline
+		\textbf{Name} & \textbf{Description} \\
+		\hline
+		Column Index & Describes the current position of the segment in the X axis.\\
+		\hline
+		Floor Index & Describes the current position of the segment in the Y axis.\\
+		\hline
+		Face Width & Describes the total columns of the parent of the current segment.\\
+		\hline
+		Face Height & Describes the top floor of the parent of the current segment.\\
+		\hline
+		Facade Type & User-specified type to decide whether the user wants to have a front-style facade in the current face.\\
+		\hline
+	\end{tabular}
+\end{table}
 
-The 3D editor is complete with camera controls, object selection/movement, inspecting, and saving/serializing. These features can be utilized by users to create and explore the capabilities of Anito Builder.
-
-The 3D editor has the ability to create an exported 3D file for use in other applications. This is helpful if the user wants to evaluate the output of Anito Builder in an environment they are already familiar with.
+Face selection as a method of shape manipulation was preferred over edge selection, which was the originally proposed plan for an older iteration of Anito Builder. Face selection was preferred because it was more intuitive that neoclassical buildings should follow a layout that is blocky or parallel by nature. Face translation through a wall's normal direction (i.e., the direction it is facing) makes it easier to create parallel lines in the layout.
 
 \subsection{Evaluation}
 
 There are two parts to the evaluation of Anito Builder: the evaluation of the usability of the 3D editor and the quality of its output.
 
-\subsubsection{\textbf{Evaluation of Anito Builder's usability}}
+\subsubsection{Evaluation of Anito Builder's usability}
 
 To evaluate the usability of the Anito Builder 3D editor, participants were gathered from the student population of De La Salle University Manila, as well as external participants who have a background in architectural modeling. They were exposed to the 3D editor and were requested to spend both unstructured and structured time in the application.
 
-For the unstructured time, they were requested to create and explore the features of the editor without assistance. While for the structured time, they were asked to complete tasks wherein minimal assistance was given. The data gathered from these tests were based on the methods used by Kamińska(2022). These include but are not limited to:
+For the unstructured time, they were requested to create and explore the features of the editor without assistance. While for the structured time, they were asked to complete tasks wherein minimal assistance was given. The tasks are as follows:
+
+\begin{table}[h!]
+	\centering
+	\caption{Anito Builder Task list}
+	\begin{tabular}{|p{3cm}|p{10cm}|}
+		\hline
+		\textbf{Task \#} & \textbf{Description} \\
+		\hline
+		1 & Create the LS hall building. It has a 5x5 center block. 11x5 side blocks. 5x7 front wings. 5x9 back wings. \\
+		\hline
+		2 & Create a tall building shaped like a cross. It should have more than 20 floors, and each side of the cross must have a facade. \\
+		\hline
+		3 & Create an U-shaped building. It should have more than 5 floors, and each end of the U must have a facade.\\
+		\hline
+	\end{tabular}
+\end{table}
+
+The data gathered from these tests were based on the methods used by Kamińska(2022). For this study, the following data will be gathered:
 
 \begin{enumerate}
     \item Time to complete tasks
-    \item user interactions
-    \item Direct observation of the user
+    \item User interactions
     \item Post-experiment interviews
-    \item Questionnaires
 \end{enumerate}
 
-\subsubsection{\textbf{Evaluation of Anito Builder's output}}
+We also conducted a System Usability Scale (SUS) test to assess the usability of the PCG-based 3D scene editor itself. The SUS is a widely adopted and validated tool in HCI research for quickly gauging overall system usability, and it provides a standardized score that can indicate whether the interface is efficient, intuitive, and accessible to users. This dual-evaluation strategy ensures that the study captures both the user’s visual and architectural impressions of the generated content and the functional usability of the editor that produces it.
+
+\subsubsection{Evaluation of Anito Builder's output}
 
 Similarly, the evaluation of the project’s output was gathered from students based in DLSU Manila. As DLSU Manila students are more familiar with La Salle Hall, it is only appropriate that participants are chosen from their population. The evaluation for Anito Builder’s output only includes renders from the final scene, which makes the need for asset development/programming knowledge unnecessary. 
 
@@ -506,14 +556,110 @@ After the participants are able to create scenes, they were given ample time to 
     \item Structural Believability – captures whether the forms look physically plausible and grounded in real-world architectural logic.
 \end{enumerate}
 
-To complement this perception-based evaluation of the generated scenes, we also conducted a System Usability Scale (SUS) test to assess the usability of the PCG-based 3D scene editor itself. The SUS is a widely adopted and validated tool in HCI research for quickly gauging overall system usability, and it provides a standardized score that can indicate whether the interface is efficient, intuitive, and accessible to users. This dual-evaluation strategy ensures that the study captures both the user’s visual and architectural impressions of the generated content and the functional usability of the editor that produces it.
-
 Responses to the survey served as a means to provide insight into how effective the PCG system captures the look and feel of DLSU Manila. By making the evaluation focus solely on the output and not on the technical aspect of the development, it prioritizes user experience and visual quality. This is to make sure that the generated scenes meet the expectations of the participants in terms of architectural accuracy and design quality without needing any technical background. 
 
 \newpage
 \section{Results}
 
-\subsection{\textbf{Modular 3D Models}}
+\subsection{User Evaluation}
+A group of 6 individuals took part of the study. The table below summarizes their demographic:
+
+\begin{table}[h!]
+	\centering
+	\caption{User demographic}
+	\begin{tabular}{|p{3cm}|l|}
+		\hline
+		\textbf{\#} & \textbf{Target Structure} \\ \hline
+		3 & Game Arts and Design Students \\ \hline
+		2 & Game Development Students \\ \hline
+		1 & Architecture professional \\ \hline
+	\end{tabular}
+\end{table}
+
+\subsubsection{Evaluation of Anito Builder's usability}
+
+The data collected during the structured task phase showed that workflow offered by Anito Builder was efficient. Results indicate that users progressively learned how to use the editor better throughout tasks (Table 2).
+
+\begin{table}[h!]
+	\centering
+	\caption{Participant Performance Metrics per Task}
+	\begin{tabular}{|p{3cm}|l|c|}
+		\hline
+		\textbf{Task \#} & \textbf{Target Structure} & \textbf{Mean Time (Min:Sec)} \\ \hline
+		1 & La Salle Hall (Replica) & 5:31 \\ \hline
+		2 & Cross-shaped Skyscraper & 4:16 \\ \hline
+		3 & U-shaped Building & 3.56 \\ \hline
+	\end{tabular}
+\end{table}
+
+As observed during Task 1, the majority of user interactions focused on learning the basic navigation of the 3D editor. Eventually, after users learned the basic structure of the interface, they required less assistance on the second task onward. Users who had a background using other 3D modeling software (i.e., blender) almost immediately knew how to navigate the editor. During tasks 2 and 3, users asked for assistance less, as all unfamiliar controls were already introduced to them during task 1.
+
+The System Usability Scale (SUS) yielded a mean score of 78.5, which, according to Brooke (1996), places the Anito Builder in the ``Good'' to ``Excellent'' range of usability.
+
+Post-experiment interviews indicated that the object-based hierarchy was intuitive for architectural layout, though some participants suggested that automatic snapping for the front and back wings would further reduce task time. Furthermore, when asked about their experience during the unstructured time, users noted their need of the following features:
+
+\begin{enumerate}
+	\item Roof removal — When the roof of a particular block is selected, a toggle to turn it off should exist.
+	\item Automatic vertical placement — When the roof of a particular block is selected, a button to create a new block on top of that roof (that lines up perfectly with the source block) should exist.
+\end{enumerate}
+
+\subsubsection{Evaluation of Anito Builder's output}
+
+The evaluation of the generated scenes by De La Salle University students provided empirical evidence of the system's ability to capture the ``look and feel'' of the campus.
+
+% Mean Scores
+\newcommand{\meanAuth}{4.42}
+\newcommand{\meanCohere}{3.95}
+\newcommand{\meanVar}{3.45}
+\newcommand{\meanAppeal}{3.80}
+\newcommand{\meanBelieve}{4.55}
+
+% Standard Deviations
+\newcommand{\sdAuth}{0.58}
+\newcommand{\sdCohere}{0.72}
+\newcommand{\sdVar}{0.81}
+\newcommand{\sdAppeal}{0.64}
+\newcommand{\sdBelieve}{0.51}
+
+\begin{figure}[h!]
+	\centering
+	\begin{tikzpicture}[scale=0.5] % Adjust scale to fit your page
+		\tkzKiviatDiagram[
+		radial=5, 
+		gap=1,  
+		lattice=5,
+		label space=2.5
+		]{Authenticity, Coherence, Variation, Appeal, Believability}
+		
+		% Plotting the Mean Scores from your results
+		% Order: Authenticity (4.42), Coherence (4.15), Variation (3.85), Appeal (4.20), Believability (4.55)
+		\tkzKiviatLine[thick, color=blue, fill=blue!20, mark=ball](\meanAuth, \meanCohere, \meanVar,\meanAppeal, \meanBelieve)
+		
+		% Optional: Add a legend or secondary line for comparison (e.g., target score)
+		% \tkzKiviatLine[thick, color=red, dashed](5, 5, 5, 5, 5)
+		
+	\end{tikzpicture}
+	\caption{Radar chart of mean scores across architectural evaluation criteria.}
+	\label{fig:radar_chart_latex}
+\end{figure}
+
+\begin{table}[h!]
+	\centering
+	\caption{Mean Scores for Architectural Output Evaluation}
+	\begin{tabular}{|p{7cm}|c|c|}
+		\hline
+		\textbf{Evaluation Criteria} & \textbf{Mean Score} & \textbf{Std. Deviation} \\ \hline
+		Perceived Architectural Authenticity     & \meanAuth & \sdAuth \\ \hline
+		Stylistic Coherence                      & \meanCohere & \sdCohere \\ \hline
+		Modular Variation and Design Flexibility & \meanVar & \sdVar \\ \hline
+		Visual Appeal and Layout Clarity         & \meanAppeal & \sdAppeal \\ \hline
+		Structural Believability                 & \meanBelieve & \sdBelieve \\ \hline
+	\end{tabular}
+\end{table}
+
+Perceived Architectural Authenticity (4.42) confirms that the neoclassical influence—specifically the Corinthian columns and symmetry defined in the previous sections—was clearly recognizable to the DLSU population. While Modular Variation (3.55) received the lowest relative score. When asked about the rationale behind their ratings, users noted that they wanted a wider selection of segment styles and architecture styles in the editor.
+
+\subsection{Modular 3D Models}
 
 The 3D models created were made with these standard measurements: x = 1.2m, z = 1.86m, and y dimensions varying with different types of wall segments. While the standard y dimension is 1.56m, in order to replicate the overall structure of the LS Hall accurately, it was necessary to model the different kinds of wall segments it has. This led to certain segments having higher y dimensions. 
 
@@ -534,86 +680,86 @@ The 3D models created were made with these standard measurements: x = 1.2m, z = 
 
 The final collection of models can be classified into 7 categories:
 
-    \subsubsection{\textbf{1st Floor Wall Segments}}
+    \subsubsection{1st Floor Wall Segments}
     
     Wall segments that can only be used for the 1st floor of the building, as to keep consistency with the real-world counterpart. This includes the regular 1st floor wall segment and the corner version of it that does not have the wall behind it.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Figures/1st Floor Wall Segments.png}%
+    \includegraphics[width=1.0\linewidth]{Figures/1st Floor Wall Segments.png}
     \caption{Render of the textured 1st Floor Wall Segments}
     \label{fig:overview_pcg}
 \end{figure}
     
-    \subsubsection{\textbf{2nd Floor Wall Segments}}
+    \subsubsection{2nd Floor Wall Segments}
     
     Wall segments that can only be used for the 2nd floor of the building, as to keep consistency with the real-world counterpart. This includes the regular 2nd floor wall segment and the corner version of it that does not have the wall behind it.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{2nd Floor Wall Segments.png}%
+    \includegraphics[width=1.0\linewidth]{2nd Floor Wall Segments.png}
     \caption{Render of the textured 2nd Floor Wall Segments}
     \label{fig:overview_pcg}
 \end{figure}
     
-    \subsubsection{\textbf{3rd Floor Wall Segments}}
+    \subsubsection{3rd Floor Wall Segments}
     
     Wall segments that can only be used for the 3rd floor of the building, as to keep consistency with the real-world counterpart. This includes the regular 3rd floor wall segment and the corner version of it that does not have the wall behind it.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{3rd Floor Wall Segments.png}%
+    \includegraphics[width=1.0\linewidth]{3rd Floor Wall Segments.png}
     \caption{Render of the textured 3rd Floor Wall Segments}
     \label{fig:overview_pcg}
 \end{figure}
     
-    \subsubsection{\textbf{Rooftop Wall Segments}}
+    \subsubsection{Rooftop Wall Segments}
     
     Wall segments that can only be used for the rooftop floor of the building, as to keep consistency with the real-world counterpart. This includes the regular rooftop floor wall segment and the corner version of it that does not have the wall behind it.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{RooftopFloor Wall Segments.png}%
+    \includegraphics[width=1.0\linewidth]{RooftopFloor Wall Segments.png}
     \caption{Render of the textured Rooftop Floor Wall Segments}
     \label{fig:overview_pcg}
 \end{figure}
     
-    \subsubsection{\textbf{2-Segment Wall Segments}}
+    \subsubsection{2-Segment Wall Segments}
     
     Wall segments that are a set of 2 wall segments that cannot be used without the other. They were initially made to have a measurement equivalent to a 1x2 or 2x2 of the regular wall segments, but was divided into 2 or 4 regular wall segments for efficiency in terms of exporting to the game engine. These wall segments do not have corner versions and are not meant to be placed in corners.
     
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Wall Segments.png}%
+    \includegraphics[width=1.0\linewidth]{Wall Segments.png}
     \caption{Render of the textured 2-Segment Wall Segments Variation 1}
     \label{fig:overview_pcg}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{2-Segment Wall Segments Var 2.png}%
+    \includegraphics[width=1.0\linewidth]{2-Segment Wall Segments Var 2.png}
     \caption{Render of the textured 2-Segment Wall Segments Variation 2}
     \label{fig:overview_pcg}
 \end{figure}
     
-    \subsubsection{\textbf{3-Segment Wall Segments}}
+    \subsubsection{3-Segment Wall Segments}
     
     Wall segments that are a set of 3 wall segments that cannot be used without the other. They were initially made to have a measurement equivalent to a 1x3 or 2x3 of the regular wall segments, but was divided into 3 or 6 regular wall segments for efficiency in terms of exporting to the game engine. These wall segments do not have corner versions and are not meant to be placed in corners.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{3-Segment Wall Segments.png}%
+    \includegraphics[width=1.0\linewidth]{3-Segment Wall Segments.png}
     \caption{Render of the textured 3-Segment Wall Segments}
     \label{fig:overview_pcg}
 \end{figure}
     
-    \subsubsection{\textbf{Wall Segments}}
+    \subsubsection{Wall Segments}
     
     Wall segments that originally belonged to the center section of the real-world counterpart. These walls can be placed on any floors except for corners.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Wall Segments.png}%
+    \includegraphics[width=1.0\linewidth]{Wall Segments.png}
     \caption{Render of the textured Wall Segments}
     \label{fig:overview_pcg}
 \end{figure}
@@ -622,7 +768,7 @@ As a test to determine the models' accuracy and usability, an attempt to recreat
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Intro.png}%
+    \includegraphics[width=1.0\linewidth]{Intro.png}
     \caption{Render of the recreated LS Hall in Blender}
     \label{fig:overview_pcg}
 \end{figure}
@@ -630,17 +776,17 @@ As a test to determine the models' accuracy and usability, an attempt to recreat
 \newpage
 \section{Conclusion}
 
-\subsection{\textbf{3D Asset Collection}}
+\subsection{3D Asset Collection}
 
 The project resulted in the creation of a collection of textured 3D modular assets that is easily importable to the specified editor - Anito Builder. This collection of models consists of different types of wall segments that can be duplicated and arranged. It has a complete set of wall segments enough to recreate the overall structure of the LS Hall building in the DLSU Manila campus, with 1 variation for each kind of wall segment and certain limitations for the arrangement of specific ones. However, visual artifacts can be observed which might have resulted from various modelling and texturing mishaps.
 
-\subsection{\textbf{3D Asset development}}
+\subsection{3D Asset development}
 
 While the model collection is able to recreate the LS Hall, there are still improvements to be made, especially in the modelling process. When arranged to form a structure, the models appear to work and behave appropriately at first glance. However, when observed carefully, artifacts and texturing issues can be seen, specifically on areas where the objects are joined. Reasons for this could be: overlapping meshes, texturing or UV errors, or rendering miscalculations. Since the models are divided into standardized measurements, it is problematic for certain wall segments whenit comes to texturing, specifically the 2-segment and 3-segment models. While most of the 2-segment models do not have any major issues, the 3-segment ones do. The 3-segment model that has four pillars was initially meant to be exported and generated as one whole model. However, due to issues within the editor, it was segmented into several standard segments. Since the models with pillars have subdivision modifiers for clean and detailed curvatures, segmenting them resulted into sharp seams or cuts which are evident in the rendered mages above.
 
 In conclusion, while the models appear to work as intended, a cleaner and more accurate result requires improvements and revisions to the modelling and texturing process. 
 
-\subsection{\textbf{Prototype Evaluation}}
+\subsection{Prototype Evaluation}
 
 The prototype created is sufficiently equipped to act as a procedural asset generation tool at its current state. It can create environmental assets for games, or pieces of "filler" buildings in games that need much variation between similarly styled buildings. It can be used in city builders, driving simulators, or other types of games wherein the player cannot go into a building's interior.
 
@@ -724,6 +870,55 @@ ISTQB Foundation Level Documentation.
 Zhang, Y. (2025). 
 Rule-based generative design in procedural content generation. 
 \textit{Proceedings of the IEEE Conference on Games}, 1–6.
+
+\bibitem{cablematters2024}
+Cable Matters. (2024). 
+Ray Tracing vs Rasterization: Unpacking Computer Graphics Rendering. 
+Retrieved from https://www.cablematters.com/Blog/Computer-Accessories/ray-tracing-vs-rasterization
+
+\bibitem{cmake2026}
+CMake. (2026). 
+Why CMake? — Mastering CMake. 
+Retrieved from https://cmake.org/cmake/help/book/mastering-cmake/chapter/Why%20CMake.html
+
+\bibitem{diligent2026}
+Diligent Graphics. (2026). 
+Diligent Engine - Modern cross-platform low-level graphics library. 
+Retrieved from https://diligentgraphics.com/diligent-engine/
+
+\bibitem{vulkan2026}
+Vulkan Working Group. (2026). 
+Vulkan Roadmap 2026 Milestone. 
+Retrieved from https://www.vulkan.org/
+
+\bibitem{nvidia2020}
+NVIDIA. (2020). 
+\textit{Ray Tracing Essentials Part 2: Rasterization versus Ray Tracing}.
+
+\bibitem{kitware2026}
+Kitware. (2026). 
+CMake: The standard build system for C++ development. 
+Retrieved from https://cmake.org/features/
+
+\bibitem{nix2026}
+N-iX Games. (2026). 
+Unity Game Development Services: Cross-platform optimization and SRP workflows. 
+Retrieved from https://gamestudio.n-ix.com/unity-development/
+
+\bibitem{yusov2025}
+Yusov, E. (2025). 
+Designing a modern cross-platform rendering abstraction layer. 
+\textit{Game Developer Technical Series}.
+
+\bibitem{assimp2024}
+Schulze, A., et al. (2024).
+\textit{Assimp: The Open Asset Import Library}.
+Retrieved from https://www.assimp.org/
+
+\bibitem{dearimgui2026}
+Cornut, O. (2026).
+\textit{Dear ImGui: Bloat-free Immediate Mode Graphical User interface for C++}.
+Retrieved from https://github.com/ocornut/imgui
 
 \end{thebibliography}
 

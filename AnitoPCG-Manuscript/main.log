@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.2.20)  1 MAR 2026 20:14
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.2.20)  5 MAR 2026 16:37
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -428,6 +428,113 @@ File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 ibraries\tikzlibrarytopaths.code.tex
 File: tikzlibrarytopaths.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 )))
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/tkz-kiviat\tkz-kiviat.sty
+Package: tkz-kiviat 2018/09/19 v0.1 b
+
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/l
+ibraries\tikzlibrarybackgrounds.code.tex
+File: tikzlibrarybackgrounds.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@layerbox@background=\box68
+\pgf@layerboxsaved@background=\box69
+))
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/numprint\numprint.sty
+Package: numprint 2012/08/20 v1.39 Print numbers (HH)
+\c@nprt@mantissa@digitsbefore=\count315
+\c@nprt@mantissa@digitsafter=\count316
+\c@nprt@exponent@digitsbefore=\count317
+\c@nprt@exponent@digitsafter=\count318
+\nprt@digitwidth=\skip57
+\nprt@sepwidth=\skip58
+\nprt@decimalwidth=\skip59
+\nprt@blockwidth=\skip60
+\nprt@digittoks=\toks34
+\nprt@pretoks=\toks35
+\nprt@posttoks=\toks36
+\nprt@thisdigit=\count319
+\nprt@curpos=\count320
+\nprt@rndpos=\count321
+\c@nprt@digitsfirstblock=\count322
+\c@nprt@blockcnt=\count323
+\c@nprt@cntprint=\count324
+
+No configuration file `numprint.cfg' found.)
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
+Package: amsmath 2025/07/09 v2.17z AMS math features
+\@mathmargin=\skip61
+
+For additional information on amsmath, use the `?' option.
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amstext.sty
+Package: amstext 2024/11/17 v2.01 AMS text
+
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks37
+\ex@=\dimen272
+))
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen273
+)
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty
+Package: amsopn 2022/04/08 v2.04 operator names
+)
+\inf@bad=\count325
+LaTeX Info: Redefining \frac on input line 233.
+\uproot@=\count326
+\leftroot@=\count327
+LaTeX Info: Redefining \overline on input line 398.
+LaTeX Info: Redefining \colon on input line 409.
+\classnum@=\count328
+\DOTSCASE@=\count329
+LaTeX Info: Redefining \ldots on input line 495.
+LaTeX Info: Redefining \dots on input line 498.
+LaTeX Info: Redefining \cdots on input line 619.
+\Mathstrutbox@=\box70
+\strutbox@=\box71
+LaTeX Info: Redefining \big on input line 721.
+LaTeX Info: Redefining \Big on input line 722.
+LaTeX Info: Redefining \bigg on input line 723.
+LaTeX Info: Redefining \Bigg on input line 724.
+\big@size=\dimen274
+LaTeX Font Info:    Redeclaring font encoding OML on input line 742.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 743.
+\macc@depth=\count330
+LaTeX Info: Redefining \bmod on input line 904.
+LaTeX Info: Redefining \pmod on input line 909.
+LaTeX Info: Redefining \smash on input line 939.
+LaTeX Info: Redefining \relbar on input line 969.
+LaTeX Info: Redefining \Relbar on input line 970.
+\c@MaxMatrixCols=\count331
+\dotsspace@=\muskip17
+\c@parentequation=\count332
+\dspbrk@lvl=\count333
+\tag@help=\toks38
+\row@=\count334
+\column@=\count335
+\maxfields@=\count336
+\andhelp@=\toks39
+\eqnshift@=\dimen275
+\alignsep@=\dimen276
+\tagshift@=\dimen277
+\tagwidth@=\dimen278
+\totwidth@=\dimen279
+\lineht@=\dimen280
+\@envbody=\toks40
+\multlinegap=\skip62
+\multlinetaggap=\skip63
+\mathdisplay@stack=\toks41
+LaTeX Info: Redefining \[ on input line 2950.
+LaTeX Info: Redefining \] on input line 2951.
+)
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/l
+ibraries\tikzlibraryarrows.code.tex
+File: tikzlibraryarrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibrary
+arrows.code.tex
+File: pgflibraryarrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\arrowsize=\dimen281
+))
 (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/l
 ibraries\tikzlibrarypositioning.code.tex
 File: tikzlibrarypositioning.code.tex 2025-08-29 v3.1.11a (3.1.11a)
@@ -443,16 +550,10 @@ File: pgflibraryshapes.geometric.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibrary
 arrows.meta.code.tex
 File: pgflibraryarrows.meta.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfarrowinset=\dimen272
-\pgfarrowlength=\dimen273
-\pgfarrowwidth=\dimen274
-\pgfarrowlinewidth=\dimen275
-)
-(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/l
-ibraries\tikzlibrarybackgrounds.code.tex
-File: tikzlibrarybackgrounds.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@layerbox@background=\box68
-\pgf@layerboxsaved@background=\box69
+\pgfarrowinset=\dimen282
+\pgfarrowlength=\dimen283
+\pgfarrowwidth=\dimen284
+\pgfarrowlinewidth=\dimen285
 )
 (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz/l
 ibraries\tikzlibraryfit.code.tex
@@ -473,7 +574,7 @@ File: pgflibraryfadings.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdftex
 .def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count315
+\l__color_backend_stack_int=\count337
 )
 
 LaTeX Warning: Unused global option(s):
@@ -519,40 +620,74 @@ LaTeX Warning: Label `fig:overview_pcg' multiply defined.
 )
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 51.
+LaTeX Font Info:    ... okay on input line 51.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 51.
+LaTeX Font Info:    ... okay on input line 51.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 51.
+LaTeX Font Info:    ... okay on input line 51.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 51.
+LaTeX Font Info:    ... okay on input line 51.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 51.
+LaTeX Font Info:    ... okay on input line 51.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 51.
+LaTeX Font Info:    ... okay on input line 51.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 51.
+LaTeX Font Info:    ... okay on input line 51.
 
 (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count316
-\scratchdimen=\dimen276
-\scratchbox=\box70
-\nofMPsegments=\count317
-\nofMParguments=\count318
-\everyMPshowfont=\toks34
-\MPscratchCnt=\count319
-\MPscratchDim=\dimen277
-\MPnumerator=\count320
-\makeMPintoPDFobject=\count321
-\everyMPtoPDFconversion=\toks35
+\scratchcounter=\count338
+\scratchdimen=\dimen286
+\scratchbox=\box72
+\nofMPsegments=\count339
+\nofMParguments=\count340
+\everyMPshowfont=\toks42
+\MPscratchCnt=\count341
+\MPscratchDim=\dimen287
+\MPnumerator=\count342
+\makeMPintoPDFobject=\count343
+\everyMPtoPDFconversion=\toks43
 )
 (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-base
 .sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.sty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
+) (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/grfext\grfext.sty
+Package: grfext 2019/12/03 v1.3 Manage graphics extensions (HO)
+
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefinekey
+s.sty
+Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
+))
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
+Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
+
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
+Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
+)
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
+Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
+))
+(C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds.st
+y
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
+)
+ (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty
+Package: iftex 2024/12/12 v1.0g TeX engine tests
+)
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+)
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 85.
+Package grfext Info: Graphics extension search list:
+(grfext)             [.pdf,.png,.jpg,.mps,.jpeg,.jbig2,.jb2,.PDF,.PNG,.JPG,.JPE
+G,.JBIG2,.JB2,.eps]
+(grfext)             \AppendGraphicsExtensions on input line 504.
 
 (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
@@ -560,19 +695,12 @@ File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 <figures/logos.jpg, id=28, 513.92pt x 256.96pt>
 File: figures/logos.jpg Graphic file (type jpg)
 <use figures/logos.jpg>
-Package pdftex.def Info: figures/logos.jpg  used on input line 35.
+Package pdftex.def Info: figures/logos.jpg  used on input line 59.
 (pdftex.def)             Requested size: 142.26378pt x 71.13275pt.
  [1
 
 {C:/Users/PC/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map} <./figures/logos
-.jpg>] [1] (main.toc
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <10.95> on input line 2.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 2.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 2.
- [2])
+.jpg>] [1] (main.toc [2])
 \tf@toc=\write4
 \openout4 = `main.toc'.
 
@@ -589,130 +717,220 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 <figures/figures/Slide1.jpg, id=63, 963.6pt x 542.025pt>
 File: figures/figures/Slide1.jpg Graphic file (type jpg)
 <use figures/figures/Slide1.jpg>
-Package pdftex.def Info: figures/figures/Slide1.jpg  used on input line 120.
+Package pdftex.def Info: figures/figures/Slide1.jpg  used on input line 144.
 (pdftex.def)             Requested size: 390.0pt x 219.37004pt.
  [9 <./figures/figures/Slide1.jpg>] [10] [11]
-Overfull \hbox (6.7588pt too wide) in paragraph at lines 145--146
+Overfull \hbox (6.7588pt too wide) in paragraph at lines 169--170
 []\OT1/cmr/m/n/10.95 For the tex-tures, Sub-stance Painter was used. Sub-stance
  Painter uses Physically-
  []
 
-[12]
-<figures/figures/Slide2.jpg, id=77, 963.6pt x 542.025pt>
+[12] [13]
+<figures/figures/Slide2.jpg, id=80, 963.6pt x 542.025pt>
 File: figures/figures/Slide2.jpg Graphic file (type jpg)
 <use figures/figures/Slide2.jpg>
-Package pdftex.def Info: figures/figures/Slide2.jpg  used on input line 162.
+Package pdftex.def Info: figures/figures/Slide2.jpg  used on input line 187.
 (pdftex.def)             Requested size: 390.0pt x 219.37004pt.
- [13] [14 <./figures/figures/Slide2.jpg>]
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 178.
+ [14 <./figures/figures/Slide2.jpg>]
+Overfull \hbox (32.33858pt too wide) in paragraph at lines 203--220
+ [][] 
+ []
 
-Overfull \hbox (32.33858pt too wide) in paragraph at lines 178--195
+[15] [16]
+<figures/figures/Slide3.jpg, id=91, 963.6pt x 542.025pt>
+File: figures/figures/Slide3.jpg Graphic file (type jpg)
+<use figures/figures/Slide3.jpg>
+Package pdftex.def Info: figures/figures/Slide3.jpg  used on input line 239.
+(pdftex.def)             Requested size: 390.0pt x 219.37004pt.
+ [17 <./figures/figures/Slide3.jpg>] [18] [19] [20]
+<figures/figures/Slide 6.jpg, id=105, 963.6pt x 542.025pt>
+File: figures/figures/Slide 6.jpg Graphic file (type jpg)
+<use figures/figures/Slide 6.jpg>
+Package pdftex.def Info: figures/figures/Slide 6.jpg  used on input line 280.
+(pdftex.def)             Requested size: 390.0pt x 219.37004pt.
+
+Underfull \hbox (badness 1430) in paragraph at lines 281--281
+[]\OT1/cmr/m/n/12 Figure 4: Side-by-side com-par-i-son of the parts of a clas-s
+i-cal or-der
+ []
+
+[21 <./figures/figures/Slide 6.jpg>] [22] [23]
+Overfull \hbox (5.15685pt too wide) in paragraph at lines 310--311
+[]\OT1/cmr/m/n/10.95 Low-human-intervention meth-ods pri-mar-ily en-com-pass te
+ch-niques such as noise-
+ []
+
+[24] [25] [26] [27] [28] [29] [30]
+<figures/figures/Slide4.JPG, id=138, 963.6pt x 542.025pt>
+File: figures/figures/Slide4.JPG Graphic file (type jpg)
+<use figures/figures/Slide4.JPG>
+Package pdftex.def Info: figures/figures/Slide4.JPG  used on input line 368.
+(pdftex.def)             Requested size: 390.0pt x 219.37004pt.
+ [31] [32 <./figures/figures/Slide4.JPG>]
+Overfull \hbox (5.0858pt too wide) in paragraph at lines 388--401
+ [][] 
+ []
+
+<Figures/enginearch.png, id=145, 546.54187pt x 567.62062pt>
+File: Figures/enginearch.png Graphic file (type png)
+<use Figures/enginearch.png>
+Package pdftex.def Info: Figures/enginearch.png  used on input line 404.
+(pdftex.def)             Requested size: 390.0pt x 405.04016pt.
+[33] [34 <./Figures/enginearch.png>]
+Overfull \hbox (7.38638pt too wide) in paragraph at lines 415--416
+[]\OT1/cmr/m/n/10.95 Scene In-te-gra-tion: Each Ob-ject in-stance de-fines its 
+spa-tial pa-ram-e-ters through
+ []
+
+[35]
+<Figures/anitobuilder_arch.png, id=157, 323.70938pt x 321.45094pt>
+File: Figures/anitobuilder_arch.png Graphic file (type png)
+<use Figures/anitobuilder_arch.png>
+Package pdftex.def Info: Figures/anitobuilder_arch.png  used on input line 428.
+
+(pdftex.def)             Requested size: 195.0pt x 193.64212pt.
+LaTeX Font Info:    Trying to load font information for OMS+cmr on input line 4
+43.
+ (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/base\omscmr.fd
+File: omscmr.fd 2024/11/19 v2.5n Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 443.
+<Figures/stretchmethod.png, id=158, 691.83469pt x 453.94594pt>
+File: Figures/stretchmethod.png Graphic file (type png)
+<use Figures/stretchmethod.png>
+Package pdftex.def Info: Figures/stretchmethod.png  used on input line 471.
+(pdftex.def)             Requested size: 390.0pt x 255.90501pt.
+
+[36 <./Figures/anitobuilder_arch.png>] [37]
+<Figures/append.png, id=170, 546.54187pt x 247.67531pt>
+File: Figures/append.png Graphic file (type png)
+<use Figures/append.png>
+Package pdftex.def Info: Figures/append.png  used on input line 481.
+(pdftex.def)             Requested size: 390.0pt x 176.73503pt.
+ [38 <./Figures/stretchmethod.png>]
+Overfull \hbox (5.0858pt too wide) in paragraph at lines 490--505
+ [][] 
+ []
+
+[39 <./Figures/append.png>]
+Overfull \hbox (5.0858pt too wide) in paragraph at lines 522--533
  [][] 
  []
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[15]
-<figures/figures/Slide3.jpg, id=88, 963.6pt x 542.025pt>
-File: figures/figures/Slide3.jpg Graphic file (type jpg)
-<use figures/figures/Slide3.jpg>
-Package pdftex.def Info: figures/figures/Slide3.jpg  used on input line 214.
-(pdftex.def)             Requested size: 390.0pt x 219.37004pt.
- [16] [17 <./figures/figures/Slide3.jpg>] [18] [19] [20] [21] [22]
-Overfull \hbox (5.15685pt too wide) in paragraph at lines 276--277
-[]\OT1/cmr/m/n/10.95 Low-human-intervention meth-ods pri-mar-ily en-com-pass te
-ch-niques such as noise-
+
+Overfull \hbox (38.76744pt too wide) in paragraph at lines 535--536
+[]\OT1/cmr/m/n/10.95 The data gath-ered from these tests were based on the meth
+-ods used by Kami^^Snska(2022).
  []
 
-[23] [24] [25] [26]
-<figures/figures/Slide4.JPG, id=124, 963.6pt x 542.025pt>
-File: figures/figures/Slide4.JPG Graphic file (type jpg)
-<use figures/figures/Slide4.JPG>
-Package pdftex.def Info: figures/figures/Slide4.JPG  used on input line 324.
-(pdftex.def)             Requested size: 390.0pt x 219.37004pt.
- [27] [28 <./figures/figures/Slide4.JPG>]
-Overfull \hbox (5.0858pt too wide) in paragraph at lines 344--357
+[40] [41] [42] [43]
+Overfull \hbox (7.71466pt too wide) in paragraph at lines 632--632
+ [][]\OT1/cmr/m/n/12 Authenticity 
+ []
+
+
+Overfull \hbox (6.5744pt too wide) in paragraph at lines 632--632
+ [][]\OT1/cmr/m/n/12 Believability 
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Overfull \hbox (3.41513pt too wide) in paragraph at lines 649--658
  [][] 
  []
 
-[29]
-LaTeX Font Info:    Trying to load font information for OMS+cmr on input line 3
-79.
- (C:\Users\PC\AppData\Local\Programs\MiKTeX\tex/latex/base\omscmr.fd
-File: omscmr.fd 2024/11/19 v2.5n Standard LaTeX font definitions
-)
-LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 379.
 
-[30] [31]
-Overfull \hbox (5.99922pt too wide) in paragraph at lines 464--465
- [][] 
- []
+LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[32] [33] [34] [35] [36]
-<Figures/1st Floor Wall Segments.png, id=162, 1927.2pt x 1084.05pt>
+[44] [45]
+<Figures/1st Floor Wall Segments.png, id=200, 1927.2pt x 1084.05pt>
 File: Figures/1st Floor Wall Segments.png Graphic file (type png)
 <use Figures/1st Floor Wall Segments.png>
 Package pdftex.def Info: Figures/1st Floor Wall Segments.png  used on input lin
-e 541.
+e 689.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
- [37]
-<figures/2nd Floor Wall Segments.png, id=167, 1927.2pt x 1084.05pt>
+ [46]
+<figures/2nd Floor Wall Segments.png, id=204, 1927.2pt x 1084.05pt>
 File: figures/2nd Floor Wall Segments.png Graphic file (type png)
 <use figures/2nd Floor Wall Segments.png>
 Package pdftex.def Info: figures/2nd Floor Wall Segments.png  used on input lin
-e 552.
+e 700.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
- [38 <./Figures/1st Floor Wall Segments.png>]
-<figures/3rd Floor Wall Segments.png, id=172, 1927.2pt x 1084.05pt>
+ [47 <./Figures/1st Floor Wall Segments.png>]
+<figures/3rd Floor Wall Segments.png, id=209, 1927.2pt x 1084.05pt>
 File: figures/3rd Floor Wall Segments.png Graphic file (type png)
 <use figures/3rd Floor Wall Segments.png>
 Package pdftex.def Info: figures/3rd Floor Wall Segments.png  used on input lin
-e 563.
+e 711.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
-
-[39 <./figures/2nd Floor Wall Segments.png>]
-<figures/RooftopFloor Wall Segments.png, id=177, 1927.2pt x 1084.05pt>
+ [48 <./figures/2nd Floor Wall Segments.png>]
+<figures/RooftopFloor Wall Segments.png, id=215, 1927.2pt x 1084.05pt>
 File: figures/RooftopFloor Wall Segments.png Graphic file (type png)
 <use figures/RooftopFloor Wall Segments.png>
 Package pdftex.def Info: figures/RooftopFloor Wall Segments.png  used on input 
-line 574.
+line 722.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
- [40 <./figures/3rd Floor Wall Segments.png>]
-<figures/Wall Segments.png, id=182, 1927.2pt x 1084.05pt>
+ [49 <./figures/3rd Floor Wall Segments.png>]
+<figures/Wall Segments.png, id=220, 1927.2pt x 1084.05pt>
 File: figures/Wall Segments.png Graphic file (type png)
 <use figures/Wall Segments.png>
-Package pdftex.def Info: figures/Wall Segments.png  used on input line 585.
+Package pdftex.def Info: figures/Wall Segments.png  used on input line 733.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
- [41 <./figures/RooftopFloor Wall Segments.png>]
-<figures/2-Segment Wall Segments Var 2.png, id=187, 1927.2pt x 1084.05pt>
+ [50 <./figures/RooftopFloor Wall Segments.png>]
+<figures/2-Segment Wall Segments Var 2.png, id=225, 1927.2pt x 1084.05pt>
 File: figures/2-Segment Wall Segments Var 2.png Graphic file (type png)
 <use figures/2-Segment Wall Segments Var 2.png>
 Package pdftex.def Info: figures/2-Segment Wall Segments Var 2.png  used on inp
-ut line 592.
+ut line 740.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
- [42 <./figures/Wall Segments.png> <./figures/2-Segment Wall Segments Var 2.png
+ [51 <./figures/Wall Segments.png> <./figures/2-Segment Wall Segments Var 2.png
 >]
-<figures/3-Segment Wall Segments.png, id=194, 1927.2pt x 1084.05pt>
+<figures/3-Segment Wall Segments.png, id=231, 1927.2pt x 1084.05pt>
 File: figures/3-Segment Wall Segments.png Graphic file (type png)
 <use figures/3-Segment Wall Segments.png>
 Package pdftex.def Info: figures/3-Segment Wall Segments.png  used on input lin
-e 603.
+e 751.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
 File: figures/Wall Segments.png Graphic file (type png)
 <use figures/Wall Segments.png>
-Package pdftex.def Info: figures/Wall Segments.png  used on input line 614.
+Package pdftex.def Info: figures/Wall Segments.png  used on input line 762.
 (pdftex.def)             Requested size: 390.0pt x 219.37006pt.
- [43 <./figures/3-Segment Wall Segments.png>]
-<figures/Intro.png, id=199, 2258.4375pt x 1693.82813pt>
+ [52 <./figures/3-Segment Wall Segments.png>]
+<figures/Intro.png, id=236, 2258.4375pt x 1693.82813pt>
 File: figures/Intro.png Graphic file (type png)
 <use figures/Intro.png>
-Package pdftex.def Info: figures/Intro.png  used on input line 623.
+Package pdftex.def Info: figures/Intro.png  used on input line 771.
 (pdftex.def)             Requested size: 390.0pt x 292.49582pt.
- [44] [45 <./figures/Intro.png (PNG copy)>] [46]
-[47] [48] [49] (main.aux)
+ [53] [54 <./figures/Intro.png (PNG copy)>] [55] [56] [57]
+Underfull \hbox (badness 10000) in paragraph at lines 875--878
+[]\OT1/cmr/m/n/10.95 Cable Mat-ters. (2024). Ray Trac-ing vs Ras-ter-i-za-tion:
+ Un-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 875--878
+\OT1/cmr/m/n/10.95 pack-ing Com-puter Graph-ics Ren-der-ing. Re-trieved from
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 875--878
+\OT1/cmr/m/n/10.95 https://www.cablematters.com/Blog/Computer-Accessories/ray-t
+racing-
+ []
+
+[58]
+Underfull \hbox (badness 1132) in paragraph at lines 880--883
+[]\OT1/cmr/m/n/10.95 CMake. (2026). Why CMake? | Mas-ter-ing CMake. Re-trieved 
+from
+ []
+
+[59] [60] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
@@ -723,13 +941,13 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 14112 strings out of 467871
- 300067 string characters out of 5419828
- 683280 words of memory out of 5000000
- 42742 multiletter control sequences out of 15000+600000
- 634485 words of font info for 62 fonts, out of 8000000 for 9000
+ 16443 strings out of 467871
+ 345594 string characters out of 5419828
+ 730061 words of memory out of 5000000
+ 45011 multiletter control sequences out of 15000+600000
+ 634784 words of font info for 64 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,10n,104p,1472b,989s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,10n,104p,1472b,979s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\PC\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm109
 5.pk><C:/Users/PC/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/
 cmbx10.pfb><C:/Users/PC/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfon
@@ -738,13 +956,11 @@ amsfonts/cm/cmmi12.pfb><C:/Users/PC/AppData/Local/Programs/MiKTeX/fonts/type1/p
 ublic/amsfonts/cm/cmmi8.pfb><C:/Users/PC/AppData/Local/Programs/MiKTeX/fonts/ty
 pe1/public/amsfonts/cm/cmr10.pfb><C:/Users/PC/AppData/Local/Programs/MiKTeX/fon
 ts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/PC/AppData/Local/Programs/MiKTe
-X/fonts/type1/public/amsfonts/cm/cmss10.pfb><C:/Users/PC/AppData/Local/Programs
-/MiKTeX/fonts/type1/public/amsfonts/cm/cmssbx10.pfb><C:/Users/PC/AppData/Local/
-Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/PC/AppData/
-Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb>
-Output written on main.pdf (50 pages, 14506522 bytes).
+X/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/PC/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb>
+Output written on main.pdf (61 pages, 14852154 bytes).
 PDF statistics:
- 267 PDF objects out of 1000 (max. 8388607)
+ 303 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 174 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 205 words of extra memory for PDF output out of 10000 (max. 10000000)
 

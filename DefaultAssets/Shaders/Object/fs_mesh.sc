@@ -237,7 +237,7 @@ void main() {
 	    vec4 lc = lit(bln.x, bln.y, 1.0);
 	    vec3 rgb = saturate(lc.y) * attenuation;
 
-        lightColor += light_color[i].xyz * rgb;
+        lightColor += light_color[i].xyz * rgb * shadow;
     }
 
     // Sample SSAO using screen coordinates
